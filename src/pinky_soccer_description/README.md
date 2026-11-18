@@ -112,7 +112,7 @@ ros2 launch pinky_soccer_description view_robot.launch.py rviz:=false    # 창 �
 4. 관성은 `width/depth/height/mass`로 계산한 박스 근사를 계속 사용합니다. 이 값을 메시 외곽 크기와 실제 출력물 무게로 갱신합니다.
 5. 다시 빌드한 뒤 테스트하고 RViz로 확인합니다. 링크·조인트 구조는 바뀌지 않습니다.
 
-Gazebo에서 `package://pinky_soccer_description` 메시를 찾으려면 `GZ_SIM_RESOURCE_PATH`에 이 패키지의 share 상위 폴더가 있어야 합니다. `pinky_soccer_bringup/launch/gazebo_soccer.launch.py`가 이미 추가합니다.
+Gazebo에서 `package://pinky_soccer_description` 메시를 찾으려면 `GZ_SIM_RESOURCE_PATH`에 이 패키지의 share 상위 폴더가 있어야 합니다. `pinky_soccer_sim/launch/gazebo_soccer.launch.py`가 이미 추가합니다.
 
 ## Nav2 footprint (범퍼 치수 확정 후)
 
@@ -129,8 +129,9 @@ Gazebo에서 `package://pinky_soccer_description` 메시를 찾으려면 `GZ_SIM
 | `view_robot.launch.py` 헤드리스 실행: `/robot_description`, `/tf`, `/tf_static` 발행, `base_footprint → bumper_link` = (0.046, 0, 0.018) | 통과 |
 | RViz2 화면 표시(형상·색·위치 확인) | 사람이 직접 확인해야 함 |
 | RViz2 화면 표시 (사용자 확인) | 통과 |
-| Gazebo | `pinky_soccer_bringup` README 참고 |
-| MuJoCo / 실물 | 다음 단계 |
+| Gazebo | `pinky_soccer_sim` README 참고 |
+| 실물 | `pinky_soccer_bringup` README 참고 |
+| MuJoCo | 다음 단계 |
 
 ## 알려진 제한
 

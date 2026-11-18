@@ -16,9 +16,9 @@ Differences from the official launch:
   - namespace is not supported yet (official bridge topics are not namespaced either)
 
 Run it, for instance, as
-    ros2 launch pinky_soccer_bringup gazebo_soccer.launch.py
-    ros2 launch pinky_soccer_bringup gazebo_soccer.launch.py world_name:=pinky_factory.world
-    ros2 launch pinky_soccer_bringup gazebo_soccer.launch.py spawn_ball:=false gui:=false
+    ros2 launch pinky_soccer_sim gazebo_soccer.launch.py
+    ros2 launch pinky_soccer_sim gazebo_soccer.launch.py world_name:=pinky_factory.world
+    ros2 launch pinky_soccer_sim gazebo_soccer.launch.py spawn_ball:=false gui:=false
 """
 import os
 
