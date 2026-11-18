@@ -131,7 +131,7 @@ Gazebo에서 `package://pinky_soccer_description` 메시를 찾으려면 `GZ_SIM
 | RViz2 화면 표시 (사용자 확인) | 통과 |
 | Gazebo | `pinky_soccer_sim` README 참고 |
 | 실물 | `pinky_soccer_bringup` README 참고 |
-| MuJoCo | 다음 단계 |
+| MuJoCo | `pinky_soccer_sim` README 참고 |
 
 ## 알려진 제한
 

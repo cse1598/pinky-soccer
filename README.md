@@ -31,6 +31,6 @@ source install/setup.bash
 - [ ] **카메라 기울기 보정**: 실물 구성은 `cam_tilt_deg` 0°, xacro·Gazebo·MuJoCo 기본값은 8°입니다. 실제 기울기를 측정하거나 캘리브레이션해서 모든 launch의 기본값을 통일합니다.
 - [ ] **범퍼 디자인**: 공식 STL을 기반으로 범퍼를 모델링하고 출력합니다. 너비, 높이, 초음파 간섭, 공 크기를 함께 정합니다(`src/pinky_soccer_description/README.md`의 설계 제약 참고).
 - [ ] **실물 bringup 검증**: 로봇에서 `pinky_soccer_bringup robot.launch.py`를 실행해 확인합니다(`src/pinky_soccer_bringup/README.md`의 확인 목록 참고).
-- [ ] **MuJoCo 통합**
+- [x] **MuJoCo 통합**
 - [ ] **Nav2 footprint**: 범퍼 치수가 확정되면 반영합니다.
 - [ ] **1대1 시뮬레이션**: 로봇 2대를 띄울 수 있도록 namespace를 지원합니다.

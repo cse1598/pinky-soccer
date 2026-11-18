@@ -81,4 +81,75 @@ git -C src/pinky_pro diff <이전 커밋> -- \
 
 ## MuJoCo
 
-다음 단계에서 추가합니다.
+### 의존성 설치 (최초 1회, 공식 pinky_mujoco README와 같음)
+
+```bash
+sudo apt install python3-pip
+pip install --break-system-packages "mujoco==3.6.0" "trimesh>=4,<5" "pycollada>=0.9,<1"
+```
+
+### 실행
+
+```bash
+ros2 launch pinky_soccer_sim mujoco_soccer.launch.py
+ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
+```
+
+### 인자
+
+| 인자 | 기본값 | 설명 |
+|---|---|---|
+| `viewer` / `camera` / `use_gpu` | `true` / `true` / `false` | 공식 MuJoCo launch와 같음 |
+| `world_name` / `world` | `empty.world` / — | 공식과 같은 규칙 (`pinky_gz_sim/worlds` 또는 `pinky_mujoco/worlds/*.yaml`) |
+| `cam_tilt_deg` / `screen_tilt_deg` | 8 / -25 | |
+| `bumper_enabled` / `bumper_params_file` | `true` / description 기본 yaml | |
+| `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.02, 0.03 | Gazebo와 같은 임시 공 |
+| `model_dir` | `~/.cache/pinky_soccer_mujoco` | 생성된 URDF와 scene.xml. 공식 캐시(`~/.cache/pinky_mujoco`)와 분리 |
+
+### 공식 MuJoCo와의 관계
+
+공식 `pinky_mujoco/launch/launch_sim.launch.py`는 항상 `pinky_description/urdf/robot.urdf.xacro`를 확장합니다. `mujoco_soccer.launch.py`는 같은 구성으로 다음만 바꿉니다.
+
+| 구성 | 처리 |
+|---|---|
+| URDF 생성 | 공식 `pinky_mujoco.description.expand_urdf()`로 `soccer_robot.urdf.xacro`를 확장 (`is_sim:=false`) |
+| 브리지 | 공식 `pinky_mujoco.bridge`를 `mujoco_soccer_bridge`로 감싸 실행. `--urdf-file`, `--world`, `--viewer` 등 공식 인자를 그대로 전달 |
+| 물리, odom, LiDAR, 카메라, ROS 토픽 | 공식 그대로 (`/clock`, `/odom`, `/tf`, `/scan`, `/joint_states`, `/camera/*`) |
+| 테스트 공 | `mujoco_soccer_bridge`가 생성된 `scene.xml`에 동적 공을 추가 |
+
+공식 `world.py`는 world 물체를 모두 정적 geom으로 만들기 때문에, world 파일에 넣은 공은 밀리지 않습니다. 그래서 `mujoco_soccer_bridge`가 공식 `bridge.build_model`을 감싸서, 생성된 scene의 `<worldbody>` **맨 끝**에 freejoint가 있는 공을 추가합니다.
+
+- 맨 끝에 추가하는 이유: 공식 `Physics.pose()`가 `qpos[0:7]`을 로봇으로 가정합니다.
+- 충돌 마스크 `contype=3, conaffinity=3`: 바닥/world(1/2)와 로봇(2/1) 모두와 충돌합니다.
+- `group=0`: viewer에 보이고 LiDAR에도 잡힙니다.
+
+이 래퍼는 공식 내부 구현(`bridge.build_model`, scene 구조, 충돌 마스크)에 의존합니다. Submodule을 업데이트한 뒤에는 `colcon test --packages-select pinky_soccer_sim`으로 확인합니다.
+
+### 검증 결과
+
+| 항목 | 결과 |
+|---|---|
+| 공 추가 단위 테스트 (위치, 순서, 충돌 마스크, 관성, 잘못된 값 거부, 인자 분리) | 통과 |
+| 공식 `expand_urdf()`로 범퍼 URDF 생성 (`bumper_link` 포함, Gazebo 플러그인 제외) | 통과 |
+| 물리 테스트 (`test_physics_robot_pushes_ball_and_stays_level`) | 통과 |
+| launch 헤드리스 실행(`viewer:=false`): `/clock` 100 Hz, `/odom` 50 Hz, `/scan` 10 Hz, `/joint_states` 49 Hz, `/camera/image_raw` 약 10 Hz(소프트웨어 렌더링) | 통과 |
+| `base_footprint → bumper_link` = (0.046, 0, 0.018), `/joint_states` 이름 `l_wheel_joint` 등 | 통과 |
+| `/cmd_vel` 주행 → `/odom` 갱신 | 통과 |
+| viewer 화면 | 사람이 직접 확인해야 함 |
+
+물리 비교 (0.25 m/s로 3 s 전진 → 정지 → 후진 → 정지, 공은 로봇 앞 0.3 m):
+
+| 조건 | 전진 후 로봇 x / 공 x | 공 최대 높이 | 최대 pitch |
+|---|---|---|---|
+| 범퍼 없음 | 0.338 / 0.395 m (**공 앞에서 멈춤**) | 0.020 m | 1.55° |
+| 범퍼 40 g | 0.725 / 0.814 m | 0.020 m | 0.03° |
+| 범퍼 400 g | 0.724 / 0.927 m | 0.020 m | 1.68° |
+
+- 범퍼가 없으면 로봇이 공 앞에서 멈춥니다. 공이 몸체 앞 아래쪽에 끼는 것으로 보입니다.
+- MuJoCo는 공식 설정상 최고 속도가 0.25 m/s(`mujoco.yaml` `max_linear`)라서 400 g 범퍼의 기울기가 Gazebo(1.0 m/s, 9.5°)보다 작게 나옵니다.
+
+### 알려진 제한
+
+- LiDAR는 지면에서 약 12.5 cm 높이를 수평으로 스캔하므로, 낮은 공(현재 지름 4 cm)은 `/scan`에 잡히지 않습니다. 실물도 마찬가지이므로 공은 카메라로 찾아야 합니다.
+- 공의 위치는 ROS 토픽으로 발행하지 않습니다(필요하면 추가).
+- 소프트웨어 렌더링에서는 카메라가 약 10~13 Hz로 제한됩니다(공식 동작). GPU가 있으면 `use_gpu:=true`를 사용합니다.
