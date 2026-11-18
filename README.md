@@ -28,7 +28,7 @@ source install/setup.bash
 ## 남은 작업
 
 - [ ] **바퀴 반지름 보정**: 실물 드라이버 파라미터는 0.027 m, URDF와 Gazebo DiffDrive는 0.028 m입니다. 실물에서 일정 거리를 주행해 odom과 실제 이동 거리를 비교해 값을 정하고, 실물(`wheel_radius` 인자)과 시뮬레이션에 같은 값을 반영합니다. 공식 URDF는 수정하지 않습니다.
-- [ ] **카메라 기울기 보정**: 실물 구성은 `cam_tilt_deg` 0°, xacro·Gazebo·MuJoCo 기본값은 8°입니다. 실제 기울기를 측정하거나 캘리브레이션해서 모든 launch의 기본값을 통일합니다.
+- [ ] **카메라 기울기 보정**: `cam_tilt_deg`는 수평에서 아래로 기운 각도입니다. 실물이 약 8° 내려가 있어 모든 launch 기본값을 8°로 통일했습니다(공식 실물 구성은 0°). 정밀한 값은 카메라 캘리브레이션으로 확인합니다.
 - [ ] **범퍼 디자인**: 공식 STL을 기반으로 범퍼를 모델링하고 출력합니다. 너비, 높이, 초음파 간섭, 공 크기를 함께 정합니다(`src/pinky_soccer_description/README.md`의 설계 제약 참고).
 - [ ] **실물 bringup 검증**: 로봇에서 `pinky_soccer_bringup robot.launch.py`를 실행해 확인합니다(`src/pinky_soccer_bringup/README.md`의 확인 목록 참고).
 - [x] **MuJoCo 통합**

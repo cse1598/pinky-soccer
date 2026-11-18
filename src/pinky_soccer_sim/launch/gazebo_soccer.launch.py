@@ -124,7 +124,7 @@ def generate_launch_description():
         DeclareLaunchArgument('screen_tilt_deg', default_value='-25'),
         DeclareLaunchArgument('bumper_enabled', default_value='true'),
         DeclareLaunchArgument('bumper_params_file', default_value=PathJoinSubstitution(
-            [soccer_description, 'config', 'bumper_params.yaml'])),
+            [soccer_description, 'config', 'bumper_v1_params.yaml'])),
         DeclareLaunchArgument('spawn_ball', default_value='true'),
         DeclareLaunchArgument('ball_x', default_value='0.3'),
         DeclareLaunchArgument('ball_y', default_value='0.0'),

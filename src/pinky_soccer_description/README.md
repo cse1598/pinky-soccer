@@ -26,7 +26,9 @@ urdf/soccer_robot.urdf.xacro
 pinky_soccer_description/
 ├── CMakeLists.txt
 ├── package.xml
-├── config/bumper_params.yaml     # 범퍼 치수 (유일한 원본)
+├── config/bumper_v1_params.yaml  # 기본 범퍼 (cad/bumper에서 생성)
+├── config/bumper_box_params.yaml # 임시 상자 범퍼 (테스트용)
+├── cad/bumper/                   # 범퍼 CAD 생성기와 출력 파일
 ├── urdf/
 │   ├── soccer_robot.urdf.xacro   # 공식 모델 + 범퍼
 │   └── bumper.urdf.xacro         # insert_bumper 매크로
@@ -40,7 +42,9 @@ RViz 설정은 공식 `pinky_description/rviz/view_robot.rviz`를 그대로 사�
 
 ## 범퍼 파라미터
 
-값은 `config/bumper_params.yaml`에서 읽습니다. **현재 값은 시뮬레이션 검증용 임시값이며, 실제 범퍼 사양이 아닙니다.**
+기본 범퍼는 **v1**(`config/bumper_v1_params.yaml`)입니다. 이 파일은 `cad/bumper/generate_bumper.py`가 생성하므로 직접 수정하지 말고 `cad/bumper/bumper_v1.yaml`을 고친 뒤 다시 생성합니다(`cad/bumper/README.md` 참고).
+
+아래 표는 임시 상자 범퍼(`config/bumper_box_params.yaml`)의 키입니다. 메시 범퍼 파일도 같은 키를 쓰고, 추가로 CAD에서 계산한 `inertia`를 가집니다. **상자 값은 시뮬레이션 검증용 임시값입니다.**
 
 | 키 | xacro 덮어쓰기 인자 | 의미 | 임시값 |
 |---|---|---|---|
@@ -103,7 +107,7 @@ ros2 launch pinky_soccer_description view_robot.launch.py rviz:=false    # 창 �
 
 1. 범퍼를 `bumper_link` 좌표계 기준으로 모델링합니다. 원점은 `offset_x/y/z`로 정한 장착점이고, x는 전방, z는 위쪽입니다.
 2. `meshes/visual/bumper.stl`(또는 `.dae`)과 `meshes/collision/bumper.stl`을 넣습니다. collision 메시는 단순화한 버전이 좋습니다.
-3. `bumper_params.yaml`에 경로를 적습니다.
+3. 파라미터 yaml에 경로를 적습니다(`cad/bumper/generate_bumper.py`를 쓰면 자동으로 생성됩니다).
    ```yaml
    visual_mesh: package://pinky_soccer_description/meshes/visual/bumper.stl
    collision_mesh: package://pinky_soccer_description/meshes/collision/bumper.stl
@@ -118,7 +122,7 @@ Gazebo에서 `package://pinky_soccer_description` 메시를 찾으려면 `GZ_SIM
 
 공식 `pinky_navigation/params/nav2_params.yaml`의 footprint는 `base_footprint` 기준 ±0.06 m 사각형이고 padding은 0.03입니다. 임시 범퍼의 앞면은 x = 0.051, 너비는 ±0.06이라 현재는 그 안에 들어갑니다.
 
-범퍼가 확정되면 공식 파일을 수정하지 말고, 자체 nav2 yaml을 만들어 launch의 `params_file:=` 인자로 넘깁니다. footprint는 `bumper_params.yaml`에서 계산해 범퍼 치수와 일치시킵니다.
+범퍼가 확정되면 공식 파일을 수정하지 말고, 자체 nav2 yaml을 만들어 launch의 `params_file:=` 인자로 넘깁니다. footprint는 범퍼 파라미터 yaml에서 계산해 범퍼 치수와 일치시킵니다.
 
 ## 검증 현황
 

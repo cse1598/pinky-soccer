@@ -1,0 +1,22 @@
+bumper_v1
+faces 1384, watertight True
+volume 31.85 cm^3 -> mass 31.6 g (density 1.24 x fill 0.8)
+bounds base_link mm x[11.00,41.50] y[-55.00,55.00] z[-19.00,23.00]
+ground clearance 9.00 mm, top 51.00 mm above ground
+centre of mass base_link mm [32.22, -0.0, 1.9]
+inertia about COM kg m^2 ixx 3.617e-05, iyy 7.110e-06, izz 3.430e-05, ixy 7.743e-18, ixz 2.295e-07, iyz -1.130e-14
+
+clearance check against pinky_description visual meshes
+robot surface points sampled: 987292
+penetrating the bumper by > 0.05 mm (nominal fit): 0
+within 0.3 mm of the bumper:
+    base_link/ID180-mesh: 1440 pts x[10.7,20.5] |y|[25.3,33.7] z[-19.0,23.0]
+    base_link/ID180-mesh_6: 909 pts x[38.4,38.7] |y|[3.1,19.9] z[0.6,17.4]
+within 1.0 mm of the bumper:
+    base_link/ID180-mesh: 5924 pts x[10.0,36.5] |y|[24.6,34.4] z[-19.0,23.0]
+    base_link/ID180-mesh_1: 890 pts x[15.1,17.9] |y|[34.0,34.4] z[-15.0,20.0]
+    base_link/ID180-mesh_12: 359 pts x[12.5,36.5] |y|[24.6,30.0] z[-15.0,-13.4]
+    base_link/ID180-mesh_5: 1056 pts x[38.2,38.2] |y|[5.1,17.9] z[2.6,15.4]
+    base_link/ID180-mesh_6: 1754 pts x[36.5,38.7] |y|[3.0,20.0] z[0.5,17.5]
+
+print size mm: [42.0, 110.0, 30.5] (front face down)

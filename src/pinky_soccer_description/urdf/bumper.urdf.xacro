@@ -3,7 +3,7 @@
     <!--
     Front bumper attached to base_link with a fixed joint.
 
-    Values come from params_file (config/bumper_params.yaml). Each dimension
+    Values come from params_file (default config/bumper_v1_params.yaml). Each dimension
     argument overrides the file when it is not an empty string.
 
     Naming follows pinky_description/urdf/pinky.urdf.xacro: link names carry no
@@ -62,13 +62,25 @@
                     </xacro:unless>
                 </geometry>
             </collision>
-            <!-- Solid box approximation; rpy must stay 0 (pinky_mujoco rejects rotated inertias). -->
+            <!--
+            Inertia about bumper_link (rpy must stay 0: pinky_mujoco rejects rotated inertias).
+            Uses params_file 'inertia' when given (computed from the CAD mesh by
+            cad/bumper/generate_bumper.py), otherwise a solid box of width/depth/height.
+            -->
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <mass value="${_m}"/>
-                <inertia ixx="${_m * (_w * _w + _h * _h) / 12}" ixy="0" ixz="0"
-                         iyy="${_m * (_d * _d + _h * _h) / 12}" iyz="0"
-                         izz="${_m * (_d * _d + _w * _w) / 12}"/>
+                <xacro:if value="${'inertia' in _cfg and str(mass) == ''}">
+                    <xacro:property name="_i" value="${_cfg['inertia']}"/>
+                    <inertia ixx="${_i['ixx']}" ixy="${_i.get('ixy', 0)}" ixz="${_i.get('ixz', 0)}"
+                             iyy="${_i['iyy']}" iyz="${_i.get('iyz', 0)}"
+                             izz="${_i['izz']}"/>
+                </xacro:if>
+                <xacro:unless value="${'inertia' in _cfg and str(mass) == ''}">
+                    <inertia ixx="${_m * (_w * _w + _h * _h) / 12}" ixy="0" ixz="0"
+                             iyy="${_m * (_d * _d + _h * _h) / 12}" iyz="0"
+                             izz="${_m * (_d * _d + _w * _w) / 12}"/>
+                </xacro:unless>
             </inertial>
         </link>
 

@@ -20,7 +20,7 @@ With bumper_enabled:=false the result equals pinky_description/urdf/robot.urdf.x
     <!-- Bumper -->
     <xacro:arg name="bumper_enabled" default="true"/>
     <xacro:arg name="bumper_params_file"
-               default="$(find pinky_soccer_description)/config/bumper_params.yaml"/>
+               default="$(find pinky_soccer_description)/config/bumper_v1_params.yaml"/>
     <!-- Optional overrides of single values in bumper_params_file (empty = use the file) -->
     <xacro:arg name="bumper_width" default=""/>
     <xacro:arg name="bumper_depth" default=""/>

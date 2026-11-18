@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument('bumper_enabled', default_value='true'),
         DeclareLaunchArgument(
             'bumper_params_file',
-            default_value=PathJoinSubstitution([share, 'config', 'bumper_params.yaml'])),
+            default_value=PathJoinSubstitution([share, 'config', 'bumper_v1_params.yaml'])),
         DeclareLaunchArgument('cam_tilt_deg', default_value='8'),
         DeclareLaunchArgument('screen_tilt_deg', default_value='-25'),
         DeclareLaunchArgument('gui', default_value='true',

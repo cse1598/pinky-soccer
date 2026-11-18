@@ -10,7 +10,7 @@ import yaml
 
 SHARE = Path(get_package_share_directory('pinky_soccer_description'))
 SOCCER_XACRO = SHARE / 'urdf' / 'soccer_robot.urdf.xacro'
-PARAMS = SHARE / 'config' / 'bumper_params.yaml'
+PARAMS = SHARE / 'config' / 'bumper_box_params.yaml'  # placeholder box, geometry tests
 OFFICIAL_XACRO = (Path(get_package_share_directory('pinky_description'))
                   / 'urdf' / 'robot.urdf.xacro')
 GROUND_Z_IN_BASE_LINK = -0.028  # base_link_fixed_joint in pinky.urdf.xacro
@@ -80,7 +80,7 @@ def test_bumper_joint_and_namespace_convention():
 
 def test_values_come_from_params_file():
     cfg = bumper_config()
-    root = parse(expand())
+    root = parse(expand(bumper_params_file=PARAMS))
     origin = floats(root.find("joint[@name='bumper_joint']/origin").get('xyz'))
     assert origin == pytest.approx([cfg['offset_x'], cfg['offset_y'], cfg['offset_z']])
     box = root.find("link[@name='bumper_link']/collision/geometry/box")
@@ -90,7 +90,8 @@ def test_values_come_from_params_file():
 
 
 def test_argument_overrides_params_file():
-    root = parse(expand(bumper_width=0.2, bumper_offset_x=0.05, bumper_mass=0.03))
+    root = parse(expand(bumper_params_file=PARAMS, bumper_width=0.2, bumper_offset_x=0.05,
+                        bumper_mass=0.03))
     link = root.find("link[@name='bumper_link']")
     assert floats(link.find('collision/geometry/box').get('size'))[1] == pytest.approx(0.2)
     assert floats(link.find('visual/geometry/box').get('size'))[1] == pytest.approx(0.2)
@@ -101,7 +102,8 @@ def test_argument_overrides_params_file():
 
 def test_inertia_is_physically_valid():
     cfg = bumper_config()
-    inertial = parse(expand()).find("link[@name='bumper_link']/inertial")
+    inertial = parse(expand(bumper_params_file=PARAMS)).find(
+        "link[@name='bumper_link']/inertial")
     assert floats(inertial.find('origin').get('rpy')) == [0, 0, 0]  # pinky_mujoco requirement
     i = {k: float(v) for k, v in inertial.find('inertia').attrib.items()}
     m, w, d, h = cfg['mass'], cfg['width'], cfg['depth'], cfg['height']
@@ -134,3 +136,47 @@ def test_check_urdf_accepts_model(tmp_path):
     urdf.write_text(expand(is_sim='true'))
     result = subprocess.run(['check_urdf', str(urdf)], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+# ---------------------------------------------------------------- CAD bumper versions
+V1_PARAMS = SHARE / 'config' / 'bumper_v1_params.yaml'
+
+
+def stl_vertices(path):
+    """Read a binary STL without extra dependencies."""
+    import numpy as np
+    data = path.read_bytes()
+    count = int.from_bytes(data[80:84], 'little')
+    records = np.frombuffer(data[84:84 + 50 * count], dtype=np.dtype(
+        [('n', '<3f4'), ('v', '<9f4'), ('a', '<u2')]))
+    return records['v'].reshape(-1, 3).astype(float)
+
+
+def mesh_path(uri):
+    prefix = 'package://pinky_soccer_description/'
+    assert uri.startswith(prefix)
+    return SHARE / uri[len(prefix):]
+
+
+def test_v1_is_the_default_and_uses_meshes_and_cad_inertia():
+    cfg = yaml.safe_load(V1_PARAMS.read_text())['bumper']
+    root = parse(expand())  # default params file
+    link = root.find("link[@name='bumper_link']")
+    assert link.find('visual/geometry/mesh').get('filename') == cfg['visual_mesh']
+    assert link.find('collision/geometry/mesh').get('filename') == cfg['collision_mesh']
+    assert mesh_path(cfg['visual_mesh']).is_file()
+    assert mesh_path(cfg['collision_mesh']).is_file()
+    i = {k: float(v) for k, v in link.find('inertial/inertia').attrib.items()}
+    for k in ('ixx', 'iyy', 'izz'):
+        assert i[k] == pytest.approx(cfg['inertia'][k])
+    assert i['ixx'] + i['iyy'] >= i['izz'] and i['iyy'] + i['izz'] >= i['ixx']
+    assert i['izz'] + i['ixx'] >= i['iyy'] and min(i['ixx'], i['iyy'], i['izz']) > 0
+
+
+def test_v1_mesh_clears_the_ground_and_stays_in_front_of_the_wheels():
+    cfg = yaml.safe_load(V1_PARAMS.read_text())['bumper']
+    offset = [cfg['offset_x'], cfg['offset_y'], cfg['offset_z']]
+    for key in ('visual_mesh', 'collision_mesh'):
+        v = stl_vertices(mesh_path(cfg[key])) + offset   # base_link frame, metres
+        assert v[:, 2].min() > GROUND_Z_IN_BASE_LINK + 0.005, f'{key} too close to the ground'
+        assert abs(v[:, 1]).max() <= 0.0552, f'{key} wider than the wheels'

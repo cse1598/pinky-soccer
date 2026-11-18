@@ -14,8 +14,9 @@ in TF. Here the driver output is remapped to wheel_joint_states_raw,
 wheel_joint_state_relay renames the joints, and joint_state_publisher merges
 wheel_joint_states into /joint_states.
 
-cam_tilt_deg defaults to 0 like upload_robot.launch.py, so the real robot keeps the TF it
-had before. The xacro, Gazebo and MuJoCo launches use 8; measure the real tilt and align.
+cam_tilt_deg (downward pitch of the front camera, degrees) defaults to 8 like the xacro,
+Gazebo and MuJoCo launches; the real camera is tilted about 8 deg down. The official
+upload_robot.launch.py uses 0, which does not match the hardware.
 
 hardware:=false starts only robot_state_publisher / joint_state_publisher, which is useful
 for checking the description on a PC without the robot's drivers installed.
@@ -58,12 +59,12 @@ def generate_launch_description():
         # Same defaults as bringup_robot.launch.xml / upload_robot.launch.py
         DeclareLaunchArgument('wheel_radius', default_value='0.027'),
         DeclareLaunchArgument('wheel_separation', default_value='0.0961'),
-        DeclareLaunchArgument('cam_tilt_deg', default_value='0'),
+        DeclareLaunchArgument('cam_tilt_deg', default_value='8'),
         DeclareLaunchArgument('screen_tilt_deg', default_value='-25'),
         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/ttyAMA0'),
         DeclareLaunchArgument('bumper_enabled', default_value='true'),
         DeclareLaunchArgument('bumper_params_file', default_value=PathJoinSubstitution(
-            [soccer_description, 'config', 'bumper_params.yaml'])),
+            [soccer_description, 'config', 'bumper_v1_params.yaml'])),
 
         # upload_robot.launch.py equivalent
         Node(package='robot_state_publisher', executable='robot_state_publisher',

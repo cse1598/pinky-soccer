@@ -69,7 +69,7 @@ pinky_bringup (bringup) ──joint_states──▶ (remap) /wheel_joint_states_
 | 인자 | 기본값 | 설명 |
 |---|---|---|
 | `hardware` | `true` | `false`이면 rsp/jsp/relay만 실행 |
-| `cam_tilt_deg` | **0** | 공식 실물 구성(`upload_robot.launch.py`)과 같은 값. 시뮬레이션 기본값은 8 (보정 예정) |
+| `cam_tilt_deg` | 8 | 카메라가 수평에서 아래로 기운 각도(°). 실물이 약 8° 내려가 있어 시뮬레이션과 같은 값을 사용. 공식 `upload_robot.launch.py`는 0 |
 | `screen_tilt_deg` | -25 | |
 | `wheel_radius`, `wheel_separation` | 0.027, 0.0961 | 공식 값. URDF·Gazebo는 반지름 0.028 (보정 예정) |
 | `lidar_serial_port` | `/dev/ttyAMA0` | |

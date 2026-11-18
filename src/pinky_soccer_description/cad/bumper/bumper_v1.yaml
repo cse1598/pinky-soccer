@@ -1,0 +1,56 @@
+# Bumper v1: basic flat front plate with two press-fit prongs (no screws).
+#
+# Units: mm. Frame: base_link (x forward, y left, z up); the ground is at z = -28.
+# Robot dimensions below were measured from the official pinky_description meshes
+# (submodule 014a09f). Measure the real robot before printing; plastic plates and
+# 3D prints both have tolerances.
+#
+# Measured references
+#   bottom plate      z -19 .. -15 (4 mm), front edge x 20.5
+#   middle plate      z  20 ..  23 (3 mm), front edge x 20.5  -> gap between plates 35 mm
+#   IR sensor board   on the bottom plate, z -15 .. -13.4, |y| <= 30, x 12.5 .. 36.5
+#   ultrasonic        bracket |y| <= 25 (x 14 .. 20.5); cans r 8.5 at y +-11.5, z 9, front x 38.7
+#   front standoffs   hex at (16.5, +-36), |y| >= 34
+#   drive motors      front face x 10.5
+#   wheels            outer face |y| 55.1, front x 28
+name: bumper_v1
+
+front_plate:
+  back_x: 37.5        # 1 mm in front of the IR board (36.5)
+  thickness: 4.0
+  half_width: 55.0    # wheel outer face
+  bottom_z: -19.0     # bottom plate underside -> 9 mm above the ground
+  top_z: 23.0         # middle plate top -> 51 mm above the ground
+  chamfer: 0.6        # small edge chamfer, keep nearly square
+
+prongs:               # one on each side, slid between the two plates
+  y_inner: 25.6       # ultrasonic bracket at |y| 25.0
+  y_outer: 33.4       # front standoff at |y| 34.0
+  back_x: 11.0        # motors at 10.5
+  plate_edge_x: 20.5  # side walls bear on both plate edges here (push load)
+  pinch_bottom_z: -15.0   # bottom plate top
+  pinch_top_z: 20.0       # middle plate bottom
+  pinch_interference: 0.1 # mm added to the 35 mm prong height (press fit); tune after a test print
+  wall_bottom_z: -19.0
+  wall_top_z: 23.0
+
+ir_board_notch:       # lets the prongs slide over the IR board edge
+  y_max: 30.5         # board |y| <= 30.0
+  z_top: -13.0        # board top -13.4
+
+ultrasonic_holes:
+  centers_y: [11.5, -11.5]
+  center_z: 9.0
+  can_radius: 8.5
+  can_front_x: 38.7
+  clearance: 0.5           # radial gap around the can
+  cone_half_angle_deg: 25  # beam is about 15 deg; widen towards the front
+
+material:
+  density_g_cm3: 1.24      # PLA
+  fill_fraction: 0.8       # rough share of solid plastic for thin parts
+
+simulation:
+  # The collision shape is the front plate only (holes ignored); prongs and walls sit
+  # inside the robot outline. MuJoCo uses convex hulls, so a single box is exact there.
+  collision: front_plate
