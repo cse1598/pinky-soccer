@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+Pinky Pro + soccer bumper.
+
+Wraps the official model instead of copying it: insert_robot from
+pinky_description/urdf/pinky.urdf.xacro builds the unmodified robot (including the
+Gazebo plugins when is_sim is true) and insert_bumper adds bumper_link on base_link.
+With bumper_enabled:=false the result equals pinky_description/urdf/robot.urdf.xacro.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="pinky">
+    <xacro:include filename="$(find pinky_description)/urdf/pinky.urdf.xacro"/>
+    <xacro:include filename="$(find pinky_soccer_description)/urdf/bumper.urdf.xacro"/>
+
+    <!-- Same arguments and defaults as pinky_description/urdf/robot.urdf.xacro -->
+    <xacro:arg name="namespace" default=""/>
+    <xacro:arg name="is_sim" default="false"/>
+    <xacro:arg name="cam_tilt_deg" default="8"/>
+    <xacro:arg name="screen_tilt_deg" default="-25"/>
+
+    <!-- Bumper -->
+    <xacro:arg name="bumper_enabled" default="true"/>
+    <xacro:arg name="bumper_params_file"
+               default="$(find pinky_soccer_description)/config/bumper_params.yaml"/>
+    <!-- Optional overrides of single values in bumper_params_file (empty = use the file) -->
+    <xacro:arg name="bumper_width" default=""/>
+    <xacro:arg name="bumper_depth" default=""/>
+    <xacro:arg name="bumper_height" default=""/>
+    <xacro:arg name="bumper_offset_x" default=""/>
+    <xacro:arg name="bumper_offset_y" default=""/>
+    <xacro:arg name="bumper_offset_z" default=""/>
+    <xacro:arg name="bumper_mass" default=""/>
+
+    <xacro:insert_robot namespace="$(arg namespace)"
+                        is_sim="$(arg is_sim)"
+                        cam_tilt_deg="$(arg cam_tilt_deg)"
+                        screen_tilt_deg="$(arg screen_tilt_deg)"/>
+
+    <xacro:if value="$(arg bumper_enabled)">
+        <xacro:insert_bumper namespace="$(arg namespace)"
+                             params_file="$(arg bumper_params_file)"
+                             width="$(arg bumper_width)"
+                             depth="$(arg bumper_depth)"
+                             height="$(arg bumper_height)"
+                             offset_x="$(arg bumper_offset_x)"
+                             offset_y="$(arg bumper_offset_y)"
+                             offset_z="$(arg bumper_offset_z)"
+                             mass="$(arg bumper_mass)"/>
+    </xacro:if>
+</robot>

@@ -1,0 +1,38 @@
+# Bumper parameters: the single source of truth for the bumper geometry.
+#
+# PLACEHOLDER VALUES for simulation testing only.
+# They are NOT measured Pinky Pro dimensions and NOT the real bumper spec.
+# Replace them once the bumper design (STL) is finished.
+#
+# Units: metres, kilograms, RGBA 0..1.
+# Frame: base_link (x forward, y left, z up). base_link is 0.028 m above the
+# ground (base_footprint), so the ground is at z = -0.028 in this frame.
+#
+# Reference points of the official model (base_link frame):
+#   base_link collision mesh front face  x = +0.0387
+#   wheels                               y = +-0.0406, radius 0.028
+#   ultrasonic sensor                    (0.0267, 0, 0.009)   -> keep its view clear
+#   IR sensors                           (0.0295, 0 / +-0.02, -0.015)
+bumper:
+  # Box size used for the visual/collision placeholder and for the inertia.
+  width: 0.12      # y
+  depth: 0.01      # x
+  height: 0.02     # z
+
+  # Position of bumper_link (box centre) relative to base_link.
+  offset_x: 0.046  # back face at 0.041, 2.3 mm in front of the base mesh
+  offset_y: 0.0
+  offset_z: -0.010  # bottom 8 mm above the ground, top 9 mm below the ultrasonic centre
+
+  # Keep it light: the robot has no support in front of the wheels.
+  mass: 0.04
+
+  # Optional meshes. Empty string = use the box above.
+  # Meshes must be modelled in the bumper_link frame (origin = mounting point
+  # defined by offset_x/y/z). Example:
+  #   visual_mesh: package://pinky_soccer_description/meshes/visual/bumper.stl
+  visual_mesh: ""
+  collision_mesh: ""
+  mesh_scale: [1.0, 1.0, 1.0]
+
+  color: [0.10, 0.45, 0.90, 1.0]
