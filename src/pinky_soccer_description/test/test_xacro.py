@@ -1,6 +1,7 @@
 """Checks for urdf/soccer_robot.urdf.xacro (run after the package is built and sourced)."""
 from pathlib import Path
 import subprocess
+import tempfile
 import xml.etree.ElementTree as ET
 
 from ament_index_python.packages import get_package_share_directory
@@ -10,7 +11,14 @@ import yaml
 
 SHARE = Path(get_package_share_directory('pinky_soccer_description'))
 SOCCER_XACRO = SHARE / 'urdf' / 'soccer_robot.urdf.xacro'
-PARAMS = SHARE / 'config' / 'bumper_box_params.yaml'  # placeholder box, geometry tests
+# A plain box bumper (no meshes) for the geometry tests; written here, not shipped.
+BOX_PARAMS = {'bumper': {'width': 0.12, 'depth': 0.01, 'height': 0.02,
+                         'offset_x': 0.046, 'offset_y': 0.0, 'offset_z': -0.010, 'mass': 0.04,
+                         'visual_mesh': '', 'collision_mesh': '',
+                         'mesh_scale': [1.0, 1.0, 1.0], 'color': [0.1, 0.45, 0.9, 1.0]}}
+_TMP = tempfile.TemporaryDirectory(prefix='bumper_test_')  # removed when the tests exit
+PARAMS = Path(_TMP.name) / 'bumper_box_params.yaml'
+PARAMS.write_text(yaml.safe_dump(BOX_PARAMS))
 OFFICIAL_XACRO = (Path(get_package_share_directory('pinky_description'))
                   / 'urdf' / 'robot.urdf.xacro')
 GROUND_Z_IN_BASE_LINK = -0.028  # base_link_fixed_joint in pinky.urdf.xacro
