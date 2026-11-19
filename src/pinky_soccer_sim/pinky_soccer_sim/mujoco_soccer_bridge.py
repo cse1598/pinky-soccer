@@ -26,8 +26,8 @@ BALL_CONAFFINITY = '3'
 BALL_GROUP = '0'
 
 
-def add_ball(scene_path, x=0.3, y=0.0, radius=0.02, mass=0.03, name=BALL_NAME):
-    """Append a solid free sphere as the last body of <worldbody> in scene_path."""
+def add_ball(scene_path, x=0.3, y=0.0, radius=0.021335, mass=0.0459, name=BALL_NAME):
+    """Append a free solid sphere (golf ball) as the last body of <worldbody>."""
     if radius <= 0 or mass <= 0:
         raise ValueError('ball radius and mass must be > 0')
     scene_path = Path(scene_path)
@@ -42,7 +42,7 @@ def add_ball(scene_path, x=0.3, y=0.0, radius=0.02, mass=0.03, name=BALL_NAME):
     body = ET.SubElement(worldbody, 'body', name=name,
                          pos=f'{x:.12g} {y:.12g} {radius + 0.001:.12g}')
     ET.SubElement(body, 'freejoint', name=f'{name}_free')
-    inertia = 2.0 * mass * radius * radius / 5.0
+    inertia = 2.0 * mass * radius * radius / 5.0   # solid sphere
     ET.SubElement(body, 'inertial', pos='0 0 0', mass=f'{mass:.12g}',
                   diaginertia=f'{inertia:.12g} {inertia:.12g} {inertia:.12g}')
     ET.SubElement(body, 'geom', name=f'{name}_geom', type='sphere', size=f'{radius:.12g}',
@@ -58,8 +58,8 @@ def parse_args(argv):
     parser.add_argument('--ball', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--ball-x', type=float, default=0.3)
     parser.add_argument('--ball-y', type=float, default=0.0)
-    parser.add_argument('--ball-radius', type=float, default=0.02)
-    parser.add_argument('--ball-mass', type=float, default=0.03)
+    parser.add_argument('--ball-radius', type=float, default=0.021335)
+    parser.add_argument('--ball-mass', type=float, default=0.0459)
     return parser.parse_known_args(argv)
 
 

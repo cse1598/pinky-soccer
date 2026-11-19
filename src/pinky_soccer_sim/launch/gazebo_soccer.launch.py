@@ -46,7 +46,7 @@ BALL_SDF = """<?xml version="1.0"?>
         <geometry><sphere><radius>{radius}</radius></sphere></geometry>
         <surface>
           <friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction>
-          <bounce><restitution_coefficient>0.3</restitution_coefficient></bounce>
+          <bounce><restitution_coefficient>0.6</restitution_coefficient></bounce>
         </surface>
       </collision>
       <visual name="visual">
@@ -65,7 +65,7 @@ def lc(name):
 
 
 def spawn_ball(context):
-    """Spawn a solid test sphere (placeholder, not the real ball)."""
+    """Spawn the ball: a 42.67 mm golf ball by default (solid sphere)."""
     if lc('spawn_ball').perform(context).lower() != 'true':
         return []
     radius = float(lc('ball_radius').perform(context))
@@ -73,7 +73,7 @@ def spawn_ball(context):
     if radius <= 0 or mass <= 0:
         raise ValueError('ball_radius and ball_mass must be > 0')
     sdf = BALL_SDF.format(name='soccer_ball', radius=radius, mass=mass,
-                          inertia=2.0 * mass * radius * radius / 5.0)
+                          inertia=2.0 * mass * radius * radius / 5.0)  # solid sphere
     return [Node(
         package='ros_gz_sim', executable='create', name='create_ball', output='screen',
         arguments=['-name', 'soccer_ball', '-string', sdf,
@@ -128,9 +128,10 @@ def generate_launch_description():
         DeclareLaunchArgument('spawn_ball', default_value='true'),
         DeclareLaunchArgument('ball_x', default_value='0.3'),
         DeclareLaunchArgument('ball_y', default_value='0.0'),
-        DeclareLaunchArgument('ball_radius', default_value='0.02',
-                              description='Placeholder; keep the centre within the bumper height'),
-        DeclareLaunchArgument('ball_mass', default_value='0.03'),
+        DeclareLaunchArgument('ball_radius', default_value='0.021335',
+                              description='Golf ball (42.67 mm)'),
+        DeclareLaunchArgument('ball_mass', default_value='0.0459',
+                              description='Golf ball (45.9 g)'),
 
         SetEnvironmentVariable('GZ_SIM_RESOURCE_PATH', resource_path),
 

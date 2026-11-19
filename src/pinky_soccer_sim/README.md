@@ -34,7 +34,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 | `bumper_params_file` | description 패키지의 yaml | 범퍼 치수 |
 | `spawn_ball` | `true` | 테스트 공 생성 |
 | `ball_x`, `ball_y` | 0.3, 0 | 공 위치 |
-| `ball_radius`, `ball_mass` | 0.02, 0.03 | **임시값**. 공 중심이 범퍼 높이 구간(현재 지면 0.008~0.028 m) 안에 있어야 범퍼를 타고 넘지 않습니다 |
+| `ball_radius`, `ball_mass` | 0.021335, 0.0459 | 주황색 골프공(공인 규격 지름 42.67 mm, 45.9 g, 속이 찬 구 관성). 공 중심(지면 약 21 mm)이 범퍼 높이 구간(지면 9~51 mm) 안에 있어서 범퍼를 타고 넘지 않습니다 |
 
 ### 공식 launch와의 관계
 
@@ -103,7 +103,7 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 | `world_name` / `world` | `empty.world` / — | 공식과 같은 규칙 (`pinky_gz_sim/worlds` 또는 `pinky_mujoco/worlds/*.yaml`) |
 | `cam_tilt_deg` / `screen_tilt_deg` | 8 / -25 | |
 | `bumper_enabled` / `bumper_params_file` | `true` / description 기본 yaml | |
-| `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.02, 0.03 | Gazebo와 같은 임시 공 |
+| `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.021335, 0.0459 | Gazebo와 같은 골프공 |
 | `model_dir` | `~/.cache/pinky_soccer_mujoco` | 생성된 URDF와 scene.xml. 공식 캐시(`~/.cache/pinky_mujoco`)와 분리 |
 
 ### 공식 MuJoCo와의 관계

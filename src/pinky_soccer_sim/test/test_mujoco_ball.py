@@ -43,9 +43,9 @@ def test_ball_collides_with_floor_and_robot_masks(tmp_path):
 
 
 def test_ball_inertia_is_solid_sphere(tmp_path):
-    path = add_ball(write_scene(tmp_path), radius=0.05, mass=0.2)
+    path = add_ball(write_scene(tmp_path), radius=0.021335, mass=0.0459)
     inertial = ET.parse(path).getroot().find(".//body[@name='soccer_ball']/inertial")
-    expected = 2 * 0.2 * 0.05 ** 2 / 5
+    expected = 2 * 0.0459 * 0.021335 ** 2 / 5
     assert [float(v) for v in inertial.get('diaginertia').split()] == pytest.approx([expected] * 3)
 
 

@@ -107,8 +107,8 @@ def generate_launch_description():
         DeclareLaunchArgument('spawn_ball', default_value='true'),
         DeclareLaunchArgument('ball_x', default_value='0.3'),
         DeclareLaunchArgument('ball_y', default_value='0.0'),
-        DeclareLaunchArgument('ball_radius', default_value='0.02'),
-        DeclareLaunchArgument('ball_mass', default_value='0.03'),
+        DeclareLaunchArgument('ball_radius', default_value='0.021335'),
+        DeclareLaunchArgument('ball_mass', default_value='0.0459'),
         DeclareLaunchArgument('model_dir', default_value=os.environ.get(
             'PINKY_SOCCER_MODEL_DIR', str(Path.home() / '.cache' / 'pinky_soccer_mujoco'))),
         OpaqueFunction(function=setup),
