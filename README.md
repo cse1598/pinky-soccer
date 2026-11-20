@@ -15,9 +15,10 @@ ROS 2 robot soccer project using Pinky Pro
 | `src/pinky_soccer_msgs` | 월드 모델·행동 목표 메시지 | O |
 | `src/pinky_soccer_world_model` | 공 검출, 공 칼만 필터, 탐색 그리드, `/world_model` | O (검출은 PC 가능) |
 | `src/pinky_soccer_bt` | 행동 트리 (`/world_model` → `/behavior_goal`) | 판단 실행 시 |
+| `src/pinky_soccer_viz` | 월드 모델 UI(RViz2 마커, OpenCV 탑뷰), 판단 계층 launch, 시뮬레이션 평가 도구 | X |
 | `src/BehaviorTree.ROS2` | BehaviorTree.ROS2 (Git Submodule, 태그 `0.3.0`, **수정 금지**) | 판단 실행 시 |
 
-판단 계층(월드 모델 → 행동 트리 → 제어 → UI)의 구조와 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 따릅니다.
+판단 계층(월드 모델 → 행동 트리 → 제어 → UI)의 구조와 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 따릅니다. 로봇·시뮬레이터 없이 `ros2 launch pinky_soccer_viz sim_viz.launch.py`, 시뮬레이터와 함께 `ros2 launch pinky_soccer_viz sim_field.launch.py`로 실행합니다.
 
 각 패키지 README에 실행 방법이 있습니다.
 

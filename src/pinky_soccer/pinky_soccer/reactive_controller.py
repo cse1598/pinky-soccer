@@ -119,7 +119,9 @@ def main(args=None):
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         pass
     finally:
-        if rclpy.ok():
-            node.pub.publish(Twist())
+        try:
+            node.pub.publish(Twist())   # best effort; the command_watchdog also stops
+        except Exception:  # noqa: B902 - context may already be shut down by a signal
+            pass
         node.destroy_node()
         rclpy.try_shutdown()

@@ -44,6 +44,7 @@ class FakeWorldModel(Node):
         self.pose = list(start)
         self.cmd, self.cmd_time = (0.0, 0.0), -math.inf
         self.t = 0.0
+        self.t0 = self.get_clock().now().nanoseconds * 1e-9   # scenario t -> ROS time
         self.last_fix = None   # (t, x, y, vx, vy) of the last OBSERVED ball
         self.pub = self.create_publisher(WorldModel, 'world_model', 10)
         self.truth = self.create_publisher(PoseStamped, 'sim/ball_ground_truth', 10)
@@ -93,7 +94,7 @@ class FakeWorldModel(Node):
             sigma = 0.02 + 0.08 * age
             state = TrackedObject.ESTIMATED if phase < 2 / 3 else TrackedObject.LOST
         cov = [sigma ** 2, 0, 0, 0, (0.7 * sigma) ** 2, 0, 0, 0, 1e6]
-        last_seen = self.last_fix[0] if self.last_fix else 0.0
+        last_seen = self.t0 + (self.last_fix[0] if self.last_fix else 0.0)
         ball = tracked('ball', (est[0], est[1], 0.0), est[2:], cov, state, last_seen,
                        {0: 1.0, 1: 0.5, 2: 0.0}[state])
 
@@ -104,7 +105,8 @@ class FakeWorldModel(Node):
                      TrackedObject.ESTIMATED if opp_phase < 0.8 else TrackedObject.LOST)
         opponents = [] if opp_state == TrackedObject.LOST else [tracked(
             'opp_0', (ox, oy, math.pi if s > 0 else 0.0), cov=[0.01, 0, 0, 0, 0.01, 0, 0, 0, 1],
-            state=opp_state, last_seen=t if opp_state == TrackedObject.OBSERVED else t - 1.0,
+            state=opp_state,
+            last_seen=self.t0 + (t if opp_state == TrackedObject.OBSERVED else t - 1.0),
             confidence=1.0 if opp_state == TrackedObject.OBSERVED else 0.5)]
 
         self.grid.relax(dt)
@@ -112,7 +114,8 @@ class FakeWorldModel(Node):
         self.grid.observe(mask, dt, (bx, by) if state == TrackedObject.OBSERVED else None)
 
         me = tracked('self', self.pose, (v * math.cos(th), v * math.sin(th)),
-                     [1e-4, 0, 0, 0, 1e-4, 0, 0, 0, 1e-3], TrackedObject.OBSERVED, t, 1.0)
+                     [1e-4, 0, 0, 0, 1e-4, 0, 0, 0, 1e-3], TrackedObject.OBSERVED, self.t0 + t,
+                     1.0)
         stamp = self.get_clock().now().to_msg()
         self.pub.publish(world_model(stamp, self.field, me, ball, opponents, self.playing,
                                      self.grid))
