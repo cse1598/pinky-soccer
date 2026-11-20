@@ -22,11 +22,17 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.conditions import UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch.utilities import normalize_to_list_of_substitutions, perform_substitutions
 from launch_ros.actions import Node
 
 
 def lc(name, context):
     return LaunchConfiguration(name).perform(context)
+
+
+def text(context, value):
+    """Resolve a str, Substitution or list of them to a plain string."""
+    return perform_substitutions(context, normalize_to_list_of_substitutions(value))
 
 
 def load_mujoco_launch(eval_truth):
@@ -44,17 +50,23 @@ def load_mujoco_launch(eval_truth):
             for action in original(context):
                 if isinstance(action, Node) and action.node_executable == 'mujoco_soccer_bridge':
                     try:
-                        args = action._Node__arguments
-                        remaps = action._Node__remappings
-                        params = action._Node__parameters
-                        env = action.process_description._Executable__additional_env
+                        args = [text(context, a) for a in action._Node__arguments]
+                        remaps = [(text(context, a), text(context, b))
+                                  for a, b in action._Node__remappings]
+                        env = {text(context, k): text(context, v)
+                               for k, v in action.process_description
+                               ._Executable__additional_env or []}
                     except AttributeError as exc:
                         raise RuntimeError('launch_ros internals changed; run with '
                                            'eval_ball_truth:=false') from exc
+                    if remaps != [('/cmd_vel', '/drive/cmd_vel')]:
+                        raise RuntimeError(f'Unexpected MuJoCo bridge remaps {remaps}; '
+                                           'update sim_field.launch.py')
+                    # Parameters mirror mujoco_soccer.launch.py ({'use_sim_time': True}).
                     action = Node(package='pinky_soccer_viz', executable='mujoco_eval_bridge',
                                   name='pinky_mujoco', remappings=remaps, arguments=args,
-                                  output='screen', parameters=params,
-                                  additional_env=dict(env or {}))
+                                  output='screen', parameters=[{'use_sim_time': True}],
+                                  additional_env=env)
                 out.append(action)
             return out
         module.setup = setup

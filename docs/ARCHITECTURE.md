@@ -32,7 +32,7 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 - 행동 트리는 센서를 직접 구독하지 않고 `/world_model`만 본다.
 - 트리는 **목표만** 바꾸고, 따라가기는 계획·제어 층이 연속적으로 처리한다.
 - 월드 모델은 각 객체의 관측/추정/분실 상태와 공분산을 함께 낸다. UI는 관측 = 진한 실선, 추정 = 흐린 점선 + 불확실성 타원, 분실 = 마지막 위치 X로 일관되게 그린다.
-- `/clock`, `/ground_truth`, `/sim/*`는 시뮬레이터 전용이다. 판단 입력으로 쓰지 않는다 (UI 평가 표시와 시험 판정만 허용).
+- `/clock`, `/ground_truth`, `/sim/*`(`/sim/ball_ground_truth` 포함)는 시뮬레이터 전용이다. 판단 입력으로 쓰지 않는다 (UI 평가 표시와 시험 판정만 허용).
 
 ## 토픽 (2026-11-21 확인)
 
@@ -52,6 +52,8 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `/game/playing` | `std_msgs/Bool` | 사람 (`ros2 topic pub`) | |
 | `/world_model/markers` | `visualization_msgs/MarkerArray` | world_model_viz | 경기장은 `/world_model/field_markers` (transient_local) |
 | `/world_model/topview` | `sensor_msgs/Image` | world_model_topview | bgr8 |
+| `/world_model/search_grid` | `nav_msgs/OccupancyGrid` | world_model_viz | RViz Map 표시용 `ball_search_grid` 복사 |
+| `/sim/ball_ground_truth` | `geometry_msgs/PoseStamped` | `fake_world_model`, `mujoco_eval_bridge`(평가용) | 프레임 `world`/`map`. 판정·UI 평가 전용 |
 | `/ground_truth` | `geometry_msgs/PoseStamped` | MuJoCo 전용 | 프레임 `world`, **로봇 자세만**. Gazebo 브리지에는 없음 |
 
 ## 좌표계

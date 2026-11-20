@@ -99,7 +99,15 @@ class SoccerTrial(Node):
                     't': round(t, 2), 'ball': self.ball and [round(v, 3) for v in self.ball],
                     'robot': self.robot and [round(v, 3) for v in self.robot],
                     'action': self.goal and f'{self.goal.branch}/{self.goal.action}',
-                    'wm_ball_state': self.wm and STATE.get(self.wm.ball.state)})
+                    'wm_ball_state': self.wm and STATE.get(self.wm.ball.state),
+                    'wm_ball': self.wm and [round(self.wm.ball.pose.x, 3),
+                                            round(self.wm.ball.pose.y, 3)],
+                    'wm_self': self.wm and [round(self.wm.self.pose.x, 3),
+                                            round(self.wm.self.pose.y, 3),
+                                            round(self.wm.self.pose.theta, 2)],
+                    'wm_opponents': self.wm and [
+                        [round(o.pose.x, 2), round(o.pose.y, 2), STATE.get(o.state)]
+                        for o in self.wm.opponents]})
                 next_trace = t + 2.0
             if self.ball and self.field.ball_in_goal(*self.ball, self.field.opp_goal_color):
                 result = 'goal'
