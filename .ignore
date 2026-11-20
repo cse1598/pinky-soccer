@@ -1,0 +1,2 @@
+# Let search tools (rg, Claude Code) see read-only reference code ignored by git
+!refs/

@@ -31,12 +31,25 @@ Gazebo와 MuJoCo도 실물 기준 카메라·IMU·초음파·배터리 인터페
 ```bash
 git clone --recursive https://github.com/cse1598/pinky-soccer.git
 cd pinky-soccer
+git config core.hooksPath .githooks   # 클론 후 한 번: 커밋 보호 훅 사용
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
 
 로봇(라즈베리파이)에서는 `src/pinky_soccer_bringup/README.md`의 설치 방법을 따릅니다.
+
+`src/BehaviorTree.ROS2`는 submodule(태그 `0.3.0` 고정, **수정 금지**)입니다. apt 패키지(`ros-jazzy-behaviortree-ros2`)가 Jazzy에 없어 submodule로 넣었습니다. 예제 패키지 빌드를 건너뛰려면 `colcon build --symlink-install --packages-skip btcpp_ros2_samples`를 씁니다.
+
+### 커밋 보호
+
+`.githooks/pre-commit`이 다음 커밋을 거부합니다. `--no-verify`로 우회하지 않습니다.
+
+- `src/pinky_pro`, `src/BehaviorTree.ROS2` submodule 포인터 변경 또는 그 안의 수정. 사람이 지시한 포인터 변경(추가·업그레이드)만 `PINKY_ALLOW_SUBMODULE=src/BehaviorTree.ROS2 git commit ...`처럼 경로를 명시해 허용합니다.
+- 로컬 전용 경로 `refs/`, `.agents/`, `AGENTS.md`, `CLAUDE.local.md`
+- 10 MB를 넘는 파일 (원본 실험 데이터 방지용 기준값)
+
+`refs/`는 참고용 외부 코드(`robocup_demo`, `BHumanCodeRelease`)를 로컬에 클론하는 곳입니다. git·colcon에서 제외되고(`.gitignore`, `refs/COLCON_IGNORE`) `.ignore`로 검색만 허용합니다. `.claude/settings.json`은 Claude Code가 `refs/`, `src/pinky_pro/`, `src/BehaviorTree.ROS2/`를 편집하지 못하게 막습니다.
 
 ## 남은 작업
 

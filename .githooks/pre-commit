@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Repository guard for every agent and human. Enable once per clone:
+#   git config core.hooksPath .githooks
+# Do not bypass with --no-verify; fix the staged content instead.
+set -euo pipefail
+
+MAX_BYTES=$((10 * 1024 * 1024))   # 10 MB, see README "커밋 보호"
+PROTECTED_SUBMODULES=("src/pinky_pro" "src/BehaviorTree.ROS2")
+FORBIDDEN_PREFIXES=("refs/" ".agents/" "AGENTS.md" "CLAUDE.local.md")
+
+fail=0
+err() { echo "pre-commit: $*" >&2; fail=1; }
+
+# Staged paths, NUL separated (added/copied/modified/renamed/type-changed).
+mapfile -d '' staged < <(git diff --cached --name-only -z --diff-filter=ACMRT)
+
+# (a) protected submodules: pointer must not be staged, worktree must be clean.
+# A human-requested pointer change (add/upgrade) is allowed only by naming it:
+#   PINKY_ALLOW_SUBMODULE=src/BehaviorTree.ROS2 git commit ...
+allowed=" ${PINKY_ALLOW_SUBMODULE:-} "
+for sub in "${PROTECTED_SUBMODULES[@]}"; do
+  for path in "${staged[@]}"; do
+    if [[ "$path" == "$sub" && "$allowed" == *" $sub "* ]]; then
+      echo "pre-commit: '$sub' pointer change allowed by PINKY_ALLOW_SUBMODULE." >&2
+      continue
+    fi
+    if [[ "$path" == "$sub" || "$path" == "$sub/"* ]]; then
+      err "'$sub' is a protected submodule; its pointer or content is staged ($path)."
+    fi
+  done
+  if [[ -e "$sub/.git" ]] && [[ -n "$(git -C "$sub" status --porcelain 2>/dev/null)" ]]; then
+    err "'$sub' has local modifications. Protected submodules must stay unmodified."
+  fi
+done
+
+# (b) local-only paths.
+for path in "${staged[@]}"; do
+  for prefix in "${FORBIDDEN_PREFIXES[@]}"; do
+    if [[ "$path" == "$prefix" || "$path" == "$prefix"* ]]; then
+      err "'$path' is local-only (refs/, .agents/, AGENTS.md, CLAUDE.local.md) and must not be committed."
+    fi
+  done
+done
+
+# (c) oversized files (raw experiment data guard). Sizes are taken from the index.
+for path in "${staged[@]}"; do
+  mode=$(git ls-files -s -- "$path" | awk '{print $1}')
+  [[ "$mode" == "160000" ]] && continue   # submodule gitlink
+  size=$(git cat-file -s ":$path" 2>/dev/null || echo 0)
+  if (( size > MAX_BYTES )); then
+    err "'$path' is $((size / 1024 / 1024)) MB (> 10 MB). Keep raw data out of git."
+  fi
+done
+
+if (( fail )); then
+  echo "pre-commit: commit rejected. Do not use --no-verify." >&2
+  exit 1
+fi

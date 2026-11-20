@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/refs/**)",
+      "Edit(/src/BehaviorTree.ROS2/**)",
+      "Edit(/src/pinky_pro/**)"
+    ]
+  }
+}
