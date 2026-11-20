@@ -3,6 +3,9 @@ build/
 install/
 log/
 
+# Local hardware experiment bags, images and reports
+/calibration_data/
+
 # Python
 __pycache__/
 *.pyc

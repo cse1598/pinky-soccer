@@ -10,8 +10,14 @@ ROS 2 robot soccer project using Pinky Pro
 | `src/pinky_soccer_description` | 공식 모델 + 범퍼 (Wrapper Xacro) | O |
 | `src/pinky_soccer_bringup` | 실물 로봇 실행 | O |
 | `src/pinky_soccer_sim` | Gazebo / MuJoCo 실행 | X |
+| `src/pinky_soccer_calibration` | 실물 보정 실험 기록·검증 (현재 카메라 내부 보정) | 실험 시 |
 
 각 패키지 README에 실행 방법이 있습니다.
+
+카메라 내부 보정은 [pinky_soccer_calibration/README.md](src/pinky_soccer_calibration/README.md)를 따릅니다.
+ROS 토픽 기반 기록·검증 도구와 초기 [Jupyter 보정 프로토타입](src/pinky_soccer_calibration/WORKBENCH.md)을 포함합니다.
+현재 방향은 자체 `pinky_soccer_bringup`에 카메라 발행 노드를 추가하고 PC에서 직접 구독하는 구성입니다. 이 연결은 아직 미구현이며 Jupyter 방식의 추가 개발은 중지했습니다.
+체커보드 기준은 9×6 내부 코너, 사용자 확인 한 칸 30 mm입니다. 실제 보드 촬영·보정 정확도 검증은 아직 진행하지 않았습니다.
 
 ## 빌드
 
