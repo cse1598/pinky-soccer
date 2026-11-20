@@ -12,6 +12,7 @@ ROS 2 robot soccer project using Pinky Pro
 | `src/pinky_soccer_sim` | Gazebo / MuJoCo 실행 | X |
 | `src/pinky_soccer_calibration` | 실물 보정 실험 기록·검증 (현재 카메라 내부 보정) | 실험 시 |
 | `src/pinky_soccer_field` | 경기장 치수·기하(`map` 좌표), AMCL용 지도 생성 | O |
+| `src/pinky_soccer_msgs` | 월드 모델·행동 목표 메시지 | O |
 | `src/BehaviorTree.ROS2` | BehaviorTree.ROS2 (Git Submodule, 태그 `0.3.0`, **수정 금지**) | 판단 실행 시 |
 
 판단 계층(월드 모델 → 행동 트리 → 제어 → UI)의 구조와 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 따릅니다.
