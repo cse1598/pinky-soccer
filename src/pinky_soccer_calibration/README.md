@@ -3,9 +3,10 @@
 ## 현재 상태 (2026-11-20)
 
 이 패키지는 지금까지 구현한 보정 도구를 보존한 작업 결과입니다. Jupyter 방식은 초기
-프로토타입이며 추가 개발을 중지했습니다. 이후에는 자체 `pinky_soccer_bringup`에서
-실물 카메라를 ROS 토픽으로 발행하고 PC의 보정·YOLO·판단이 같은 입력을 구독하도록
-연결할 예정입니다. 카메라 발행 노드와 이 연결은 아직 미구현입니다.
+프로토타입이며 추가 개발을 중지했습니다. 자체 `pinky_soccer_bringup`에 실물 카메라의
+ROS 원본·압축·CameraInfo 발행 노드를 추가했습니다([실행 안내](../pinky_soccer_bringup/README.md)).
+아래 ROS 기록·검증 CLI는 해당 토픽을 사용할 수 있습니다. 프로토타입 GUI의 입력 교체와
+YOLO·판단 연결은 후속 작업이며, 신규 카메라 ROS 노드의 실물 검증도 필요합니다.
 실제 체커보드 촬영과 실물 보정 정확도 검증도 아직 진행하지 않았습니다.
 
 ## 초기 프로토타입: 로봇 Jupyter 카메라 보정 화면
@@ -272,3 +273,6 @@ colcon test-result --verbose --test-result-base build/pinky_soccer_calibration
 - [ROS 공식 단안 보정 도구](https://github.com/ros-perception/image_pipeline/tree/jazzy/camera_calibration)
 - [usb_cam 실행과 지원 포맷](https://github.com/ros-drivers/usb_cam/tree/ros2)
 - [OpenCV 보정·재투영 API](https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html)
+# 새 ROS 올인원 UI
+
+실행: `ros2 run pinky_soccer_calibration calibration_ui`. 장치 연결은 launch에서 수행합니다. 안내·실험·적용 범위와 아직 남은 기능은 [ROS_UI.md](ROS_UI.md)를 참고하세요.

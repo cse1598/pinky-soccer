@@ -5,7 +5,7 @@ setup(
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/pinky_soccer_calibration']),
-        ('share/pinky_soccer_calibration', ['package.xml', 'README.md', 'WORKBENCH.md']),
+        ('share/pinky_soccer_calibration', ['package.xml', 'README.md', 'WORKBENCH.md', 'ROS_UI.md']),
     ],
     install_requires=['setuptools'],
     tests_require=['pytest'],
@@ -15,5 +15,6 @@ setup(
     entry_points={'console_scripts': [
         'camera_intrinsics = pinky_soccer_calibration.cli:main',
         'camera_workbench = pinky_soccer_calibration.workbench:main',
+        'calibration_ui = pinky_soccer_calibration.suite_ui:main',
     ]},
 )

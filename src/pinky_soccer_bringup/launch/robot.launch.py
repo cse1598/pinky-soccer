@@ -27,12 +27,16 @@ Run it, for instance, as
 """
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
+                            OpaqueFunction, SetLaunchConfiguration)
 from launch.conditions import IfCondition
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
+from pinky_soccer_bringup.calibration_profile import arguments as profile_arguments, configure_urdf
+
+from pinky_soccer_bringup.sensor_launch import SENSOR_ARGUMENTS, sensor_arguments
 
 
 def lc(name):
@@ -54,7 +58,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('hardware', default_value='true',
-                              description='false: description only (no lidar/motor/battery)'),
+                              description='false: description only (no physical devices)'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         # Same defaults as bringup_robot.launch.xml / upload_robot.launch.py
         DeclareLaunchArgument('wheel_radius', default_value='0.027'),
@@ -65,11 +69,18 @@ def generate_launch_description():
         DeclareLaunchArgument('bumper_enabled', default_value='true'),
         DeclareLaunchArgument('bumper_params_file', default_value=PathJoinSubstitution(
             [soccer_description, 'config', 'bumper_v1_params.yaml'])),
+        *sensor_arguments(),
+        *profile_arguments(),
+        OpaqueFunction(function=lambda context: [SetLaunchConfiguration(
+            'calibrated_description', configure_urdf(
+                robot_description.evaluate(context),
+                lc('calibration_profile').perform(context)))]),
 
         # upload_robot.launch.py equivalent
         Node(package='robot_state_publisher', executable='robot_state_publisher',
              name='robot_state_publisher',
-             parameters=[{'robot_description': robot_description,
+             parameters=[{'robot_description': ParameterValue(
+                 lc('calibrated_description'), value_type=str),
                           'use_sim_time': lc('use_sim_time'),
                           'ignore_timestamp': False}]),
         Node(package='joint_state_publisher', executable='joint_state_publisher',
@@ -96,7 +107,16 @@ def generate_launch_description():
                          {'wheel_radius': ParameterValue(lc('wheel_radius'), value_type=float),
                           'wheel_separation': ParameterValue(lc('wheel_separation'),
                                                              value_type=float)}],
-             remappings=[('joint_states', 'wheel_joint_states_raw')],
+             remappings=[('joint_states', 'wheel_joint_states_raw'), ('cmd_vel', 'drive/cmd_vel')],
              condition=hardware),
+        Node(package='pinky_soccer_bringup', executable='command_watchdog', condition=hardware),
+        Node(package='pinky_soccer_bringup', executable='time_sync_status', condition=hardware),
         Node(package='pinky_bringup', executable='battery_publisher', condition=hardware),
+        IncludeLaunchDescription(
+            PathJoinSubstitution([FindPackageShare('pinky_soccer_bringup'),
+                                  'launch', 'sensors.launch.py']),
+            launch_arguments={
+                'hardware': lc('hardware'), 'use_sim_time': lc('use_sim_time'),
+                **{name: lc(name) for name in SENSOR_ARGUMENTS},
+            }.items(), condition=hardware),
     ])

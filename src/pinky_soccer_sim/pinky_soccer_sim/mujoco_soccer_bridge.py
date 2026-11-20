@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Run the official pinky_mujoco bridge with a dynamic test ball added to the scene.
+Run the official bridge with a dynamic ball and optional physical-interface sensors.
 
 pinky_mujoco/world.py turns every world object into a static geom, so a ball placed in a
 world file cannot be pushed. This wrapper keeps the official bridge (physics, odometry,
-lidar, camera, ROS interfaces) and only post-processes the generated scene.xml: it wraps
-pinky_mujoco.bridge.build_model and appends a free-floating sphere to <worldbody>.
+lidar) and post-processes scene.xml to append a free-floating sphere to <worldbody>.
+With --sensor-config the runtime classes also add native IMU/ray observations and
+route camera frames through the common sensor adapter.
 
 Depends on pinky_mujoco internals (bridge.build_model, scene.xml layout, collision masks);
 re-check after updating the submodule.
@@ -60,6 +61,9 @@ def parse_args(argv):
     parser.add_argument('--ball-y', type=float, default=0.0)
     parser.add_argument('--ball-radius', type=float, default=0.021335)
     parser.add_argument('--ball-mass', type=float, default=0.0459)
+    parser.add_argument('--sensor-config')
+    parser.add_argument('--imu-enabled', action='store_true')
+    parser.add_argument('--adc-enabled', action='store_true')
     return parser.parse_known_args(argv)
 
 
@@ -67,6 +71,9 @@ def main(args=None):
     from pinky_mujoco import bridge
 
     options, rest = parse_args(sys.argv[1:] if args is None else args)
+    if options.sensor_config:
+        from pinky_soccer_sim.mujoco_sensors import install
+        install(bridge, options)
     if options.ball:
         official_build_model = bridge.build_model
 

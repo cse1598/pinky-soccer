@@ -4,6 +4,65 @@
 
 로봇 형상은 `pinky_soccer_description`, 실물 실행은 `pinky_soccer_bringup`이 담당합니다. 시뮬레이터 의존성은 이 패키지에만 있으므로 로봇(라즈베리파이)에서는 이 패키지를 빌드하거나 rosdep으로 설치하지 않아도 됩니다.
 
+## 실물과 공통인 센서 인터페이스
+
+두 시뮬레이터는 `sensor_adapter`를 통해 실물 `robot.launch.py`와 같은 공개 센서 토픽을 제공합니다. 내부 렌더링·브리지 토픽은 `/sim/` 아래에 둡니다. 공식 Submodule은 수정하지 않으며 런타임 모델과 자체 브리지만 확장합니다. 계약은 `config/interface.yaml`, 가상 센서 모델 설정은 `config/sensors.yaml`에 있습니다.
+
+| 공개 토픽 | 형식·의미 | 활성화 |
+|---|---|---|
+| `/camera/image_raw` | `sensor_msgs/Image`, BGR8, 광학 프레임 `front_camera_optical_frame` | `camera_enabled:=true` (기본) |
+| `/camera/image_raw/compressed` | `sensor_msgs/CompressedImage`, JPEG | 카메라와 동일 |
+| `/camera/camera_info` | `sensor_msgs/CameraInfo`, 원본/JPEG와 동일한 stamp·frame | 카메라와 동일 |
+| `/imu_raw` | `sensor_msgs/Imu`, quaternion, rad/s, m/s² (중력 포함) | `imu_enabled:=true` |
+| `/imu_native` | `sensor_msgs/Imu`, 실물 공식 드라이버 진단용과 같은 deg/s | IMU와 동일; 판단에는 `/imu_raw` 사용 |
+| `/us_sensor/range` | `sensor_msgs/Range`, m, `ultrasonic_link`, 시야각 0.26 rad | `adc_enabled:=true` |
+| `/ir_sensor/range` | `std_msgs/UInt16MultiArray`, ADC 3채널 | ADC 활성화 + 거리/ADC 실측 보정표 필요 |
+| `/batt_state` | `sensor_msgs/BatteryState`, 공식 ADC의 필드·미지원값 NaN 규약 | ADC와 동일 |
+| `/battery/voltage`, `/battery/percent` | `std_msgs/Float32`, V / 0~100 % | 항상 |
+
+카메라 3개 토픽과 `/imu_raw`의 QoS는 실물과 같은 SensorData(Best Effort, Volatile, depth 5)입니다. 초음파·IR ADC·배터리는 실물처럼 Reliable, depth 10입니다. 카메라 기본값은 640×480, 최대 15 Hz, JPEG 품질 85이며 `front_camera_link`에서 실물과 동일한 광학 TF를 발행합니다. 원본의 RGB/BGR와 행 stride를 처리합니다. MuJoCo 소프트웨어 렌더링은 부하에 따라 FPS를 낮출 수 있습니다.
+
+센서 플래그 기본값은 실물과 동일하게 카메라 true, IMU/ADC false입니다. 다음처럼 모든 가상 센서를 켭니다.
+
+```bash
+ros2 launch pinky_soccer_sim gazebo_soccer.launch.py imu_enabled:=true adc_enabled:=true
+# 또는
+ros2 launch pinky_soccer_sim mujoco_soccer.launch.py imu_enabled:=true adc_enabled:=true
+```
+
+Gazebo는 네이티브 IMU와 추가한 GPU ray 센서, MuJoCo는 센서 링크 위치에 설치한 네이티브 accelerometer/gyro/framequat와 ray casting을 사용합니다. 초음파는 수평 부채꼴 5개 ray 중 최솟값으로 근사합니다. 감지 범위보다 가까우면 -Inf, 장애물이 없으면 +Inf를 발행하며 음향 반사·재질·다중 경로는 모델링하지 않습니다. IR 3개의 거리 관측은 `/sim/ir_l_link/distance`, `/sim/ir_mid_link/distance`, `/sim/ir_r_link/distance` (`Range`)로 확인합니다.
+
+**실측 자료가 없어 동일한 물리 성능까지 검증된 상태는 아닙니다.** 다음은 명시적인 제한입니다.
+
+- 카메라 가상 FOV는 공식 모델의 1.1519 rad 가정입니다. 가상 CameraInfo는 렌더링 모델 값이며, 실물 CameraInfo에는 실제 내부 보정 YAML을 넣어야 합니다. 기본 모델은 왜곡이 없는 카메라입니다. 실제 왜곡·노출·모션 블러까지 복제하지 않습니다. 실물 영상의 180° 회전과 실제 장착 방향은 후속 실물 검증 대상입니다.
+- 센서 위치·방향은 공식 URDF 기준입니다. IR은 공식 링크 +X 방향을 사용하지만 실제 광축과 ADC 채널 L/M/R 순서는 미확인입니다. 거리 검색 범위 0.005~0.8 m도 가상 실험 설정이며 실물 사양이 아닙니다.
+- 사용자가 IR 실측 자료가 없음을 확인했습니다. `sensors.yaml`의 `ir.distances`(증가하는 m)와 `ir.adc_values`(0~4095)에 측정값을 넣고 `sensor_config:=/절대/경로.yaml`로 실행하면 ADC 토픽이 켜집니다. 범위 안은 선형 보간, 밖은 표의 끝값으로 포화합니다. 보정표가 없으면 경고하며 ADC 토픽을 발행하지 않습니다.
+- IMU는 이상적인 물리 관측이며 BNO055 융합기의 지연·바이어스·yaw drift를 재현하지 않습니다. covariance 0은 미확인 의미입니다. Gazebo와 MuJoCo의 기본 중력 설정은 각각의 엔진 설정을 따릅니다.
+- 배터리는 설정된 전압·백분율을 유지하는 이상적인 전원입니다. 기본 8.4 V / 100 %는 가상 시나리오이며 실측값이 아닙니다. 소모·충전 모델은 포함하지 않습니다. 타이머는 `/clock`을 따르므로 일시정지 중에 진행되지 않습니다.
+- Gazebo GPU ray는 렌더링 형상, MuJoCo ray는 충돌 형상을 봅니다. 시야 가림·메시 차이에 따른 거리는 실험으로 비교해야 합니다.
+
+실물·가상 센서 계층에는 현재 애플리케이션용 서비스/액션이 없습니다. `SetCameraInfo` 서비스도 제공하지 않으며 실물은 시작 시 YAML을 읽습니다. 시뮬레이터 관리용 서비스와 ROS 노드별 파라미터 서비스는 환경마다 다를 수 있습니다. 향후 경기 제어 서비스/액션은 공통 제어 계층에서 정의해야 합니다. `/clock`, `/ground_truth`, `/sim/*`는 가상환경 전용이며 판단 프로그램의 필수 입력으로 사용하지 않습니다. 기존 `/cmd_vel`, `/odom`, `/scan`, `/joint_states`, TF는 유지합니다.
+
+### 동일한 수신 프로그램으로 검사하기
+
+시뮬레이터 실행 후 별도 PC 터미널에서 실행합니다. 실제 로봇도 같은 PC 명령을 사용합니다(로봇과 ROS domain·네트워크 설정 일치 필요).
+
+```bash
+source install/setup.bash
+ros2 run pinky_soccer_sim check_interface --imu --adc --duration 15 \
+  --output /tmp/pinky-interface.yaml
+```
+
+실물에서 IMU/ADC를 끈 경우 `--imu --adc`를 생략합니다. IR 보정표를 설정한 뒤에는 `--ir`도 추가합니다. 카메라를 끈 경우 `--no-camera`를 사용합니다. 이 도구는 명령을 보내지 않고 토픽 수신·타입·카메라 QoS/인코딩·주요 frame을 검사하고 그래프·서비스 목록·수신 수를 YAML로 저장합니다. 통신 계약 검사이며 보정 정확도나 센서 단위의 물리적 정확성을 증명하지는 않습니다.
+
+### 센서 확장 검증 (2026-11-20)
+
+- Gazebo/MuJoCo 실제 launch에서 카메라 원본/JPEG/CameraInfo·IMU·초음파·IR 거리·배터리 수신 확인. 두 카메라는 640×480 BGR8, 동일 optical frame으로 수신.
+- 동일 `check_interface --imu --adc` 명령으로 두 환경 모두 PASS. 실물 래퍼·시뮬레이션 기능 테스트 총 33개 및 lint 통과 (`colcon test-result`: 각각 39/35 검사 결과, 실패 0).
+- MuJoCo 정지 중 가속도 크기 약 9.81 m/s², gyro 약 0 및 이동 장애물에 대한 ray 거리 변화 검증. 합성 입력의 실제 DDS 검사로 색상·원본/JPEG/CameraInfo 헤더·IMU 단위 유지·IR 보간 검증.
+- 이 PC의 Gazebo는 소프트웨어 EGL과 하드웨어 장치 선택이 충돌했습니다. 설치된 NVIDIA 드라이버가 있는 이 환경에서는 `__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json`과 소프트웨어 강제 옵션 해제 후 실행 확인했습니다. 이 경로를 다른 PC에 그대로 적용하지 마세요.
+- 실물 신규 ROS 노드·IR 채널·실측 기반 카메라/센서 보정은 아직 검증하지 않았습니다. 아래 기존 주행/공 실험 표의 수신 주기는 센서 확장 전 측정 기록입니다.
+
 ## Gazebo
 
 ```bash
@@ -43,11 +102,11 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 | 구성 | 처리 |
 |---|---|
 | world | 공식 `pinky_gz_sim/worlds` 재사용 (수정 없음) |
-| bridge 설정 | 공식 `pinky_gz_sim/params/pinky_bridge.yaml` 재사용 |
-| Gazebo 플러그인 (DiffDrive, LiDAR, 카메라, IMU, 램프) | 공식 xacro 매크로에서 그대로 생성 |
+| bridge 설정 | 자체 `config/gazebo_bridge.yaml`; 공식 공통 토픽 유지, 내부 영상·IMU·ray 브리지 추가 |
+| Gazebo 플러그인 (DiffDrive, LiDAR, 카메라, IMU, 램프) | 공식 매크로 생성 후 런타임 URDF에서 카메라 설정·선택 센서 확장 |
 | robot_state_publisher / joint_state_publisher | `upload_robot.launch.py`와 같은 설정으로 재구성 |
 | `GZ_SIM_RESOURCE_PATH` | 공식 경로 + `pinky_soccer_description` share 추가 (CAD 메시용) |
-| image_bridge | `camera/image_raw` 하나만 (공식은 같은 이름의 노드 두 개를 실행) |
+| 영상 | `parameter_bridge` → `/sim/camera/*` → 공통 센서 어댑터 |
 | 테스트 공 | `ros_gz_sim create -string`으로 별도 생성 (world 수정 없음) |
 
 공식 Submodule을 업데이트한 뒤에는 위 공식 파일들이 바뀌었는지 확인하고 이 launch에 반영합니다.
@@ -114,7 +173,8 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 |---|---|
 | URDF 생성 | 공식 `pinky_mujoco.description.expand_urdf()`로 `soccer_robot.urdf.xacro`를 확장 (`is_sim:=false`) |
 | 브리지 | 공식 `pinky_mujoco.bridge`를 `mujoco_soccer_bridge`로 감싸 실행. `--urdf-file`, `--world`, `--viewer` 등 공식 인자를 그대로 전달 |
-| 물리, odom, LiDAR, 카메라, ROS 토픽 | 공식 그대로 (`/clock`, `/odom`, `/tf`, `/scan`, `/joint_states`, `/camera/*`) |
+| 물리, odom, LiDAR | 공식 유지 (`/clock`, `/odom`, `/tf`, `/scan`, `/joint_states`) |
+| 카메라·센서 | 자체 설정의 renderer와 네이티브 IMU·ray 관측 → 공통 센서 어댑터 |
 | 테스트 공 | `mujoco_soccer_bridge`가 생성된 `scene.xml`에 동적 공을 추가 |
 
 공식 `world.py`는 world 물체를 모두 정적 geom으로 만들기 때문에, world 파일에 넣은 공은 밀리지 않습니다. 그래서 `mujoco_soccer_bridge`가 공식 `bridge.build_model`을 감싸서, 생성된 scene의 `<worldbody>` **맨 끝**에 freejoint가 있는 공을 추가합니다.

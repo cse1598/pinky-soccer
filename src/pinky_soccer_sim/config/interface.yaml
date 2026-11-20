@@ -1,0 +1,34 @@
+# Public application sensor interface. Simulator internals live under /sim.
+# Optional groups use the same camera_enabled/imu_enabled/adc_enabled flags as real launch.
+topics:
+  cmd_vel: geometry_msgs/msg/Twist  # input
+  odom: nav_msgs/msg/Odometry
+  scan: sensor_msgs/msg/LaserScan
+  joint_states: sensor_msgs/msg/JointState
+  tf: tf2_msgs/msg/TFMessage
+  tf_static: tf2_msgs/msg/TFMessage
+  camera/image_raw: sensor_msgs/msg/Image
+  camera/image_raw/compressed: sensor_msgs/msg/CompressedImage
+  camera/camera_info: sensor_msgs/msg/CameraInfo
+  imu_raw: sensor_msgs/msg/Imu
+  imu_native: sensor_msgs/msg/Imu
+  us_sensor/range: sensor_msgs/msg/Range
+  ir_sensor/range: std_msgs/msg/UInt16MultiArray
+  batt_state: sensor_msgs/msg/BatteryState
+  battery/voltage: std_msgs/msg/Float32
+  battery/percent: std_msgs/msg/Float32
+camera:
+  encoding: bgr8
+  frame_id: front_camera_optical_frame
+  reliability: BEST_EFFORT
+  durability: VOLATILE
+  depth: 5
+imu:
+  frame_id: imu_link
+  angular_velocity_unit: rad/s
+  linear_acceleration_unit: m/s^2
+ultrasonic:
+  frame_id: ultrasonic_link
+  unit: m
+services: []  # No application sensor services in the physical launch today.
+actions: []   # Parameter/simulator management APIs are outside the application contract.
