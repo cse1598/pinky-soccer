@@ -12,6 +12,8 @@ ROS 2 robot soccer project using Pinky Pro
 | `src/pinky_soccer_sim` | Gazebo / MuJoCo 실행 | X |
 | `src/pinky_soccer_calibration` | 실물 보정 실험 기록·검증 (현재 카메라 내부 보정) | 실험 시 |
 
+판단 계층(월드 모델 → 행동 트리 → 제어 → UI)의 구조와 규칙은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 따릅니다.
+
 각 패키지 README에 실행 방법이 있습니다.
 
 카메라 내부 보정은 [pinky_soccer_calibration/README.md](src/pinky_soccer_calibration/README.md)를 따릅니다.
