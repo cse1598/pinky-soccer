@@ -1,0 +1,11 @@
+fake_world_model:
+  ros__parameters:
+    field_spec: ""
+    our_goal_color: yellow
+    rate_hz: 30.0
+    cycle_sec: 12.0
+    follow_cmd_vel: true
+    playing: true
+    camera_hfov_deg: 60.0
+    camera_max_range: 1.5
+    initial_pose: [-0.5, 0.0, 0.0]

@@ -3,12 +3,13 @@
 <package format="3">
   <name>pinky_soccer</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Pinky soccer control: reactive_controller follows /behavior_goal targets.</description>
   <maintainer email="102153140+cse1598@users.noreply.github.com">cse</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
+  <exec_depend>pinky_soccer_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

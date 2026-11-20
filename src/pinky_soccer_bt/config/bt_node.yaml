@@ -1,0 +1,11 @@
+# bt_node parameters. Thresholds inside trees/soccer_1v1.xml are starting assumptions to tune
+# in simulation (max_sigma, margin, tol_*, offset, speed, ratio).
+bt_node:
+  ros__parameters:
+    tick_rate_hz: 15.0          # 10-20 Hz
+    groot2_enabled: true
+    groot2_port: 1667
+    cout_logger: false          # StdCoutLogger (Groot2 Free node-count limit fallback)
+    file_logger_path: ""        # e.g. /tmp/soccer.btlog (FileLogger2) when not empty
+    world_model_topic: /world_model
+    behavior_goal_topic: /behavior_goal

@@ -1,0 +1,13 @@
+# Proportional BehaviorGoal follower. Gains and limits are starting ASSUMPTIONS (tune in sim).
+reactive_controller:
+  ros__parameters:
+    k_lin: 1.2            # [1/s]
+    k_ang: 2.5            # [1/s]
+    max_lin: 0.25         # [m/s]  (sim bridge also caps commands)
+    max_ang: 2.0          # [rad/s]
+    pos_tol: 0.03         # [m]
+    ang_tol: 0.08         # [rad]
+    turn_in_place: 0.9    # [rad] rotate only above this heading error
+    goal_timeout: 0.5     # [s] stop if /behavior_goal is older (steady clock)
+    pose_timeout: 0.5     # [s] stop if /world_model is older
+    rate_hz: 20.0

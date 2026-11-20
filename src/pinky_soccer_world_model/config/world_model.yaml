@@ -1,0 +1,24 @@
+# World model. field_spec empty = installed pinky_soccer_sim/config/rcj_field.yaml.
+world_model_node:
+  ros__parameters:
+    field_spec: ""
+    our_goal_color: yellow          # D7: defend -X (yellow), attack +X (blue)
+    localization: odom_only         # odom_only (kickoff pose + odom) | tf (AMCL map -> odom)
+    initial_pose: [0.0, 0.0, 0.0]   # kickoff pose in map for odom_only (sim spawn: origin, +X)
+    publish_map_to_odom: true
+    rate_hz: 30.0
+    playing_default: false          # /game/playing true starts the game
+    ball_radius: 0.021335
+    self_sigma_floor: 0.01          # [m]
+    grid.resolution: 0.05           # [m] ball search grid (assumption)
+    grid.relax_tau: 8.0             # [s]
+    grid.miss_factor: 0.3           # belief multiplier per second seen without the ball
+    grid.camera_hfov_deg: 60.0      # fallback only when camera_info has no K (assumption)
+    grid.min_range: 0.15            # [m] nearest visible floor (assumption, depends on tilt)
+    grid.max_range: 1.5             # [m] farthest reliable detection (assumption)
+    opponents.enabled: true
+    opponents.wall_margin: 0.06     # [m] points this close to the walls are walls
+    opponents.cluster_gap: 0.05     # [m]
+    opponents.min_points: 3
+    opponents.max_size: 0.30        # [m]
+    opponents.hold_sec: 1.0         # [s] keep as ESTIMATED after the last scan hit

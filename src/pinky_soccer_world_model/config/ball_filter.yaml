@@ -1,0 +1,13 @@
+# Ball Kalman filter. Every value is a starting ASSUMPTION; tune in simulation, then on carpet.
+world_model_node:
+  ros__parameters:
+    ball.friction_tau: 1.5          # [s] rolling velocity e-folding time (measure on carpet)
+    ball.accel_noise: 0.5           # [m/s^2]
+    ball.meas_sigma_base: 0.02      # [m] camera fix std near the robot
+    ball.meas_sigma_per_m2: 0.03    # [m/m^2] grows with squared distance
+    ball.init_vel_sigma: 0.5        # [m/s]
+    ball.gate_chi2: 13.8            # outlier gate (2 dof, 99.9 %)
+    ball.observed_timeout: 0.3      # [s] OBSERVED while the last fix is this recent
+    ball.lost_timeout: 5.0          # [s]
+    ball.lost_sigma: 0.5            # [m] worst-axis std above which the ball is LOST
+    ball.max_speed: 3.0             # [m/s]

@@ -1,0 +1,247 @@
+"""Fuse self pose, ball detections and LiDAR into /world_model (map frame, ~30 Hz).
+
+Self pose
+  localization=tf        : TF map -> base_footprint (AMCL provides map -> odom).
+  localization=odom_only : /odom composed with the kickoff pose `initial_pose`; this node
+                           then also broadcasts map -> odom (static) so TF users agree.
+Ball      : /ball_detection (PointStamped) -> map -> BallFilter (Kalman + friction).
+Search    : SearchGrid lowered inside the camera field of view when nothing is seen.
+Opponents : /scan points inside the walls, clustered (basic; tracking is TODO).
+Game      : /game/playing (std_msgs/Bool).
+"""
+
+import math
+
+from geometry_msgs.msg import PointStamped, TransformStamped
+from nav_msgs.msg import Odometry
+import numpy as np
+from pinky_soccer_field.field_geometry import Field
+from pinky_soccer_msgs.msg import TrackedObject, WorldModel
+from pinky_soccer_world_model.ball_detector import transform_matrix
+from pinky_soccer_world_model.ball_filter import BallFilter, BallFilterParams, LOST, OBSERVED
+from pinky_soccer_world_model.geometry import compose2d, quat_from_yaw, yaw_from_quat
+from pinky_soccer_world_model.msgs import tracked, world_model
+from pinky_soccer_world_model.opponents import cluster_opponents, scan_points
+from pinky_soccer_world_model.search_grid import SearchGrid
+import rclpy
+from rclpy.duration import Duration
+from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
+from rclpy.time import Time
+from sensor_msgs.msg import CameraInfo, LaserScan
+from std_msgs.msg import Bool
+from tf2_ros import Buffer, StaticTransformBroadcaster, TransformException, TransformListener
+
+
+class WorldModelNode(Node):
+    """World model; all tunables are parameters (see config/*.yaml)."""
+
+    def __init__(self):
+        super().__init__('world_model_node')
+        p = self.declare_parameter
+        self.field = Field.from_file(p('field_spec', '').value or None,
+                                     p('our_goal_color', 'yellow').value)
+        self.localization = p('localization', 'odom_only').value
+        if self.localization not in ('odom_only', 'tf'):
+            raise ValueError('localization must be odom_only or tf')
+        self.initial_pose = tuple(p('initial_pose', [0.0, 0.0, 0.0]).value)
+        self.map_frame = p('map_frame', 'map').value
+        self.odom_frame = p('odom_frame', 'odom').value
+        self.base_frame = p('base_frame', 'base_footprint').value
+        self.self_sigma = p('self_sigma_floor', 0.01).value
+        self.playing = p('playing_default', False).value
+        rate = p('rate_hz', 30.0).value
+
+        names = BallFilterParams.__dataclass_fields__
+        bp = BallFilterParams(**{k: p(f'ball.{k}', float(getattr(BallFilterParams(), k))).value
+                                 for k in names})
+        self.ball_radius = p('ball_radius', 0.021335).value
+        self.ball = BallFilter(bp, self.field.inner_walls, self.ball_radius)
+
+        self.grid = SearchGrid(self.field.inner_walls, p('grid.resolution', 0.05).value,
+                               relax_tau=p('grid.relax_tau', 8.0).value,
+                               miss_factor=p('grid.miss_factor', 0.3).value)
+        self.hfov_fallback = math.radians(p('grid.camera_hfov_deg', 60.0).value)
+        self.fov_min = p('grid.min_range', 0.15).value
+        self.fov_max = p('grid.max_range', 1.5).value
+        self.hfov = None
+        self.camera_seen = None
+
+        self.opp_enabled = p('opponents.enabled', True).value
+        self.opp_cfg = {'wall_margin': p('opponents.wall_margin', 0.06).value,
+                        'gap': p('opponents.cluster_gap', 0.05).value,
+                        'min_points': p('opponents.min_points', 3).value,
+                        'max_size': p('opponents.max_size', 0.30).value}
+        self.opp_hold = p('opponents.hold_sec', 1.0).value
+        self.opponents, self.opp_time = [], None
+
+        self.pose = None            # (x, y, theta) map
+        self.velocity = (0.0, 0.0)
+        self.pose_cov = [0.0] * 9
+        self.last_tick = None
+
+        self.tf = Buffer()
+        self.listener = TransformListener(self.tf, self)
+        if self.localization == 'odom_only' and p('publish_map_to_odom', True).value:
+            self.static = StaticTransformBroadcaster(self)
+            self.static.sendTransform(self.map_to_odom())
+        self.pub = self.create_publisher(WorldModel, 'world_model', 10)
+        self.create_subscription(Odometry, 'odom', self.on_odom, 20)
+        self.create_subscription(PointStamped, 'ball_detection', self.on_ball, 10)
+        self.create_subscription(CameraInfo, 'camera/camera_info', self.on_info,
+                                 qos_profile_sensor_data)
+        self.create_subscription(LaserScan, 'scan', self.on_scan, qos_profile_sensor_data)
+        self.create_subscription(Bool, 'game/playing', self.on_playing, 10)
+        self.create_timer(1.0 / rate, self.tick)
+        self.get_logger().info(
+            f'World model: {self.localization}, our goal {self.field.our_goal_color}, '
+            f'attack {"+X" if self.field.attack_sign > 0 else "-X"}')
+
+    # ------------------------------------------------------------------ inputs
+    def now(self):
+        """Return node clock seconds (sim time when use_sim_time)."""
+        return self.get_clock().now().nanoseconds * 1e-9
+
+    def map_to_odom(self):
+        """Return the static kickoff transform map -> odom."""
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id, t.child_frame_id = self.map_frame, self.odom_frame
+        t.transform.translation.x, t.transform.translation.y = self.initial_pose[:2]
+        q = quat_from_yaw(self.initial_pose[2])
+        (t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z,
+         t.transform.rotation.w) = q
+        return t
+
+    def on_playing(self, msg):
+        """Latest game start/stop."""
+        self.playing = msg.data
+
+    def on_info(self, msg):
+        """Camera alive marker and horizontal FOV from the intrinsics."""
+        self.camera_seen = self.now()
+        if msg.k[0] > 0 and msg.width > 0:
+            self.hfov = 2 * math.atan(msg.width / (2 * msg.k[0]))
+
+    def on_odom(self, msg):
+        """odom_only: compose with the kickoff pose; both modes: velocity and covariance."""
+        q = msg.pose.pose.orientation
+        odom_pose = (msg.pose.pose.position.x, msg.pose.pose.position.y,
+                     yaw_from_quat(q.x, q.y, q.z, q.w))
+        c = msg.pose.covariance
+        self.pose_cov = [max(c[0], self.self_sigma ** 2), c[1], c[5], c[6],
+                         max(c[7], self.self_sigma ** 2), c[11], c[30], c[31],
+                         max(c[35], 1e-4)]
+        if self.localization == 'odom_only':
+            self.pose = compose2d(self.initial_pose, odom_pose)
+        if self.pose is not None:
+            v = msg.twist.twist.linear.x
+            self.velocity = (v * math.cos(self.pose[2]), v * math.sin(self.pose[2]))
+
+    def lookup(self, target, source, stamp=None):
+        """Return (R, t) target <- source at stamp, falling back to the latest transform."""
+        for when in ([Time.from_msg(stamp)] if stamp is not None else []) + [Time()]:
+            try:
+                tf = self.tf.lookup_transform(target, source, when,
+                                              timeout=Duration(seconds=0.0))
+                return transform_matrix(tf)
+            except TransformException:
+                continue
+        return None
+
+    def on_ball(self, msg):
+        """Fuse a detection (any frame) after moving it into map."""
+        rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+        if rt is None:
+            return
+        R, t = rt
+        local = np.array([msg.point.x, msg.point.y, msg.point.z])
+        world = R @ local + t
+        t_obs = Time.from_msg(msg.header.stamp).nanoseconds * 1e-9
+        self.ball.update(world[:2], t_obs if t_obs > 0 else self.now(),
+                         float(np.hypot(local[0], local[1])))
+        self.grid.observe(np.zeros_like(self.grid.p, bool), 0.0, world[:2])
+
+    def on_scan(self, msg):
+        """Opponent candidates from wall-free LiDAR clusters."""
+        if not self.opp_enabled:
+            return
+        rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+        if rt is None:
+            return
+        R, t = rt
+        pts = scan_points(msg.ranges, msg.angle_min, msg.angle_increment,
+                          msg.range_min, msg.range_max)
+        if len(pts) == 0:
+            return
+        world = (R[:2, :2] @ pts.T).T + t[:2]
+        self.opponents = cluster_opponents(world, self.field.inner_walls, **self.opp_cfg)
+        self.opp_time = self.now()
+
+    # ------------------------------------------------------------------ output
+    def update_pose_from_tf(self):
+        rt = self.lookup(self.map_frame, self.base_frame)
+        if rt is None:
+            return
+        R, t = rt
+        self.pose = (float(t[0]), float(t[1]), math.atan2(R[1, 0], R[0, 0]))
+
+    def tick(self):
+        """Predict, update the search grid and publish."""
+        now = self.now()
+        dt = 0.0 if self.last_tick is None else max(0.0, now - self.last_tick)
+        self.last_tick = now
+        if self.localization == 'tf':
+            self.update_pose_from_tf()
+        if self.pose is None:
+            self.get_logger().warn('Waiting for self pose', throttle_duration_sec=5.0)
+            return
+        self.ball.predict(now)
+        state = self.ball.state(now)
+
+        self.grid.relax(dt)
+        camera_alive = self.camera_seen is not None and now - self.camera_seen < 0.5
+        if camera_alive and state != OBSERVED:
+            mask = self.grid.fov_mask(self.pose[0], self.pose[1], self.pose[2],
+                                      self.hfov or self.hfov_fallback,
+                                      self.fov_min, self.fov_max)
+            self.grid.observe(mask, dt)
+
+        if self.ball.initialized:
+            x, y, vx, vy = self.ball.x
+            sigma = self.ball.max_sigma()
+            confidence = {OBSERVED: 1.0, LOST: 0.0}.get(
+                state, max(0.0, 1.0 - sigma / self.ball.p.lost_sigma))
+            ball = tracked('ball', (x, y, 0.0), (vx, vy), self.ball.covariance3(), state,
+                           self.ball.last_seen, confidence)
+        else:
+            bx, by = self.grid.best_cell()
+            ball = tracked('ball', (bx, by, 0.0), cov=self.ball.covariance3(),
+                           state=TrackedObject.LOST, confidence=0.0)
+
+        opponents = []
+        if self.opp_time is not None and now - self.opp_time <= self.opp_hold:
+            fresh = now - self.opp_time <= 0.3
+            for i, (ox, oy, _) in enumerate(self.opponents):
+                opponents.append(tracked(
+                    f'opp_{i}', (ox, oy, 0.0), cov=[0.01, 0, 0, 0, 0.01, 0, 0, 0, 10.0],
+                    state=TrackedObject.OBSERVED if fresh else TrackedObject.ESTIMATED,
+                    last_seen=self.opp_time, confidence=1.0 if fresh else 0.5))
+
+        me = tracked('self', self.pose, self.velocity, self.pose_cov, TrackedObject.OBSERVED,
+                     now, 1.0)
+        self.pub.publish(world_model(self.get_clock().now().to_msg(), self.field, me, ball,
+                                     opponents, self.playing, self.grid))
+
+
+def main(args=None):
+    """Run the world model."""
+    rclpy.init(args=args)
+    node = WorldModelNode()
+    try:
+        rclpy.spin(node)
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()

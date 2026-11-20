@@ -1,0 +1,14 @@
+# HSV ball detector. All thresholds are ASSUMPTIONS (sim ball rgba 1 0.45 0); measure on the
+# real orange golf ball under the venue lighting and update.
+ball_detector:
+  ros__parameters:
+    ball_radius: 0.021335           # golf ball rule size (42.67 mm); measure the real ball
+    # Groups of 6: [h_lo, s_lo, v_lo, h_hi, s_hi, v_hi], OpenCV HSV (H 0..180). Assumption.
+    hsv_ranges: [5, 120, 80, 25, 255, 255]
+    min_area_px: 12.0               # assumption
+    min_circularity: 0.4            # assumption
+    max_range: 2.5                  # [m] reject hits farther than the field diagonal
+    image_rotated_180: false        # real camera: verify orientation (see MEMORY open question)
+    camera_yaml: ""                 # optional camera YAML or calibration profile.yaml; else camera_info
+    floor_frame: base_footprint
+    output_frame: base_link

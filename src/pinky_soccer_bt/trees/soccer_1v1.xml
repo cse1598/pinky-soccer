@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pinky Soccer 1v1 Behavior Tree (BehaviorTree.CPP v4)
+  Input: /world_model only (map frame, field centre origin, +X blue goal).
+  Output: BehaviorGoal targets; the control layer tracks them.
+  Actions write the goal into the root blackboard entry "goal"; bt_node ticks the separate
+  "PublishGoal" tree after "Main" on every cycle so the goal is sent even while RUNNING.
+-->
+<root BTCPP_format="4" main_tree_to_execute="Main">
+
+  <BehaviorTree ID="Main">
+    <ReactiveSequence>
+      <!-- Copy the latest /world_model into the blackboard (RosTopicSubNode) -->
+      <ReadWorldModel topic_name="/world_model"
+                      playing="{playing}" pose="{pose}" ball="{ball}"
+                      opponents="{opponents}" own_goal="{own_goal}" opp_goal="{opp_goal}"/>
+
+      <ReactiveFallback name="GameState">
+        <ReactiveSequence name="NotPlaying">
+          <Inverter><IsPlaying playing="{playing}"/></Inverter>
+          <StopRobot/>
+        </ReactiveSequence>
+
+        <ReactiveFallback name="Decide">
+          <ReactiveSequence name="BallLost">
+            <Inverter><BallKnown ball="{ball}" max_sigma="0.30"/></Inverter>
+            <SubTree ID="SearchBall" _autoremap="true"/>
+          </ReactiveSequence>
+
+          <ReactiveSequence name="DefenseNeeded">
+            <ReactiveFallback>
+              <BallInOwnHalf ball="{ball}" own_goal="{own_goal}" margin="0.30"/>
+              <OpponentCloserToBall ball="{ball}" opponents="{opponents}" pose="{pose}"/>
+            </ReactiveFallback>
+            <SubTree ID="Defend" _autoremap="true"/>
+          </ReactiveSequence>
+
+          <SubTree ID="Attack" _autoremap="true"/>
+        </ReactiveFallback>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Attack">
+    <ReactiveFallback>
+      <ReactiveSequence name="Shoot">
+        <IsBehindBall ball="{ball}" pose="{pose}" opp_goal="{opp_goal}"
+                      tol_dist="0.08" tol_angle="0.35"/>
+        <NotFacingOwnGoal pose="{pose}" own_goal="{own_goal}" min_angle="1.57"/>
+        <PushBall ball="{ball}" opp_goal="{opp_goal}" speed="0.25"/>
+      </ReactiveSequence>
+      <!-- Point on the (opp_goal -> ball) line, offset behind the ball -->
+      <GoBehindBall ball="{ball}" pose="{pose}" opp_goal="{opp_goal}" offset="0.15"/>
+    </ReactiveFallback>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Defend">
+    <ReactiveSequence>
+      <!-- Point on the segment between ball and own goal, facing the ball -->
+      <GoToBlockPoint ball="{ball}" pose="{pose}" own_goal="{own_goal}" ratio="0.35"/>
+      <FaceBall ball="{ball}" pose="{pose}"/>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="SearchBall">
+    <Fallback>
+      <Timeout msec="2000"><TurnToLastSeen ball="{ball}" pose="{pose}"/></Timeout>
+      <Timeout msec="5000"><SpinInPlace speed="0.8"/></Timeout>
+      <!-- Field center in the map frame -->
+      <GoToPose x="0.0" y="0.0"/>
+    </Fallback>
+  </BehaviorTree>
+
+  <!-- Ticked by bt_node after Main every cycle (RosTopicPubNode). -->
+  <BehaviorTree ID="PublishGoal">
+    <PublishBehaviorGoal topic_name="/behavior_goal"/>
+  </BehaviorTree>
+
+</root>
