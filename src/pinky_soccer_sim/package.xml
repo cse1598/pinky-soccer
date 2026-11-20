@@ -28,6 +28,7 @@
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
   <!-- pip only (same as pinky_mujoco): mujoco==3.6.0, trimesh, pycollada -->
 
   <test_depend>ament_cmake_pytest</test_depend>

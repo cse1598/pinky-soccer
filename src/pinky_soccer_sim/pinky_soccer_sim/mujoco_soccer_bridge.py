@@ -69,8 +69,10 @@ def parse_args(argv):
 
 def main(args=None):
     from pinky_mujoco import bridge
+    from pinky_soccer_sim.rcj_field import install_mujoco
 
     options, rest = parse_args(sys.argv[1:] if args is None else args)
+    install_mujoco(bridge)
     if options.sensor_config:
         from pinky_soccer_sim.mujoco_sensors import install
         install(bridge, options)

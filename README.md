@@ -15,6 +15,8 @@ ROS 2 robot soccer project using Pinky Pro
 각 패키지 README에 실행 방법이 있습니다.
 
 카메라 내부 보정은 [pinky_soccer_calibration/README.md](src/pinky_soccer_calibration/README.md)를 따릅니다.
+
+RCJ 규격 축구 경기장은 두 시뮬레이터에서 `world_name:=rcj_soccer.world`로 실행합니다. [경기장 안내](src/pinky_soccer_sim/FIELD.md)를 참고하세요.
 ROS 토픽 기반 기록·검증 도구와 초기 [Jupyter 보정 프로토타입](src/pinky_soccer_calibration/WORKBENCH.md)을 포함합니다.
 자체 `pinky_soccer_bringup`에 로봇에서 직접 실행하는 카메라 발행 노드와 선택형 IMU·초음파·IR 구성을 추가했습니다. 실행 방법은 [bringup README](src/pinky_soccer_bringup/README.md)를 참고합니다.
 PC 보정·YOLO와의 연결은 후속 작업이며 Jupyter 방식의 추가 개발은 중지했습니다. 신규 센서 실행 구성의 실물 검증은 아직 필요합니다.

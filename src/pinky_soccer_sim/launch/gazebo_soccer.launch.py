@@ -26,7 +26,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
-                            OpaqueFunction, SetEnvironmentVariable)
+                            OpaqueFunction, SetEnvironmentVariable, SetLaunchConfiguration)
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -105,6 +105,20 @@ def setup_robot(context):
                  parameters=[{'robot_description': urdf, 'use_sim_time': True}])]
 
 
+def setup_world(context):
+    """Resolve own soccer worlds first while retaining official worlds and overrides."""
+    from pathlib import Path
+    explicit = lc('world').perform(context)
+    name = lc('world_name').perform(context)
+    candidates = [Path(explicit).expanduser()] if explicit else [
+        Path(get_package_share_directory(package)) / 'worlds' / name
+        for package in ('pinky_soccer_sim', 'pinky_gz_sim')]
+    for path in candidates:
+        if path.is_file():
+            return [SetLaunchConfiguration('soccer_world', str(path))]
+    raise FileNotFoundError(f'World file not found: {explicit or name}')
+
+
 def generate_launch_description():
     soccer_description = get_package_share_directory('pinky_soccer_description')
     pinky_description = get_package_share_directory('pinky_description')
@@ -127,8 +141,7 @@ def generate_launch_description():
         *sensor_launch.nodes(),
         DeclareLaunchArgument('world_name', default_value='empty.world',
                               description='File in pinky_gz_sim/worlds'),
-        DeclareLaunchArgument('world', default_value=PathJoinSubstitution(
-            [pinky_gz_sim, 'worlds', lc('world_name')])),
+        DeclareLaunchArgument('world', default_value='', description='Explicit world file path'),
         DeclareLaunchArgument('bridge_params', default_value=PathJoinSubstitution(
             [get_package_share_directory('pinky_soccer_sim'), 'config', 'gazebo_bridge.yaml'])),
         DeclareLaunchArgument('gui', default_value='true', description='Start the Gazebo GUI'),
@@ -150,10 +163,11 @@ def generate_launch_description():
                               description='Golf ball (45.9 g)'),
 
         SetEnvironmentVariable('GZ_SIM_RESOURCE_PATH', resource_path),
+        OpaqueFunction(function=setup_world),
 
         IncludeLaunchDescription(
             PathJoinSubstitution([ros_gz_sim, 'launch', 'gz_sim.launch.py']),
-            launch_arguments={'gz_args': ['-r -s -v4 ', lc('world')],
+            launch_arguments={'gz_args': ['-r -s -v4 ', lc('soccer_world')],
                               'on_exit_shutdown': 'true'}.items()),
         IncludeLaunchDescription(
             PathJoinSubstitution([ros_gz_sim, 'launch', 'gz_sim.launch.py']),

@@ -2,6 +2,8 @@
 
 범퍼를 장착한 Pinky Pro의 시뮬레이션(Gazebo, MuJoCo) launch 패키지입니다.
 
+RCJ 축구 경기장은 `world_name:=rcj_soccer.world`로 선택합니다. 치수·가정·생성 방법과 두 엔진 실행 명령은 [FIELD.md](FIELD.md)를 참고하세요.
+
 로봇 형상은 `pinky_soccer_description`, 실물 실행은 `pinky_soccer_bringup`이 담당합니다. 시뮬레이터 의존성은 이 패키지에만 있으므로 로봇(라즈베리파이)에서는 이 패키지를 빌드하거나 rosdep으로 설치하지 않아도 됩니다.
 
 ## 실물과 공통인 센서 인터페이스

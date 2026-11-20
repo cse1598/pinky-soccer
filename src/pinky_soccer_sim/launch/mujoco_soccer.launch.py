@@ -37,6 +37,9 @@ def resolve_world(context):
     if explicit:
         return Path(explicit).expanduser()
     name = lc('world_name', context)
+    own = Path(get_package_share_directory('pinky_soccer_sim')) / 'worlds' / name
+    if own.is_file():
+        return own
     if name.endswith('.yaml'):
         return Path(get_package_share_directory('pinky_mujoco')) / 'worlds' / name
     return Path(get_package_share_directory('pinky_gz_sim')) / 'worlds' / name
