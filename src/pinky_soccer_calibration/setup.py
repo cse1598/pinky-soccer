@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 setup(
@@ -6,6 +8,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/pinky_soccer_calibration']),
         ('share/pinky_soccer_calibration', ['package.xml', 'README.md', 'WORKBENCH.md', 'ROS_UI.md']),
+        ('share/pinky_soccer_calibration/launch', glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
     tests_require=['pytest'],

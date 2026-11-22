@@ -1,0 +1,47 @@
+# Effective dry-contact preset, NOT measured properties of the user's equipment.
+schema_version: 1
+name: golf_ball_eva_foam_rubber
+gravity: 9.81
+timestep: 0.001
+ball:
+  diameter_m: 0.0427          # user's measurement; R&A minimum is 42.67 mm
+  mass_kg: 0.0459            # representative regulation ball, NOT a measured mass
+  hard_surface_restitution: 0.80  # reference only; foam pair below overrides this
+  inertia_ratio: 0.4         # uniform solid-sphere approximation
+floor:
+  material: generic_closed_cell_EVA_foam_yoga_mat
+wheel:
+  material: dry_rubber_tread
+# Pair values are explicit engineering assumptions pending drop/roll/traction tests.
+# stiffness is an effective N/m spring, not Young's modulus of the material.
+contacts:
+  ball_floor:
+    sliding_friction: 0.45
+    restitution: 0.25
+    stiffness_n_m: 1500.0
+    effective_mass_kg: 0.0459
+    rolling_deceleration_m_s2: 0.35
+  wheel_floor:
+    sliding_friction: 0.90
+    restitution: 0.0
+    stiffness_n_m: 12000.0
+    effective_mass_kg: 0.20
+    rolling_deceleration_m_s2: 0.02
+  caster_floor:
+    sliding_friction: 0.10
+    restitution: 0.0
+    stiffness_n_m: 8000.0
+    effective_mass_kg: 0.10
+    rolling_deceleration_m_s2: 0.01
+  ball_wall:
+    sliding_friction: 0.35
+    restitution: 0.60
+    stiffness_n_m: 15000.0
+    effective_mass_kg: 0.0459
+    rolling_deceleration_m_s2: 0.0
+sources:
+  - https://www.randa.org/en/roe/the-rules-of-equipment/part-4-conformance-of-balls
+  - https://doi.org/10.1088/1757-899X/36/1/012038
+  - https://doi.org/10.1002/pls2.10050
+  - https://pmc.ncbi.nlm.nih.gov/articles/PMC10780418/
+  - https://raypenner.com/golf-putting.pdf

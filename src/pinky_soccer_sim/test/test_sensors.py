@@ -5,7 +5,7 @@ import time
 import xml.etree.ElementTree as ET
 
 import numpy as np
-from pinky_soccer_sim.sensor_adapter import bgr_frame, SensorAdapter
+from pinky_soccer_sim.sensor_adapter import bgr_frame, ideal_magnetic_field, SensorAdapter
 from pinky_soccer_sim.sensor_model import (
     adc_from_distance, add_mujoco_sensors, configure_gazebo, load_config, ray_ranges)
 import pytest
@@ -20,6 +20,15 @@ from std_msgs.msg import UInt16MultiArray
 import yaml
 
 CONFIG = Path(__file__).parents[1] / 'config/sensors.yaml'
+
+
+def test_ideal_magnetic_sensor_rotates_world_field_without_pose_topic():
+    from geometry_msgs.msg import Quaternion
+    import math
+    for yaw in (0., .5, math.pi):
+        q = Quaternion(z=math.sin(yaw/2), w=math.cos(yaw/2))
+        actual = ideal_magnetic_field(q, [22e-6, 0., -42e-6])
+        assert actual == pytest.approx([22e-6*math.cos(yaw), -22e-6*math.sin(yaw), -42e-6])
 
 
 def test_rgb_stride_is_converted_to_bgr():

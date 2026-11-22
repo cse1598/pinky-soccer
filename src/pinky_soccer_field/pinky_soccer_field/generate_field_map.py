@@ -136,7 +136,8 @@ def main(argv=None):
     else:
         height, source = default_lidar_height(), 'pinky_soccer_description xacro'
     grid, origin, seen = rasterize(field, args.resolution, height)
-    pgm, yaml_path = write_map(grid, origin, args.resolution, args.output)
+    name = f'{field.spec.get("field_id", "rcj")}_field'
+    pgm, yaml_path = write_map(grid, origin, args.resolution, args.output, name=name)
     print(f'LiDAR height {height:.4f} m ({source}); obstacles drawn: '
           f'{", ".join(o.name for o in seen) or "none"}')
     print(f'Wrote {pgm} and {yaml_path} ({grid.shape[1]}x{grid.shape[0]} cells)')

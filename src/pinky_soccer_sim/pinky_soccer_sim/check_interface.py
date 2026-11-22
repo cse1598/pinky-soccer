@@ -10,8 +10,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data, ReliabilityPolicy
 from rclpy.utilities import remove_ros_args
-from sensor_msgs.msg import BatteryState, CameraInfo, CompressedImage, Image, Imu, Range
-from std_msgs.msg import Float32, UInt16MultiArray
+from sensor_msgs.msg import BatteryState, CameraInfo, CompressedImage, Image, Imu, MagneticField, Range
+from std_msgs.msg import Float32, String, UInt16MultiArray
 import yaml
 
 
@@ -22,6 +22,7 @@ def main(args=None):
     parser.add_argument('--output', required=True, help='YAML report path')
     parser.add_argument('--no-camera', action='store_true')
     parser.add_argument('--imu', action='store_true')
+    parser.add_argument('--mag', action='store_true', help='Require magnetic IMU/status too')
     parser.add_argument('--adc', action='store_true')
     parser.add_argument('--ir', action='store_true', help='Require calibrated IR ADC output too')
     argv = remove_ros_args(args=['check_interface', *args] if args is not None else None)[1:]
@@ -37,6 +38,8 @@ def main(args=None):
                          'camera/camera_info': CameraInfo})
     if options.imu:
         expected.update({'imu_raw': Imu, 'imu_native': Imu})
+    if options.mag:
+        expected.update({'imu/mag': MagneticField, 'imu/status': String})
     if options.adc:
         expected.update({'us_sensor/range': Range, 'batt_state': BatteryState})
     if options.ir:
@@ -69,6 +72,10 @@ def main(args=None):
                              + '/msg/' + expected[topic].__name__)
             if types != {expected_type}:
                 errors.append(f'Type/publisher mismatch: {topic}: {sorted(types)}')
+        if not options.no_camera:
+            services = dict(node.get_service_names_and_types())
+            if services.get('/camera/capture_frame') != ['pinky_soccer_msgs/srv/CaptureFrame']:
+                errors.append('Missing or wrong type: /camera/capture_frame service')
         for topic in ('camera/image_raw', 'camera/image_raw/compressed', 'camera/camera_info'):
             if topic not in samples:
                 continue

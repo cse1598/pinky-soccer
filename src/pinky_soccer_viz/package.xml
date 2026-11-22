@@ -23,6 +23,9 @@
   <exec_depend>pinky_soccer_msgs</exec_depend>
   <exec_depend>pinky_soccer_field</exec_depend>
   <exec_depend>pinky_soccer_world_model</exec_depend>
+  <exec_depend>nav2_amcl</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>pinky_soccer_bt</exec_depend>
   <exec_depend>pinky_soccer</exec_depend>
   <exec_depend>pinky_soccer_sim</exec_depend>

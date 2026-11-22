@@ -2,18 +2,34 @@
 """Normalize simulated observations to the physical robot's public ROS interface."""
 
 from copy import deepcopy
+import json
 import math
 
 import cv2
 import numpy as np
 from pinky_soccer_bringup.camera_support import image_messages
+from pinky_soccer_bringup.frame_capture import FrameCaptureService
 from pinky_soccer_sim.sensor_model import adc_from_distance, load_config, RANGE_LINKS
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import BatteryState, CameraInfo, CompressedImage, Image, Imu, LaserScan, Range
-from std_msgs.msg import Float32, UInt16MultiArray
+from sensor_msgs.msg import (BatteryState, CameraInfo, CompressedImage, Image, Imu,
+                             LaserScan, MagneticField, Range)
+from std_msgs.msg import Float32, String, UInt16MultiArray
+
+
+def ideal_magnetic_field(orientation, world_field):
+    """Rotate an explicit ideal ambient field into the simulated IMU sensor axes."""
+    x, y, z, w = (getattr(orientation, k) for k in ('x', 'y', 'z', 'w'))
+    norm = x*x+y*y+z*z+w*w
+    if not math.isfinite(norm) or norm < .9:
+        raise ValueError('Invalid simulated IMU orientation')
+    q = np.array([x, y, z])/math.sqrt(norm)
+    w /= math.sqrt(norm)
+    cross = np.array([[0, -q[2], q[1]], [q[2], 0, -q[0]], [-q[1], q[0], 0]])
+    rotation = np.eye(3)+2*w*cross+2*cross@cross
+    return rotation.T @ np.asarray(world_field)
 
 
 def bgr_frame(msg):
@@ -38,16 +54,24 @@ class SensorAdapter(Node):
         self.images, self.infos = {}, {}
         self.ir_samples = {}
         self.last_image = None
+        self.capture_service = None
         qos = qos_profile_sensor_data
         if self.declare_parameter('camera_enabled', True).value:
             self.raw = self.create_publisher(Image, 'camera/image_raw', qos)
             self.jpeg = self.create_publisher(CompressedImage, 'camera/image_raw/compressed', qos)
             self.info = self.create_publisher(CameraInfo, 'camera/camera_info', qos)
+            self.capture_service = FrameCaptureService(self, self.cfg['camera']['jpeg_quality'])
             self.create_subscription(Image, 'sim/camera/image_raw', self.image_received, qos)
             self.create_subscription(CameraInfo, 'sim/camera/camera_info', self.info_received, qos)
         if self.declare_parameter('imu_enabled', False).value:
             self.imu = self.create_publisher(Imu, 'imu_raw', qos)
             self.native = self.create_publisher(Imu, 'imu_native', 10)
+            self.mag = self.create_publisher(MagneticField, 'imu/mag', qos)
+            self.mag_status = self.create_publisher(String, 'imu/status', qos)
+            self.world_field = self.declare_parameter(
+                'magnetic_field_world_tesla', [22e-6, 0., -42e-6]).value
+            if len(self.world_field) != 3 or not all(math.isfinite(v) for v in self.world_field):
+                raise ValueError('magnetic_field_world_tesla must be a finite 3-vector')
             self.create_subscription(Imu, 'sim/imu', self.imu_received, qos)
         self.adc = self.declare_parameter('adc_enabled', False).value
         if self.adc:
@@ -110,12 +134,21 @@ class SensorAdapter(Node):
                 if jpeg is not None:
                     self.jpeg.publish(jpeg)
                 self.info.publish(result)
+                self.capture_service.complete(
+                    frame, msg.header.stamp, 'front_camera_optical_frame', info)
                 self.last_image = key
             except ValueError as error:
                 self.get_logger().error(str(error), throttle_duration_sec=5)
         for cache in (self.images, self.infos):
             while len(cache) > 5:
                 del cache[next(iter(cache))]
+
+    def destroy_node(self):
+        """Finish pending capture requests before releasing subscriptions."""
+        if self.capture_service is not None:
+            self.capture_service.close()
+            self.capture_service = None
+        return super().destroy_node()
 
     def imu_received(self, msg):
         """Native simulators use SI; provide the legacy deg/s diagnostic stream too."""
@@ -130,6 +163,13 @@ class SensorAdapter(Node):
             native.angular_velocity_covariance = [
                 float(v) * (180 / math.pi)**2 for v in native.angular_velocity_covariance]
         self.native.publish(native)
+        magnetic = MagneticField(header=deepcopy(msg.header))
+        (magnetic.magnetic_field.x, magnetic.magnetic_field.y,
+         magnetic.magnetic_field.z) = map(float, ideal_magnetic_field(msg.orientation, self.world_field))
+        self.mag.publish(magnetic)
+        self.mag_status.publish(String(data=json.dumps({
+            'stamp': self.key(msg)/1e9, 'source': 'ideal_simulated_ambient_field',
+            'mode': 'NDOF', 'system': 3, 'gyro': 3, 'accel': 3, 'mag': 3})))
 
     def range_received(self, link, msg):
         """Reduce cone rays and assemble three simultaneous IR channels L/M/R."""

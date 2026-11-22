@@ -12,6 +12,8 @@ topics:
   camera/camera_info: sensor_msgs/msg/CameraInfo
   imu_raw: sensor_msgs/msg/Imu
   imu_native: sensor_msgs/msg/Imu
+  imu/mag: sensor_msgs/msg/MagneticField  # IMU enabled; real magnetic driver required
+  imu/status: std_msgs/msg/String       # JSON: stamp, mode, mag/gyro/accel/system, source
   us_sensor/range: sensor_msgs/msg/Range
   ir_sensor/range: std_msgs/msg/UInt16MultiArray
   batt_state: sensor_msgs/msg/BatteryState
@@ -27,8 +29,10 @@ imu:
   frame_id: imu_link
   angular_velocity_unit: rad/s
   linear_acceleration_unit: m/s^2
+  magnetic_field_unit: tesla
 ultrasonic:
   frame_id: ultrasonic_link
   unit: m
-services: []  # No application sensor services in the physical launch today.
+services:
+  camera/capture_frame: pinky_soccer_msgs/srv/CaptureFrame  # camera_enabled: raw/jpeg, new frame
 actions: []   # Parameter/simulator management APIs are outside the application contract.

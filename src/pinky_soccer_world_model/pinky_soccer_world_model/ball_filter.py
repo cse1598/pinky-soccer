@@ -33,7 +33,7 @@ class BallFilterParams:
 class BallFilter:
     """Kalman filter; time arguments are seconds on any monotonic clock."""
 
-    def __init__(self, params=None, bounds=None, ball_radius=0.021335):
+    def __init__(self, params=None, bounds=None, ball_radius=0.02135):
         self.p = params or BallFilterParams()
         self.bounds = bounds          # pinky_soccer_field Rect or None
         self.radius = ball_radius

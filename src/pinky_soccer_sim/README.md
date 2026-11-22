@@ -1,8 +1,27 @@
 # pinky_soccer_sim
 
+공 기본 지름은 사용자 실측 **42.7mm**(반경/바닥 위 중심 높이 **0.02135m**)입니다.
+Gazebo·MuJoCo의 시각/충돌 구와 인식·필터 기본 반경을 같은 값으로 맞춥니다.
+실물 사진의 형광 주황색은 RGB `(1, 0.30, 0)`과 광택으로 근사합니다. 실제 형광의
+자외선 반응·스펙트럼·딤플은 모델링하지 않으며 조명/노출에 따라 영상 색은 달라집니다.
+질량45.9g·마찰·반발은 여전히 미실측 가정입니다. 지름 변경만으로 실측 물성으로 간주하지 않습니다.
+
+공통 물성은 [`config/materials.yaml`](config/materials.yaml)에서 지정합니다. 기본은 골프공·EVA 계열
+폼 요가매트·건조 고무바퀴이며, 두 엔진이 같은 접촉 계산 라이브러리를 사용합니다.
+근거/가정·지원 범위·동일 조건 비교 시험은 [MATERIALS.md](MATERIALS.md)를 참고하세요.
+
+`imu_enabled:=true`이면 `/imu/mag`·`/imu/status`도 제공합니다. 실제 자기 간섭이 없는
+이상적 균일 자기장을 native IMU 축으로 회전한 시험 센서이며, 실측값이 아닙니다.
+경기 launch의 AMCL·골대 색/자기 방향 기준은
+[LOCALIZATION.md](../pinky_soccer_world_model/LOCALIZATION.md)를 참고하세요.
+
+카메라가 활성화되면 실물과 동일한 `/camera/capture_frame`
+(`pinky_soccer_msgs/srv/CaptureFrame`) 서비스를 제공합니다. 원본/JPEG 한 장 요청·저장 방법은
+[CAMERA_CAPTURE.md](../pinky_soccer_bringup/CAMERA_CAPTURE.md)를 참고하세요.
+
 범퍼를 장착한 Pinky Pro의 시뮬레이션(Gazebo, MuJoCo) launch 패키지입니다.
 
-RCJ 축구 경기장은 `world_name:=rcj_soccer.world`로 선택합니다. 치수·가정·생성 방법과 두 엔진 실행 명령은 [FIELD.md](FIELD.md)를 참고하세요.
+경기장은 `field:=rcj` 또는 `field:=hardboard`로 선택합니다. 기존 `world_name:=rcj_soccer.world`도 유지합니다. [FIELD.md](FIELD.md)와 [제2 하드보드 경기장](HARDBOARD_FIELD.md)에 치수·가정·실행 방법이 있습니다.
 
 로봇 형상은 `pinky_soccer_description`, 실물 실행은 `pinky_soccer_bringup`이 담당합니다. 시뮬레이터 의존성은 이 패키지에만 있으므로 로봇(라즈베리파이)에서는 이 패키지를 빌드하거나 rosdep으로 설치하지 않아도 됩니다.
 
@@ -43,7 +62,7 @@ Gazebo는 네이티브 IMU와 추가한 GPU ray 센서, MuJoCo는 센서 링크 
 - 배터리는 설정된 전압·백분율을 유지하는 이상적인 전원입니다. 기본 8.4 V / 100 %는 가상 시나리오이며 실측값이 아닙니다. 소모·충전 모델은 포함하지 않습니다. 타이머는 `/clock`을 따르므로 일시정지 중에 진행되지 않습니다.
 - Gazebo GPU ray는 렌더링 형상, MuJoCo ray는 충돌 형상을 봅니다. 시야 가림·메시 차이에 따른 거리는 실험으로 비교해야 합니다.
 
-실물·가상 센서 계층에는 현재 애플리케이션용 서비스/액션이 없습니다. `SetCameraInfo` 서비스도 제공하지 않으며 실물은 시작 시 YAML을 읽습니다. 시뮬레이터 관리용 서비스와 ROS 노드별 파라미터 서비스는 환경마다 다를 수 있습니다. 향후 경기 제어 서비스/액션은 공통 제어 계층에서 정의해야 합니다. `/clock`, `/ground_truth`, `/sim/*`는 가상환경 전용이며 판단 프로그램의 필수 입력으로 사용하지 않습니다. 기존 `/cmd_vel`, `/odom`, `/scan`, `/joint_states`, TF는 유지합니다.
+실물·가상 센서 계층은 카메라 활성화 시 `/camera/capture_frame` 단발 사진 서비스를 동일하게 제공합니다. `SetCameraInfo` 서비스는 제공하지 않으며 실물은 시작 시 YAML을 읽습니다. 애플리케이션용 액션은 없으며 시뮬레이터 관리용 서비스와 ROS 노드별 파라미터 서비스는 환경마다 다를 수 있습니다. 향후 경기 제어 서비스/액션은 공통 제어 계층에서 정의해야 합니다. `/clock`, `/ground_truth`, `/sim/*`는 가상환경 전용이며 판단 프로그램의 필수 입력으로 사용하지 않습니다. 기존 `/cmd_vel`, `/odom`, `/scan`, `/joint_states`, TF는 유지합니다.
 
 ### 동일한 수신 프로그램으로 검사하기
 
@@ -95,7 +114,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 | `bumper_params_file` | description 패키지의 yaml | 범퍼 치수 |
 | `spawn_ball` | `true` | 테스트 공 생성 |
 | `ball_x`, `ball_y` | 0.3, 0 | 공 위치 |
-| `ball_radius`, `ball_mass` | 0.021335, 0.0459 | 주황색 골프공(공인 규격 지름 42.67 mm, 45.9 g, 속이 찬 구 관성). 공 중심(지면 약 21 mm)이 범퍼 높이 구간(지면 9~51 mm) 안에 있어서 범퍼를 타고 넘지 않습니다 |
+| `ball_radius`, `ball_mass` | 0.02135, 0.0459 | 주황색 골프공(실측 지름 42.7 mm, 질량 45.9 g·속이 찬 구 관성은 미실측 가정). 공 중심(지면 약 21 mm)이 범퍼 높이 구간(지면 9~51 mm) 안에 있어서 범퍼를 타고 넘지 않습니다 |
 
 ### 공식 launch와의 관계
 
@@ -164,7 +183,7 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 | `world_name` / `world` | `empty.world` / — | 공식과 같은 규칙 (`pinky_gz_sim/worlds` 또는 `pinky_mujoco/worlds/*.yaml`) |
 | `cam_tilt_deg` / `screen_tilt_deg` | 8 / -25 | |
 | `bumper_enabled` / `bumper_params_file` | `true` / description 기본 yaml | |
-| `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.021335, 0.0459 | Gazebo와 같은 골프공 |
+| `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.02135, 0.0459 | Gazebo와 같은 골프공 |
 | `model_dir` | `~/.cache/pinky_soccer_mujoco` | 생성된 URDF와 scene.xml. 공식 캐시(`~/.cache/pinky_mujoco`)와 분리 |
 
 ### 공식 MuJoCo와의 관계

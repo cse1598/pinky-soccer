@@ -14,13 +14,14 @@ from dataclasses import dataclass
 import math
 import os
 from pathlib import Path
+import re
 
 import yaml
 
 GOAL_COLORS = ('yellow', 'blue')
 # Fixed by the field model: blue goal on +X, yellow goal on -X.
 COLOR_SIGN = {'blue': 1.0, 'yellow': -1.0}
-TEXT_KEYS = ('source', 'specification_date')
+TEXT_KEYS = ('source', 'specification_date', 'field_id')
 
 
 def load_spec(path):
@@ -28,11 +29,15 @@ def load_spec(path):
     cfg = yaml.safe_load(Path(path).read_text())
     if not isinstance(cfg, dict):
         raise ValueError(f'Field spec is not a mapping: {path}')
+    if (not isinstance(cfg.get('field_id', 'rcj'), str)
+            or not re.fullmatch(r'[a-z][a-z0-9_]*', cfg.get('field_id', 'rcj'))):
+        raise ValueError('Invalid field_id')
     for key, value in cfg.items():
         if key in TEXT_KEYS:
             continue
+        zero_allowed = key in ('ramp_base', 'ramp_rise')
         if (isinstance(value, bool) or not isinstance(value, (int, float))
-                or not math.isfinite(value) or value <= 0):
+                or not math.isfinite(value) or value < 0 or (value == 0 and not zero_allowed)):
             raise ValueError(f'Invalid field setting: {key}')
     required = ('playing_length', 'playing_width', 'outer_strip', 'wall_height',
                 'goal_width', 'goal_height', 'goal_depth', 'ramp_base', 'line_width',
@@ -41,6 +46,8 @@ def load_spec(path):
     missing = [k for k in required if k not in cfg]
     if missing:
         raise ValueError(f'Missing field settings: {", ".join(missing)}')
+    if (cfg['ramp_base'] == 0) != (cfg['ramp_rise'] == 0):
+        raise ValueError('Disable ramps with both ramp_base=0 and ramp_rise=0')
     if (cfg['goal_width'] >= cfg['playing_width'] or cfg['goal_depth'] >= cfg['outer_strip']
             or cfg['ramp_base'] > cfg['outer_strip']
             or cfg['penalty_radius'] >= cfg['penalty_depth']
@@ -238,13 +245,16 @@ class Field:
                                          walls.ymin), wall_h),
         ]
         gh, half = self.spec['goal_height'], self.spec['goal_width'] / 2
+        t = self.spec.get('goal_thickness', t)
         for color in GOAL_COLORS:
             s = self.color_sign(color)
             front, back = self.half_length, self.half_length + self.spec['goal_depth']
             xs = sorted((s * back, s * (back + t)))
-            out.append(Obstacle(f'{color}_goal_back', Rect(xs[0], -half - t, xs[1], half + t),
+            back_half = half if 'goal_thickness' in self.spec else half+t
+            out.append(Obstacle(f'{color}_goal_back', Rect(xs[0], -back_half, xs[1], back_half),
                                 gh))
-            xs = sorted((s * front, s * back))
+            side_back = back+t if 'goal_thickness' in self.spec else back
+            xs = sorted((s * front, s * side_back))
             for side in (-1, 1):
                 ys = sorted((side * half, side * (half + t)))
                 out.append(Obstacle(f'{color}_goal_side_{side:+d}',

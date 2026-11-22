@@ -22,6 +22,9 @@ Run it, for instance, as
     ros2 launch pinky_soccer_sim gazebo_soccer.launch.py spawn_ball:=false gui:=false
 """
 import os
+from pathlib import Path
+import subprocess
+import tempfile
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -34,6 +37,7 @@ from pinky_soccer_bringup.calibration_profile import arguments as profile_argume
 from pinky_soccer_sim import sensor_launch
 from pinky_soccer_sim.sensor_model import configure_gazebo, load_config
 import xacro
+from pinky_soccer_sim import materials
 
 BALL_SDF = """<?xml version="1.0"?>
 <sdf version="1.9">
@@ -56,7 +60,9 @@ BALL_SDF = """<?xml version="1.0"?>
       <visual name="visual">
         <geometry><sphere><radius>{radius}</radius></sphere></geometry>
         <material>
-          <ambient>1 0.45 0 1</ambient><diffuse>1 0.45 0 1</diffuse>
+          <!-- Photo-based vivid orange approximation; fluorescence is not simulated. -->
+          <ambient>1 0.30 0 1</ambient><diffuse>1 0.30 0 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular><shininess>64</shininess>
         </material>
       </visual>
     </link>
@@ -69,7 +75,7 @@ def lc(name):
 
 
 def spawn_ball(context):
-    """Spawn the ball: a 42.67 mm golf ball by default (solid sphere)."""
+    """Spawn the ball: a 42.7 mm golf ball by default (solid sphere)."""
     if lc('spawn_ball').perform(context).lower() != 'true':
         return []
     radius = float(lc('ball_radius').perform(context))
@@ -78,6 +84,8 @@ def spawn_ball(context):
         raise ValueError('ball_radius and ball_mass must be > 0')
     sdf = BALL_SDF.format(name='soccer_ball', radius=radius, mass=mass,
                           inertia=2.0 * mass * radius * radius / 5.0)  # solid sphere
+    sdf = materials.configure_gazebo_ball(
+        sdf, materials.load_materials(lc('material_config').perform(context)))
     return [Node(
         package='ros_gz_sim', executable='create', name='create_ball', output='screen',
         arguments=['-name', 'soccer_ball', '-string', sdf,
@@ -87,7 +95,7 @@ def spawn_ball(context):
         parameters=[{'use_sim_time': True}])]
 
 
-def setup_robot(context):
+def robot_xml(context):
     """Expand official macros then add sensors only in the runtime model."""
     path = os.path.join(get_package_share_directory('pinky_soccer_description'),
                         'urdf', 'soccer_robot.urdf.xacro')
@@ -100,7 +108,21 @@ def setup_robot(context):
              ('camera_enabled', 'imu_enabled', 'adc_enabled')]
     urdf = configure_gazebo(urdf, cfg, *flags)
     urdf = configure_urdf(urdf, lc('calibration_profile').perform(context), True)
-    return [Node(package='robot_state_publisher', executable='robot_state_publisher',
+    return urdf
+
+
+def setup_robot(context):
+    urdf = robot_xml(context)
+    directory = Path(tempfile.mkdtemp(prefix='pinky-material-robot-'))
+    path = directory/'robot.urdf'
+    path.write_text(urdf)
+    converted = subprocess.run(['gz', 'sdf', '-p', str(path)],
+                               capture_output=True, text=True, check=True)
+    cfg = materials.load_materials(lc('material_config').perform(context))
+    path = directory/'robot.sdf'
+    path.write_text(materials.configure_gazebo_robot(converted.stdout, urdf, cfg))
+    return [SetLaunchConfiguration('material_robot_sdf', str(path)),
+            Node(package='robot_state_publisher', executable='robot_state_publisher',
                  name='robot_state_publisher',
                  parameters=[{'robot_description': urdf, 'use_sim_time': True}])]
 
@@ -108,14 +130,25 @@ def setup_robot(context):
 def setup_world(context):
     """Resolve own soccer worlds first while retaining official worlds and overrides."""
     from pathlib import Path
+    from pinky_soccer_sim.field_selection import selected_world
     explicit = lc('world').perform(context)
     name = lc('world_name').perform(context)
-    candidates = [Path(explicit).expanduser()] if explicit else [
+    selected = selected_world(LaunchConfiguration('field', default='').perform(context),
+                              explicit, name)
+    candidates = [selected] if selected is not None else ([Path(explicit).expanduser()] if explicit else [
         Path(get_package_share_directory(package)) / 'worlds' / name
-        for package in ('pinky_soccer_sim', 'pinky_gz_sim')]
+        for package in ('pinky_soccer_sim', 'pinky_gz_sim')])
     for path in candidates:
         if path.is_file():
-            return [SetLaunchConfiguration('soccer_world', str(path))]
+            cfg = materials.load_materials(lc('material_config').perform(context))
+            contacts = materials.sphere_contacts(robot_xml(context), cfg)
+            directory = Path(tempfile.mkdtemp(prefix='pinky-material-world-'))
+            ball = ((float(lc('ball_radius').perform(context)),
+                     float(lc('ball_mass').perform(context)))
+                    if lc('spawn_ball').perform(context).lower() == 'true' else None)
+            output = materials.gazebo_world(path, directory/'world.sdf', cfg,
+                                            lc('robot_name').perform(context), contacts, ball)
+            return [SetLaunchConfiguration('soccer_world', str(output))]
     raise FileNotFoundError(f'World file not found: {explicit or name}')
 
 
@@ -138,7 +171,11 @@ def generate_launch_description():
     return LaunchDescription([
         *sensor_launch.arguments(),
         *profile_arguments(simulation=True),
+        DeclareLaunchArgument('material_config', default_value=str(
+            Path(get_package_share_directory('pinky_soccer_sim'))/'config/materials.yaml')),
         *sensor_launch.nodes(),
+        DeclareLaunchArgument('field', default_value='', choices=['', 'rcj', 'hardboard'],
+                              description='rcj|hardboard; empty preserves world/world_name'),
         DeclareLaunchArgument('world_name', default_value='empty.world',
                               description='File in pinky_gz_sim/worlds'),
         DeclareLaunchArgument('world', default_value='', description='Explicit world file path'),
@@ -157,8 +194,8 @@ def generate_launch_description():
         DeclareLaunchArgument('spawn_ball', default_value='true'),
         DeclareLaunchArgument('ball_x', default_value='0.3'),
         DeclareLaunchArgument('ball_y', default_value='0.0'),
-        DeclareLaunchArgument('ball_radius', default_value='0.021335',
-                              description='Golf ball (42.67 mm)'),
+        DeclareLaunchArgument('ball_radius', default_value='0.02135',
+                              description='Golf ball (42.7 mm)'),
         DeclareLaunchArgument('ball_mass', default_value='0.0459',
                               description='Golf ball (45.9 g)'),
 
@@ -182,7 +219,7 @@ def generate_launch_description():
                           'use_sim_time': True}]),
 
         Node(package='ros_gz_sim', executable='create', name='create_robot', output='screen',
-             arguments=['-name', lc('robot_name'), '-topic', 'robot_description',
+             arguments=['-name', lc('robot_name'), '-file', lc('material_robot_sdf'),
                         '-x', lc('x'), '-y', lc('y'), '-z', '0.1', '-Y', lc('yaw')],
              parameters=[{'use_sim_time': True}]),
         OpaqueFunction(function=spawn_ball),

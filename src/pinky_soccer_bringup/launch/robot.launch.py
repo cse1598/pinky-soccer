@@ -30,7 +30,8 @@ from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
                             OpaqueFunction, SetLaunchConfiguration)
 from launch.conditions import IfCondition
-from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (AndSubstitution, Command, LaunchConfiguration,
+                                  NotSubstitution, PathJoinSubstitution)
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -111,7 +112,10 @@ def generate_launch_description():
              condition=hardware),
         Node(package='pinky_soccer_bringup', executable='command_watchdog', condition=hardware),
         Node(package='pinky_soccer_bringup', executable='time_sync_status', condition=hardware),
-        Node(package='pinky_bringup', executable='battery_publisher', condition=hardware),
+        # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.
+        Node(package='pinky_bringup', executable='battery_publisher',
+             condition=IfCondition(AndSubstitution(lc('hardware'),
+                                                   NotSubstitution(lc('adc_enabled'))))),
         IncludeLaunchDescription(
             PathJoinSubstitution([FindPackageShare('pinky_soccer_bringup'),
                                   'launch', 'sensors.launch.py']),

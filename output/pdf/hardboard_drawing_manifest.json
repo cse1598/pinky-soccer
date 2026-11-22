@@ -1,0 +1,36 @@
+{
+  "source_yaml": "src/pinky_soccer_sim/config/hardboard_field.yaml",
+  "source_sha256": "c14acf8c032c8ae92d5707d22700b7f4ed8b48d51b86a240082d0080cd00c924",
+  "units": "mm",
+  "goal_stock_mm": 5.0,
+  "inside_floor_mm": [
+    1820.0,
+    1220.0
+  ],
+  "goal_panels_for_two_goals": [
+    {
+      "part": "back",
+      "width_mm": 400,
+      "height_mm": 70,
+      "quantity": 2
+    },
+    {
+      "part": "side",
+      "width_mm": 55,
+      "height_mm": 70,
+      "quantity": 4
+    },
+    {
+      "part": "roof",
+      "width_mm": 410,
+      "height_mm": 55,
+      "quantity": 2
+    }
+  ],
+  "circle_tiles": {
+    "columns": 2,
+    "rows": 3,
+    "overlap_mm": 15
+  },
+  "print_scale": "100%, no fit to page"
+}

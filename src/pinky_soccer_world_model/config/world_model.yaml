@@ -5,10 +5,12 @@ world_model_node:
     our_goal_color: yellow          # D7: defend -X (yellow), attack +X (blue)
     localization: odom_only         # odom_only (kickoff pose + odom) | tf (AMCL map -> odom)
     initial_pose: [0.0, 0.0, 0.0]   # kickoff pose in map for odom_only (sim spawn: origin, +X)
+    align_first_odom: false         # real_game: latch first odom to initial_pose, no driver reset
+    odom_timeout: 0.0               # real_game: 0.5 s; <=0 preserves legacy behavior
     publish_map_to_odom: true
     rate_hz: 30.0
     playing_default: false          # /game/playing true starts the game
-    ball_radius: 0.021335
+    ball_radius: 0.02135
     self_sigma_floor: 0.01          # [m]
     grid.resolution: 0.05           # [m] ball search grid (assumption)
     grid.relax_tau: 8.0             # [s]

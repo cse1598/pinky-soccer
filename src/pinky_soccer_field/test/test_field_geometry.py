@@ -80,6 +80,8 @@ def test_rejects_invalid_specs(tmp_path, spec):
 def test_same_validation_as_sim_generator(tmp_path, spec):
     sim = pytest.importorskip('pinky_soccer_sim.rcj_field')
     cases = [spec, dict(spec, goal_depth=spec['outer_strip']), dict(spec, ramp_base=0.5),
+             dict(spec, ramp_base=0, ramp_rise=0, field_id='hardboard'),
+             dict(spec, ramp_base=0), dict(spec, field_id='../bad'),
              dict(spec, penalty_radius=spec['penalty_depth']), dict(spec, friction=0)]
     for i, case in enumerate(cases):
         path = tmp_path / f'case{i}.yaml'

@@ -1,5 +1,8 @@
 # pinky_soccer_bringup
 
+원본/JPEG **한 프레임 요청 서비스** `/camera/capture_frame`와 파일 저장 명령은
+[CAMERA_CAPTURE.md](CAMERA_CAPTURE.md)를 참고하세요. 영상 토픽 구독 없이 사용할 수 있습니다.
+
 범퍼를 장착한 Pinky Pro의 구동부와 센서를 **실물 로봇**에서 실행하는 패키지입니다.
 공식 `pinky_bringup bringup_robot.launch.xml` 대신 사용하며, 공식 Submodule은 수정하지 않습니다.
 
@@ -211,8 +214,8 @@ pinky_bringup (bringup) ──joint_states──▶ (remap) /wheel_joint_states_
 | relay 단위 테스트 | 통과 |
 | 카메라 변환·보정 파일 검사·launch 활성화 조건 | 자동 테스트로 검사 |
 | 합성 카메라의 실제 DDS 원본/JPEG/CameraInfo 일치와 장치 해제 | 자동 테스트로 검사 |
-| 신규 카메라 ROS 노드·IMU·ADC의 **실물** 실행 | 미검증. 실제 로봇에서 아래 절차로 확인 필요 |
-| `hardware:=true` | **미검증**. PC에 `sllidar_ros2`가 없어 실행할 수 없음. 로봇에서 확인 필요 |
+| 신규 카메라 ROS 노드·IMU·ADC의 **실물** 실행 | 2026-11-21 메시지 수신 확인. 센서 정확도·실측 보정은 별도 |
+| `hardware:=true` | 2026-11-21 실제 로봇 launch·전체 센서/관절 토픽 수신 확인. 주행 명령 시험은 미수행 |
 
 로봇에서 확인할 것:
 
@@ -225,4 +228,39 @@ pinky_bringup (bringup) ──joint_states──▶ (remap) /wheel_joint_states_
 
 ## 자동 시각 동기화 상태
 
+`imu_enabled:=true`일 때 기본 `imu_magnetic_enabled:=true`는 자체 `bno055_magnetic`을
+사용합니다. 공식 submodule을 고치지 않고 NDOF로 구동해 기존 `/imu_raw`(SI),
+`/imu_native`(deg/s), 추가 `/imu/mag`(tesla)·`/imu/status`(JSON 보정 상태)를 발행합니다.
+공식 드라이버/릴레이와는 launch에서 상호 배제합니다. 기존 IMU-only 모드는
+`imu_magnetic_enabled:=false`입니다. 다른 IMU 프로세스도 먼저 종료해야 합니다.
+새 드라이버의 ARM64 실물 동작·축·자기 간섭은 현장 검증이 필요합니다.
+사용 절차는 [위치 추정 안내](../pinky_soccer_world_model/LOCALIZATION.md)를 참고하세요.
+
 실물 launch는 `/calibration/time_sync_status`를 발행하는 read-only chrony 상태 노드를 포함합니다. 최초 1회 PC/라즈베리파이 설정 후 OS가 자동 동기화하고 UI가 상태를 판정합니다. 설치·네트워크 기준과 적용 명령은 [ROS UI 안내](../pinky_soccer_calibration/ROS_UI.md#실물-자동-시간-동기화-최초-1회-설정)를 참고하세요. launch가 시스템 시계를 임의로 바꾸지는 않습니다.
+
+## ADC와 배터리 토픽의 단일 읽기 경로
+
+`adc_enabled:=true`이면 공식 ADC 드라이버만 I2C 버스 1의 주소 `0x08`을 읽습니다. 자체 `battery_state_relay`가 `/batt_state`의 같은 전압 표본으로 `/battery/voltage`와 `/battery/percent`를 5초마다 발행하고, 기존 `pinkylib.Battery` 기반 `battery_publisher`는 실행하지 않습니다. `adc_enabled:=false`이면 기존 배터리 퍼블리셔를 유지합니다.
+
+두 드라이버는 같은 장치에 채널 선택 명령을 쓰고 대기한 뒤 읽으므로, 동시에 실행하면 상대 프로세스가 선택한 채널을 잘못 읽을 수 있습니다. 실물에서 전압 약 6.4V와 잔량 100%가 함께 수신돼 두 경로를 하나로 통합했습니다. 원본 ADC 드라이버는 수정하지 않습니다. 외부에서 같은 I2C 장치를 직접 읽는 별도 스크립트도 중복 실행하지 마세요.
+
+잔량은 기존 pinkylib의 공식을 유지한 **전압 기반 추정값**입니다(6.8V→0%, 7.6V→100%, 범위 제한). 실측된 배터리 SoC나 방전 곡선이 아닙니다. NaN/비양수 전압 또는 2초 이상 오래된 ADC 표본은 발행하지 않습니다. 정확한 전압은 멀티미터와 교차 확인해야 하며, 실제 배터리 특성은 후속 보정 대상입니다.
+
+## 원본 토픽은 보이지만 릴레이가 발행하지 않을 때
+
+2026-11-21 실물에서 PC는 `/imu_native`(100Hz)·`/wheel_joint_states_raw`(30Hz)를 받지만 로봇 내부의 릴레이는 수신하지 못하는 문제가 확인됐습니다. `/imu_raw`, `/wheel_joint_states`, `/joint_states`는 토픽 이름/퍼블리셔가 보여도 메시지가 0개였고, joint_state_publisher는 robot_description을 기다리고 있었습니다.
+
+당시 PC·로봇의 CycloneDDS XML은 무선 인터페이스 고정·`AllowMulticast=false`·상대 장치 peer만 지정한 상태였습니다. 로봇 내부 읽기 검사에서는 원본 IMU/바퀴 메시지가 0개였으나, 임시 설정에 **localhost peer 하나만 추가**하면 7초에 각각 702개/210개가 수신됐습니다. 드라이버 고장이나 단위 변환 오류가 아니라 같은 호스트의 DDS 참가자 발견 실패였습니다.
+
+사용 중인 XML을 먼저 백업하고 PC와 로봇의 기존 `Discovery/Peers`에 다음 항목을 추가합니다. 기존 인터페이스·상대 peer·domain·멀티캐스트 설정은 유지합니다.
+
+```xml
+<Peers>
+  <Peer Address="localhost"/>
+  <!-- 기존 상대 장치 Peer 항목 유지 -->
+</Peers>
+```
+
+설정은 프로세스 시작 시 읽으므로 로봇 launch를 정상 종료 후 같은 명령으로 다시 실행합니다. 이미 실험 기록 중이면 먼저 기록을 마무리하세요. 복구 후 UI와 같은 통신 조건의 검사 노드에서 `/imu_raw` 100Hz, `/wheel_joint_states` 30Hz, `/joint_states` 20Hz와 나머지 센서 수신을 확인했습니다. 이 조치는 해당 발견 문제를 해결한 것이며, 카메라 내부 보정이나 센서 실측 정확도를 보장하지 않습니다.
+
+CycloneDDS의 [정적 peer 발견 설정](https://cyclonedds.io/docs/cyclonedds/latest/config/discovery-config.html)을 참고하세요. launch는 사용자 DDS 파일을 자동으로 덮어쓰지 않습니다.

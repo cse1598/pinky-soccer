@@ -3,7 +3,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.substitutions import AndSubstitution, LaunchConfiguration
+from launch.substitutions import AndSubstitution, LaunchConfiguration, NotSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -17,6 +17,7 @@ SENSOR_ARGUMENTS = {
     'camera_info_url': ('', 'Measured ROS calibration YAML, file:///absolute/path.yaml'),
     'camera_frame_id': ('front_camera_optical_frame', 'Optical frame of emitted images'),
     'imu_enabled': ('false', 'Enable only after confirming BNO055/I2C compatibility'),
+    'imu_magnetic_enabled': ('true', 'Use the single-owner NDOF driver with magnetic data'),
     'imu_interface': ('/dev/i2c-0', 'Official BNO055 I2C interface'),
     'imu_rate': ('100.0', 'Official BNO055 sample rate'),
     'adc_enabled': ('false', 'Enable official ultrasonic/IR/ADC driver after verification'),
@@ -68,18 +69,31 @@ def generate_sensor_description():
                  '--frame-id', 'front_camera_link', '--child-frame-id', lc('camera_frame_id'),
              ]),
         Node(package='pinky_imu_bno055', executable='main_node', name='soccer_imu_driver',
-             output='screen', condition=enabled('imu_enabled'),
+             output='screen', condition=IfCondition(AndSubstitution(
+                 AndSubstitution(lc('hardware'), lc('imu_enabled')),
+                 NotSubstitution(lc('imu_magnetic_enabled')))),
              parameters=[sim_time, {
                  'interface': lc('imu_interface'), 'frame_id': 'imu_link',
                  'rate': ParameterValue(lc('imu_rate'), value_type=float),
              }], remappings=[('imu_raw', 'imu_native')]),
         Node(package='pinky_soccer_bringup', executable='imu_units_relay',
              name='imu_units_relay', output='screen', parameters=[sim_time],
-             condition=enabled('imu_enabled')),
+             condition=IfCondition(AndSubstitution(
+                 AndSubstitution(lc('hardware'), lc('imu_enabled')),
+                 NotSubstitution(lc('imu_magnetic_enabled'))))),
+        Node(package='pinky_soccer_bringup', executable='bno055_magnetic',
+             name='soccer_magnetic_imu', output='screen',
+             condition=IfCondition(AndSubstitution(
+                 AndSubstitution(lc('hardware'), lc('imu_enabled')), lc('imu_magnetic_enabled'))),
+             parameters=[sim_time, {'interface': lc('imu_interface'), 'frame_id': 'imu_link',
+                                   'rate': ParameterValue(lc('imu_rate'), value_type=float)}]),
         Node(package='pinky_sensor_adc', executable='main_node', name='soccer_adc_driver',
              output='screen', condition=enabled('adc_enabled'),
              parameters=[sim_time, {
                  'interface': lc('adc_interface'),
                  'rate': ParameterValue(lc('adc_rate'), value_type=float),
              }]),
+        Node(package='pinky_soccer_bringup', executable='battery_state_relay',
+             name='soccer_battery_state_relay', output='screen', parameters=[sim_time],
+             condition=enabled('adc_enabled')),
     ])

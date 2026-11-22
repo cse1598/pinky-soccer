@@ -27,7 +27,7 @@ BALL_CONAFFINITY = '3'
 BALL_GROUP = '0'
 
 
-def add_ball(scene_path, x=0.3, y=0.0, radius=0.021335, mass=0.0459, name=BALL_NAME):
+def add_ball(scene_path, x=0.3, y=0.0, radius=0.02135, mass=0.0459, name=BALL_NAME):
     """Append a free solid sphere (golf ball) as the last body of <worldbody>."""
     if radius <= 0 or mass <= 0:
         raise ValueError('ball radius and mass must be > 0')
@@ -38,6 +38,15 @@ def add_ball(scene_path, x=0.3, y=0.0, radius=0.021335, mass=0.0459, name=BALL_N
         raise ValueError(f'{scene_path} has no <worldbody>')
     if worldbody.find(f"body[@name='{name}']") is not None:
         raise ValueError(f'{scene_path} already has a body named {name}')
+    # Approximate the photographed glossy fluorescent-orange product in RGB;
+    # this is not a measured spectral/UV fluorescence material model.
+    asset = tree.getroot().find('asset')
+    if asset is None:
+        asset = ET.Element('asset')
+        tree.getroot().insert(0, asset)
+    material = f'{name}_material'
+    ET.SubElement(asset, 'material', name=material, rgba='1 0.30 0 1',
+                  specular='0.5', shininess='0.55')
     # Appended last: pinky_mujoco Physics reads the robot pose from qpos[0:7], so the
     # robot's free joint must stay first.
     body = ET.SubElement(worldbody, 'body', name=name,
@@ -47,7 +56,7 @@ def add_ball(scene_path, x=0.3, y=0.0, radius=0.021335, mass=0.0459, name=BALL_N
     ET.SubElement(body, 'inertial', pos='0 0 0', mass=f'{mass:.12g}',
                   diaginertia=f'{inertia:.12g} {inertia:.12g} {inertia:.12g}')
     ET.SubElement(body, 'geom', name=f'{name}_geom', type='sphere', size=f'{radius:.12g}',
-                  rgba='1 0.45 0 1', group=BALL_GROUP,
+                  material=material, group=BALL_GROUP,
                   contype=BALL_CONTYPE, conaffinity=BALL_CONAFFINITY)
     ET.indent(tree)
     tree.write(scene_path, encoding='unicode')
@@ -59,9 +68,10 @@ def parse_args(argv):
     parser.add_argument('--ball', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--ball-x', type=float, default=0.3)
     parser.add_argument('--ball-y', type=float, default=0.0)
-    parser.add_argument('--ball-radius', type=float, default=0.021335)
+    parser.add_argument('--ball-radius', type=float, default=0.02135)
     parser.add_argument('--ball-mass', type=float, default=0.0459)
     parser.add_argument('--sensor-config')
+    parser.add_argument('--material-config')
     parser.add_argument('--imu-enabled', action='store_true')
     parser.add_argument('--adc-enabled', action='store_true')
     return parser.parse_known_args(argv)
@@ -84,6 +94,8 @@ def main(args=None):
                             options.ball_radius, options.ball_mass)
 
         bridge.build_model = build_model_with_ball
+    from pinky_soccer_sim.materials import install_mujoco as install_materials, load_materials
+    install_materials(bridge, load_materials(options.material_config))
     bridge.main(rest)
 
 

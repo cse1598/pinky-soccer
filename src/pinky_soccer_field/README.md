@@ -11,9 +11,10 @@
 
 ## 치수 원본
 
-치수 원본은 **하나**입니다: `pinky_soccer_sim/config/rcj_field.yaml` (Codex 작업 영역, 이 패키지로 옮기지 않음).
+치수 원본은 **경기장별 하나의 YAML**입니다: 기존 `pinky_soccer_sim/config/rcj_field.yaml`, 제2 경기장 `pinky_soccer_sim/config/hardboard_field.yaml` (이 패키지로 옮기지 않음). 새 경기장은 내부 1820×1220mm·외벽 200mm이며, 같은 YAML을 시뮬레이션 생성기·기하·표시·지도 생성기가 읽습니다.
 
 - 노드는 `field_spec` 파라미터(YAML 경로)로 읽습니다. 비어 있으면 `PINKY_SOCCER_FIELD_SPEC` 환경 변수, 그다음 설치된 `pinky_soccer_sim` share의 `config/rcj_field.yaml`을 씁니다.
+- `pinky_soccer_viz`의 `sim_field.launch.py`/`sim_viz.launch.py`는 `field:=rcj|hardboard`로 물리 월드와 기하/표시 YAML을 함께 선택합니다. 별도 실행 노드와 지도 CLI는 `field_spec`/`--spec`에 선택한 YAML 경로를 지정합니다.
 - 로봇처럼 `pinky_soccer_sim`이 설치되지 않은 곳에서는 YAML 사본 경로를 `field_spec`으로 넘기세요.
 - `load_spec()`은 sim 생성기의 `load_spec()`과 같은 검증 규칙을 따릅니다. sim 패키지가 있으면 테스트가 두 로더의 판정이 같은지 확인합니다.
 - 장기적으로 YAML과 `load_spec()`을 이 패키지로 옮기고 sim 생성기가 여기서 import하는 편이 깔끔합니다. 사용자와 Codex의 동의 후 별도 작업입니다 (`.agents/STATUS.md` 메시지 참고).

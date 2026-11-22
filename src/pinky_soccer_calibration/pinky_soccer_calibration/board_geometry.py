@@ -29,9 +29,12 @@ class Board:
         result *= self.square_mm / 1000
         return result
 
-    def detect(self, gray):
+    def detect(self, gray, fast=False):
+        flags = cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_NORMALIZE_IMAGE
+        if fast:
+            flags |= cv2.CALIB_CB_FAST_CHECK
         ok, corners = cv2.findChessboardCorners(
-            gray, self.pattern, cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_NORMALIZE_IMAGE)
+            gray, self.pattern, flags)
         if not ok:
             return None
         return cv2.cornerSubPix(gray, corners, (5, 5), (-1, -1),
@@ -55,7 +58,7 @@ def matrix_rpy(r):
 MECHANICAL_FROM_OPTICAL = rpy_matrix(-math.pi/2, 0, -math.pi/2)
 
 
-def floor_pose(points, pixels, k, d):
+def floor_pose(points, pixels, k, d, allow_normal_flip=False):
     """Invert planar PnP; reject below-floor and ambiguous positive-depth solutions."""
     points = np.asarray(points, dtype=np.float64)
     pixels = np.asarray(pixels, dtype=np.float64).reshape(-1, 1, 2)
@@ -63,19 +66,26 @@ def floor_pose(points, pixels, k, d):
             or not np.isfinite(pixels).all() or not np.isfinite(k).all()
             or not np.isfinite(d).all() or k[0, 0] <= 0 or k[1, 1] <= 0):
         raise ValueError('유효한 내부 보정값과 보드 코너가 필요합니다.')
-    ok, rotations, translations, _ = cv2.solvePnPGeneric(
-        points, pixels, k, d, flags=cv2.SOLVEPNP_IPPE)
     candidates = []
-    if ok:
+    models = [points]
+    if allow_normal_flip:
+        reflected = points.copy()
+        reflected[:, 1] *= -1
+        models.append(reflected)
+    for model in models:
+        ok, rotations, translations, _ = cv2.solvePnPGeneric(
+            model, pixels, k, d, flags=cv2.SOLVEPNP_IPPE)
+        if not ok:
+            continue
         for rv, tv in zip(rotations, translations):
             camera_from_board, _ = cv2.Rodrigues(rv)
-            if np.any((points @ camera_from_board.T + tv.reshape(1, 3))[:, 2] <= 0):
+            if np.any((model @ camera_from_board.T + tv.reshape(1, 3))[:, 2] <= 0):
                 continue
             board_from_camera = camera_from_board.T
             position = -board_from_camera @ tv.reshape(3)
             if not .01 < position[2] < 3.:
                 continue
-            projected, _ = cv2.projectPoints(points, rv, tv, k, d)
+            projected, _ = cv2.projectPoints(model, rv, tv, k, d)
             rms = float(np.sqrt(np.mean(np.sum((pixels-projected)**2, axis=2))))
             mechanical = board_from_camera @ MECHANICAL_FROM_OPTICAL.T
             candidates.append((rms, position, mechanical))

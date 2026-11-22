@@ -1,5 +1,18 @@
 # pinky_soccer_viz
 
+실물·Gazebo·MuJoCo 경기 launch는 기본 RViz와 `game_camera_view`를 함께 엽니다.
+카메라 창은 원본/실제 공 검출 표시/HSV 마스크를 동기화해 보여주고 수신 중단도 표시합니다.
+`headless:=true`이면 GUI를 열지 않습니다. 자세한 사용법은 [GAMEPLAY.md](GAMEPLAY.md).
+
+세 환경 공통 실행은 [GAMEPLAY.md](GAMEPLAY.md)를 참고합니다.
+`ros2 launch pinky_soccer_viz game.launch.py mode:=real|gazebo|mujoco field:=hardboard`
+에서 mode 하나를 선택하면 전체 경기 프로그램·RViz가 실행되고 `/game/playing`을 기다립니다.
+실물 미보정 시험에는 `allow_uncalibrated:=true`를 추가합니다.
+
+실물 경기: [REAL_GAME.md](REAL_GAME.md). PC에서
+`ros2 launch pinky_soccer_viz real_game.launch.py field:=hardboard allow_uncalibrated:=true`
+로 공 인식·판단·저속 제어를 실행하고 `/game/playing`으로 시작/정지합니다.
+
 월드 모델 UI 두 가지와 판단 계층 전체를 띄우는 launch, 시뮬레이션 평가 도구입니다. PC 전용입니다 (로봇에 설치하지 않음).
 
 ## 실행
@@ -12,6 +25,7 @@ ros2 launch pinky_soccer_viz sim_viz.launch.py gui:=false            # 화면 �
 # 시뮬레이터 + RCJ 경기장 + 전체 판단 계층 (use_sim_time)
 ros2 launch pinky_soccer_viz sim_field.launch.py                     # MuJoCo + 뷰어 + RViz2
 ros2 launch pinky_soccer_viz sim_field.launch.py simulator:=gazebo
+ros2 launch pinky_soccer_viz sim_field.launch.py field:=hardboard     # 제2 하드보드 경기장
 ros2 launch pinky_soccer_viz sim_field.launch.py headless:=true eval_ball_truth:=true
 ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 ```
@@ -20,13 +34,14 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 |---|---|---|
 | `gui` (sim_viz) | `true` | RViz2, rqt_image_view |
 | `simulator` (sim_field) | `mujoco` | `mujoco` 또는 `gazebo` |
+| `field` (sim_field/sim_viz) | `rcj` | `rcj` 또는 `hardboard`, 물리 월드·월드 모델·두 UI가 같은 YAML 사용 |
 | `headless` (sim_field) | `false` | MuJoCo `viewer:=false` / Gazebo `gui:=false`, RViz2 끔 |
 | `eval_ball_truth` (sim_field) | `false` | MuJoCo만. 아래 평가용 브리지로 `/sim/ball_ground_truth` 발행 |
 | `ball_x`, `ball_y` (sim_field) | 0.3, 0.0 | 공 생성 위치 |
 | `our_goal_color` | `yellow` | |
 | `snapshot_dir`, `snapshot_period` | 빈 값, 0 | 탑뷰 PNG 저장(초 주기) |
 
-`sim_field.launch.py`는 `pinky_soccer_sim`의 launch를 고치지 않고 include합니다 (`world_name:=rcj_soccer.world`). 그 위에 `ball_detector`, `world_model_node`(`localization:=odom_only`), `bt_node`, `reactive_controller`, UI를 띄웁니다.
+`sim_field.launch.py`는 `pinky_soccer_sim`의 launch를 include하고 `field` 선택을 전달합니다. 그 위에 `ball_detector`, 기본 LiDAR AMCL·골색/지자기 방향 확인, `world_model_node`(TF), `bt_node`, `reactive_controller`, UI를 띄웁니다. `localization:=odom_only`로 기존 방식을 선택할 수 있습니다. 월드 모델과 두 UI의 `field_spec`도 선택한 YAML로 맞춥니다. [위치 추정](../pinky_soccer_world_model/LOCALIZATION.md)·[제2 경기장 제작 치수](../pinky_soccer_sim/HARDBOARD_FIELD.md)를 참고하세요.
 
 ## UI 표시 규칙 (두 UI 공통, `style.py`)
 
@@ -43,6 +58,7 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 - `/world_model/field_markers` (MarkerArray, `transient_local`, 시작 시 한 번)
 - `/world_model/markers` (MarkerArray, `/world_model`마다)
 - `/world_model/search_grid` (OccupancyGrid, RViz Map 표시용 복사)
+- `/world_model/search_grid_markers` (MarkerArray, 기본 RViz 히트맵). 일부 GPU의 indexed texture 셰이더 오류를 피하도록 셀별 색상 CUBE_LIST 사용. 기존 Map 토픽도 유지.
 - `rviz/soccer.rviz`: 고정 프레임 `map`, 위에서 본 직교 뷰.
 
 ### world_model_topview (OpenCV)
@@ -61,10 +77,10 @@ ros2 run pinky_soccer_viz soccer_trial --ros-args -p use_sim_time:=true -p timeo
 
 ## 테스트
 
-`colcon test --packages-select pinky_soccer_viz`: 세 공 상태의 탑뷰 렌더링, 관측 공 색, 히트맵 표시, 공분산 타원 축, 경기장·동적 마커 생성과 직렬화 (10개, flake8 포함).
+`colcon test --packages-select pinky_soccer_viz`: 세 공 상태의 탑뷰 렌더링, 관측 공 색, 히트맵 표시/마커 좌표·색상, 공분산 타원 축, 경기장·동적 마커 생성과 직렬화 (11개, flake8 포함).
 
 ## 한계
 
-- 화면이 잠긴 환경에서 개발해 RViz2·rqt 화면은 직접 보지 못했습니다. 토픽과 탑뷰 PNG로만 확인했습니다.
+- RViz2·rqt 실행 및 OpenGL 초기화, 히트맵 마커 사용 후 indexed texture 셰이더 오류 해소를 확인했습니다. 실제 경기 중 표시의 현장 시각 검증은 필요합니다.
 - 페널티 구역의 둥근 모서리는 사각형으로 그립니다.
 - 히트맵은 경기장 선 위에도 반투명으로 덮입니다.

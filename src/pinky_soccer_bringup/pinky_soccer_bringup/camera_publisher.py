@@ -2,8 +2,9 @@
 """Publish the robot's pinkylib camera directly to ROS, without Jupyter."""
 
 from pinky_soccer_bringup.camera_support import camera_info, image_messages, positive
+from pinky_soccer_bringup.frame_capture import FrameCaptureService
 import rclpy
-from rclpy.executors import ExternalShutdownException
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image
@@ -16,6 +17,7 @@ class CameraPublisher(Node):
         """Start the robot SDK lazily; camera_factory is injectable for tests."""
         super().__init__('soccer_camera', **kwargs)
         self.camera = None
+        self.capture_service = None
         try:
             width = self.declare_parameter('width', 640).value
             height = self.declare_parameter('height', 480).value
@@ -46,6 +48,7 @@ class CameraPublisher(Node):
             self.camera = camera_factory()
             self.camera.start(width=width, height=height)
             self.failures = 0
+            self.capture_service = FrameCaptureService(self, self.quality)
             self.timer = self.create_timer(1.0 / fps, self.publish_frame)
             self.get_logger().info(
                 f'Camera ready: {width}x{height}, capture limit {fps:g} Hz; '
@@ -64,6 +67,7 @@ class CameraPublisher(Node):
                 frame, stamp, self.frame_id, self.calibration, self.quality,
                 include_raw=self.raw_pub.get_subscription_count() > 0,
                 include_compressed=self.jpeg_pub.get_subscription_count() > 0)
+            self.capture_service.complete(frame, stamp, self.frame_id, self.calibration)
             self.failures = 0
         except Exception as error:
             self.failures += 1
@@ -80,6 +84,9 @@ class CameraPublisher(Node):
 
     def destroy_node(self):
         """Release the hardware on normal shutdown, capture error or partial startup."""
+        if self.capture_service is not None:
+            self.capture_service.close()
+            self.capture_service = None
         if self.camera is not None:
             camera, self.camera = self.camera, None
             try:
@@ -93,12 +100,17 @@ def main(args=None):
     """Run a dedicated robot process; no remote code execution is used."""
     rclpy.init(args=args)
     node = None
+    executor = MultiThreadedExecutor(num_threads=2)
     try:
         node = CameraPublisher()
-        rclpy.spin(node)
+        executor.add_node(node)
+        executor.spin()
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        if node is not None and node.capture_service is not None:
+            node.capture_service.close()
+        executor.shutdown()
         if node is not None:
             node.destroy_node()
         rclpy.try_shutdown()

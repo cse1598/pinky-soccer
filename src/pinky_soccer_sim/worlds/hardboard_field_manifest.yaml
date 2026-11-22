@@ -1,0 +1,33 @@
+source: User-defined four-board training field, 2026-11-21
+specification_date: '2026-11-21'
+field_id: hardboard
+playing_length: 1.66
+playing_width: 1.06
+outer_strip: 0.08
+wall_height: 0.2
+goal_width: 0.4
+goal_height: 0.07
+goal_depth: 0.05
+goal_thickness: 0.005
+ramp_base: 0.0
+ramp_rise: 0.0
+line_width: 0.015
+penalty_depth: 0.17
+penalty_width: 0.54
+penalty_radius: 0.1
+center_diameter: 0.4
+neutral_diameter: 0.007
+neutral_distance_from_end: 0.3
+wall_thickness: 0.01
+floor_thickness: 0.02
+thin_black_line: 0.002
+friction: 0.8
+arc_segments: 128
+origin: field center, floor top z=0; +X blue, -X yellow
+total_length: 1.82
+total_width: 1.22
+construction_assumptions:
+- wall/floor thickness
+- thin black line width
+- colors/lighting/friction are not measured
+generated_objects: 286

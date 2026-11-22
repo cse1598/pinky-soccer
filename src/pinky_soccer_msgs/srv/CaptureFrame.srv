@@ -1,0 +1,11 @@
+# Select exactly one response payload: "raw" (lossless BGR8) or "jpeg".
+string format "raw"
+# Wall-clock timeout, also effective when simulation /clock is paused. Range: (0, 10].
+float64 timeout_sec 3.0
+---
+bool success
+string message
+# Only the requested payload is populated; both use camera_info's acquisition header.
+sensor_msgs/Image image
+sensor_msgs/CompressedImage compressed_image
+sensor_msgs/CameraInfo camera_info

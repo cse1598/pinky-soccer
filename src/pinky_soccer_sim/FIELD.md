@@ -1,5 +1,7 @@
 # RoboCupJunior Soccer 경기장
 
+별도 하드보드 경기장(내부 1820×1220mm, 외벽 200mm)은 **[HARDBOARD_FIELD.md](HARDBOARD_FIELD.md)**를 참고하세요. 기존 RCJ는 `field:=rcj`, 제2 경기장은 `field:=hardboard`로 선택합니다. 이 문서의 기존 규격·YAML·생성물은 그대로 유지합니다.
+
 Blender/MCP 없이 `config/rcj_field.yaml`에서 치수를 읽어 Gazebo SDF와 MuJoCo MJCF를 함께 생성합니다. 공식 Submodule은 수정하지 않습니다. 규격 출처는 [Technical Specification For Soccer Fields (2026-06-03)](https://robocup-junior.github.io/soccer-rules/master/field_specification.html)이며, 사용자가 제시한 2023 도면의 주요 치수와 일치합니다. 공식 CAD 형상을 복사한 모델이 아니라 수치 규격 기반 자체 생성 모델입니다.
 
 ## 실행

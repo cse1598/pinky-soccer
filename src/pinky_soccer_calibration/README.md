@@ -1,5 +1,32 @@
 # pinky_soccer_calibration
 
+노트북 웹캠만으로 리허설하려면 **실행 옵션** `-webcam`을 사용합니다(UI에서 소스를 전환하지 않습니다).
+
+```bash
+source ~/pinky-soccer/install/setup.bash
+ros2 run pinky_soccer_calibration calibration_ui -webcam
+# 또는 launch로 실행
+ros2 launch pinky_soccer_calibration calibration_ui.launch.py webcam:=true
+```
+
+내부 보정/독립 검증 → 바닥 높이·각도 추정 → 공 인식 검토 순으로 진행합니다.
+웹캠 전용 rehearsal 프로젝트에 저장하며 핑키 프로젝트와 혼용하지 않습니다.
+장치 번호·해상도 옵션과 측정 기준은 [ROS_UI.md](ROS_UI.md)의 웹캠 절을 참고하세요.
+
+현재 ROS 보정 UI는 **JPEG 실시간 미리보기/체커 표시 + 촬영 버튼의 raw 한 프레임 서비스**를
+사용합니다. 상시 원본 구독 없이 보정용 원본 PNG·CameraInfo·Bag·CSV를 보존합니다.
+실행·서버 갱신과 저장 구조는 [ROS_UI.md](ROS_UI.md)를 참고하세요.
+
+현재 ROS 기반 올인원 UI는 **[ROS 캘리브레이션 스튜디오](ROS_UI.md)**를 사용하세요.
+**공 인식 검토** 탭은 경기용 HSV 검출·공통 거리 투영·BallFilter를 직접 사용해 공 표시와
+현재/추적 좌표·거리를 보여 줍니다. 보정이 없으면 명시한 HFOV 가정으로 추정하며 출처를 구분합니다.
+프로젝트를 새로 만들거나 기존 폴더를 열어 계속 기록할 수 있습니다. **카메라 보정** 한 탭에서 보드 설정·원본 촬영·파일 추가·사진 분류/삭제·미리보기·계산을 진행합니다.
+**측정 기록** 탭에서는 바퀴·센서의 측정 횟수/실측값 확인과 삭제·재계산을 진행합니다.
+현재 기록으로 다시 계산한 뒤 최종 `profile.yaml`을 내보내며 미완료 자료도 저장합니다.
+첫 **센서 모니터** 탭에서 배터리·IMU 자세·LiDAR 점군·초음파·IR ADC·odom·관절·카메라 상태와 원본 메시지를 기록 시작 없이 확인할 수 있습니다.
+LiDAR·초음파 거리는 범퍼 전면 바깥쪽 중앙을 기준으로 입력하여 센서 좌표로 자동 변환합니다.
+장착 보정은 바닥 보드로 높이·기울기만 추정합니다. 아래는 초기 프로토타입·CLI 안내입니다.
+
 ## 현재 상태 (2026-11-20)
 
 이 패키지는 지금까지 구현한 보정 도구를 보존한 작업 결과입니다. Jupyter 방식은 초기
@@ -251,9 +278,9 @@ ros2 topic echo /camera/camera_info --once
 
 | 다음 단계 | 사용자가 측정할 값·방법 | 적용 대상 |
 |---|---|---|
-| 카메라 외부 | `base_link` 기준으로 위치가 알려진 보드/기준점 XYZ, 여러 자세 촬영 | 자체 description wrapper의 카메라 XYZ/RPY; 광학 frame 변환 구분 |
+| 카메라 장착 | 바닥 체커보드로 높이·roll/pitch만 추정, 위치/축 등록 입력 없이 반복 촬영 | `floor_camera`·`camera_mount` 측정/통계 YAML. X/Y/yaw·전체 TF 자동 적용 없음; `ROS_UI.md` 참조 |
 | 바퀴 실측 | 좌우 지름 반복 측정, 바퀴 중심 간격; 공식 URDF·Gazebo 값과 비교 | 자체 보정 YAML; 공식 submodule 수정 없음 |
-| 오도메트리 | `/odom` 1 m 전진·후진, ±360° 각각 반복, 펜 궤적과 실제 거리·각도 입력 | 실물 bringup `wheel_radius`/`wheel_separation`; 좌우 개별 반경은 제어 지원 확인 필요 |
+| 오도메트리 | `/odom` 1 m 전후진은 범퍼 종방향 거리·좌우 편향, ±360° 회전은 누적 각도만 분리 입력/저장. 일정 곡률 가정·측정 절차는 `ROS_UI.md` 참조 | 실물 bringup `wheel_radius`/`wheel_separation`; 좌우 개별 반경은 제어 지원 확인 필요 |
 | LiDAR | 여러 방향의 평면 표적 실측 거리와 `/scan`, 장착 XYZ/방향 측정 | 자체 description/센서 설정 |
 | IMU·초음파 | 정지 반복과 알려진 회전각, 거리·방향별 표적/미검출 기록 | 자체 센서/제어 설정 |
 

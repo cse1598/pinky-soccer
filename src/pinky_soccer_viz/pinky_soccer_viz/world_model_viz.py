@@ -107,6 +107,26 @@ def ellipse_marker(f, ns, x, y, cov, rgba):
     return m
 
 
+def search_grid_markers(grid):
+    """Render probabilities without the indexed texture shader used by RViz Map."""
+    m = MarkerFactory(grid.header.frame_id).make(
+        'ball_search', Marker.CUBE_LIST, color('line', 0.35),
+        (grid.info.resolution, grid.info.resolution, 0.0005))
+    m.header = grid.header
+    m.pose.position = pt(grid.info.origin.position.x, grid.info.origin.position.y,
+                         grid.info.origin.position.z + 0.0004)
+    m.pose.orientation = grid.info.origin.orientation
+    width = grid.info.width
+    for index, value in enumerate(grid.data[:width * grid.info.height]):
+        if value < 0:
+            continue
+        probability = min(100, value) / 100.0
+        m.points.append(pt((index % width + 0.5) * grid.info.resolution,
+                           (index // width + 0.5) * grid.info.resolution))
+        m.colors.append(ColorRGBA(r=probability, g=0.0, b=1.0 - probability, a=0.35))
+    return MarkerArray(markers=[m])
+
+
 class WorldModelViz(Node):
     """Marker publisher."""
 
@@ -124,6 +144,8 @@ class WorldModelViz(Node):
         self.field_pub.publish(field_markers(self.field))
         self.pub = self.create_publisher(MarkerArray, 'world_model/markers', 10)
         self.grid_pub = self.create_publisher(OccupancyGrid, 'world_model/search_grid', 2)
+        self.grid_markers_pub = self.create_publisher(
+            MarkerArray, 'world_model/search_grid_markers', 2)
         self.goal = None
         self.truth = {}
         self.create_subscription(WorldModel, 'world_model', self.on_wm, 10)
@@ -183,7 +205,7 @@ class WorldModelViz(Node):
         else:
             alpha = style.SOLID_ALPHA if b.state == OBSERVED else style.FAINT_ALPHA
             s = f.make('ball', Marker.SPHERE, color('ball', alpha), (0.0427, 0.0427, 0.0427))
-            s.pose.position = pt(b.pose.x, b.pose.y, 0.0213)
+            s.pose.position = pt(b.pose.x, b.pose.y, 0.02135)
             out.markers.append(s)
             if b.state == ESTIMATED:
                 e = ellipse_marker(f, 'ball', b.pose.x, b.pose.y, b.covariance,
@@ -243,6 +265,7 @@ class WorldModelViz(Node):
         self.pub.publish(out)
         if wm.ball_search_grid.info.width:
             self.grid_pub.publish(wm.ball_search_grid)
+            self.grid_markers_pub.publish(search_grid_markers(wm.ball_search_grid))
 
 
 def main(args=None):

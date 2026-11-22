@@ -51,33 +51,71 @@ def transform_point2d(pose, p):
     return (pose[0] + c * p[0] - s * p[1], pose[1] + s * p[0] + c * p[1])
 
 
-def detect_color_blob(bgr, hsv_ranges, min_area=12, min_circularity=0.4):
-    """Find the largest blob within HSV ranges. Return (u, v, radius_px, area) or None.
+BLOB_SHAPE_DEFAULTS = {'min_circle_fill': .72, 'min_axis_ratio': .75,
+                       'min_color_fraction': .55, 'max_radial_error': .15}
 
-    hsv_ranges: list of ((h, s, v) low, (h, s, v) high) in OpenCV units (H 0..180).
-    """
+
+def color_mask(bgr, hsv_ranges):
+    """Return the actual HSV selection before morphological shape processing."""
     import cv2
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
-    mask = None
+    mask = np.zeros(bgr.shape[:2], np.uint8)
     for low, high in hsv_ranges:
-        part = cv2.inRange(hsv, np.array(low, np.uint8), np.array(high, np.uint8))
-        mask = part if mask is None else cv2.bitwise_or(mask, part)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        mask |= cv2.inRange(hsv, np.array(low, np.uint8), np.array(high, np.uint8))
+    return mask
+
+
+def _compact_blob(bgr, hsv_ranges, min_area=12, min_circularity=.72, *,
+                  min_circle_fill=.72, min_axis_ratio=.75,
+                  min_color_fraction=.55, max_radial_error=.15, mask=None):
+    """Select a filled, near-circular colour region; return (u,v,radius,area) or None.
+
+    Centre/radius come from the enclosing outline circle, not the colour centroid:
+    dark ball logos and highlights may move the centroid without moving the ball.
+    A square can have high circularity; enclosing-circle fill and radial residual
+    explicitly reject it. Border-cropped regions are not complete ball observations.
+    """
+    import cv2
+    raw = color_mask(bgr, hsv_ranges) if mask is None else mask
+    kernel = np.ones((3, 3), np.uint8)
+    clean = cv2.morphologyEx(raw, cv2.MORPH_OPEN, kernel)
+    clean = cv2.morphologyEx(clean, cv2.MORPH_CLOSE, kernel)
+    contours, _ = cv2.findContours(clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     best = None
     for c in contours:
         area = cv2.contourArea(c)
         if area < min_area:
             continue
+        x, y, w, h = cv2.boundingRect(c)
+        if (min(x, y) <= 0 or x+w >= bgr.shape[1] or y+h >= bgr.shape[0]
+                or min(w, h)/max(w, h) < min_axis_ratio):
+            continue
         perimeter = cv2.arcLength(c, True)
         circularity = 4 * math.pi * area / (perimeter * perimeter) if perimeter > 0 else 0
         if circularity < min_circularity:
             continue
+        (u, v), r = cv2.minEnclosingCircle(c)
+        if r <= 0 or area/(math.pi*r*r) < min_circle_fill:
+            continue
+        distances = np.linalg.norm(c.reshape(-1, 2)-[u, v], axis=1)
+        radial_error = float(np.sqrt(np.mean((distances-r)**2))/r)
+        if radial_error > max_radial_error:
+            continue
+        yy, xx = np.ogrid[y:y+h, x:x+w]
+        inside = (xx-u)**2+(yy-v)**2 <= r*r
+        fraction = np.count_nonzero(raw[y:y+h, x:x+w][inside])/np.count_nonzero(inside)
+        if fraction < min_color_fraction:
+            continue
         if best is None or area > best[3]:
-            m = cv2.moments(c)
-            (_, _), r = cv2.minEnclosingCircle(c)
-            best = (m['m10'] / m['m00'], m['m01'] / m['m00'], r, area)
+            best = (float(u), float(v), float(r), area)
     return best
+
+
+def detect_color_blob(bgr, hsv_ranges, min_area=12, min_circularity=.72, **shape):
+    """Compatibility API using the common lighting/arc detector, with one output."""
+    from .robust_ball import observe_ball
+    shape.pop('mask', None)
+    return observe_ball(bgr, hsv_ranges, min_area, min_circularity, shape).blob
 
 
 def pixel_ray(u, v, K, D=None):
@@ -91,6 +129,15 @@ def pixel_ray(u, v, K, D=None):
         x, y = (u - K[0, 2]) / K[0, 0], (v - K[1, 2]) / K[1, 1]
     d = np.array([x, y, 1.0])
     return d / np.linalg.norm(d)
+
+
+def intrinsics_from_hfov(width, height, hfov_deg):
+    """Approximate pinhole intrinsics, explicitly not a camera calibration."""
+    if width <= 0 or height <= 0 or not math.isfinite(hfov_deg) or not 1 < hfov_deg < 179:
+        raise ValueError('Positive image dimensions and HFOV between 1 and 179 required')
+    focal = width / (2 * math.tan(math.radians(hfov_deg) / 2))
+    return np.array([[focal, 0, (width - 1) / 2],
+                     [0, focal, (height - 1) / 2], [0, 0, 1]], float)
 
 
 def intersect_plane_z(origin, direction, z):

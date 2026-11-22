@@ -114,3 +114,26 @@ def test_search_grid_heat_is_visible(field):
     u, v = view.px(0.5, 0.5)
     hot = view.render(wm)[v, u].astype(int)
     assert np.abs(hot - view.background[v, u].astype(int)).sum() > 100
+
+
+def test_search_grid_markers_preserve_origin_and_unknown_cells():
+    from nav_msgs.msg import OccupancyGrid
+    from pinky_soccer_viz.world_model_viz import search_grid_markers
+    from rclpy.serialization import serialize_message
+    grid = OccupancyGrid()
+    grid.header.frame_id = 'map'
+    grid.info.width, grid.info.height, grid.info.resolution = 2, 2, 0.1
+    grid.info.origin.position.x, grid.info.origin.position.y = -0.8, -0.5
+    grid.info.origin.orientation.z, grid.info.origin.orientation.w = 0.6, 0.8
+    grid.data = [0, -1, 50, 100]
+    result = search_grid_markers(grid)
+    serialize_message(result)
+    m = result.markers[0]
+    assert m.header == grid.header
+    assert m.pose.orientation == grid.info.origin.orientation
+    assert m.pose.position.x == -0.8 and m.pose.position.y == -0.5
+    assert grid.info.origin.position.z == 0.0  # source message is not modified
+    assert len(m.points) == len(m.colors) == 3
+    assert m.points[-1].x == pytest.approx(0.15)
+    assert m.points[-1].y == pytest.approx(0.15)
+    assert m.colors[0].b == 1.0 and m.colors[-1].r == 1.0

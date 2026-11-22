@@ -22,15 +22,38 @@ ROS 2 robot soccer project using Pinky Pro
 
 각 패키지 README에 실행 방법이 있습니다.
 
+## 진행 현황 (2026-11-23)
+
+- **올인원 보정 UI:** 프로젝트 생성/저장/재열기, 측정 기록·사진 추가/분류/삭제·재계산,
+  내부/바닥 보드/바퀴 등 보정과 센서 모니터·경기 알고리즘 기반 공 검토를 제공합니다.
+  JPEG 미리보기와 원본 한 프레임 서비스 촬영을 분리했고 `-webcam` 로컬 리허설도 지원합니다.
+  [보정 실행·측정 안내](src/pinky_soccer_calibration/ROS_UI.md)
+- **경기 실행·인식:** 실물/Gazebo/MuJoCo 공통 실행, RViz와 원본/공 표시/마스크 창,
+  조명·부분 가림에 대응하는 단일 공 검출을 연결했습니다.
+  [경기 실행](src/pinky_soccer_viz/GAMEPLAY.md)
+- **자기 위치:** LiDAR 지도·AMCL에 골대 색/지자기 방향 확인을 보조로 연결했습니다.
+  실내 자기 간섭과 실제 장착·시간 동기화 검증은 남아 있습니다.
+  [위치 추정](src/pinky_soccer_world_model/LOCALIZATION.md)
+- **경기장·물성:** 제2 경기장(내부1820×1220mm/외벽200mm)·5mm 골대 판 제작 도면,
+  실측42.7mm 공과 폼 매트/고무바퀴의 공통 접촉 계산을 적용했습니다.
+  두 엔진의 낙하·구름·벽 충돌 비교를 통과했으며 재질 수치는 실측 전 초기 가정입니다.
+  [제작 도면](src/pinky_soccer_sim/HARDBOARD_FIELD.md) ·
+  [물성·재검증](src/pinky_soccer_sim/MATERIALS.md)
+- **다음 단계:** 실제 로봇의 보정·거리/접지/재질 검증과 행동 스킬 시험대/계층 개편입니다.
+  스킬 개편은 설계 논의 단계이며 이번 변경에 새 스킬 실행 코드는 포함하지 않습니다.
+
+시뮬레이션·합성 데이터·웹캠 검증은 실제 Pinky Pro의 보정 정확도나 경기 성능 검증을 대신하지 않습니다.
+원본 ROS Bag·사진·개별 보정 프로젝트는 로컬에 보존하고 git에서 제외합니다.
+
 카메라 내부 보정은 [pinky_soccer_calibration/README.md](src/pinky_soccer_calibration/README.md)를 따릅니다.
 
-RCJ 규격 축구 경기장은 두 시뮬레이터에서 `world_name:=rcj_soccer.world`로 실행합니다. [경기장 안내](src/pinky_soccer_sim/FIELD.md)를 참고하세요.
+두 시뮬레이터에서 `field:=rcj`(기존 RCJ) 또는 `field:=hardboard`(제2 경기장, 내부 1820×1220mm·외벽 200mm)로 선택합니다. [기존 경기장](src/pinky_soccer_sim/FIELD.md)·[하드보드 경기장 제작 치수와 실행](src/pinky_soccer_sim/HARDBOARD_FIELD.md)을 참고하세요. 판단/표시 통합 launch도 같은 `field` 옵션을 사용합니다.
 ROS 토픽 기반 기록·검증 도구와 초기 [Jupyter 보정 프로토타입](src/pinky_soccer_calibration/WORKBENCH.md)을 포함합니다.
 자체 `pinky_soccer_bringup`에 로봇에서 직접 실행하는 카메라 발행 노드와 선택형 IMU·초음파·IR 구성을 추가했습니다. 실행 방법은 [bringup README](src/pinky_soccer_bringup/README.md)를 참고합니다.
-PC 보정·YOLO와의 연결은 후속 작업이며 Jupyter 방식의 추가 개발은 중지했습니다. 신규 센서 실행 구성의 실물 검증은 아직 필요합니다.
+PC 보정 UI는 ROS 토픽/서비스와 연결했으며 YOLO 도입은 후속 작업입니다. Jupyter 방식의 추가 개발은 중지했습니다. 신규 센서의 실물 정확도 검증은 아직 필요합니다.
 
 Gazebo와 MuJoCo도 실물 기준 카메라·IMU·초음파·배터리 인터페이스를 제공합니다. IR은 거리 검출을 제공하며 ADC 출력에는 실측 보정표가 필요합니다. 공통 실행 옵션과 환경 간 점검 명령은 [시뮬레이션 센서 README](src/pinky_soccer_sim/README.md#실물과-공통인-센서-인터페이스)를 참고합니다.
-체커보드 기준은 9×6 내부 코너, 사용자 확인 한 칸 30 mm입니다. 실제 보드 촬영·보정 정확도 검증은 아직 진행하지 않았습니다.
+체커보드 내부 코너 가로/세로 수와 실측 한 칸 길이는 UI에서 입력합니다. 초기 사용자 기준은 9×6·30mm이며, 웹캠 리허설 결과를 로봇의 실제 보정값으로 사용하지 않습니다.
 
 ## 빌드
 

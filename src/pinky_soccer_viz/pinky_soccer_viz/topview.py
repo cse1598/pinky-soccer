@@ -137,7 +137,7 @@ class TopView:
 
     def _draw_ball(self, img, obj):
         x, y = obj.pose.x, obj.pose.y
-        r = max(3, self.m(0.0213))
+        r = max(3, self.m(0.02135))
         if obj.state == OBSERVED:
             cv2.circle(img, self.px(x, y), r, bgr('ball'), -1, cv2.LINE_AA)
         elif obj.state == ESTIMATED:

@@ -23,6 +23,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from pinky_soccer_bringup.calibration_profile import arguments as profile_arguments, configure_urdf
 from pinky_soccer_sim import sensor_launch
+from pinky_soccer_sim.field_selection import selected_world
 from pinky_soccer_sim.sensor_model import load_config
 import yaml
 
@@ -34,6 +35,10 @@ def lc(name, context):
 def resolve_world(context):
     """Return the world path; same rules as the official MuJoCo launch."""
     explicit = lc('world', context)
+    selected = selected_world(LaunchConfiguration('field', default='').perform(context),
+                              explicit, lc('world_name', context))
+    if selected is not None:
+        return selected
     if explicit:
         return Path(explicit).expanduser()
     name = lc('world_name', context)
@@ -81,6 +86,11 @@ def setup(context):
                               / 'config/mujoco.yaml').read_text())
     physics['camera'].update({key: cfg['camera'][key] for key in
                               ('width', 'height', 'fps', 'horizontal_fov')})
+    from pinky_soccer_sim.materials import load_materials
+    material_path = lc('material_config', context)
+    materials = load_materials(material_path)
+    physics['physics']['timestep'] = materials['timestep']
+    args += ['--material-config', material_path]
     physics_path = model_dir / 'physics.yaml'
     physics_path.write_text(yaml.safe_dump(physics))
     args += ['--physics-config', str(physics_path), '--sensor-config', sensor_path]
@@ -121,6 +131,10 @@ def generate_launch_description():
         DeclareLaunchArgument('use_gpu', default_value='false'),
         DeclareLaunchArgument('viewer', default_value='true'),
         DeclareLaunchArgument('camera', default_value='true'),
+        DeclareLaunchArgument('material_config', default_value=str(
+            Path(get_package_share_directory('pinky_soccer_sim'))/'config/materials.yaml')),
+        DeclareLaunchArgument('field', default_value='', choices=['', 'rcj', 'hardboard'],
+                              description='rcj|hardboard; empty preserves world/world_name'),
         DeclareLaunchArgument(
             'world_name', default_value='empty.world',
             description='File in pinky_gz_sim/worlds or *.yaml in pinky_mujoco/worlds'),
@@ -133,7 +147,7 @@ def generate_launch_description():
         DeclareLaunchArgument('spawn_ball', default_value='true'),
         DeclareLaunchArgument('ball_x', default_value='0.3'),
         DeclareLaunchArgument('ball_y', default_value='0.0'),
-        DeclareLaunchArgument('ball_radius', default_value='0.021335'),
+        DeclareLaunchArgument('ball_radius', default_value='0.02135'),
         DeclareLaunchArgument('ball_mass', default_value='0.0459'),
         DeclareLaunchArgument('model_dir', default_value=os.environ.get(
             'PINKY_SOCCER_MODEL_DIR', str(Path.home() / '.cache' / 'pinky_soccer_mujoco'))),

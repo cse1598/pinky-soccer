@@ -43,10 +43,43 @@ def test_ball_collides_with_floor_and_robot_masks(tmp_path):
 
 
 def test_ball_inertia_is_solid_sphere(tmp_path):
-    path = add_ball(write_scene(tmp_path), radius=0.021335, mass=0.0459)
+    path = add_ball(write_scene(tmp_path), radius=0.02135, mass=0.0459)
     inertial = ET.parse(path).getroot().find(".//body[@name='soccer_ball']/inertial")
-    expected = 2 * 0.0459 * 0.021335 ** 2 / 5
+    expected = 2 * 0.0459 * 0.02135 ** 2 / 5
     assert [float(v) for v in inertial.get('diaginertia').split()] == pytest.approx([expected] * 3)
+
+
+def test_measured_diameter_matches_gazebo_and_perception(tmp_path):
+    """Keep the user-measured 42.7 mm physical/visual and camera plane consistent."""
+    import importlib.util
+    from pathlib import Path
+
+    from ament_index_python.packages import get_package_share_directory
+    import yaml
+
+    # Perception is optional when only the simulator package is installed.
+    BallFilter = pytest.importorskip('pinky_soccer_world_model.ball_filter').BallFilter
+    radius = .0427/2
+    scene = ET.parse(add_ball(write_scene(tmp_path))).getroot()
+    geom = scene.find(".//geom[@name='soccer_ball_geom']")
+    assert float(geom.get('size')) == pytest.approx(radius)
+    assert parse_args([])[0].ball_radius == pytest.approx(radius)
+    material = scene.find("asset/material[@name='soccer_ball_material']")
+    rgba = [float(v) for v in material.get('rgba').split()]
+    assert rgba == pytest.approx([1, .30, 0, 1])
+    path = Path(__file__).parents[1]/'launch/gazebo_soccer.launch.py'
+    spec = importlib.util.spec_from_file_location('ball_sdf_launch', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    sdf = ET.fromstring(module.BALL_SDF.format(name='ball', mass=.0459, radius=radius,
+                                              inertia=2*.0459*radius**2/5))
+    assert all(float(e.text) == pytest.approx(radius) for e in sdf.findall('.//sphere/radius'))
+    assert [float(v) for v in sdf.find('.//diffuse').text.split()] == pytest.approx(rgba)
+    cfg = Path(get_package_share_directory('pinky_soccer_world_model'))/'config'
+    for name, node in [('ball_detector.yaml', 'ball_detector'), ('world_model.yaml', 'world_model_node')]:
+        data = yaml.safe_load((cfg/name).read_text())[node]['ros__parameters']
+        assert data['ball_radius'] == pytest.approx(radius)
+    assert BallFilter().radius == pytest.approx(radius)
 
 
 @pytest.mark.parametrize('radius, mass', [(0, 0.03), (0.02, 0), (-1, 1)])

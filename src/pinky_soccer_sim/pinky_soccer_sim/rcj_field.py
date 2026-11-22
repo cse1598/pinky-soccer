@@ -5,6 +5,7 @@ import argparse
 import copy
 import math
 from pathlib import Path
+import re
 import struct
 import xml.etree.ElementTree as ET
 
@@ -26,11 +27,20 @@ def vector(values):
 def load_spec(path):
     """Reject impossible geometry instead of silently generating overlapping goals."""
     cfg = yaml.safe_load(Path(path).read_text())
+    if not isinstance(cfg, dict):
+        raise ValueError('Field specification must be a mapping')
+    if (not isinstance(cfg.get('field_id', 'rcj'), str)
+            or not re.fullmatch(r'[a-z][a-z0-9_]*', cfg.get('field_id', 'rcj'))):
+        raise ValueError('Invalid field_id')
     for key, value in cfg.items():
-        if key in ('source', 'specification_date'):
+        if key in ('source', 'specification_date', 'field_id'):
             continue
-        if not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+        zero_allowed = key in ('ramp_base', 'ramp_rise')
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or value < 0 or (value == 0 and not zero_allowed)):
             raise ValueError(f'Invalid field setting: {key}')
+    if (cfg['ramp_base'] == 0) != (cfg['ramp_rise'] == 0):
+        raise ValueError('Disable ramps with both ramp_base=0 and ramp_rise=0')
     if (cfg['goal_width'] >= cfg['playing_width'] or cfg['goal_depth'] >= cfg['outer_strip']
             or cfg['ramp_base'] > cfg['outer_strip']
             or cfg['penalty_radius'] >= cfg['penalty_depth']
@@ -74,6 +84,20 @@ def scene(cfg):
     goal_half = cfg['goal_width']/2
     for sign, color, name in [(1, BLUE, 'blue'), (-1, YELLOW, 'yellow')]:
         front, depth, gh = length/2, cfg['goal_depth'], cfg['goal_height']
+        if 'goal_thickness' in cfg:
+            t = cfg['goal_thickness']
+            # Back fits between full-depth side panels; roof sits on their top edges.
+            box(f'{name}_goal_back', [sign*(front+depth+t/2), 0, gh/2],
+                [t, cfg['goal_width'], gh], color)
+            for side in (-1, 1):
+                box(f'{name}_goal_side_{side}',
+                    [sign*(front+(depth+t)/2), side*(goal_half+t/2), gh/2],
+                    [depth+t, t, gh], color)
+            box(f'{name}_goal_roof', [sign*(front+(depth+t)/2), 0, gh+t/2],
+                [depth+t, cfg['goal_width']+2*t, t], color)
+            box(f'{name}_goal_floor', [sign*(front+depth/2), 0, .00015],
+                [depth, cfg['goal_width'], .0001], color, False)
+            continue
         box(f'{name}_goal_back', [sign*(front+depth+wall/2), 0, gh/2],
             [wall, cfg['goal_width']+2*wall, gh], color)
         for side in (-1, 1):
@@ -95,7 +119,7 @@ def scene(cfg):
         items.append({'name': name, 'kind': 'mesh', 'vertices': vertices, 'pos': [0, 0, 0],
                       'color': GREEN, 'collision': True, 'yaw': 0})
 
-    for sign in (-1, 1):
+    for sign in ((-1, 1) if ramp > 0 else ()):
         wedge(f'side_ramp_{sign}',
               [(-hx, sign*hy), (hx, sign*hy),
                (hx-ramp, sign*(hy-ramp)), (-hx+ramp, sign*(hy-ramp))],
@@ -157,11 +181,14 @@ def generate(spec, output):
     cfg = load_spec(spec)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    meshes = output/'rcj_meshes'
-    meshes.mkdir(exist_ok=True)
+    field_id = cfg.get('field_id', 'rcj')
+    world_name, model_name = f'{field_id}_soccer', f'{field_id}_field'
+    mesh_dir = f'{field_id}_meshes'
     items = scene(cfg)
+    if any(i['kind'] == 'mesh' for i in items):
+        (output/mesh_dir).mkdir(exist_ok=True)
     sdf = ET.Element('sdf', version='1.9')
-    world = ET.SubElement(sdf, 'world', name='rcj_soccer')
+    world = ET.SubElement(sdf, 'world', name=world_name)
     ET.SubElement(world, 'gravity').text = '0 0 -9.81'
     for filename, name in [('physics', 'Physics'), ('user-commands', 'UserCommands'),
                            ('scene-broadcaster', 'SceneBroadcaster'), ('imu', 'Imu')]:
@@ -175,19 +202,19 @@ def generate(spec, output):
     ET.SubElement(light, 'direction').text = '-0.3 0.2 -1'
     ET.SubElement(light, 'diffuse').text = '.85 .85 .85 1'
     ET.SubElement(light, 'cast_shadows').text = 'false'
-    model = ET.SubElement(world, 'model', name='rcj_field')
+    model = ET.SubElement(world, 'model', name=model_name)
     ET.SubElement(model, 'static').text = 'true'
     link = ET.SubElement(model, 'link', name='field')
-    mjcf = ET.Element('mujoco', model='rcj_field')
+    mjcf = ET.Element('mujoco', model=model_name)
     ET.SubElement(mjcf, 'compiler', angle='radian')
     asset = ET.SubElement(mjcf, 'asset')
     body = ET.SubElement(mjcf, 'worldbody')
     for item in items:
         mesh_file = None
         if item['kind'] == 'mesh':
-            mesh_file = f'rcj_meshes/{item["name"]}.stl'
+            mesh_file = f'{mesh_dir}/{item["name"]}.stl'
             stl(output/mesh_file, item['vertices'])
-            ET.SubElement(asset, 'mesh', name=f'rcj_{item["name"]}', file=mesh_file)
+            ET.SubElement(asset, 'mesh', name=f'{field_id}_{item["name"]}', file=mesh_file)
         for kind in (['collision', 'visual'] if item['collision'] else ['visual']):
             element = ET.SubElement(link, kind, name=item['name'])
             ET.SubElement(element, 'pose').text = vector([*item['pos'], 0, 0, item['yaw']])
@@ -210,7 +237,7 @@ def generate(spec, output):
                 ode = ET.SubElement(ET.SubElement(surface, 'friction'), 'ode')
                 ET.SubElement(ode, 'mu').text = str(cfg['friction'])
                 ET.SubElement(ode, 'mu2').text = str(cfg['friction'])
-        attrs = {'name': f'rcj_{item["name"]}', 'pos': vector(item['pos']),
+        attrs = {'name': f'{field_id}_{item["name"]}', 'pos': vector(item['pos']),
                  'euler': vector([0, 0, item['yaw']]), 'rgba': vector(item['color']),
                  'group': '0' if item['collision'] else '2',
                  'contype': '1' if item['collision'] else '0',
@@ -221,9 +248,9 @@ def generate(spec, output):
         elif item['kind'] == 'cylinder':
             attrs.update(type='cylinder', size=vector([item['radius'], item['length']/2]))
         else:
-            attrs.update(type='mesh', mesh=f'rcj_{item["name"]}')
+            attrs.update(type='mesh', mesh=f'{field_id}_{item["name"]}')
         ET.SubElement(body, 'geom', **attrs)
-    for root, name in [(sdf, 'rcj_soccer.world'), (mjcf, 'rcj_soccer.mjcf')]:
+    for root, name in [(sdf, world_name+'.world'), (mjcf, world_name+'.mjcf')]:
         ET.indent(root)
         ET.ElementTree(root).write(output/name, encoding='unicode', xml_declaration=True)
     manifest = dict(cfg, origin='field center, floor top z=0; +X blue, -X yellow',
@@ -232,8 +259,9 @@ def generate(spec, output):
                     construction_assumptions=['wall/floor thickness', 'thin black line width',
                                               'colors/lighting/friction are not measured'],
                     generated_objects=len(items))
-    (output/'rcj_field_manifest.yaml').write_text(yaml.safe_dump(manifest, sort_keys=False))
-    return output/'rcj_soccer.world'
+    manifest_path = output/f'{field_id}_field_manifest.yaml'
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
+    return output/(world_name+'.world')
 
 
 def install_mujoco(bridge):
@@ -241,13 +269,16 @@ def install_mujoco(bridge):
     original = bridge.build_model
 
     def build(share, output_dir, urdf=None, config_file=None, world=None, simple_render=False):
-        is_rcj = world and Path(world).name == 'rcj_soccer.world'
-        if not is_rcj:
+        is_field = world and Path(world).name.endswith('_soccer.world')
+        if not is_field:
             return original(share, output_dir, urdf, config_file, world, simple_render)
         world = Path(world).resolve()
         root_world = ET.parse(world).getroot()
-        if root_world.find("world[@name='rcj_soccer']/model[@name='rcj_field']") is None:
-            raise ValueError('Expected generated RCJ world; filename alone is insufficient')
+        field_id = world.stem.removesuffix('_soccer')
+        if root_world.find(f"world[@name='{world.stem}']/model[@name='{field_id}_field']") is None:
+            if field_id in ('rcj', 'hardboard'):
+                raise ValueError('Expected generated soccer world; filename alone is insufficient')
+            return original(share, output_dir, urdf, config_file, world, simple_render)
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
         empty = output/'rcj_empty_base.world'

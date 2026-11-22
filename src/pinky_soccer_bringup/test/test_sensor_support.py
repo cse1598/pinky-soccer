@@ -122,7 +122,8 @@ def test_sensor_launch_hardware_gates(hardware, camera, imu, adc, expected):
     """Description-only mode must never start hardware, even with sensor flags true."""
     context = LaunchContext()
     context.launch_configurations.update(
-        hardware=hardware, camera_enabled=camera, imu_enabled=imu, adc_enabled=adc)
+        hardware=hardware, camera_enabled=camera, imu_enabled=imu, adc_enabled=adc,
+        imu_magnetic_enabled='true')
     nodes = [entity for entity in generate_sensor_description().entities
              if isinstance(entity, Node)]
     assert sum(node.condition.evaluate(context) for node in nodes) == expected
@@ -140,3 +141,17 @@ def test_robot_launch_forwards_all_sensor_arguments():
                if 'camera_enabled' in dict(include.launch_arguments)]
     assert len(sensors) == 1
     assert set(SENSOR_ARGUMENTS) <= dict(sensors[0].launch_arguments).keys()
+
+
+@pytest.mark.parametrize('magnetic', ['true', 'false'])
+def test_magnetic_and_official_driver_never_run_together(magnetic):
+    context = LaunchContext()
+    context.launch_configurations.update(hardware='true', imu_enabled='true',
+                                         imu_magnetic_enabled=magnetic)
+    nodes = {n.node_executable: n for n in generate_sensor_description().entities
+             if isinstance(n, Node)}
+    assert nodes['bno055_magnetic'].condition.evaluate(context) == (magnetic == 'true')
+    official = next(n for n in generate_sensor_description().entities
+                    if isinstance(n, Node) and n.node_executable == 'main_node'
+                    and n.node_package == 'pinky_imu_bno055')
+    assert official.condition.evaluate(context) == (magnetic == 'false')

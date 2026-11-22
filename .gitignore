@@ -5,6 +5,8 @@ log/
 
 # Local hardware experiment bags, images and reports
 /calibration_data/
+/calibration_results/
+/ros_*/
 
 # Python
 __pycache__/

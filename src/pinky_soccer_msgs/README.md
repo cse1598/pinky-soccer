@@ -16,6 +16,10 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 
 ## 설계 메모
 
+- 카메라 단발 요청 서비스 `/camera/capture_frame`: `pinky_soccer_msgs/srv/CaptureFrame`.
+  `format`은 raw/jpeg, `timeout_sec`은0초 초과~10초 이하(기본3초). 응답의 success/message와
+  선택된 image 또는 compressed_image 및 같은 촬영의 camera_info를 반환합니다.
+  기존 판단 메시지 필드는 변경하지 않습니다. 사용법은 bringup의 `CAMERA_CAPTURE.md` 참고.
 - 공분산은 위치 불확실성을 직접 담아, 행동 트리의 `BallKnown`이 시간 대신 "최대 표준편차 ≤ `max_sigma`"로 판단합니다.
 - `velocity`는 `Vector3`이지만 z는 쓰지 않습니다.
 - `self`는 Python·C++ 모두에서 필드 이름으로 문제없이 생성됨을 확인했습니다 (`msg.self`).

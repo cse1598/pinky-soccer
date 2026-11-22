@@ -1,0 +1,7 @@
+goal_heading:
+  ros__parameters:
+    # OpenCV HSV; tune to actual coloured panels and lighting.
+    blue_low: [95, 90, 45]
+    blue_high: [135, 255, 255]
+    yellow_low: [20, 90, 60]
+    yellow_high: [38, 255, 255]

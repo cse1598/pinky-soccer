@@ -126,7 +126,7 @@ def test_detect_orange_blob():
     pytest.importorskip('cv2')
     import cv2
     img = np.full((120, 160, 3), (40, 140, 40), np.uint8)       # green carpet (BGR)
-    cv2.circle(img, (100, 70), 8, (0, 115, 255), -1)             # rgba 1 0.45 0 -> BGR
+    cv2.circle(img, (100, 70), 8, (0, 77, 255), -1)              # rgba 1 0.30 0 -> BGR
     blob = detect_color_blob(img, [((5, 120, 80), (25, 255, 255))])
     assert blob is not None
     assert blob[0] == pytest.approx(100, abs=1) and blob[1] == pytest.approx(70, abs=1)

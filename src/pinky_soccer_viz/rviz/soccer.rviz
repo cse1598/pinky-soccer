@@ -9,8 +9,8 @@ Visualization Manager:
       Enabled: false
       Value: false
     - Class: rviz_default_plugins/Map
-      Name: Ball search grid
-      Enabled: true
+      Name: Ball search grid (legacy texture)
+      Enabled: false
       Topic:
         Value: /world_model/search_grid
         Durability Policy: Volatile
@@ -18,6 +18,14 @@ Visualization Manager:
       Color Scheme: costmap
       Alpha: 0.4
       Draw Behind: false
+      Value: false
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Ball search grid
+      Enabled: true
+      Topic:
+        Value: /world_model/search_grid_markers
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Name: Field
