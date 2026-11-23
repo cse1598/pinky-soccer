@@ -1,0 +1,9 @@
+name: play_score_open
+description: Striker playbook, no opponent. Ball at the centre, robot in its own half facing away.
+robot: [-0.5, 0.25, 180]
+ball: [0.0, 0.0]
+prime_ball: false
+task: {behavior: striker}
+duration: 60
+plot_full: true
+expect: {goal: scored, max_time: 45}

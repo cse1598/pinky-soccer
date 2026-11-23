@@ -1,0 +1,9 @@
+name: play_curve_dribble
+description: Static opponent between the ball and the goal; the striker must dribble around it and score.
+robot: [-0.2, 0.0, 0]
+ball: [-0.1, 0.0]
+opponents: [{pos: [0.35, 0.0], theta_deg: 180}]
+task: {behavior: striker}
+duration: 60
+plot_full: true
+expect: {goal: scored, max_time: 50}

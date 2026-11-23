@@ -1,0 +1,8 @@
+name: play_defend
+description: Opponent shot - ball rolling at our goal at 1.0 m/s; the striker defends, then plays on.
+robot: [-0.55, 0.1, -60]
+ball: {pos: [0.3, -0.15], vel: [-1.0, 0.1]}
+task: {behavior: striker}
+duration: 8
+plot_full: true
+expect: {no_concede: true}

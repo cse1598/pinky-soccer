@@ -1,0 +1,7 @@
+name: chargeshot_strength
+description: Open-field shot with a 3 cm run-up (weak); compare ball speed with chargeshot_goal (8 cm).
+robot: [-0.2, 0.0, 0]
+ball: [0.0, 0.0]
+task: {skill: ChargeShot, args: {aim: [0.8, 0.0], backoff: 0.03}}
+duration: 10
+expect: {status: SUCCESS, max_time: 6, settle: 1.5}

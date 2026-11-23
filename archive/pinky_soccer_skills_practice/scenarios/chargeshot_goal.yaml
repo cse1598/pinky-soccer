@@ -1,0 +1,7 @@
+name: chargeshot_goal
+description: Ball 12 cm in front of the opponent goal line, robot off to the side; align, back off 8 cm and shoot it in.
+robot: [0.45, 0.2, 0]
+ball: [0.71, 0.05]
+task: {skill: ChargeShot, args: {aim: opp_goal, backoff: 0.08}}
+duration: 14
+expect: {max_time: 8, min_ball_speed: 0.2, goal: scored, settle: 2.0}

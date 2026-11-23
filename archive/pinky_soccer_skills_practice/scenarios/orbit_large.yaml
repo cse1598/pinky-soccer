@@ -1,0 +1,7 @@
+name: orbit_large
+description: At the ball facing +X; re-orient by 150 degrees around the ball without pushing it.
+robot: [-0.063, 0.0, 0]
+ball: [0.0, 0.0]
+task: {skill: OrbitBall, args: {heading_deg: 150}}
+duration: 12
+expect: {status: SUCCESS, max_time: 6, max_ball_moved: 0.03, max_ball_offset: 0.025, max_aim_err_deg: 6}

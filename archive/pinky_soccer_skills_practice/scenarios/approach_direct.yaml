@@ -1,0 +1,7 @@
+name: approach_direct
+description: Ball straight ahead-left; stop 3 cm in front of it facing the opponent goal.
+robot: [-0.4, -0.2, 0]
+ball: [0.0, 0.1]
+task: {skill: ApproachBall, args: {aim: opp_goal, gap: 0.03}}
+duration: 10
+expect: {status: SUCCESS, max_time: 5, max_ball_moved: 0.01, max_ball_offset: 0.025, max_aim_err_deg: 6}

@@ -1,0 +1,7 @@
+name: block_shot
+description: Ball rolling towards our (yellow, -X) goal at 1.0 m/s; defender in front of the goal intercepts it on its path.
+robot: [-0.62, 0.15, -90]
+ball: {pos: [0.3, -0.15], vel: [-1.0, 0.1]}
+task: {skill: BlockShot}
+duration: 5
+expect: {no_concede: true}

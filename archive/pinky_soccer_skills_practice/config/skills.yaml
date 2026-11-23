@@ -1,0 +1,20 @@
+# Skill parameters. Every key has a code default in pinky_soccer_skills/params.py (with the
+# source of each value); this file only lists what is commonly tuned. Values marked
+# "bench" were chosen with skill_bench sweeps in MuJoCo, others are assumptions to measure.
+robot:
+  max_lin: 0.25          # [m/s] launch max_lin overrides (real robot default 0.08)
+  max_ang: 1.5           # [rad/s] official MuJoCo control cap
+drive:
+  k_alpha: 5.0           # bench
+  k_beta: -2.0           # bench
+ball_model:
+  roll_decel: 0.35       # [m/s^2] = sim materials ball_floor; MEASURE on the real mat
+  us_contact_range: 0.022  # [m] ultrasonic reading with the ball at the bumper (sim); MEASURE
+dribble:
+  mode: hybrid           # tap | push | hybrid (bench: hybrid = speed with periodic sightings)
+  tap_speed: 0.25
+  recheck_period: 0.9     # bench: 1.5+ loses the ball sideways
+shot:
+  strike_accel: 0.4      # [m/s^2] run-up acceleration -> strength = backoff distance
+playbook:
+  shot_range: 0.20       # [m] from the goal line; follows from roll_decel and max_lin

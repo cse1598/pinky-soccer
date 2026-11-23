@@ -1,0 +1,7 @@
+name: orbit_small
+description: At the ball facing +X; re-orient by 40 degrees (reverse out and re-enter expected).
+robot: [-0.063, 0.0, 0]
+ball: [0.0, 0.0]
+task: {skill: OrbitBall, args: {heading_deg: 40}}
+duration: 10
+expect: {status: SUCCESS, max_time: 4.5, max_ball_moved: 0.02, max_ball_offset: 0.025, max_aim_err_deg: 6}

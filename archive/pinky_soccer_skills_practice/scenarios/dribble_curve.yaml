@@ -1,0 +1,7 @@
+name: dribble_curve
+description: Ball at the bumper; dribble along a bent path (two 45 degree turns).
+robot: [-0.663, -0.3, 0]
+ball: [-0.6, -0.3]
+task: {skill: Dribble, args: {path: [[-0.6, -0.3], [-0.2, -0.3], [0.1, 0.0], [0.5, 0.0]]}}
+duration: 25
+expect: {status: SUCCESS, max_time: 14, max_ball_path_dev: 0.08, max_robot_ball_dist: 0.35}

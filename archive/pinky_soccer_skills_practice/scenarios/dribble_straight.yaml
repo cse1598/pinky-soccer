@@ -1,0 +1,7 @@
+name: dribble_straight
+description: Ball at the bumper; tap-dribble 1.0 m along +X.
+robot: [-0.563, 0.0, 0]
+ball: [-0.5, 0.0]
+task: {skill: Dribble, args: {path: [[-0.5, 0.0], [0.5, 0.0]]}}
+duration: 20
+expect: {status: SUCCESS, max_time: 9, max_ball_path_dev: 0.06, max_robot_ball_dist: 0.25}

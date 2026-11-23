@@ -1,0 +1,7 @@
+name: recover_contact
+description: Ball hidden in the blind zone right at the bumper after a turn; back out and see it.
+robot: [0.0, 0.0, 0]
+ball: [0.075, 0.03]
+task: {skill: RecoverBall, args: {last_local: [0.07, 0.03]}}
+duration: 8
+expect: {status: SUCCESS, max_time: 2.5}

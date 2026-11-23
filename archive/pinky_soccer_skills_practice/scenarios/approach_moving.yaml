@@ -1,0 +1,7 @@
+name: approach_moving
+description: Ball rolling across the field at 0.3 m/s; intercept at the predicted point.
+robot: [-0.3, -0.35, 90]
+ball: {pos: [-0.4, 0.2], vel: [0.3, 0.0]}
+task: {skill: ApproachBall, args: {aim: opp_goal, gap: 0.03}}
+duration: 12
+expect: {status: SUCCESS, max_time: 8, max_ball_offset: 0.03, max_aim_err_deg: 8}

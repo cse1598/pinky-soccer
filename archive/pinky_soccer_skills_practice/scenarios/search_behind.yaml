@@ -1,0 +1,7 @@
+name: search_behind
+description: Ball behind the robot, never seen before; spin and find it.
+robot: [0.0, 0.0, 0]
+ball: [-0.5, 0.2]
+task: {skill: SearchBall}
+duration: 12
+expect: {status: SUCCESS, max_time: 6}

@@ -1,0 +1,7 @@
+name: approach_wrong_side
+description: Robot stands between ball and opponent goal facing it; must go around the ball without touching it.
+robot: [0.35, 0.0, 180]
+ball: [0.15, 0.0]
+task: {skill: ApproachBall, args: {aim: opp_goal, gap: 0.03}}
+duration: 12
+expect: {status: SUCCESS, max_time: 8, max_ball_moved: 0.01, max_ball_offset: 0.025, max_aim_err_deg: 6}
