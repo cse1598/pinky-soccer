@@ -4,3 +4,6 @@
 [submodule "src/BehaviorTree.ROS2"]
 	path = src/BehaviorTree.ROS2
 	url = https://github.com/BehaviorTree/BehaviorTree.ROS2
+[submodule "external/acados"]
+	path = external/acados
+	url = https://github.com/acados/acados.git
