@@ -11,6 +11,12 @@ import yaml
 from .camera_mount import apply_mount, fixed_transforms, mount_values, OPTICAL
 
 
+def selected(path):
+    """Return the profile path, or '' when calibration is disabled ('' or 'none')."""
+    path = str(path or '').strip()
+    return '' if path.lower() in ('', 'none') else path
+
+
 def read_profile(path, simulation):
     data = yaml.safe_load(Path(path).expanduser().read_text())
     if data.get('schema_version') != 1 or data.get('human_verified') is not True:
@@ -30,20 +36,34 @@ def read_profile(path, simulation):
     return data
 
 
-def arguments(simulation=False):
+def arguments(simulation=False, default=''):
+    """Declare calibration_profile (default: none, or a simulator's own profile)."""
     def apply(context):
-        path = LaunchConfiguration('calibration_profile').perform(context)
+        path = selected(LaunchConfiguration('calibration_profile').perform(context))
         if not path:
             return []
         data = read_profile(path, simulation)
         # Simulators generate their own CameraInfo from their renderer, never substitute real K/D.
         return [SetLaunchConfiguration(key, str(value)) for key, value in
                 data.get('launch', {}).items() if not simulation or key != 'camera_info_url']
-    return [DeclareLaunchArgument('calibration_profile', default_value=''),
+    return [DeclareLaunchArgument('calibration_profile', default_value=str(default),
+                                  description="profile.yaml; 'none' disables calibration"),
             OpaqueFunction(function=apply)]
 
 
+def drive_constants(path, simulation=False):
+    """Return (wheel_radius, wheel_separation) from a profile's launch block, or Nones."""
+    path = selected(path)
+    if not path:
+        return None, None
+    launch = read_profile(path, simulation).get('launch', {})
+    radius, separation = launch.get('wheel_radius'), launch.get('wheel_separation')
+    return (None if radius is None else float(radius),
+            None if separation is None else float(separation))
+
+
 def configure_urdf(urdf, path, simulation=False):
+    path = selected(path)
     if not path:
         return urdf
     data = read_profile(path, simulation)
@@ -83,14 +103,12 @@ def configure_urdf(urdf, path, simulation=False):
                 origin = ET.SubElement(joint, 'origin')
             origin.set('xyz', ' '.join(map(str, corrected[:3, 3])))
             origin.set('rpy', ' '.join(map(str, angles)))
-    # Keep actual collision dimensions consistent with measured effective wheel geometry.
+    # Wheel calibration changes only the drive constants (cmd_vel -> wheel speed conversion
+    # and encoder odometry), exactly like the physical driver's wheel_radius/wheel_separation.
+    # The wheel collision geometry is the simulated physics and is never changed, otherwise a
+    # simulator could not be calibrated against itself (2026-11-24 decision).
     w = data.get('results', {}).get('wheels')
-    if simulation and w:
-        for side, key in [('l', 'left_radius_m'), ('r', 'right_radius_m')]:
-            link = root.find(f"link[@name='{side}_wheel']")
-            cylinder = link.find('collision/geometry/cylinder')
-            if cylinder is not None:
-                cylinder.set('radius', str(w[key]))
+    if simulation and w and 'wheel_radius' in data.get('launch', {}):
         for plugin in root.findall('.//plugin'):
             if 'DiffDrive' in plugin.get('name', ''):
                 plugin.find('wheel_radius').text = str(data['launch']['wheel_radius'])

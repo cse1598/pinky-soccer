@@ -152,6 +152,13 @@ def setup_world(context):
     raise FileNotFoundError(f'World file not found: {explicit or name}')
 
 
+def default_profile(simulator):
+    """Return this simulator's own odometry calibration profile (or '' when absent)."""
+    path = (Path(get_package_share_directory('pinky_soccer_sim')) / 'config' / 'calibration'
+            / f'{simulator}_profile.yaml')
+    return str(path) if path.is_file() else ''
+
+
 def generate_launch_description():
     soccer_description = get_package_share_directory('pinky_soccer_description')
     pinky_description = get_package_share_directory('pinky_description')
@@ -170,7 +177,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         *sensor_launch.arguments(),
-        *profile_arguments(simulation=True),
+        *profile_arguments(simulation=True, default=default_profile('gazebo')),
         DeclareLaunchArgument('material_config', default_value=str(
             Path(get_package_share_directory('pinky_soccer_sim'))/'config/materials.yaml')),
         *sensor_launch.nodes(),

@@ -13,6 +13,10 @@ re-check after updating the submodule.
 
 Own arguments (the rest is passed to pinky_mujoco.bridge unchanged):
     --ball / --no-ball, --ball-x, --ball-y, --ball-radius, --ball-mass
+    --wheel-radius, --wheel-separation   odometry/command conversion constants (calibration
+        profile `launch` values). Like the physical robot's driver parameters they change only
+        how /cmd_vel becomes wheel speeds and how wheel encoders become /odom; the wheel
+        collision geometry (the physics) is left untouched.
 """
 import argparse
 from pathlib import Path
@@ -74,7 +78,30 @@ def parse_args(argv):
     parser.add_argument('--material-config')
     parser.add_argument('--imu-enabled', action='store_true')
     parser.add_argument('--adc-enabled', action='store_true')
+    parser.add_argument('--wheel-radius', type=float)
+    parser.add_argument('--wheel-separation', type=float)
     return parser.parse_known_args(argv)
+
+
+def install_drive_constants(bridge, radius=None, separation=None):
+    """Override Physics.radius/track (cmd_vel conversion and encoder odometry) only."""
+    if radius is None and separation is None:
+        return
+    for name, value in (('wheel radius', radius), ('wheel separation', separation)):
+        if value is not None and not (0.0 < value < 1.0):
+            raise ValueError(f'{name} {value} out of range')
+    base = bridge.Physics
+
+    class CalibratedDrivePhysics(base):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.model_radius, self.model_track = self.radius, self.track
+            if radius is not None:
+                self.radius = float(radius)
+            if separation is not None:
+                self.track = float(separation)
+
+    bridge.Physics = CalibratedDrivePhysics
 
 
 def main(args=None):
@@ -96,6 +123,7 @@ def main(args=None):
         bridge.build_model = build_model_with_ball
     from pinky_soccer_sim.materials import install_mujoco as install_materials, load_materials
     install_materials(bridge, load_materials(options.material_config))
+    install_drive_constants(bridge, options.wheel_radius, options.wheel_separation)
     bridge.main(rest)
 
 

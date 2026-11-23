@@ -1,0 +1,141 @@
+schema_version: 1
+environment: rehearsal
+robot_id: gazebo-sim
+started_utc: '2026-11-23T19:46:18.425179+00:00'
+measurement_source: simulator_ground_truth
+simulator: gazebo
+calibration_scope: drive constants only (cmd_vel conversion and encoder odometry);
+  simulated wheel geometry unchanged
+pre_calibration_odometry_error:
+  forward:
+    mean_relative_error: 0.0009
+    max_abs_relative_error: 0.0009
+  backward:
+    mean_relative_error: 0.001
+    max_abs_relative_error: 0.001
+  left:
+    mean_relative_error: 0.0164
+    max_abs_relative_error: 0.0171
+  right:
+    mean_relative_error: 0.0162
+    max_abs_relative_error: 0.0164
+results:
+  wheels:
+    left_radius_m: 0.027974266731720963
+    right_radius_m: 0.027974266731720963
+    separation_m: 0.09806505559195278
+    effective_radius_m: 0.027974266731720963
+    individual_radii_identified: false
+    radius_repeats_m:
+      count: 6
+      mean: 0.02797426668269942
+      sample_std: 1.0595593059873711e-06
+      max: 0.02797584700930094
+    separation_repeats_m:
+      count: 6
+      mean: 0.09806505887219791
+      sample_std: 4.0545203781501546e-05
+      max: 0.09810328315350592
+    radius_model: shared_effective_radius
+    trials: 12
+    encoder_normalization:
+    - trial_id: 20fb47068b384052af6fb590d80dc2e8
+      kind: forward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: facdf66cab54406ea84651748a5847d0
+      kind: backward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 97f6414059df4cb497c66cb34ecbdd3c
+      kind: left
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 2cafb6c7a096469b926ec55a4dacce0d
+      kind: right
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 0497f7cf4f0a4cd4a31e806fafcf14d0
+      kind: forward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: fc3b39b92ec44498ad7fc080ffd54c9b
+      kind: backward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 827418e69eb74b88bea9eb1dd18f0d04
+      kind: left
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: b7969c9a28d54e1da4ea9c59bdd08f83
+      kind: right
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 07ef56dd84b84c5aa08d47a3b0f3621a
+      kind: forward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: b97bb037d3cc45b1a54db1b6d0bd2fa7
+      kind: backward
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: e4fb0bc3e27f4c47a014b4d008500f11
+      kind: left
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    - trial_id: 82f43bec7e2148b59d6a5b12dcbb31b4
+      kind: right
+      encoder_multipliers:
+      - 1.0
+      - 1.0
+    equation_residual:
+      count: 12
+      mean: 0.00013014033016514603
+      sample_std: 0.00010377489319503515
+      max: 0.00023618158465188444
+    repeat_measurements:
+      forward:
+        distance_m:
+          count: 3
+          mean: 1.002735718753771
+          sample_std: 0.0015273798979255127
+          max: 1.00449276961389
+      backward:
+        distance_m:
+          count: 3
+          mean: -1.003418836520701
+          sample_std: 0.0012315585751811447
+          max: -1.0020038918613086
+      left:
+        angle_rad:
+          count: 3
+          mean: 6.1853323071795865
+          sample_std: 0.0061048769848374065
+          max: 6.189341307179586
+      right:
+        angle_rad:
+          count: 3
+          mean: -6.18578964051292
+          sample_std: 0.0015472337681598383
+          max: -6.184279307179586
+    straight_model: start_to_end_distance; lateral_drift_not_used_as_yaw
+    assumption: approximately_straight_runs; shared_effective_radius
+launch:
+  wheel_radius: 0.027974266731720963
+  wheel_separation: 0.09806505559195278
+camera_pose: null
+project_revision: 1
+exported_utc: '2026-11-23T19:46:18.580769+00:00'
+pending_recalculation: []
+human_verified: true

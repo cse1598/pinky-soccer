@@ -33,6 +33,8 @@ install(PROGRAMS ${PROJECT_NAME}/check_interface.py
   DESTINATION lib/${PROJECT_NAME} RENAME check_interface)
 install(PROGRAMS ${PROJECT_NAME}/check_material_physics.py
   DESTINATION lib/${PROJECT_NAME} RENAME check_material_physics)
+install(PROGRAMS ${PROJECT_NAME}/calibrate_odometry.py
+  DESTINATION lib/${PROJECT_NAME})
 install(PROGRAMS ${PROJECT_NAME}/fit_sensor_noise.py
   DESTINATION lib/${PROJECT_NAME} RENAME fit_sensor_noise)
 install(PROGRAMS ${PROJECT_NAME}/rcj_field.py
@@ -51,6 +53,8 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
   ament_add_pytest_test(test_sensors test/test_sensors.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
+  ament_add_pytest_test(test_odometry_calibration test/test_odometry_calibration.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 120)
   ament_add_pytest_test(test_sensor_noise test/test_sensor_noise.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
 endif()

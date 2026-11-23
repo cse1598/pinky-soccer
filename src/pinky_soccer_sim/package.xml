@@ -25,6 +25,8 @@
   <exec_depend>pinky_soccer_bringup</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>pinky_soccer_msgs</exec_depend>
+  <!-- calibrate_odometry.py reuses the calibration UI Session/fit/export code -->
+  <exec_depend>pinky_soccer_calibration</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>python3-numpy</exec_depend>

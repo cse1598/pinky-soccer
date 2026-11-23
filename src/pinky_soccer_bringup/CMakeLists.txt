@@ -57,6 +57,8 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   ament_add_pytest_test(test_sensor_runtime test/test_sensor_runtime.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  ament_add_pytest_test(test_calibration_profile test/test_calibration_profile.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 120)
   ament_add_pytest_test(test_frame_capture test/test_frame_capture.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

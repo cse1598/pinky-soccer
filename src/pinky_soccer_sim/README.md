@@ -87,6 +87,48 @@ ros2 run pinky_soccer_sim check_interface --imu --adc --duration 15 \
 - 이 PC의 Gazebo는 소프트웨어 EGL과 하드웨어 장치 선택이 충돌했습니다. 설치된 NVIDIA 드라이버가 있는 이 환경에서는 `__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json`과 소프트웨어 강제 옵션 해제 후 실행 확인했습니다. 이 경로를 다른 PC에 그대로 적용하지 마세요.
 - 실물 신규 ROS 노드·IR 채널·실측 기반 카메라/센서 보정은 아직 검증하지 않았습니다. 아래 기존 주행/공 실험 표의 수신 주기는 센서 확장 전 측정 기록입니다.
 
+## 시뮬레이터 오도메트리 보정 (2026-11-24)
+
+실물처럼 시뮬레이터도 명령 변환·엔코더 odom 상수를 보정합니다. 피드백 제어가 아니라 상수 보정입니다.
+보정 UI와 같은 실험(0.08 m/s·0.30 rad/s로 odom 1 m / 360°까지, 60초 제한)을 전진·후진·좌회전·우회전
+각 3회 돌리고, 줄자 대신 시뮬레이터 정답값(범퍼 앞면 중앙 시작~끝 직선거리, 실제 누적 회전각)으로 잽니다.
+계산과 저장은 `pinky_soccer_calibration`의 Session·`distance_rotation_fit`·export를 그대로 써서
+실물과 같은 형식의 `profile.yaml`(`environment: rehearsal`, `robot_id: <simulator>-sim`,
+`measurement_source: simulator_ground_truth`)이 나옵니다.
+
+| 시뮬레이터 | 보정 전 odom 오차 (직진 / 회전) | 유효 반경 | 유효 간격 | 보정 후 (직진 / 회전) |
+|---|---|---|---|---|
+| MuJoCo | +1.8 % / +2.7 % | 27.50 mm (모델 28.0) | 98.25 mm (모델 97.1) | 0.0 % / −0.2~−0.3 % |
+| Gazebo | +0.1 % / +1.6 % | 27.97 mm (DiffDrive 28.0) | 98.07 mm (DiffDrive 96.1) | 0.0 % / −0.5 % |
+
+(+는 odom이 실제보다 크게 셈. 하드보드 경기장 매트 재질, 센서 잡음 기본 ON에서 측정.)
+
+적용 범위: **구동 상수만** 바꿉니다(사용자 결정 (a)). 바퀴 충돌 형상(물리)은 그대로입니다.
+- MuJoCo: 래퍼 `--wheel-radius/--wheel-separation`이 공식 `Physics.radius/track`(cmd_vel 변환·odom)만 덮어씀
+- Gazebo: DiffDrive 플러그인 `wheel_radius/wheel_separation`만 변경
+- 실물 드라이버의 `wheel_radius/wheel_separation`과 같은 구조라, 같은 프로필 형식으로 세 환경을 다룹니다.
+
+기본 적용: `mujoco_soccer.launch.py`·`gazebo_soccer.launch.py`(및 이를 포함하는 경기 launch)는
+`config/calibration/<simulator>_profile.yaml`이 있으면 자동으로 씁니다. 다른 프로필은
+`calibration_profile:=<path>`로 지정하고, 보정 없이 공식 상수로 돌리려면 `calibration_profile:=none`.
+
+다시 보정하기 (물리·재질·모델을 바꾼 뒤):
+
+```bash
+# 1) 보정을 적용하지 않은 상태로 띄우기
+ros2 launch pinky_soccer_sim mujoco_soccer.launch.py field:=hardboard viewer:=false camera:=false \
+    spawn_ball:=false calibration_profile:=none
+# 2) 다른 터미널 (같은 ROS_DOMAIN_ID)
+ros2 run pinky_soccer_sim calibrate_odometry.py --simulator mujoco --install \
+    --install-dir ~/pinky-soccer/src/pinky_soccer_sim/config/calibration
+# 3) 재빌드 후 다시 띄워 검증
+ros2 run pinky_soccer_sim calibrate_odometry.py --simulator mujoco --verify --repeats 2
+```
+
+Gazebo는 `gazebo_soccer.launch.py ... gui:=false`, `--simulator gazebo`. 실행기는 위치 맞춤용으로 먼저
+0.5 m 후진(기록 안 함)한 뒤 실험해 1 m 주행이 경기장 안에 있도록 합니다. 원본 실험 폴더는
+`calibration_results/simulator/`(git 제외)에 남습니다.
+
 ## Gazebo
 
 ```bash

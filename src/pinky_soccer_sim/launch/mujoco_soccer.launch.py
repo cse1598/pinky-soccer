@@ -21,7 +21,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from pinky_soccer_bringup.calibration_profile import arguments as profile_arguments, configure_urdf
+from pinky_soccer_bringup.calibration_profile import (arguments as profile_arguments,
+                                                      configure_urdf, drive_constants)
 from pinky_soccer_sim import sensor_launch
 from pinky_soccer_sim.field_selection import selected_world
 from pinky_soccer_sim.sensor_model import load_config
@@ -63,7 +64,9 @@ def setup(context):
         mappings['bumper_params_file'] = params_file
     urdf = expand_urdf(package='pinky_soccer_description',
                        filename='urdf/soccer_robot.urdf.xacro', mappings=mappings)
-    urdf = configure_urdf(urdf, lc('calibration_profile', context), True)
+    profile = lc('calibration_profile', context)
+    urdf = configure_urdf(urdf, profile, True)
+    wheel_radius, wheel_separation = drive_constants(profile, simulation=True)
 
     # Separate cache from the official launch so both can be used side by side.
     model_dir = Path(lc('model_dir', context)).expanduser()
@@ -80,6 +83,11 @@ def setup(context):
         env = {'MUJOCO_GL': 'glfw', 'LIBGL_ALWAYS_SOFTWARE': '1',
                '__GLX_VENDOR_LIBRARY_NAME': 'mesa'}
     args = ['--urdf-file', str(urdf_path), '--output-dir', str(model_dir), '--world', str(world)]
+    # Simulator odometry calibration: drive constants only, physics geometry unchanged.
+    if wheel_radius is not None:
+        args += ['--wheel-radius', str(wheel_radius)]
+    if wheel_separation is not None:
+        args += ['--wheel-separation', str(wheel_separation)]
     sensor_path = lc('sensor_config', context)
     cfg = load_config(sensor_path)
     physics = yaml.safe_load((Path(get_package_share_directory('pinky_mujoco'))
@@ -124,10 +132,17 @@ def setup(context):
     ]
 
 
+def default_profile(simulator):
+    """Return this simulator's own odometry calibration profile (or '' when absent)."""
+    path = (Path(get_package_share_directory('pinky_soccer_sim')) / 'config' / 'calibration'
+            / f'{simulator}_profile.yaml')
+    return str(path) if path.is_file() else ''
+
+
 def generate_launch_description():
     return LaunchDescription([
         *sensor_launch.arguments(),
-        *profile_arguments(simulation=True),
+        *profile_arguments(simulation=True, default=default_profile('mujoco')),
         DeclareLaunchArgument('use_gpu', default_value='false'),
         DeclareLaunchArgument('viewer', default_value='true'),
         DeclareLaunchArgument('camera', default_value='true'),
