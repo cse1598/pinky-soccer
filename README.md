@@ -14,6 +14,8 @@ ROS 2 robot soccer project using Pinky Pro
 | `src/pinky_soccer_field` | 경기장 치수·기하(`map` 좌표), AMCL용 지도 생성 | O |
 | `src/pinky_soccer_msgs` | 월드 모델·행동 목표 메시지 | O |
 | `src/pinky_soccer_world_model` | 공 검출, 공 칼만 필터, 탐색 그리드, `/world_model` | O (검출은 PC 가능) |
+| `src/pinky_soccer_dynamics` | 바퀴 단위 동역학 모델·보정 파라미터 로더(출처 표시)·`/cmd_vel` 명령 변환·응답 식별/검증 도구. [보정 절차](src/pinky_soccer_dynamics/CALIBRATION.md) | 판단 실행 시 |
+| `src/pinky_soccer_mpc` | acados NMPC (1단계: acados 연결·솔버 검증). `.venv` 파이썬으로 빌드 | 판단 실행 시 |
 | `src/pinky_soccer_bt` | 행동 트리 (`/world_model` → `/behavior_goal`) | 판단 실행 시 |
 | `src/pinky_soccer_viz` | 월드 모델 UI(RViz2 마커, OpenCV 탑뷰), 판단 계층 launch, 시뮬레이션 평가 도구 | X |
 | `src/BehaviorTree.ROS2` | BehaviorTree.ROS2 (Git Submodule, 태그 `0.3.0`, **수정 금지**) | 판단 실행 시 |

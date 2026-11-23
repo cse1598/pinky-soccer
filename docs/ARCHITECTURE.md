@@ -84,6 +84,8 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `pinky_soccer_field` | 경기장 치수·기하 로더, AMCL용 지도 생성 | Python |
 | `pinky_soccer_msgs` | TrackedObject, WorldModel, BehaviorGoal | msg |
 | `pinky_soccer_world_model` | ball_detector, world_model_node, fake_world_model | Python |
+| `pinky_soccer_dynamics` | 바퀴 단위 동역학 모델, 보정 파라미터(출처 표시), `/cmd_vel` 명령 변환 | Python |
+| `pinky_soccer_mpc` | acados NMPC (`external/acados` 서브모듈, 개발 중: 1단계 완료) | Python |
 | `pinky_soccer_bt` | bt_node, BT 노드, `trees/*.xml` | C++ |
 | `pinky_soccer` | reactive_controller (기존 축구 제어 패키지) | Python |
 | `pinky_soccer_viz` | world_model_viz, world_model_topview, 런치 | Python |
