@@ -63,7 +63,7 @@ def load_mujoco_launch(eval_truth):
                     except AttributeError as exc:
                         raise RuntimeError('launch_ros internals changed; run with '
                                            'eval_ball_truth:=false') from exc
-                    if remaps != [('/cmd_vel', '/drive/cmd_vel')]:
+                    if remaps != [('/cmd_vel', '/drive/cmd_vel'), ('/scan', '/sim/lidar/scan')]:
                         raise RuntimeError(f'Unexpected MuJoCo bridge remaps {remaps}; '
                                            'update sim_field.launch.py')
                     # Parameters mirror mujoco_soccer.launch.py ({'use_sim_time': True}).

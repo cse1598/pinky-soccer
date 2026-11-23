@@ -115,7 +115,7 @@ def setup(context):
     return [
         *sensor_launch.nodes(camera=camera),
         Node(package='pinky_soccer_sim', executable='mujoco_soccer_bridge', name='pinky_mujoco',
-             remappings=[('/cmd_vel', '/drive/cmd_vel')],
+             remappings=[('/cmd_vel', '/drive/cmd_vel'), ('/scan', '/sim/lidar/scan')],
              arguments=args, output='screen', additional_env=env,
              parameters=[{'use_sim_time': True}]),
         Node(package='robot_state_publisher', executable='robot_state_publisher',

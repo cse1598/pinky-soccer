@@ -13,6 +13,10 @@ def arguments():
     return [
         DeclareLaunchArgument('sensor_config', default_value=PathJoinSubstitution([
             get_package_share_directory('pinky_soccer_sim'), 'config', 'sensors.yaml'])),
+        DeclareLaunchArgument('sensor_noise_config', default_value=PathJoinSubstitution([
+            get_package_share_directory('pinky_soccer_sim'), 'config', 'measured_sensor_noise.yaml'])),
+        DeclareLaunchArgument('sensor_noise_enabled', default_value='true'),
+        DeclareLaunchArgument('sensor_noise_seed', default_value='20261124'),
         *[DeclareLaunchArgument(name, default_value=default) for name, default in
           [('camera_enabled', 'true'), ('imu_enabled', 'false'), ('adc_enabled', 'false')]],
     ]
@@ -25,6 +29,11 @@ def nodes(camera=None):
         Node(package='pinky_soccer_sim', executable='sensor_adapter',
              parameters=[{'use_sim_time': True,
                           'sensor_config': LaunchConfiguration('sensor_config'),
+                          'sensor_noise_config': LaunchConfiguration('sensor_noise_config'),
+                          'sensor_noise_enabled': ParameterValue(
+                              LaunchConfiguration('sensor_noise_enabled'), value_type=bool),
+                          'sensor_noise_seed': ParameterValue(
+                              LaunchConfiguration('sensor_noise_seed'), value_type=int),
                           **{name: ParameterValue(LaunchConfiguration(name), value_type=bool)
                              for name in ('imu_enabled', 'adc_enabled')},
                           'camera_enabled': camera if camera is not None else ParameterValue(

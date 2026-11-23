@@ -1,21 +1,31 @@
 #!/usr/bin/env python3
 """Normalize simulated observations to the physical robot's public ROS interface."""
 
-from copy import deepcopy
 import json
 import math
+from copy import deepcopy
+from pathlib import Path
+
+from ament_index_python.packages import get_package_share_directory
 
 import cv2
+
 import numpy as np
+
 from pinky_soccer_bringup.camera_support import image_messages
 from pinky_soccer_bringup.frame_capture import FrameCaptureService
-from pinky_soccer_sim.sensor_model import adc_from_distance, load_config, RANGE_LINKS
+
+from pinky_soccer_sim.sensor_model import RANGE_LINKS, adc_from_distance, load_config
+from pinky_soccer_sim.sensor_noise import SensorNoise, load_noise
+
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
+
 from sensor_msgs.msg import (BatteryState, CameraInfo, CompressedImage, Image, Imu,
                              LaserScan, MagneticField, Range)
+
 from std_msgs.msg import Float32, String, UInt16MultiArray
 
 
@@ -51,11 +61,21 @@ class SensorAdapter(Node):
         """Configure optional sensors without inventing unknown IR ADC calibration."""
         super().__init__('soccer_sim_sensors', **kwargs)
         self.cfg = load_config(self.declare_parameter('sensor_config', '').value)
+        default_noise = (Path(get_package_share_directory('pinky_soccer_sim')) /
+                         'config/measured_sensor_noise.yaml')
+        noise_path = self.declare_parameter('sensor_noise_config', str(default_noise)).value
+        self.noise = SensorNoise(load_noise(noise_path),
+                                 self.declare_parameter('sensor_noise_seed', 20261124).value,
+                                 self.declare_parameter('sensor_noise_enabled', True).value)
+        self.get_logger().info('Measured sensor error model: ' +
+                               (noise_path if self.noise.enabled else 'disabled (ideal inputs)'))
         self.images, self.infos = {}, {}
         self.ir_samples = {}
         self.last_image = None
         self.capture_service = None
         qos = qos_profile_sensor_data
+        self.scan = self.create_publisher(LaserScan, 'scan', qos)
+        self.create_subscription(LaserScan, 'sim/lidar/scan', self.scan_received, qos)
         if self.declare_parameter('camera_enabled', True).value:
             self.raw = self.create_publisher(Image, 'camera/image_raw', qos)
             self.jpeg = self.create_publisher(CompressedImage, 'camera/image_raw/compressed', qos)
@@ -153,6 +173,21 @@ class SensorAdapter(Node):
     def imu_received(self, msg):
         """Native simulators use SI; provide the legacy deg/s diagnostic stream too."""
         msg = deepcopy(msg)
+        true_orientation = deepcopy(msg.orientation)
+        if self.noise.enabled:
+            stamp = self.key(msg)
+            for field, model in [('angular_velocity', 'gyro'), ('linear_acceleration', 'accel')]:
+                vector = getattr(msg, field)
+                values = self.noise.vector(model, [getattr(vector, a) for a in 'xyz'], stamp)
+                vector.x, vector.y, vector.z = map(float, values)
+                setattr(msg, field+'_covariance', self.noise.covariance(model))
+            # A missing/invalid attitude stays missing; valid native attitudes are normalized.
+            quat = [getattr(msg.orientation, a) for a in ('x', 'y', 'z', 'w')]
+            if msg.orientation_covariance[0] != -1 and np.isfinite(quat).all() and np.linalg.norm(quat) > .9:
+                values = self.noise.quaternion(quat, stamp)
+                (msg.orientation.x, msg.orientation.y,
+                 msg.orientation.z, msg.orientation.w) = map(float, values)
+                msg.orientation_covariance = self.noise.covariance('orientation')
         msg.header.frame_id = 'imu_link'
         self.imu.publish(msg)
         native = deepcopy(msg)
@@ -165,7 +200,7 @@ class SensorAdapter(Node):
         self.native.publish(native)
         magnetic = MagneticField(header=deepcopy(msg.header))
         (magnetic.magnetic_field.x, magnetic.magnetic_field.y,
-         magnetic.magnetic_field.z) = map(float, ideal_magnetic_field(msg.orientation, self.world_field))
+         magnetic.magnetic_field.z) = map(float, ideal_magnetic_field(true_orientation, self.world_field))
         self.mag.publish(magnetic)
         self.mag_status.publish(String(data=json.dumps({
             'stamp': self.key(msg)/1e9, 'source': 'ideal_simulated_ambient_field',
@@ -178,6 +213,9 @@ class SensorAdapter(Node):
         if not values:
             return
         distance = min(values)
+        if link == 'ultrasonic_link':
+            distance = float(self.noise.ranges(
+                'ultrasonic', [distance], cfg['min_range'], cfg['max_range'], self.key(msg))[0])
         result = Range()
         result.header = deepcopy(msg.header)
         result.header.frame_id = link
@@ -203,6 +241,13 @@ class SensorAdapter(Node):
             del self.ir_samples[key]
         while len(self.ir_samples) > 5:
             del self.ir_samples[next(iter(self.ir_samples))]
+
+    def scan_received(self, msg):
+        """Route both native LiDAR streams through exactly one shared error model."""
+        result = deepcopy(msg)
+        result.ranges = self.noise.ranges(
+            'lidar', msg.ranges, msg.range_min, msg.range_max, self.key(msg)).tolist()
+        self.scan.publish(result)
 
     def publish_battery(self):
         """Expose an explicit ideal battery scenario, without claiming measured discharge."""

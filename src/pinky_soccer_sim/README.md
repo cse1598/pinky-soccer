@@ -27,10 +27,13 @@ Gazebo·MuJoCo의 시각/충돌 구와 인식·필터 기본 반경을 같은 �
 
 ## 실물과 공통인 센서 인터페이스
 
-두 시뮬레이터는 `sensor_adapter`를 통해 실물 `robot.launch.py`와 같은 공개 센서 토픽을 제공합니다. 내부 렌더링·브리지 토픽은 `/sim/` 아래에 둡니다. 공식 Submodule은 수정하지 않으며 런타임 모델과 자체 브리지만 확장합니다. 계약은 `config/interface.yaml`, 가상 센서 모델 설정은 `config/sensors.yaml`에 있습니다.
+두 시뮬레이터는 `sensor_adapter`를 통해 실물 `robot.launch.py`와 같은 공개 센서 토픽을 제공합니다. 내부 렌더링·브리지 토픽은 `/sim/` 아래에 둡니다. 공식 Submodule은 수정하지 않으며 런타임 모델과 자체 브리지만 확장합니다. 계약은 `config/interface.yaml`, 센서 기하/시나리오는 `config/sensors.yaml`, 실측 오차는 `config/measured_sensor_noise.yaml`에 있습니다.
+
+기본 실행은 LiDAR·초음파·IMU에 실측 기반 오차를 적용합니다. 두 엔진의 공통 어댑터에서 적용하며 `sensor_noise_enabled:=false`로 이상적 관측과 비교합니다. 거리별 편차/흔들림·원본 출처·재생성 명령과 한계는 [SENSOR_NOISE.md](SENSOR_NOISE.md)를 참고하세요.
 
 | 공개 토픽 | 형식·의미 | 활성화 |
 |---|---|---|
+| `/scan` | `sensor_msgs/LaserScan`, 원본 stamp/frame 유지·실측 오차 적용 | 항상 |
 | `/camera/image_raw` | `sensor_msgs/Image`, BGR8, 광학 프레임 `front_camera_optical_frame` | `camera_enabled:=true` (기본) |
 | `/camera/image_raw/compressed` | `sensor_msgs/CompressedImage`, JPEG | 카메라와 동일 |
 | `/camera/camera_info` | `sensor_msgs/CameraInfo`, 원본/JPEG와 동일한 stamp·frame | 카메라와 동일 |
@@ -53,12 +56,12 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py imu_enabled:=true adc_enabl
 
 Gazebo는 네이티브 IMU와 추가한 GPU ray 센서, MuJoCo는 센서 링크 위치에 설치한 네이티브 accelerometer/gyro/framequat와 ray casting을 사용합니다. 초음파는 수평 부채꼴 5개 ray 중 최솟값으로 근사합니다. 감지 범위보다 가까우면 -Inf, 장애물이 없으면 +Inf를 발행하며 음향 반사·재질·다중 경로는 모델링하지 않습니다. IR 3개의 거리 관측은 `/sim/ir_l_link/distance`, `/sim/ir_mid_link/distance`, `/sim/ir_r_link/distance` (`Range`)로 확인합니다.
 
-**실측 자료가 없어 동일한 물리 성능까지 검증된 상태는 아닙니다.** 다음은 명시적인 제한입니다.
+**정지 실측의 통계적 오차를 반영하며, 모든 동작/재질에서 실물과 동일한 성능을 검증한 것은 아닙니다.** 다음은 명시적인 제한입니다.
 
 - 카메라 가상 FOV는 공식 모델의 1.1519 rad 가정입니다. 가상 CameraInfo는 렌더링 모델 값이며, 실물 CameraInfo에는 실제 내부 보정 YAML을 넣어야 합니다. 기본 모델은 왜곡이 없는 카메라입니다. 실제 왜곡·노출·모션 블러까지 복제하지 않습니다. 실물 영상의 180° 회전과 실제 장착 방향은 후속 실물 검증 대상입니다.
 - 센서 위치·방향은 공식 URDF 기준입니다. IR은 공식 링크 +X 방향을 사용하지만 실제 광축과 ADC 채널 L/M/R 순서는 미확인입니다. 거리 검색 범위 0.005~0.8 m도 가상 실험 설정이며 실물 사양이 아닙니다.
 - 사용자가 IR 실측 자료가 없음을 확인했습니다. `sensors.yaml`의 `ir.distances`(증가하는 m)와 `ir.adc_values`(0~4095)에 측정값을 넣고 `sensor_config:=/절대/경로.yaml`로 실행하면 ADC 토픽이 켜집니다. 범위 안은 선형 보간, 밖은 표의 끝값으로 포화합니다. 보정표가 없으면 경고하며 ADC 토픽을 발행하지 않습니다.
-- IMU는 이상적인 물리 관측이며 BNO055 융합기의 지연·바이어스·yaw drift를 재현하지 않습니다. covariance 0은 미확인 의미입니다. Gazebo와 MuJoCo의 기본 중력 설정은 각각의 엔진 설정을 따릅니다.
+- IMU는 물리 관측에 실측 정지 잔차의 편차·공분산을 추가합니다. BNO055 융합기의 동적 지연·장기 yaw drift는 미식별입니다. 추가 오차의 covariance를 발행하며 기본 중력은 엔진 설정을 따릅니다.
 - 배터리는 설정된 전압·백분율을 유지하는 이상적인 전원입니다. 기본 8.4 V / 100 %는 가상 시나리오이며 실측값이 아닙니다. 소모·충전 모델은 포함하지 않습니다. 타이머는 `/clock`을 따르므로 일시정지 중에 진행되지 않습니다.
 - Gazebo GPU ray는 렌더링 형상, MuJoCo ray는 충돌 형상을 봅니다. 시야 가림·메시 차이에 따른 거리는 실험으로 비교해야 합니다.
 
@@ -194,7 +197,7 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 |---|---|
 | URDF 생성 | 공식 `pinky_mujoco.description.expand_urdf()`로 `soccer_robot.urdf.xacro`를 확장 (`is_sim:=false`) |
 | 브리지 | 공식 `pinky_mujoco.bridge`를 `mujoco_soccer_bridge`로 감싸 실행. `--urdf-file`, `--world`, `--viewer` 등 공식 인자를 그대로 전달 |
-| 물리, odom, LiDAR | 공식 유지 (`/clock`, `/odom`, `/tf`, `/scan`, `/joint_states`) |
+| 물리, odom, LiDAR | 공식 물리 유지. 원본 LiDAR는 `/sim/lidar/scan`으로 remap하여 공통 오차 적용 후 `/scan` 발행 |
 | 카메라·센서 | 자체 설정의 renderer와 네이티브 IMU·ray 관측 → 공통 센서 어댑터 |
 | 테스트 공 | `mujoco_soccer_bridge`가 생성된 `scene.xml`에 동적 공을 추가 |
 

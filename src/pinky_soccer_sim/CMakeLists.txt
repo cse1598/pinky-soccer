@@ -14,7 +14,7 @@ set_target_properties(pinky_foam_contact PROPERTIES INSTALL_RPATH "$ORIGIN")
 install(TARGETS pinky_contact_kernel pinky_foam_contact LIBRARY DESTINATION lib)
 
 ament_python_install_package(${PROJECT_NAME})
-install(FILES FIELD.md HARDBOARD_FIELD.md MATERIALS.md DESTINATION share/${PROJECT_NAME})
+install(FILES FIELD.md HARDBOARD_FIELD.md MATERIALS.md SENSOR_NOISE.md DESTINATION share/${PROJECT_NAME})
 
 install(
   PROGRAMS ${PROJECT_NAME}/mujoco_soccer_bridge.py
@@ -33,6 +33,8 @@ install(PROGRAMS ${PROJECT_NAME}/check_interface.py
   DESTINATION lib/${PROJECT_NAME} RENAME check_interface)
 install(PROGRAMS ${PROJECT_NAME}/check_material_physics.py
   DESTINATION lib/${PROJECT_NAME} RENAME check_material_physics)
+install(PROGRAMS ${PROJECT_NAME}/fit_sensor_noise.py
+  DESTINATION lib/${PROJECT_NAME} RENAME fit_sensor_noise)
 install(PROGRAMS ${PROJECT_NAME}/rcj_field.py
   DESTINATION lib/${PROJECT_NAME} RENAME generate_rcj_field)
 
@@ -48,6 +50,8 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_mujoco_ball test/test_mujoco_ball.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
   ament_add_pytest_test(test_sensors test/test_sensors.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
+  ament_add_pytest_test(test_sensor_noise test/test_sensor_noise.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
 endif()
 

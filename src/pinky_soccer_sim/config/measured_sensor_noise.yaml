@@ -1,0 +1,173 @@
+schema_version: 1
+provenance:
+  source_project: ros_20261123_195718_b5b380
+  source_project_sha256: 8a6e29e13de7672dff102c0128a86ae49a32c5ef01c59af6f76280fdc8f03cf1
+  source_lidar_bag: raw_bag_4fa28a0aa5764a9a968efeeaa1747078
+  method: Gaussian covariance; IMU first-lag exponential correlation; range noise
+    independent across scans
+  range_extension: Frontal flat-wall data applied to all rays; endpoint parameters
+    held outside measured distances
+  unmodelled:
+  - camera image noise and detection error
+  - IR ADC noise
+  - battery noise
+  - encoder/odometry noise
+  - transport latency
+  - magnetometer error
+  - dynamic IMU error and long-term drift
+  camera_ball_x_correction_m: 0.013
+  camera_note: Review-only geometric correction, not image noise; not injected into
+    camera pixels
+  accel_reference: Recorded orientation inverse-rotated gravity 9.81 m/s^2; attitude
+    outliers use the regular run mean
+  orientation_reference: Robust per-run mean removed; large isolated residuals replayed
+    separately; absolute attitude accuracy not measured
+lidar:
+  extrapolation: hold_endpoint_parameters
+  table:
+  - - 0.20849552790254355
+    - -0.006859890177551675
+    - 0.0007856100752793627
+    - 0.000373195661935558
+  - - 0.3584955279025435
+    - -0.006354295830685808
+    - 0.0006308867546768719
+    - 0.0002467852300131862
+  runs:
+  - id: a132b04b91cb4bd0a1ce19dda376e8b1
+    samples: 101
+    recorded_utc: '2026-11-23T14:03:43.935809+00:00'
+    messages: 101
+    frontal_rays: 9
+    window_start_ns: 1795442613935809024
+    window_end_ns: 1795442623935809024
+    raw_projected_mean_m: 0.3518229539139435
+    reference_m: 0.3584955279025435
+    aggregation: per_ray_temporal_covariance_after_removing_each_ray_mean
+  - id: 9ba8e2e6d6cd456f961af5dfd257b107
+    samples: 100
+    recorded_utc: '2026-11-23T14:04:17.670505+00:00'
+    messages: 100
+    frontal_rays: 10
+    window_start_ns: 1795442647670504960
+    window_end_ns: 1795442657670504960
+    raw_projected_mean_m: 0.2015732565649687
+    reference_m: 0.20849552790254355
+    aggregation: per_ray_temporal_covariance_after_removing_each_ray_mean
+ultrasonic:
+  extrapolation: hold_endpoint_parameters
+  table:
+  - - 0.16479552790254354
+    - -0.01828429862588643
+    - 0.00045262153721082905
+    - 0.0
+  - - 0.3147955279025435
+    - -0.0012994353446363904
+    - 0.002223734027238046
+    - 0.0
+  - - 0.6247955279025436
+    - 0.04508853391081091
+    - 0.0014419556678312887
+    - 0.0
+  runs:
+  - id: 9e34efa202f14a758117c777aed3a3a4
+    samples: 200
+    recorded_utc: '2026-11-23T13:55:51.917450+00:00'
+  - id: 0ee982225d014417841ae2b35222f1ff
+    samples: 200
+    recorded_utc: '2026-11-23T13:58:12.886763+00:00'
+  - id: f7a459b213894ae2ab7b29cc4c2883fd
+    samples: 200
+    recorded_utc: '2026-11-23T13:58:44.915214+00:00'
+gyro:
+  bias:
+  - -0.004230898787874404
+  - 0.0037078815791197896
+  - 0.0012091089040855959
+  covariance:
+  - - 0.00010472857049238977
+    - 1.061036473864332e-05
+    - -1.7334295034632023e-06
+  - - 1.061036473864332e-05
+    - 5.424100702857494e-05
+    - -5.963340418332935e-06
+  - - -1.7334295034632023e-06
+    - -5.963340418332935e-06
+    - 1.5326219480073153e-05
+  samples: 2776
+  sample_period_s: 0.009995338001317577
+  correlation_time_s: 0.007315634213535588
+  lag_one_correlation: 0.2550493508977923
+accel:
+  bias:
+  - 0.09599472730827027
+  - 0.1014737220976819
+  - -0.005260770730069395
+  covariance:
+  - - 0.0068102161579183
+    - -0.0021337991938624604
+    - -0.001880793836324536
+  - - -0.0021337991938624604
+    - 0.006649659053605444
+    - 0.0009684121726472817
+  - - -0.001880793836324536
+    - 0.0009684121726472817
+    - 0.010372056178483554
+  samples: 2776
+  sample_period_s: 0.009995338001317577
+  correlation_time_s: 0.0026661245985689684
+  lag_one_correlation: 0.023540949713553406
+orientation:
+  bias:
+  - 0.0
+  - 0.0
+  - 0.0
+  covariance:
+  - - 3.016535581002588e-06
+    - -1.275414327462957e-06
+    - -9.327134657118699e-07
+  - - -1.275414327462957e-06
+    - 3.535196480322795e-06
+    - 1.308306058579857e-06
+  - - -9.327134657118699e-07
+    - 1.308306058579857e-06
+    - 4.256958916714626e-06
+  samples: 2766
+  sample_period_s: 0.009995338001317577
+  correlation_time_s: 1.482274572823038
+  lag_one_correlation: 0.9932794414011284
+  outlier_probability: 0.0036023054755043226
+  outlier_rotvecs:
+  - - -0.005112700070889771
+    - 0.051713500233718825
+    - 0.5982754539030632
+  - - 0.0005942703245645975
+    - 0.060954697680704495
+    - 0.6262850895723315
+  - - 0.004141161840399048
+    - 0.05584035582351134
+    - 0.5996909938320075
+  - - -0.18551527299098225
+    - 0.0004693962756085545
+    - 0.6301972029657683
+  - - -0.0026819501241598623
+    - 0.059409496566534416
+    - 0.599869612837853
+  - - -0.18551523028651293
+    - 0.0004694875177162118
+    - 0.6301972624566388
+  - - -0.18551521961727666
+    - 0.0004695103135409558
+    - 0.6301972773197702
+  - - -0.18106494056408995
+    - -0.00764540891468585
+    - 0.606932991915268
+  - - -0.0022623500488527723
+    - 0.05650007295018914
+    - 0.6034161294248672
+  - - -0.002005969295758607
+    - 0.05292940319342684
+    - 0.5735926565672431
+  total_samples: 2776
+  outlier_samples: 10
+  outlier_policy: Empirical stationary attitude jumps relative to robust per-run mean

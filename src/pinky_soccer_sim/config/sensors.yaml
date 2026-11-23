@@ -1,4 +1,4 @@
-# Simulation assumptions, NOT measured Pinky Pro calibration.
+# Sensor geometry/scenario assumptions. Measured errors: measured_sensor_noise.yaml.
 # Poses come from the official URDF, including its unverified IR directions (+X).
 camera:
   width: 640

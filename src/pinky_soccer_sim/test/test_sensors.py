@@ -64,6 +64,7 @@ def test_gazebo_wrapper_preserves_core_and_adds_sensors():
     urdf = xacro.process_file(str(path / 'urdf/soccer_robot.urdf.xacro'),
                               mappings={'is_sim': 'true'}).toxml()
     root = ET.fromstring(configure_gazebo(urdf, load_config(CONFIG), True, True, True))
+    assert root.find(".//noise") is None  # Noise is added exactly once in the shared adapter.
     assert root.find("joint[@name='l_wheel_joint']") is not None
     assert root.find(".//sensor[@type='camera']/camera/image/width").text == '640'
     assert root.find(".//sensor[@type='camera']/camera/image/height").text == '480'
@@ -120,6 +121,7 @@ def test_actual_ros_camera_imu_and_range_contract(tmp_path, monkeypatch):
     rclpy.init(args=[], context=context, domain_id=88)
     node = SensorAdapter(context=context, parameter_overrides=[
         Parameter('sensor_config', value=str(config)), Parameter('imu_enabled', value=True),
+        Parameter('sensor_noise_enabled', value=False),
         Parameter('adc_enabled', value=True)])
     receiver = Node('sensor_contract_receiver', context=context)
     executor = SingleThreadedExecutor(context=context)

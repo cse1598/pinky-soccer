@@ -55,6 +55,11 @@ def configure_gazebo(urdf, cfg, camera=True, imu=False, adc=False):
     robot = ET.fromstring(urdf)
     for gazebo in robot.findall('gazebo'):
         for sensor in list(gazebo.findall('sensor')):
+            # All measured errors are injected by SensorAdapter in both engines.
+            # Remove the official 20 mm lidar Gaussian rather than adding noise twice.
+            for parent in sensor.iter():
+                for noise in list(parent.findall('noise')):
+                    parent.remove(noise)
             if sensor.get('type') == 'camera':
                 if not camera:
                     gazebo.remove(sensor)
