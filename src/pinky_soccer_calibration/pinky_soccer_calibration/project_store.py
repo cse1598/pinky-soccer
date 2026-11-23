@@ -53,6 +53,8 @@ class ProjectStore:
             camera = {'k': k.tolist(), 'd': d.tolist(), 'size': list(size), 'square': square}
         state = {'project_schema': 1, 'meta': self.meta, 'revision': self.revision,
                  'board': [self.board.columns, self.board.rows, self.board.square_mm],
+                 'floor_board': [self.floor_board.columns, self.floor_board.rows,
+                                 self.floor_board.square_mm],
                  'frames': {key: [self.relative(p) for p in paths]
                             for key, paths in self.frames.items()},
                  'camera': camera, 'trials': self.trials, 'measurements': self.measurements,
@@ -62,7 +64,8 @@ class ProjectStore:
         self.write('session.yaml', self.meta)
         self.write('results.yaml', self.results)
         self.write('wheel_trials.yaml', self.trials)
-        for kind, types in [('straight', {'straight_displacement'}), ('rotation', {'rotation_angle'})]:
+        for kind, types in [('straight', {'straight_displacement', 'straight_distance'}),
+                            ('rotation', {'rotation_angle'})]:
             self.write('wheel_'+kind+'_trials.yaml',
                        [v for v in self.trials if v.get('measurement_type') in types])
         return self.write('project.yaml', state)  # Authoritative state, atomically replaced last.
@@ -88,6 +91,8 @@ class ProjectStore:
             shape = state['board'] if state else [*meta.get('board_inner_corners', [9, 6]),
                                                  meta.get('square_mm', 30)]
             obj.board = Board(*shape)
+            obj.floor_board = Board(*(state.get('floor_board', shape) if state else
+                                      meta.get('floor_board', shape)))
             obj.frames = {key: ([obj.local_path(p) for p in state['frames'][key]] if state else
                                 sorted((root/key).glob('*.png')))
                           for key in ('training', 'validation')}
@@ -124,6 +129,7 @@ class ProjectStore:
                     path = obj.local_path(row['image_file']) if 'image_file' in row else root/'floor'/f'{i:04d}.png'
                     obj.measurements.setdefault('floor', []).append(
                         {'id': uuid.uuid4().hex, 'image_file': obj.relative(path),
+                         'board': row.get('board', list(shape)),
                          'legacy_report': row})
                 if obj.results.get('camera', {}).get('passed') and (root/'camera.yaml').exists():
                     from .core import camera_model
@@ -131,9 +137,16 @@ class ProjectStore:
                     obj.camera = (k, d, size, obj.board.square_mm)
             for row in obj.trials:
                 row.setdefault('id', uuid.uuid4().hex)
+            # Before board separation every floor photo used the intrinsic board.
+            # Freeze that historical geometry before the user changes the next board.
+            for row in obj.measurements.get('floor', []):
+                row.setdefault('board', list(shape))
             if state and any(hashlib.sha256(obj.local_path(p).read_bytes()).hexdigest() != value
                              for p, value in state.get('photo_hashes', {}).items()):
                 obj.invalidate('camera')
+            if (obj.results.get('wheels') and any('measurement_type' in row for row in obj.trials)
+                    and obj.results['wheels'].get('radius_model') != 'shared_effective_radius'):
+                obj.invalidate('wheels')
             obj.save()
             return obj
         except Exception:
@@ -151,6 +164,8 @@ class ProjectStore:
             self.camera = None
             if self.measurements.get('floor'):
                 self.stale.add('floor')
+        if category == 'ball_review':
+            return  # Validation evidence never changes runtime calibration.
         # Previously exported profiles remain immutable, but no stale root profile is advertised.
         profile = self.root/'profile.yaml'
         if profile.exists():
@@ -220,7 +235,7 @@ class ProjectStore:
         self.save()
 
     def recalculate(self, category):
-        from .suite_model import scalar_report, wheel_fit
+        from .suite_model import override_mount_height, scalar_report, wheel_fit
         if category == 'camera':
             self.camera_fit(self.board.square_mm)
             return self.camera_validate()
@@ -233,6 +248,10 @@ class ProjectStore:
         try:
             if category == 'wheels':
                 result = wheel_fit(rows)
+            elif category == 'ball_review':
+                result = {'error_m': stats([v['error_m'] for v in rows]),
+                          'corrected_error_m': stats([v['corrected_error_m'] for v in rows]),
+                          'purpose': 'review_only_not_applied_to_gameplay'}
             elif category in ('lidar', 'ultrasonic'):
                 result = []
                 for row in rows:
@@ -282,14 +301,18 @@ class ProjectStore:
                     frame = cv2.imread(str(self.local_path(row['image_file'])))
                     if frame is None or frame.shape[:2][::-1] != self.camera[2]:
                         raise ValueError('장착 사진 파일/해상도를 확인하세요.')
-                    corners = self.board.detect(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+                    board_spec = row.get('board', [self.board.columns, self.board.rows,
+                                                   self.board.square_mm])
+                    board = Board(*board_spec)
+                    corners = board.detect(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
                     if corners is None:
                         raise ValueError('장착 사진의 체커보드를 검출하지 못했습니다.')
-                    pose = floor_pose(self.board.points(), corners, *self.camera[:2], allow_normal_flip=True)
+                    pose = floor_pose(board.points(), corners, *self.camera[:2], allow_normal_flip=True)
                     entries.append({'height_m': pose['height_m'], 'roll_rad': pose['mechanical_rpy_rad'][0],
                                     'pitch_rad': pose['mechanical_rpy_rad'][1],
                                     'reprojection_rms_px': pose['reprojection_rms_px'],
                                     'image_file': row['image_file'],
+                                    'board': list(board_spec),
                                     'capture_metadata_file': row.get('capture_metadata_file'),
                                     'measurement_mode': 'floor_height_tilt'})
                 self.results['floor_camera'] = entries
@@ -299,6 +322,7 @@ class ProjectStore:
                 result['repeatability_passed'] = (len(entries) >= 5
                     and result['height_m']['sample_std'] < .005
                     and max(result[k]['sample_std'] for k in ('roll_rad', 'pitch_rad')) < .035)
+                result = override_mount_height(result, self.meta.get('camera_mount_height_override'))
                 self.results['camera_mount'] = result
             else:
                 raise ValueError('알 수 없는 보정 항목입니다.')

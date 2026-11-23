@@ -77,6 +77,7 @@ def app_for(node, session):
     app = App.__new__(App)
     app.node, app.session, app.events = node, session, queue.Queue()
     app.inputs = {'columns': '9', 'rows': '6', 'square': '30'}
+    app.inputs.update(floor_columns='9', floor_rows='6', floor_square='30')
     app.options = {'floor_confirm': True}
     return app
 
@@ -160,6 +161,7 @@ def test_floor_shutter_uses_service_original_and_provenance(connected, tmp_path)
     session = Session(tmp_path, 'rehearsal', 'floor-route')
     node.begin(session)
     app = app_for(node, session)
+    app.inputs.update(floor_columns='7', floor_rows='5', floor_square='24.5')
     observed = {}
 
     def floor_capture(frame, registration, provenance):
@@ -171,6 +173,9 @@ def test_floor_shutter_uses_service_original_and_provenance(connected, tmp_path)
     assert np.array_equal(observed['frame'], original)
     assert observed['registration'] is None
     assert observed['provenance']['format'] == 'raw'
+    assert session.board.pattern == (9, 6)
+    assert session.floor_board.pattern == (7, 5)
+    assert session.floor_board.square_mm == 24.5
 
 
 @pytest.mark.parametrize('failure', ['jpeg', 'header', 'size'])

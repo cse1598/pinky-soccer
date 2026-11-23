@@ -19,7 +19,7 @@ ros2 launch pinky_soccer_calibration calibration_ui.launch.py webcam:=true
 
 현재 ROS 기반 올인원 UI는 **[ROS 캘리브레이션 스튜디오](ROS_UI.md)**를 사용하세요.
 **공 인식 검토** 탭은 경기용 HSV 검출·공통 거리 투영·BallFilter를 직접 사용해 공 표시와
-현재/추적 좌표·거리를 보여 줍니다. 보정이 없으면 명시한 HFOV 가정으로 추정하며 출처를 구분합니다.
+현재/추적 좌표·거리를 보여 줍니다. 범퍼 기준 실측 X/Y·검토용 오프셋을 입력해 오차와 적용 후 값을 비교하고 기록할 수 있습니다([입력 기준](ROS_UI.md#범퍼-기준-공-위치-실측과-오프셋)). 보정이 없으면 명시한 HFOV 가정으로 추정하며 출처를 구분합니다.
 프로젝트를 새로 만들거나 기존 폴더를 열어 계속 기록할 수 있습니다. **카메라 보정** 한 탭에서 보드 설정·원본 촬영·파일 추가·사진 분류/삭제·미리보기·계산을 진행합니다.
 **측정 기록** 탭에서는 바퀴·센서의 측정 횟수/실측값 확인과 삭제·재계산을 진행합니다.
 현재 기록으로 다시 계산한 뒤 최종 `profile.yaml`을 내보내며 미완료 자료도 저장합니다.
@@ -278,9 +278,9 @@ ros2 topic echo /camera/camera_info --once
 
 | 다음 단계 | 사용자가 측정할 값·방법 | 적용 대상 |
 |---|---|---|
-| 카메라 장착 | 바닥 체커보드로 높이·roll/pitch만 추정, 위치/축 등록 입력 없이 반복 촬영 | `floor_camera`·`camera_mount` 측정/통계 YAML. X/Y/yaw·전체 TF 자동 적용 없음; `ROS_UI.md` 참조 |
+| 카메라 장착 | 바닥 체커보드로 높이·roll/pitch만 추정, 위치/축 등록 입력 없이 반복 촬영 | `floor_camera`·`camera_mount` 측정/통계 YAML. 보정 높이/기울기 공 검토 우선·프로필 launch 적용, X/Y/yaw는 모델 유지; `ROS_UI.md` 참조 |
 | 바퀴 실측 | 좌우 지름 반복 측정, 바퀴 중심 간격; 공식 URDF·Gazebo 값과 비교 | 자체 보정 YAML; 공식 submodule 수정 없음 |
-| 오도메트리 | `/odom` 1 m 전후진은 범퍼 종방향 거리·좌우 편향, ±360° 회전은 누적 각도만 분리 입력/저장. 일정 곡률 가정·측정 절차는 `ROS_UI.md` 참조 | 실물 bringup `wheel_radius`/`wheel_separation`; 좌우 개별 반경은 제어 지원 확인 필요 |
+| 오도메트리 | `/odom` 1 m 전후진은 범퍼 중앙 시작~끝 거리(m) 하나, ±360° 회전은 누적 각도만 분리 입력/저장. 공통 유효 반경/간격 추정·측정 절차는 `ROS_UI.md` 참조 | 실물 bringup `wheel_radius`/`wheel_separation`; 좌우 개별 반경은 제어 지원 확인 필요 |
 | LiDAR | 여러 방향의 평면 표적 실측 거리와 `/scan`, 장착 XYZ/방향 측정 | 자체 description/센서 설정 |
 | IMU·초음파 | 정지 반복과 알려진 회전각, 거리·방향별 표적/미검출 기록 | 자체 센서/제어 설정 |
 
@@ -303,3 +303,10 @@ colcon test-result --verbose --test-result-base build/pinky_soccer_calibration
 # 새 ROS 올인원 UI
 
 실행: `ros2 run pinky_soccer_calibration calibration_ui`. 장치 연결은 launch에서 수행합니다. 안내·실험·적용 범위와 아직 남은 기능은 [ROS_UI.md](ROS_UI.md)를 참고하세요.
+LiDAR 탭의 **현재 LiDAR 경기장 모양 저장**은 프로젝트에 원본 Bag/CSV와
+Nav2 형식 `map.yaml`/`map.pgm`을 저장합니다. 정지·경기장 정리 확인 후 기록 시작 없이 사용할 수
+있으며, 단일 스캔의 미관측 영역과 로봇/센서 기준 좌표를 보존합니다.
+준비·좌표·파일 설명은 [ROS_UI.md](ROS_UI.md#lidar-경기장-모양-저장)를 참고하세요.
+
+**장착** 탭에는 내부 보정과 독립된 체커보드 규격 입력란이 있습니다. 다른 보드로 바꾸어도
+내부 보정값과 사진은 유지되며, 장착 사진은 각자의 촬영 규격으로 저장·재계산됩니다.

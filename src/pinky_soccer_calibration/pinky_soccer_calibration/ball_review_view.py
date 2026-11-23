@@ -1,23 +1,34 @@
 """Read-only ball inspection tab driven by shared gameplay algorithms."""
 
+from copy import deepcopy
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 import tkinter as tk
+import uuid
 
 from pinky_soccer_world_model.ball_detector import load_camera_yaml
 
-from .ball_review import GameplayReview, gameplay_settings
+import yaml
+
+from .ball_review import compare_bumper_ball, GameplayReview, gameplay_settings
+from .project_store import utc
 
 
 class BallReviewView(ttk.Frame):
     """Inspect JPEG candidates, metric projection and gameplay BallFilter tracking."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, on_saved=None, is_busy=None):
         super().__init__(parent, padding=10)
+        self.on_saved = on_saved or (lambda: None)
+        self.is_busy = is_busy or (lambda: False)
         self.engine = GameplayReview()
         self.external = None
         self.external_path = ''
+        self.external_mount = None
         self.source_node = None
         self.report = None
+        self.comparison = None
+        self.session = None
         canvas = tk.Canvas(self, highlightthickness=0)
         scrollbar = ttk.Scrollbar(self, orient='vertical', command=canvas.yview)
         canvas.configure(yscrollcommand=scrollbar.set)
@@ -59,9 +70,30 @@ class BallReviewView(ttk.Frame):
         self.tracking.pack(fill='x')
         self.geometry = ttk.Label(body, text='', wraplength=540, padding=6)
         self.geometry.pack(fill='x')
+        box = ttk.LabelFrame(body, text='범퍼 기준 실측 비교 · 검토용 오프셋', padding=6)
+        box.pack(fill='x', pady=6)
+        ttk.Label(box, text='범퍼 앞면 바깥 중앙의 바닥 투영점 → 공 중심 (m). X 전방+, Y 왼쪽+.\n'
+                  '공 표면까지 잰 거리는 중심까지로 환산하세요. 오프셋은 인식값에 더합니다.\n'
+                  '경기 좌표/TF에는 적용하지 않습니다. 웹캠 모드에서는 사용할 수 없습니다.',
+                  wraplength=520).pack(fill='x')
+        self.actual_xy = [tk.StringVar(value=''), tk.StringVar(value='0')]
+        self.offset_xy = [tk.StringVar(value='0'), tk.StringVar(value='0')]
+        for title, variables in [('실측', self.actual_xy), ('오프셋', self.offset_xy)]:
+            row = ttk.Frame(box)
+            row.pack(fill='x')
+            ttk.Label(row, text=title, width=9).pack(side='left')
+            for axis, variable in zip(('X (m)', 'Y (m)'), variables):
+                ttk.Label(row, text=axis).pack(side='left')
+                ttk.Entry(row, textvariable=variable, width=10).pack(side='left', padx=4)
+        row = ttk.Frame(box)
+        row.pack(fill='x', pady=4)
+        ttk.Button(row, text='현재 실측 차이를 오프셋으로', command=self.use_offset).pack(side='left')
+        ttk.Button(row, text='비교 기록 저장', command=self.save_comparison).pack(side='left')
+        self.comparison_text = ttk.Label(box, text='실측 X/Y를 입력하세요.', wraplength=520)
+        self.comparison_text.pack(fill='x')
         self.description = ttk.Label(body, text='거리 = 표시 좌표 원점에서 공 중심까지 수평 거리. X 전방+, Y 왼쪽+.\n'
                   '미보정 값은 HFOV·왜곡 0·실행 TF 가정에 따른 추정입니다.\n'
-                  '카메라 위치/각도는 실행 중 TF를 사용하며, 장착 측정값을 자동 적용하지 않습니다.\n'
+                  '보정 높이/설치각도를 우선 사용하며 X/Y/yaw는 실행 TF를 유지합니다.\n'
                   '영상은 JPEG 미리보기이므로 경기 원본 영상과 픽셀 검출 차이가 날 수 있습니다.',
                   wraplength=540)
         self.description.pack(fill='x', pady=8)
@@ -90,6 +122,7 @@ class BallReviewView(ttk.Frame):
         """Return to project / CameraInfo / explicit approximation precedence."""
         self.external = None
         self.external_path = ''
+        self.external_mount = None
         self.engine.reset()
 
     def load_camera(self):
@@ -99,6 +132,9 @@ class BallReviewView(ttk.Frame):
         if path:
             try:
                 self.external = load_camera_yaml(path)
+                data = yaml.safe_load(Path(path).read_text())
+                self.external_mount = data.get(
+                    'camera_mount', data.get('results', {}).get('camera_mount'))
                 self.external_path = path
                 self.engine.reset()
             except (OSError, ValueError, KeyError, TypeError) as error:
@@ -119,6 +155,11 @@ class BallReviewView(ttk.Frame):
                                            f"\n공 지름 {settings['ball_radius']*2000:.2f}mm (설정값)")
                 self.external = external
                 self.external_path = settings.get('camera_yaml', '')
+                self.external_mount = None
+                if self.external_path:
+                    data = yaml.safe_load(Path(self.external_path).read_text())
+                    self.external_mount = data.get(
+                        'camera_mount', data.get('results', {}).get('camera_mount'))
                 if self.source_node:
                     self.configure_source(self.source_node)
             except (OSError, ValueError, KeyError, TypeError) as error:
@@ -126,6 +167,19 @@ class BallReviewView(ttk.Frame):
 
     def update_frame(self, node, session):
         """Return annotated JPEG pixels and update diagnostics on the Tk thread."""
+        if session is not self.session:
+            previous = session.measurements.get('ball_review', []) if session else []
+            latest = previous[-1] if previous else {}
+            saved_offset = (session.meta.get('ball_review', {}).get('offset_xy_m')
+                            if session else None)
+            for variables, key, default in ((self.actual_xy, 'actual_xy_m', ['', '0']),
+                                            (self.offset_xy, 'offset_xy_m', ['0', '0'])):
+                values = (saved_offset if key == 'offset_xy_m' and saved_offset is not None
+                          else latest.get(key, default))
+                for variable, value in zip(variables, values):
+                    variable.set(str(value))
+        self.session = session
+        self.comparison = None
         frame, header, info, key = node.review_frame()
         now = node.get_clock().now().nanoseconds * 1e-9
         observed = header.stamp.sec + header.stamp.nanosec * 1e-9
@@ -133,12 +187,14 @@ class BallReviewView(ttk.Frame):
             observed = now
         preview, report = self.engine.process(
             frame, key, observed, now, header, node.review_transform, session, info, self.external,
-            self.approximate.get(), self.hfov.get(), self.rotated.get())
+            self.approximate.get(), self.hfov.get(), self.rotated.get(), self.external_mount)
         if getattr(node, 'source_kind', '') == 'webcam':
             report['mount_source'] = ('웹캠 바닥 보정 높이/roll/pitch · 노트북/웹캠을 움직이면 다시 측정하세요.\n'
                                       'webcam_floor: 원점은 웹캠 바닥 투영점, X는 카메라 전방, Y는 왼쪽')
             if report['reason'].startswith('카메라/바닥/'):
                 report['reason'] = '웹캠 높이·기울기 측정이 필요합니다(장착 탭).'
+        report['observed_at_s'] = observed
+        report['frame_key'] = str(key)
         self.report = report
         self.calibration.configure(text='카메라: '+report['intrinsics_source']+
                                    ('\n'+self.external_path if self.external else ''),
@@ -166,20 +222,85 @@ class BallReviewView(ttk.Frame):
                      f"마지막 채택 관측 후 {tracked['age_s']:.2f}초")
         self.tracking.configure(text=text)
         geometry_text = f'영상 {frame.shape[1]}×{frame.shape[0]} · {header.frame_id}\n'+report['mount_source']
-        if report['point'] and report['frame'] == 'base_link':
+        comparison_text = '실측 X/Y를 입력하고 새 공 관측을 기다리세요.'
+        if getattr(node, 'source_kind', '') == 'webcam':
+            comparison_text = '웹캠 리허설에는 로봇 범퍼 기준이 없습니다.'
+        elif report['point'] and report['frame'] == 'base_link' and abs(now-observed) <= 2:
             try:
-                front = node.measurement_geometry().front
+                geometry = node.measurement_geometry()
+                front = geometry.front
                 x, y = report['point'][:2]
                 geometry_text += f'\n범퍼 앞면 중앙 기준 공 중심: X {x-front[0]:.3f}m / Y {y-front[1]:.3f}m'
-            except ValueError:
-                pass
+                comparison = compare_bumper_ball(
+                    report['point'], front, [float(v.get()) for v in self.actual_xy],
+                    [float(v.get()) for v in self.offset_xy])
+                comparison.update(robot_description_sha256=geometry.sha256,
+                                  geometry_source='running_robot_description_model_not_physical_measurement')
+                self.comparison = comparison
+                ex, ey = comparison['error_xy_m']
+                cx, cy = comparison['corrected_xy_m']
+                comparison_text = (
+                    f'인식−실측: X {ex*1000:+.1f}mm / Y {ey*1000:+.1f}mm · 위치 오차 {comparison["error_m"]*1000:.1f}mm'
+                    f'\n실측 수평 거리 {comparison["actual_range_m"]:.3f}m / 인식 {comparison["observed_range_m"]:.3f}m'
+                    f'\n오프셋 적용: X {cx:.3f}m / Y {cy:.3f}m · 수평 거리 {comparison["corrected_range_m"]:.3f}m'
+                    f'\n적용 후 위치 오차 {comparison["corrected_error_m"]*1000:.1f}mm')
+            except (ValueError, TypeError) as error:
+                comparison_text = '실측/범퍼 기준 확인: '+str(error)
+        self.comparison_text.configure(text=comparison_text)
         self.geometry.configure(text=geometry_text)
         return preview
+
+    def current_comparison(self):
+        """Revalidate edited entries and stream freshness before a button action."""
+        if self.comparison is None or self.report is None or self.source_node is None:
+            raise ValueError('새 공 관측과 범퍼 기준·실측 입력이 필요합니다.')
+        now = self.source_node.get_clock().now().nanoseconds * 1e-9
+        if abs(now-self.report['observed_at_s']) > 2:
+            raise ValueError('영상이 오래되었습니다. 새 관측을 기다리세요.')
+        result = compare_bumper_ball(
+            self.report['point'], self.comparison['bumper_front_base_xyz_m'],
+            [float(v.get()) for v in self.actual_xy], [float(v.get()) for v in self.offset_xy])
+        result.update(robot_description_sha256=self.comparison['robot_description_sha256'],
+                      geometry_source=self.comparison['geometry_source'])
+        return result
+
+    def use_offset(self):
+        """Copy the measured residual into the editable review-only correction."""
+        try:
+            result = self.current_comparison()
+            for variable, value in zip(self.offset_xy, result['suggested_offset_xy_m']):
+                variable.set(f'{value:.6f}')
+        except (ValueError, TypeError) as error:
+            messagebox.showerror('실측 비교', str(error))
+
+    def save_comparison(self):
+        """Persist validation evidence without invalidating calibration profiles."""
+        try:
+            if self.is_busy():
+                raise ValueError('진행 중인 보정 작업이 끝난 뒤 저장하세요.')
+            if self.session is None:
+                raise ValueError('프로젝트를 먼저 열어 주세요.')
+            result = self.current_comparison()
+            result.update(id=uuid.uuid4().hex, recorded_utc=utc(),
+                          observation=deepcopy(self.report),
+                          camera_file=self.external_path, settings=deepcopy(self.engine.settings))
+            self.session.measurements.setdefault('ball_review', []).append(result)
+            self.session.meta.setdefault('ball_review', {})['offset_xy_m'] = result['offset_xy_m']
+            self.session.revision += 1
+            self.session.results.pop('ball_review', None)
+            self.session.stale.discard('ball_review')
+            self.session.save()
+            self.on_saved()
+            self.comparison_text.configure(text='비교 기록 저장 완료 · 측정 기록 탭에서 확인할 수 있습니다.')
+        except (ValueError, TypeError, OSError) as error:
+            messagebox.showerror('비교 기록 저장', str(error))
 
     def no_frame(self, error):
         """Clear stale observations instead of displaying the last frame as live."""
         self.engine.reset()
         self.report = None
+        self.comparison = None
+        self.comparison_text.configure(text='새 공 관측 수신 대기')
         self.calibration.configure(text='카메라 보정: 새 영상 수신 대기', foreground='#777777')
         self.observation.configure(text='공 관측 중단: '+str(error))
         self.tracking.configure(text='추적 초기화 · 새 영상 수신 대기')

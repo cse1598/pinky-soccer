@@ -1,5 +1,6 @@
 """Auditable calibration calculations, independent of the UI and ROS graph."""
 
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 import uuid
@@ -12,15 +13,31 @@ from .core import stats
 from .board_geometry import Board, floor_pose, registered_pose
 from .project_store import ProjectStore, utc
 
+
+def override_mount_height(summary, override):
+    """Keep measured tilt and raw height statistics when selecting a model height."""
+    if not override:
+        return summary
+    height = float(override['height_m'])
+    if not np.isfinite(height) or not .01 < height < 3:
+        raise ValueError('카메라 높이는 0.01~3m 사이의 유한한 값이어야 합니다.')
+    result = deepcopy(summary)
+    result['measured_height_m'] = deepcopy(summary.get('measured_height_m', summary['height_m']))
+    result['height_m'] = {'mean': height, 'source': 'user_selected_urdf_height'}
+    result['height_override'] = deepcopy(override)
+    return result
+
+
 GUIDES = {
     'camera': ('카메라 내부', '보드 내부 코너 수·칸 실측 길이 입력(기본9×6·30mm). '
                '카메라 보정 탭에서 촬영/파일 추가 후 학습15장 이상·검증8장 이상 분류. '
                '독립 검증 계산은 현재 학습 사진으로 매번 새로 보정하고 검증 사진으로 평가합니다. '
                '사진 추가·이동·삭제 후 다시 계산하고 왜곡 제거 영상의 직선도 확인하세요.'),
     'wheels': ('바퀴·오도메트리', '줄자·바닥 테이프·각도 기준·펜 준비. 장애물 없는 바닥에서 '
-               '전후진: 시작 방향 기준 범퍼 앞면 중앙의 종방향 이동(m)·좌우 편향(mm)을 입력해 저장. '
-               'X 전진+/후진-, Y 시작 때 로봇 왼쪽+/오른쪽-. 회전: 누적 각도만 별도 저장(좌+/우-). '
-               '각 방향 3회 이상 권장. 편향 변환은 일정 곡률 가정이므로 S자·미끄러진 궤적은 재실험.'),
+               '전후진: 범퍼 앞면 중앙의 시작~끝 직선 거리(m)만 입력(전진+/후진-). '
+               '회전: 실제 누적 각도(deg)만 별도 저장(좌+/우-). 좌우 편향으로 각도를 역산하지 않습니다. '
+               '공통 유효 바퀴 반경·간격 추정이며 좌우 반경 차이는 식별하지 않습니다. '
+               '각 방향 3회 이상 권장. S자·큰 곡선·미끄러진 궤적은 재실험.'),
     'lidar': ('LiDAR', '넓고 수직인 벽과 범퍼 앞면을 평행하게 놓으세요. 범퍼 전면 바깥쪽 '
               '중앙에서 벽까지 로봇 전방으로 잰 거리(m)를 입력합니다. 센서 위치는 실행 모델에서 '
               '자동 변환합니다. 로봇 정면 ±0.035rad 레이를 사용하며 여러 거리에서 3회 이상 반복. '
@@ -41,7 +58,8 @@ GUIDES = {
                    '로봇을 수평·정지시키세요. 촬영하면 바닥에서 카메라 광학 중심까지 높이와 '
                    '좌우 roll/상하 pitch를 추정합니다. 보드 위치·0번·축 방향 등록은 필요 없습니다. '
                    'pitch +는 아래쪽 기울기입니다. 보드 위치를 바꿔 5회 이상 반복 권장. '
-                   '로봇 기준 X/Y/yaw는 측정하지 않으며 전체 TF로 자동 적용하지 않습니다.'),
+                   '보정 높이/각도는 공 검토에 우선 적용하며 프로필로 launch에도 적용합니다. '
+                   '측정하지 않은 X/Y/yaw는 기존 모델/TF 값을 유지합니다.'),
 }
 
 
@@ -53,6 +71,9 @@ def finite(value):
 
 
 def wheel_fit(trials):
+    if any('measurement_type' in row for row in trials):
+        from .wheel_measurement import distance_rotation_fit
+        return distance_rotation_fit(trials)
     rows, targets = [], []
     for t in trials:
         left, right, angle = map(finite, (t['left_rad'], t['right_rad'], t['angle_rad']))
@@ -109,6 +130,7 @@ class Session(ProjectStore):
         self.frames = {'training': [], 'validation': []}
         self.camera = None
         self.board = Board()
+        self.floor_board = Board()
         self.init_project()
         self.save()
 
@@ -234,10 +256,12 @@ class Session(ProjectStore):
         k, d, size, _ = self.camera
         if frame.shape[:2][::-1] != size:
             raise ValueError('내부 보정과 영상 해상도가 다릅니다.')
-        corners = self.board.detect(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+        board = self.floor_board
+        board_spec = [board.columns, board.rows, board.square_mm]
+        corners = board.detect(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
         if corners is None:
-            raise ValueError('바닥 보드 전체 내부 코너가 보여야 합니다.')
-        result = floor_pose(self.board.points(), corners, k, d, allow_normal_flip=registration is None)
+            raise ValueError(f'장착용 {board.pattern} 바닥 보드 전체 내부 코너가 보여야 합니다.')
+        result = floor_pose(board.points(), corners, k, d, allow_normal_flip=registration is None)
         if registration is not None:
             result['base_pose'] = registered_pose(result, *registration)
             result['registration'] = list(registration)
@@ -248,6 +272,7 @@ class Session(ProjectStore):
                       'reprojection_rms_px': result['reprojection_rms_px'],
                       'measurement_mode': 'floor_height_tilt', 'reference': 'floor_plane',
                       'unmeasured': ['base_x', 'base_y', 'base_yaw']}
+        result['board'] = board_spec
         entries = self.results.setdefault('floor_camera', [])
         folder = self.root / 'floor'
         folder.mkdir(exist_ok=True)
@@ -285,6 +310,7 @@ class Session(ProjectStore):
         if registration is None:
             self.measurements.setdefault('floor', []).append(
                 {'id': uuid.uuid4().hex, 'recorded_utc': utc(), 'image_file': self.relative(path),
+                 'board': board_spec,
                  'capture_metadata_file': result.get('capture_metadata_file')})
             self.revision += 1
             self.recalculate('floor')
@@ -294,12 +320,18 @@ class Session(ProjectStore):
                     height_statistics=stats([e['height_m'] for e in entries]),
                     applicable='extrinsics' in self.results)
 
+    def configure_floor_board(self, board):
+        """Change the next mounting board without reinterpreting old photos or intrinsics."""
+        self.floor_board = board
+        self.meta['floor_board'] = [board.columns, board.rows, board.square_mm]
+        self.save()
+
     def export(self, confirmed):
         if self.meta.get('image_source', {}).get('kind') == 'webcam' and self.meta['environment'] != 'rehearsal':
             raise ValueError('웹캠 보정은 rehearsal 프로필로만 내보낼 수 있습니다.')
         if not confirmed or not self.results:
             raise ValueError('분석 결과와 사람이 수행한 독립 확인이 필요합니다.')
-        export_results = {k: v for k, v in self.results.items() if k not in self.stale
+        export_results = {k: v for k, v in self.results.items() if k not in self.stale and k != 'ball_review'
                           and not (k == 'camera' and not v.get('passed'))}
         if not any(k != 'time_sync' for k in export_results):
             raise ValueError('현재 기록으로 계산·검증한 유효 결과가 없습니다. 먼저 다시 계산하세요.')
@@ -322,6 +354,8 @@ class Session(ProjectStore):
                                      wheel_separation=w['separation_m'])
         if 'extrinsics' in export_results:
             profile['camera_pose'] = export_results['extrinsics']
+        if 'camera_mount' in export_results and 'floor' not in self.stale:
+            profile['camera_mount'] = export_results['camera_mount']
         profile['human_verified'] = True
         self.write('results.yaml', self.results)
         self.write('wheel_trials.yaml', self.trials)

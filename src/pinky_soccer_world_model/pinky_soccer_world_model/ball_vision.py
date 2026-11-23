@@ -26,6 +26,12 @@ def project_ball(blob, shape, k, d, camera_rt, output_rt, radius, max_range, rot
 def annotate_ball(frame, blob, calibration='calibrated', observation=None):
     """Draw the same raw pixel candidate for gameplay debug and calibration review."""
     preview = frame.copy()
+    if observation is not None and observation.roi_top > 0:
+        top = observation.roi_top
+        preview[:top] = (preview[:top]*.35).astype(preview.dtype)
+        cv2.line(preview, (0, top), (preview.shape[1]-1, top), (255, 200, 0), 1)
+        cv2.putText(preview, 'OUTSIDE SEARCH AREA', (8, max(60, top-8)),
+                    cv2.FONT_HERSHEY_SIMPLEX, .45, (255, 200, 0), 1, cv2.LINE_AA)
     status = 'NO BALL'
     if blob is not None:
         u, v, radius, _ = blob

@@ -1,13 +1,15 @@
 """Independent synthetic trajectories and UI save routing for wheel calibration."""
 
 import math
+from copy import deepcopy
 import threading
 from types import SimpleNamespace
 
 import numpy as np
 
 from pinky_soccer_calibration.suite_model import Session, wheel_fit
-from pinky_soccer_calibration.wheel_measurement import rotation_measurement, straight_measurement
+from pinky_soccer_calibration.wheel_measurement import (
+    distance_measurement, rotation_measurement, straight_measurement)
 
 import pytest
 
@@ -41,14 +43,14 @@ def test_bumper_displacement_recovers_axle_arc_forward_and_backward(distance, an
 
 
 def measurements():
-    """Generate encoder rotations using known unequal radii and axle separation."""
+    """Generate independent distance/turn runs with a known common radius."""
     trials = []
     for kind, distance, angle in [('forward', 1., .08), ('backward', -1., -.08),
                                   ('left', .015, 6.2), ('right', -.009, -6.35)]:
         # Rotation deliberately translates: it must not introduce an invented s=0 equation.
-        record = {'kind': kind, 'left_rad': (distance-.0961*angle/2)/.027,
+        record = {'kind': kind, 'left_rad': (distance-.0961*angle/2)/.028,
                   'right_rad': (distance+.0961*angle/2)/.028}
-        record.update(straight_measurement(kind, *endpoint(distance, angle), REFERENCE)
+        record.update(distance_measurement(kind, distance, REFERENCE)
                       if kind in ('forward', 'backward') else
                       rotation_measurement(kind, math.degrees(angle)))
         trials.append(record)
@@ -58,12 +60,41 @@ def measurements():
 def test_fit_separated_trials_recovers_radii_without_assuming_rotation_translation_zero():
     """Do not turn unmeasured rotation translation into a zero-distance constraint."""
     report = wheel_fit(measurements())
-    assert report['left_radius_m'] == pytest.approx(.027)
+    assert report['left_radius_m'] == pytest.approx(.028)
     assert report['right_radius_m'] == pytest.approx(.028)
     assert report['separation_m'] == pytest.approx(.0961)
+    assert not report['individual_radii_identified']
     assert 'distance_m' not in measurements()[2]
     with pytest.raises(ValueError):
         wheel_fit(measurements()[:2]*2)
+
+
+def test_raw_right_encoder_sign_is_normalized_without_modifying_records():
+    """Real reverse-sign and sim forward-sign encoders yield the same calibration."""
+    records = measurements()
+    for row in records:
+        row['right_rad'] *= -1
+    original = deepcopy(records)
+    result = wheel_fit(records)
+    assert result['effective_radius_m'] == pytest.approx(.028)
+    assert result['separation_m'] == pytest.approx(.0961)
+    assert records == original
+    assert all(r['encoder_multipliers'] == [1., -1.]
+               for r in result['encoder_normalization'])
+
+
+def test_legacy_lateral_displacement_does_not_become_a_yaw_measurement():
+    """Rotating the initial measuring baseline cannot manufacture a wheel asymmetry."""
+    records = measurements()
+    for row in records[:2]:
+        distance = row['distance_m']
+        row.update(measurement_type='straight_displacement',
+                   longitudinal_m=distance*math.cos(.15),
+                   lateral_m=distance*math.sin(.15), angle_rad=123.)
+    result = wheel_fit(records)
+    assert result['effective_radius_m'] == pytest.approx(.028)
+    assert result['separation_m'] == pytest.approx(.0961)
+    assert result['left_radius_m'] == result['right_radius_m']
 
 
 @pytest.mark.parametrize('kind,x,y', [
@@ -90,7 +121,7 @@ def test_ui_saves_separate_types_and_invalidates_previous_fit(tmp_path):
     app.session = Session(tmp_path, 'rehearsal', 'wheel-test')
     app.node = SimpleNamespace(writer=True, lock=threading.RLock(),
                                measurement_geometry=lambda: SimpleNamespace(sha256='model'))
-    app.inputs = {'distance': '1', 'lateral': '10', 'angle': ''}
+    app.inputs = {'distance': '1', 'angle': ''}
     app.node.last_motion = {'complete': True, 'kind': 'forward', 'left_rad': 36., 'right_rad': 36.,
                             'measurement_geometry': REFERENCE}
     with pytest.raises(ValueError, match='저장 버튼'):
@@ -99,8 +130,9 @@ def test_ui_saves_separate_types_and_invalidates_previous_fit(tmp_path):
     app.session.results['wheels'] = {'stale': True}
     app.trial('straight')
     saved = yaml.safe_load((app.session.root/'wheel_trials.yaml').read_text())
-    assert saved[0]['lateral_m'] == .01
-    assert saved[0]['measurement_type'] == 'straight_displacement'
+    assert saved[0]['distance_m'] == 1
+    assert 'lateral_m' not in saved[0] and 'angle_rad' not in saved[0]
+    assert saved[0]['measurement_type'] == 'straight_distance'
     assert (app.session.root/'wheel_straight_trials.yaml').exists()
     assert 'wheels' not in app.session.results
     assert app.node.last_motion is None

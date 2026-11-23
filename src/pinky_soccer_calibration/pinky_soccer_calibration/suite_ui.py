@@ -22,11 +22,12 @@ from .suite_ros import Acquisition, MOTION_LINEAR_SPEED, MOTION_ANGULAR_SPEED
 from .board_geometry import Board
 from .board_preview import annotate_board
 from .monitor_view import SensorMonitor
-from .wheel_measurement import straight_measurement, rotation_measurement
+from .wheel_measurement import distance_measurement, rotation_measurement
 from .project_store import utc
 from .project_view import ProjectView
 from .camera_view import CameraCalibrationView
 from .ball_review_view import BallReviewView
+from .lidar_field import save_field
 
 
 class App:
@@ -87,7 +88,8 @@ class App:
         book.pack(fill='both', expand=True)
         self.monitor = SensorMonitor(book)
         book.add(self.monitor, text='센서 모니터')
-        self.ball_review = BallReviewView(book)
+        self.ball_review = BallReviewView(book, lambda: self.project_view.refresh(),
+                                        lambda: self.busy)
         self.ball_review.configure_source(node)
         book.add(self.ball_review, text='공 인식 검토')
         self.project_view = ProjectView(book, self)
@@ -115,11 +117,10 @@ class App:
                 self.armed = tk.BooleanVar(value=False)
                 ttk.Checkbutton(tab, text='주변을 비우고 바닥에 배치했습니다. 주행 허용',
                                 variable=self.armed).pack(anchor='w')
-                ttk.Label(tab, text='① 전후진 실험 · 시작 방향에 평행/수직인 두 거리 측정').pack(fill='x')
+                ttk.Label(tab, text='① 전후진 실험 · 범퍼 중앙의 시작~끝 직선 거리 측정').pack(fill='x')
                 for label, kind in [('전진 1m', 'forward'), ('후진 1m', 'backward')]:
                     self.button(tab, label, lambda k=kind: self.move(k))
-                self.field(tab, 'distance', '범퍼 중앙 종방향 이동 (m, 전진+/후진-)', '')
-                self.field(tab, 'lateral', '범퍼 중앙 좌우 편향 (mm, 시작 방향의 왼쪽+/오른쪽-)', '')
+                self.field(tab, 'distance', '범퍼 중앙 시작~끝 거리 (m, 전진+/후진-)', '')
                 self.button(tab, '전후진 실측 저장', lambda: self.trial('straight'))
                 ttk.Label(tab, text='② 회전 실험 · 한 바퀴 누적 각도 측정').pack(fill='x')
                 for label, kind in [('좌회전 360°', 'left'), ('우회전 360°', 'right')]:
@@ -133,6 +134,20 @@ class App:
                                                            wraplength=480)
                 self.range_geometry_label[key].pack(fill='x', pady=4)
                 self.button(tab, '10초 정지 수집 → 분석', lambda k=key: self.range_test(k))
+                if key == 'lidar':
+                    ttk.Separator(tab).pack(fill='x', pady=8)
+                    ttk.Label(tab, text='경기장 윤곽 저장 · 현재 스캔 1장 기준\n'
+                              '사람·장애물을 치우고 로봇을 정지하세요. 가려진 벽은 저장되지 않습니다.\n'
+                              '지도 원점은 촬영 당시 로봇/센서 위치이며 경기장 중앙·범퍼 기준이 아닙니다.',
+                              wraplength=490).pack(fill='x')
+                    self.field(tab, 'lidar_map_resolution', '지도 해상도 (m/픽셀)', '0.01')
+                    self.lidar_clear = tk.BooleanVar(value=False)
+                    ttk.Checkbutton(tab, text='로봇 정지·경기장 안 사람/장애물 제거를 확인했습니다.',
+                                    variable=self.lidar_clear).pack(anchor='w')
+                    self.button(tab, '현재 LiDAR 경기장 모양 저장', self.save_lidar_field)
+                    self.lidar_saved = ttk.Label(tab, text='프로젝트를 만들거나 불러온 뒤 저장하세요.',
+                                                 wraplength=490)
+                    self.lidar_saved.pack(fill='x')
             elif key == 'imu':
                 self.button(tab, '10초 정지 수집 → 바이어스·노이즈 분석', self.imu_test)
             elif key == 'timing':
@@ -141,6 +156,13 @@ class App:
                 self.sync_label.pack(fill='x')
                 self.button(tab, '10초 주기·지터·헤더 나이 수집', self.timing)
             elif key == 'extrinsics':
+                self.mount_tab = tab
+                ttk.Label(tab, text='장착 확인용 체커보드 · 내부 보정용과 다른 보드 사용 가능',
+                          wraplength=490).pack(fill='x')
+                self.field(tab, 'floor_columns', '장착용 내부 코너 가로 수', '9')
+                self.field(tab, 'floor_rows', '장착용 내부 코너 세로 수', '6')
+                self.field(tab, 'floor_square', '장착용 한 칸 실측 길이 (mm)', '30')
+                self.button(tab, '장착 보드 설정 저장', self.configure_floor_board)
                 self.floor_confirm = tk.BooleanVar(value=False)
                 ttk.Checkbutton(tab, text=('보드를 바닥에 평평하게 놓고 웹캠을 고정했습니다.' if self.webcam else
                                           '보드를 바닥에 평평하게 놓고 로봇을 수평·정지시켰습니다.'),
@@ -202,6 +224,7 @@ class App:
         self.options = dict(output=self.output.get(), environment=self.environment.get(),
                             robot=self.robot.get(), confirm=self.confirm.get(),
                             armed=self.armed.get(), floor_confirm=self.floor_confirm.get())
+        self.options['lidar_clear'] = self.lidar_clear.get()
         self.busy = True
 
         def run():
@@ -219,6 +242,34 @@ class App:
         if not self.session:
             raise ValueError('프로젝트를 만들거나 저장 폴더를 불러오세요.')
         return self.session
+
+    def save_lidar_field(self):
+        """Save a stationary reference without starting recording or changing calibration values."""
+        session = self.require()
+        if self.webcam:
+            raise ValueError('웹캠 전용 모드에서는 LiDAR를 저장할 수 없습니다.')
+        if not self.options['lidar_clear']:
+            raise ValueError('로봇 정지·경기장 안 사람/장애물 제거 확인을 체크하세요.')
+        messages, seen, _ = self.node.monitor_snapshot()
+        scan = messages.get('/scan')
+        if scan is None:
+            raise ValueError('/scan 미수신: 로봇/시뮬레이터 launch와 ROS 연결을 확인하세요.')
+        try:
+            geometry = self.node.measurement_geometry()
+        except ValueError:
+            geometry = None
+        now = time.monotonic()
+        directory, info = save_field(
+            session.root, scan, received_monotonic=seen.get('/scan', -math.inf),
+            received_ros_ns=self.node.get_clock().now().nanoseconds, geometry=geometry,
+            odom=messages.get('/odom'),
+            odom_age_s=now-seen['/odom'] if '/odom' in seen else None,
+            environment=session.meta['environment'], robot_id=session.meta['robot_id'],
+            resolution=float(self.inputs['lidar_map_resolution']))
+        return (f'LiDAR 경기장 관측 저장: {directory}\n'
+                f'지도: {directory / "map.yaml"}\n'
+                f'벽 관측 {info["obstacle_returns"]}개 · 좌표 {info["capture_coordinate_frame"]} · '
+                '원본 Bag/CSV 보존. 보정 프로필과 별개이며 자동 적용되지 않습니다.')
 
     def require_recording(self):
         session = self.require()
@@ -350,16 +401,16 @@ class App:
             reference = t['measurement_geometry']
             if self.node.measurement_geometry().sha256 != reference['robot_description_sha256']:
                 raise ValueError('주행 후 모델이 바뀌었습니다. 원래 모델을 복원한 뒤 저장하세요.')
-            t.update(straight_measurement(t['kind'], finite(self.inputs['distance']),
-                                         finite(self.inputs['lateral'])/1000, reference))
+            t.update(distance_measurement(t['kind'], finite(self.inputs['distance']), reference))
         else:
             t.update(rotation_measurement(t['kind'], finite(self.inputs['angle'])))
         t.update(id=uuid.uuid4().hex, recorded_utc=utc())
         session.trials.append(t)
         try:
             category = 'straight' if straight else 'rotation'
+            types = {'straight_displacement', 'straight_distance'} if straight else {'rotation_angle'}
             session.write('wheel_'+category+'_trials.yaml',
-                          [v for v in session.trials if v.get('measurement_type') == t['measurement_type']])
+                          [v for v in session.trials if v.get('measurement_type') in types])
             session.write('wheel_trials.yaml', session.trials)
         except Exception:
             session.trials.pop()
@@ -369,8 +420,7 @@ class App:
         session.save()
         with self.node.lock:
             self.node.last_motion = None
-        detail = (f"종방향 {t['longitudinal_m']:.4f}m / 편향 {t['lateral_m']*1000:.1f}mm, "
-                  f"일정 곡률 가정 추정 각도 {math.degrees(t['angle_rad']):.2f}°" if straight else
+        detail = (f"시작~끝 실측 거리 {t['distance_m']:.4f}m · 편향/각도 역산 없음" if straight else
                   f"실측 누적 회전 {t['measured_angle_deg']:.2f}°")
         return f'{len(session.trials)}회 저장: {detail}. 각 방향 3회 이상 반복 후 바퀴 추정.'
 
@@ -453,7 +503,7 @@ class App:
             raise ValueError('보드를 바닥에 평평하게 놓고 '+
                              ('웹캠을 고정한 뒤 확인하세요.' if getattr(self, 'webcam', False) else
                               '로봇을 수평·정지시킨 뒤 확인하세요.'))
-        self.configure_board()
+        self.configure_floor_board()
         frame, metadata = self.capture_source()
         result = session.floor_capture(frame, None, provenance=metadata)
         self.events.put(('mount_result', result))
@@ -464,6 +514,13 @@ class App:
             raise ValueError('먼저 새 실험을 시작하세요.')
         self.session.configure_board(Board(int(self.inputs['columns']), int(self.inputs['rows']),
                                            finite(self.inputs['square'])))
+
+    def configure_floor_board(self):
+        session = self.require()
+        board = Board(int(self.inputs['floor_columns']), int(self.inputs['floor_rows']),
+                      finite(self.inputs['floor_square']))
+        session.configure_floor_board(board)
+        return f'장착용 보드 설정: 내부 코너 {board.pattern}, 한 칸 {board.square_mm:g}mm'
 
     def export(self):
         if not self.session:
@@ -485,6 +542,12 @@ class App:
         except ValueError as error:
             geometry_text = str(error)
         self.monitor.update_values(self.node.monitor_snapshot(), geometry)
+        if self.session:
+            saved = sorted(p for p in (self.session.root/'lidar_fields').glob('*/observation.yaml')
+                           if not p.parent.name.startswith('.'))
+            self.lidar_saved.configure(text=(f'저장된 경기장 관측 {len(saved)}개\n'
+                                            f'최근 지도: {saved[-1].parent / "map.yaml"}' if saved else
+                                            '저장된 경기장 관측 없음 · 기록 시작 없이 저장 가능'))
         for label in self.range_geometry_label.values():
             label.configure(text=geometry_text)
         if geometry is not None:
@@ -512,7 +575,9 @@ class App:
                     summary = self.session.results.get('camera_mount', {})
                     if all(k in summary for k in ('height_m', 'roll_rad', 'pitch_rad')):
                         self.mount_status.configure(
-                            text=f"현재 기록 {summary.get('repeats', 0)}회 평균: "
+                            text=(f"현재 기록 {summary.get('repeats', 0)}회 · URDF 높이 사용: "
+                                  if summary.get('height_override') else
+                                  f"현재 기록 {summary.get('repeats', 0)}회 평균: ") +
                                  f"높이 {summary['height_m']['mean']*1000:.1f}mm · "
                                  f"roll {math.degrees(summary['roll_rad']['mean']):.2f}° · "
                                  f"pitch {math.degrees(summary['pitch_rad']['mean']):.2f}°")
@@ -523,6 +588,10 @@ class App:
                 self.robot.set(value['robot_id'])
                 for key, v in zip(('columns', 'rows', 'square'),
                                   (*self.session.board.pattern, self.session.board.square_mm)):
+                    self.fields[key].set(str(v))
+                for key, v in zip(('floor_columns', 'floor_rows', 'floor_square'),
+                                  (*self.session.floor_board.pattern,
+                                   self.session.floor_board.square_mm)):
                     self.fields[key].set(str(v))
                 self.book.select(self.camera_tab)
             elif kind == 'capture_waiting':
@@ -567,8 +636,11 @@ class App:
                 if self.undistort.get() and camera:
                     k,d,_,_ = camera
                     frame = cv2.undistort(frame, k, d)
+                mounting = self.book.select() == str(self.mount_tab)
+                columns, rows = (('floor_columns', 'floor_rows') if mounting else ('columns', 'rows'))
                 frame, board_text, found = annotate_board(
-                    frame, self.fields['columns'].get(), self.fields['rows'].get())
+                    frame, self.fields[columns].get(), self.fields[rows].get())
+                board_text = ('장착용 · ' if mounting else '내부 보정용 · ')+board_text
                 self.board_status.configure(text=board_text,
                                             foreground='#16733c' if found else '#a05a00')
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

@@ -58,7 +58,7 @@ class ProjectView(ttk.Frame):
         self.details.delete('1.0', 'end')
         groups = {'wheels': session.trials, **session.measurements}
         labels = {'wheels': '바퀴', 'floor': '장착', 'lidar': 'LiDAR', 'ultrasonic': '초음파',
-                  'imu_stationary': 'IMU 정지', 'timing': '주기'}
+                  'imu_stationary': 'IMU 정지', 'timing': '주기', 'ball_review': '공 실측 비교'}
         counts = {k: sum(v.get('kind') == k for v in session.trials)
                   for k in ('forward', 'backward', 'left', 'right')}
         self.counts.configure(text='바퀴: 전진 {forward} / 후진 {backward} / 좌회전 {left} / 우회전 {right}회'
@@ -71,12 +71,17 @@ class ProjectView(ttk.Frame):
                         .get(row.get('kind'), '이전 실험')
                     if 'longitudinal_m' in row:
                         detail += f" X {row['longitudinal_m']:.4f}m / Y {row['lateral_m']*1000:.1f}mm"
+                    elif row.get('measurement_type') == 'straight_distance':
+                        detail += f" 시작~끝 거리 {row['distance_m']:.4f}m"
                     elif 'measured_angle_deg' in row:
                         detail += f" {row['measured_angle_deg']:.2f}°"
                     else:
                         detail += f" s={row.get('distance_m')}m / θ={row.get('angle_rad')}rad"
                 elif category == 'floor':
                     detail = Path(row.get('image_file', '')).name
+                elif category == 'ball_review':
+                    detail = (f"위치 오차 {row['error_m']*1000:.1f}mm → "
+                              f"오프셋 적용 후 {row['corrected_error_m']*1000:.1f}mm")
                 else:
                     detail = ('이전 분석값(원시 표본 없음)' if 'legacy_report' in row else
                               f"표본 {len(row.get('samples', []))}개 · "+json.dumps(row.get('reference', {}),

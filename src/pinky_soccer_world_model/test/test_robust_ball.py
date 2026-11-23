@@ -50,15 +50,15 @@ def test_one_target_continuity_loss_and_reacquisition():
     first = detector.detect(scene(), 1., 'a')
     assert first.blob is not None
     image = scene((153, 126))
-    cv2.circle(image, (270, 65), 40, (15, 100, 245), -1)
+    cv2.circle(image, (270, 185), 35, (15, 100, 245), -1)
     next_frame = detector.detect(image, 1.1, 'b')
     assert next_frame.blob[:2] == pytest.approx((153, 126), abs=2)
     assert detector.detect(image, 1.1, 'b') is next_frame
     blank = np.zeros_like(image)
     assert detector.detect(blank, 1.2, 'c').blob is None
-    distant = scene((270, 65), 40)
+    distant = scene((270, 185), 35)
     assert detector.detect(distant, 1.3, 'd').blob is None
-    assert detector.detect(distant, 2., 'e').blob[:2] == pytest.approx((270, 65), abs=2)
+    assert detector.detect(distant, 2., 'e').blob[:2] == pytest.approx((270, 185), abs=2)
     # A rewound simulator/camera clock starts a new visual association.
     assert detector.detect(scene(), .5, 'f').blob[:2] == pytest.approx((150, 125), abs=2)
 
@@ -67,3 +67,38 @@ def test_white_circle_and_fully_hidden_ball_are_not_invented():
     image = np.full((240, 320, 3), 45, np.uint8)
     cv2.circle(image, (150, 125), 35, (255, 255, 255), -1)
     assert observe_ball(image, RANGES).blob is None
+
+
+@pytest.mark.parametrize('size', [(320, 240), (640, 480)])
+def test_outside_field_is_excluded_and_coordinates_stay_in_original_frame(size):
+    """An outside orange ball cannot win over the ball in the field."""
+    width, height = size
+    image = np.full((height, width, 3), 45, np.uint8)
+    cv2.rectangle(image, (0, height//4), (width-1, height//3), (245,)*3, -1)
+    cv2.circle(image, (width//2, height//8), height//10, (15, 100, 245), -1)
+    outside_only = image.copy()
+    assert observe_ball(outside_only, RANGES).blob is None
+    center = (width//2, 3*height//4)
+    cv2.circle(image, center, height//12, (15, 100, 245), -1)
+    before = image.copy()
+    result = observe_ball(image, RANGES)
+    assert result.blob[:2] == pytest.approx(center, abs=3)
+    assert result.mask.shape == (height, width)
+    assert not result.mask[:height//3].any()
+    assert np.array_equal(before, image)
+
+
+def test_roi_does_not_track_a_ball_into_excluded_area():
+    """Visual memory cannot keep observing a ball above the search boundary."""
+    detector = BallImageDetector(RANGES)
+    assert detector.detect(scene((150, 110), 20), 1).blob is not None
+    assert detector.detect(scene((150, 55), 20), 1.1).blob is None
+    full = BallImageDetector(RANGES, options={'detection_top_fraction': 0})
+    assert full.detect(scene((150, 55), 20), 1).blob is not None
+
+
+@pytest.mark.parametrize('fraction', [-.1, 1., float('nan')])
+def test_invalid_roi_fraction_is_rejected(fraction):
+    """Reject configuration that cannot describe an image search area."""
+    with pytest.raises(ValueError):
+        BallImageDetector(RANGES, options={'detection_top_fraction': fraction})

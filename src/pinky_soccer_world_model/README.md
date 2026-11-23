@@ -35,6 +35,12 @@ ros2 run pinky_soccer_world_model fake_world_model --ros-args --params-file $(ro
 영상 중앙 주점·왜곡 0으로 임시 미터 좌표를 계산합니다. 실제 보정값이 아니며
 `APPROXIMATE` 표시·경고를 냅니다. 기본값은 false, 유효한 CameraInfo가 우선합니다.
 
+공 검출은 기본적으로 **영상 상단 1/3을 제외한 아래 2/3**만 검색합니다. 흰색 폼보드 벽 위의
+경기장 밖 배경을 제외하려는 현재 카메라 배치 기준이며, 흰 벽 경계를 자동 추정하는 기능은 아닙니다.
+`config/ball_detector.yaml`의 `detection_top_fraction`(0 이상 1 미만, 0은 전체 화면)으로 조정합니다.
+경기 디버그 영상과 보정 UI의 공 검토 화면은 제외 영역을 어둡게 하고 경계선을 표시합니다.
+ROI 내부에서 검출하더라도 출력 픽셀 좌표와 거리 투영은 원래 전체 영상 기준을 유지합니다.
+
 ### 실물 카메라 미보정 상태에서 공 인식 확인
 
 로봇의 `robot.launch.py`로 영상이 발행되는 상태에서 PC에서 실행합니다.

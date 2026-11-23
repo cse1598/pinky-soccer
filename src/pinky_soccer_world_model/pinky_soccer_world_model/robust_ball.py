@@ -15,7 +15,7 @@ from .geometry import _compact_blob, color_mask
 
 ROBUST_DEFAULTS = {'min_arc_fraction': .42, 'min_seed_fraction': .10,
                    'min_explained_fraction': .42, 'min_detection_confidence': .48,
-                   'visual_memory_s': .7}
+                   'visual_memory_s': .7, 'detection_top_fraction': 1/3}
 
 
 @dataclass
@@ -29,6 +29,7 @@ class BallObservation:
     color_fraction: float = 0.
     partial: bool = False
     candidates: int = 0
+    roi_top: int = 0
 
 
 def illumination_evidence(frame, ranges):
@@ -112,6 +113,32 @@ def circle_fractions(circle, seed, explained):
 
 def observe_ball(frame, ranges, min_area=12, min_circularity=.72,
                  shape=None, options=None, previous=None):
+    """Search the field ROI and restore full-image coordinates for projection."""
+    fraction = (options or {}).get('detection_top_fraction',
+                                   ROBUST_DEFAULTS['detection_top_fraction'])
+    if not math.isfinite(fraction) or not 0 <= fraction < 1:
+        raise ValueError('detection_top_fraction must be between 0 (inclusive) and 1')
+    height, width = frame.shape[:2]
+    top = min(height-1, math.ceil(height*fraction))
+    if min(height-top, width) < 8:
+        return BallObservation(None, np.zeros((height, width), np.uint8), roi_top=top)
+    prior = previous
+    if prior is not None:
+        prior = ((prior[0], prior[1]-top, *prior[2:])
+                 if prior[1] >= top else None)
+    result = _observe_ball_region(frame[top:], ranges, min_area, min_circularity,
+                                  shape, options, prior)
+    mask = np.zeros((height, width), np.uint8)
+    mask[top:] = result.mask
+    result.mask, result.roi_top = mask, top
+    if result.blob is not None:
+        u, v, radius, area = result.blob
+        result.blob = (u, v+top, radius, area) if v >= 0 else None
+    return result
+
+
+def _observe_ball_region(frame, ranges, min_area=12, min_circularity=.72,
+                         shape=None, options=None, previous=None):
     """Generate circle hypotheses, refit visible arcs, then return at most one."""
     cfg = {**ROBUST_DEFAULTS, **(options or {})}
     height, width = frame.shape[:2]
@@ -254,6 +281,10 @@ class BallImageDetector:
         self.ranges, self.min_area, self.min_circularity = ranges, min_area, min_circularity
         self.shape, self.options = shape, {**ROBUST_DEFAULTS, **(options or {})}
         for key, value in self.options.items():
+            if key == 'detection_top_fraction':
+                if not math.isfinite(value) or not 0 <= value < 1:
+                    raise ValueError(f'Invalid robust detector option: {key}')
+                continue
             if not math.isfinite(value) or value <= 0 or (key != 'visual_memory_s' and value > 1):
                 raise ValueError(f'Invalid robust detector option: {key}')
         self.reset()

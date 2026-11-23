@@ -76,6 +76,22 @@ def test_project_calibration_precedence_and_resolution_mismatch():
     assert select_intrinsics(frame.shape, session, None, None, False, 66)[0] is None
 
 
+def test_review_excludes_outside_area_using_gameplay_settings():
+    """Review uses the gameplay ROI and shades it without changing the input."""
+    frame, _, _, lookup = scene()
+    frame[:] = 100
+    cv2.circle(frame, (160, 40), 20, (0, 140, 255), -1)
+    original = frame.copy()
+    cfg, params = gameplay_settings()
+    engine = GameplayReview(cfg, params)
+    preview, report = engine.process(
+        frame, 1, 10., 10., SimpleNamespace(frame_id='camera', stamp=None), lookup)
+    assert report['blob'] is None and report['point'] is None
+    assert np.array_equal(frame, original)
+    assert tuple(preview[10, 300]) == (35, 35, 35)
+    assert np.array_equal(preview[220, 300], frame[220, 300])
+
+
 def test_missing_tf_and_lost_ball_never_reuse_old_observation():
     frame, _, _, lookup = scene()
     header = SimpleNamespace(frame_id='camera', stamp=None)

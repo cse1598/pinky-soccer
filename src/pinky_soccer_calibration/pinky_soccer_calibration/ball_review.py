@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
+from pinky_soccer_bringup.camera_mount import apply_mount
 import numpy as np
 from pinky_soccer_world_model.ball_filter import BallFilter, BallFilterParams, LOST
 from pinky_soccer_world_model.ball_vision import annotate_ball, project_ball
@@ -12,6 +13,30 @@ from pinky_soccer_world_model.geometry import (
     BLOB_SHAPE_DEFAULTS, intrinsics_from_hfov)
 from pinky_soccer_world_model.robust_ball import BallImageDetector, ROBUST_DEFAULTS
 import yaml
+
+
+def compare_bumper_ball(point, front, actual_xy, offset_xy=(0., 0.)):
+    """Compare horizontal ball centers in bumper axes; offset is actual minus observed."""
+    values = [np.asarray(v, dtype=float) for v in (point, front, actual_xy, offset_xy)]
+    if ([v.shape for v in values] != [(3,), (3,), (2,), (2,)]
+            or not all(np.isfinite(v).all() for v in values)):
+        raise ValueError('공 위치·범퍼·실측·오프셋은 유한한 좌표여야 합니다.')
+    point, front, actual, offset = values
+    if actual[0] < 0:
+        raise ValueError('범퍼 전방 실측 X는 0 이상이어야 합니다.')
+    observed = point[:2] - front[:2]
+    corrected = observed + offset
+    return {'measurement_reference': 'bumper_front_center', 'target': 'ball_center',
+            'observed_xy_m': observed.tolist(), 'actual_xy_m': actual.tolist(),
+            'offset_xy_m': offset.tolist(), 'corrected_xy_m': corrected.tolist(),
+            'suggested_offset_xy_m': (actual-observed).tolist(),
+            'error_xy_m': (observed-actual).tolist(),
+            'error_m': float(np.linalg.norm(observed-actual)),
+            'corrected_error_m': float(np.linalg.norm(corrected-actual)),
+            'observed_range_m': float(np.linalg.norm(observed)),
+            'actual_range_m': float(np.linalg.norm(actual)),
+            'corrected_range_m': float(np.linalg.norm(corrected)),
+            'bumper_front_base_xyz_m': front.tolist()}
 
 
 def gameplay_settings(path=None):
@@ -43,6 +68,10 @@ def gameplay_settings(path=None):
             raise ValueError(f'{key}는 0~1 범위여야 합니다.')
     for key, default in ROBUST_DEFAULTS.items():
         detector[key] = float(detector.get(key, default))
+        if key == 'detection_top_fraction':
+            if not math.isfinite(detector[key]) or not 0 <= detector[key] < 1:
+                raise ValueError('detection_top_fraction은 0 이상 1 미만이어야 합니다.')
+            continue
         if not math.isfinite(detector[key]) or detector[key] <= 0:
             raise ValueError(f'{key}는 유한한 양수여야 합니다.')
     return detector, params
@@ -107,7 +136,8 @@ class GameplayReview:
         self.last_time = None
 
     def process(self, frame, frame_key, observed_at, now, header, lookup,
-                session=None, info=None, external=None, approximate=True, hfov=66.0, rotated=False):
+                session=None, info=None, external=None, approximate=True, hfov=66.0, rotated=False,
+                external_mount=None):
         """lookup(target, source, stamp) supplies (R,t), using the acquisition TF buffer."""
         cfg = self.settings
         observation = self.visual.detect(frame, observed_at, frame_key)
@@ -132,6 +162,20 @@ class GameplayReview:
         report['reason'] = '주황색 공 후보 미검출' if blob is None else '미터 좌표 계산 대기'
         cam = lookup(cfg['floor_frame'], header.frame_id, header.stamp)
         output = lookup(cfg['output_frame'], cfg['floor_frame'], None)
+        summary = external_mount if external_mount is not None else (
+            session.results.get('camera_mount') if session and
+            not {'camera', 'floor'} & session.stale else None)
+        if summary and cam is not None:
+            try:
+                cam = apply_mount(cam, summary)
+                report['mount_source'] = (
+                    ('URDF 선택 높이 + 보정 roll/pitch · X/Y/yaw는 실행 TF 유지'
+                     if summary.get('height_override') else
+                     '보정 높이/roll/pitch 우선 · X/Y/yaw는 실행 TF 유지') +
+                    ('' if summary.get('repeatability_passed') else ' · 반복 검증 미완료'))
+            except (KeyError, TypeError, ValueError) as error:
+                cam = None
+                report['mount_source'] = '장착 보정값 오류: '+str(error)
         point = project_ball(blob, frame.shape, k, d, cam, output, cfg['ball_radius'],
                              cfg['max_range'], rotated)
         if blob is not None:
