@@ -61,6 +61,7 @@ class MpcController(Node):
         self.future_scheduled=False
         self.future_predicted=None
         self.active_predicted=None
+        self.active_solve_id=None
         self.pose_receipt_sim=None
         self.adapter=CommandAdapter(self.params)
         self.arrival=Arrival(float(p('pos_tol',.02).value),
@@ -153,6 +154,7 @@ class MpcController(Node):
         self.next_solve=0.
         self.schedule.clear()
         self.active_predicted=None
+        self.active_solve_id=None
 
     def job(self,generation,x,goal,v,w,forward,is_pose):
         if self.worker_generation!=generation:
@@ -178,6 +180,9 @@ class MpcController(Node):
             if state=='track' and self.last_solution_input_sim is not None else None)
         data['command_state_age_wall_s'] = (time.monotonic()-self.last_solution_input_wall
             if state=='track' and self.last_solution_input_wall is not None else None)
+        data['active_solve_id']=self.active_solve_id if state=='track' else None
+        data['compensated_state_age_sim_s']=(self.last_tick-self.last_solution_input_sim-self.dt
+            if state=='track' and self.active_solve_id is not None else None)
         data['pose_receipt_age_sim_s'] = (max(0.,self.last_tick-self.pose_receipt_sim)
             if self.last_tick is not None and self.pose_receipt_sim is not None else None)
         self.status_pub.publish(String(data=json.dumps(data)))
@@ -238,7 +243,7 @@ class MpcController(Node):
                     # Hold the existing stage until its scheduled boundary.
                     # The new solution is only eligible for that boundary.
                     if res['ok'] and wall-submitted<=.3:
-                        self.schedule.offer(now,(res,predicted,submitted_sim,submitted))
+                        self.schedule.offer(now,(res,predicted,submitted_sim,submitted,completed_id))
                 elif res['ok'] and wall-submitted<=.3:
                     self.last_solution=tuple(res['u'])
                     self.last_solution_sim=now
@@ -292,7 +297,8 @@ class MpcController(Node):
         if is_pose and inside and self.arrival.since is not None:
             # Braking to zero is not a P alignment controller; if we drift out,
             # tracking resumes immediately with the same NMPC.
-            if self.last_solution is not None or (self.future is not None and self.future_generation==self.generation):
+            if (self.last_solution is not None or self.schedule.due is not None or
+                    (self.future is not None and self.future_generation==self.generation)):
                 self.invalidate()
             self.send((0.,0.))
             return self.report('arrived' if done else 'settle','settled' if done else 'waiting for rest',
@@ -339,7 +345,8 @@ class MpcController(Node):
         if due:
             self.diag['activation_jitter_sim_s']=float(jitter)
             if result is not None:
-                res,predicted,submitted_sim,submitted=result
+                res,predicted,submitted_sim,submitted,solve_id=result
+                self.active_solve_id=solve_id
                 self.last_solution=tuple(res['u'])
                 self.last_solution_sim=now
                 self.last_solution_wall=wall
@@ -357,6 +364,7 @@ class MpcController(Node):
                 # No valid solution for this interval: brake, not an old first input.
                 self.last_solution=None
                 self.active_predicted=None
+                self.active_solve_id=None
                 self.failures+=1
                 self.diag.update(activation_position_error_m=None,
                     activation_heading_error_rad=None,activation_wheel_error_rad_s=None,
