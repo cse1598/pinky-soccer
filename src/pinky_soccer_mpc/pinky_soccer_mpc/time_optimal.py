@@ -17,7 +17,8 @@ class TimeOptimalMpc(PoseMpc):
     SLSQP checks it between iterations, not during a native solver call.
     """
     def __init__(self, params, dt=.1, max_steps=80, budget=.075,
-                 pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12):
+                 pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12,
+                 prepare_problems=True):
         super().__init__(params, horizon=dt*20, steps=20)
         self.max_steps = int(max_steps)
         self.budget = float(budget)
@@ -27,8 +28,9 @@ class TimeOptimalMpc(PoseMpc):
         self.cache = {}
         self.reset()
         # Compile all candidate sizes before control begins, not in the worker.
-        for n in range(2, self.max_steps+1):
-            self.problem(n)
+        if prepare_problems:
+            for n in range(2, self.max_steps+1):
+                self.problem(n)
 
     def reset(self):
         super().reset()
