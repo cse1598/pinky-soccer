@@ -1001,8 +1001,9 @@ class VerifierApp:
             start = pose_of(wm.self)
             if self.show_predict.get():
                 # NMPC: its own optimal trajectory; reactive: simulate the P controller law.
-                self.prediction = s['mpc_path'] or core.predict_path(
-                    start, waypoints, self.gains, float(goal.max_speed))
+                self.prediction = (s['mpc_path'] if self.node.controller_kind == 'mpc'
+                                   else core.predict_path(start, waypoints, self.gains,
+                                                          float(goal.max_speed)))
                 mp.polyline(self.prediction, fill=COLORS['predict'], width=2, dash=(4, 3))
             mp.polyline([start[:2]] + [w[:2] for w in waypoints], fill=COLORS['plan'],
                         dash=(2, 4))

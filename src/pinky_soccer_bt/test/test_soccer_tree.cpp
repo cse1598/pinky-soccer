@@ -202,7 +202,18 @@ TEST_F(TreeTest, VerifyRunsRealGoToPose)
   g = decideWith(tree, world(0.49, -0.2, 0, 0.3, 0, TrackedObject::LOST, false), &status);
   EXPECT_EQ(status, BT::NodeStatus::RUNNING);   // in place but heading 0 != 1.0
   g = decideWith(tree, world(0.49, -0.2, 0.95, 0.3, 0, TrackedObject::LOST, false), &status);
-  EXPECT_EQ(status, BT::NodeStatus::SUCCESS);
+  EXPECT_EQ(status, BT::NodeStatus::RUNNING);  // pose alone cannot terminate the skill
+  ASSERT_NE(g.goal_id, 0u);
+  MotionResult result;
+  result.goal_id = g.goal_id + 1;
+  result.state = MotionResult::SUCCESS;
+  bb_->set("motion_result", ReceivedMotionResult{result, std::chrono::steady_clock::now()});
+  EXPECT_EQ(tree.tickOnce(), BT::NodeStatus::RUNNING); // reject a different invocation
+  result.goal_id = g.goal_id;
+  bb_->set("motion_result", ReceivedMotionResult{result, std::chrono::steady_clock::now()});
+  EXPECT_EQ(tree.tickOnce(), BT::NodeStatus::SUCCESS);
+  ASSERT_TRUE(bb_->get("goal", g));
+  EXPECT_EQ(g.mode, BehaviorGoal::STOP);
 }
 
 TEST_F(TreeTest, VerifySubtreeAndDetourPath)

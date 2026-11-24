@@ -3,12 +3,13 @@
 <package format="3">
   <name>pinky_soccer_mpc</name>
   <version>0.0.0</version>
-  <description>Pinky Pro NMPC with acados (external/acados submodule). Stage 1: acados environment and solver verification.</description>
+  <description>Pinky Pro phase-1 direct-shooting NMPC; experimental acados solver retained.</description>
   <maintainer email="102153140+cse1598@users.noreply.github.com">cse</maintainer>
   <license>Apache-2.0</license>
 
   <exec_depend>pinky_soccer_dynamics</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>

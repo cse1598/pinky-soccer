@@ -34,6 +34,8 @@ class MpcController(Node):
         if identification:
             raise ValueError('Legacy identification not validated for phase-1 model')
         self.params=dyn_params.load(target,profile=profile or None)
+        if self.params.m('delay') > 0.:
+            raise ValueError('Phase-1 predictor does not compensate transport delay')
         self.max_lin=float(p('max_lin',0.).value)
         self.max_ang=float(p('max_ang',0.).value)
         self.goal_timeout=float(p('goal_timeout',.5).value)

@@ -172,7 +172,9 @@ class RunRecord:
               'target_x', 'target_y', 'target_th',
               'mpc_state', 'mpc_status', 'mpc_ms', 'mpc_direction', 'wheel_l', 'wheel_r',
               'profile_l', 'profile_r', 'wheel_cmd_l', 'wheel_cmd_r', 'feedback_age',
-              'feedback_enabled', 'period_s', 'v_bound', 'w_bound', 'mpc_residuals')
+              'feedback_enabled', 'period_s', 'v_bound', 'w_bound', 'mpc_residuals',
+              'mpc_reason', 'mpc_goal_id', 'mpc_iterations', 'mpc_backend',
+              'mpc_position_error', 'mpc_heading_error', 'mpc_message')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -206,7 +208,8 @@ class RunRecord:
         diag = mpc or {}
         self.rows[-1].extend(diag.get(k) for k in ('state','status','ms','direction',
             'wheel_l','wheel_r','profile_l','profile_r','wheel_cmd_l','wheel_cmd_r',
-            'feedback_age','feedback_enabled','period_s','v_bound','w_bound','residuals'))
+            'feedback_age','feedback_enabled','period_s','v_bound','w_bound','residuals',
+            'reason','goal_id','iterations','backend','position_error','heading_error','message'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:
@@ -249,6 +252,11 @@ class RunRecord:
                                 f'{100 * math.hypot(goal[0] - x, goal[1] - y):.1f} cm'))
                     out.append((f'목표 방향 오차({label})',
                                 f'{math.degrees(wrap(goal[2] - th)):+.1f}°'))
+            if self.state == 'success' and truth:
+                x, y, th = truth[-1]
+                within = (math.hypot(goal[0]-x, goal[1]-y) <= .02 and
+                          abs(wrap(goal[2]-th)) <= math.radians(3))
+                out.append(('정답 정확도 기준(2 cm / 3°)', '충족' if within else '미충족'))
         else:
             targets = self.column('target_x', 'target_y', 'est_x', 'est_y')
             if targets:
