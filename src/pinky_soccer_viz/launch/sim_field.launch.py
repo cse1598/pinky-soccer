@@ -115,6 +115,7 @@ def setup(context):
     if sim == 'mujoco':
         # The eval bridge adds /sim/ball_ground_truth and /sim/set_ball (referee reset).
         common.update(viewer='false' if headless else 'true',
+                      use_gpu=lc('use_gpu', context),
                       bridge_package='pinky_soccer_viz', bridge_executable='mujoco_eval_bridge')
     else:
         common.update(gui='false' if headless else 'true')
@@ -187,6 +188,8 @@ def generate_launch_description():
         DeclareLaunchArgument('opponent_x', default_value=auto),
         DeclareLaunchArgument('opponent_y', default_value=auto),
         DeclareLaunchArgument('opponent_yaw', default_value=auto),
+        DeclareLaunchArgument('use_gpu', default_value='auto',
+                              choices=['auto', 'true', 'false', 'nvidia', 'system']),
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('localization', default_value='lidar',
                               choices=['lidar', 'odom_only']),

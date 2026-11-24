@@ -91,3 +91,21 @@ source install/setup.bash
 - [x] **MuJoCo 통합**
 - [ ] **Nav2 footprint**: 범퍼 치수가 확정되면 반영합니다.
 - [ ] **1대1 시뮬레이션**: 로봇 2대를 띄울 수 있도록 namespace를 지원합니다.
+
+### MuJoCo GPU / real-time monitoring
+
+`game.launch.py mode:=mujoco` and the standalone MuJoCo launch now default to
+`use_gpu:=auto`. With `mesa-utils` installed, a bounded GLX probe selects working
+NVIDIA PRIME offload; otherwise system OpenGL is used (Intel/AMD/NVIDIA or software).
+Override with `use_gpu:=nvidia` (force offload), `use_gpu:=system` (system OpenGL),
+or `use_gpu:=false` (legacy CPU/simple rendering). `true` is an alias for auto.
+The launch logs its selection; the camera startup log reports the actual renderer.
+No physics, calibration, or MPC changes.
+
+Verification UI displays rolling RTF and /clock receive rate for simulations.
+RTF uses the difference in clock stamps divided by monotonic wall time over a
+2-second window, not clock message rate alone. Clock loss is flagged separately.
+CSV includes rolling RTF, clock Hz/age/state, simulation time and wall elapsed
+from the first recorded sample. The summary reports the RTF over recorded samples.
+Real robot runs leave those columns empty. These are observer-side measurements;
+DDS delivery jitter or dropped messages can affect the displayed clock rate.

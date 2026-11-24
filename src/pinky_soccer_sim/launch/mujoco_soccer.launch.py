@@ -22,12 +22,13 @@ from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from pinky_soccer_bringup.calibration_profile import (arguments as profile_arguments,
                                                       configure_urdf, drive_constants)
 from pinky_soccer_sim import multi_robot, sensor_launch
+from pinky_soccer_sim.render_backend import MODES, renderer_environment
 from pinky_soccer_sim.field_selection import selected_world
 from pinky_soccer_sim.sensor_model import load_config
 import yaml
@@ -81,11 +82,7 @@ def setup(context):
     if not world.is_file():
         raise FileNotFoundError(f'World file not found: {world}')
 
-    use_gpu = lc('use_gpu', context).lower() == 'true'
-    env = {}
-    if not use_gpu:
-        env = {'MUJOCO_GL': 'glfw', 'LIBGL_ALWAYS_SOFTWARE': '1',
-               '__GLX_VENDOR_LIBRARY_NAME': 'mesa'}
+    renderer, env, simple_render = renderer_environment(lc('use_gpu', context))
     args = ['--urdf-file', str(urdf_path), '--output-dir', str(model_dir), '--world', str(world)]
     # Simulator odometry calibration: drive constants only, physics geometry unchanged.
     if wheel_radius is not None:
@@ -123,7 +120,7 @@ def setup(context):
         args.append('--viewer')
     if not camera:
         args.append('--no-camera')
-    if not use_gpu:
+    if simple_render:
         args.append('--simple-render')
     if lc('spawn_ball', context).lower() == 'true':
         args += ['--ball-x', lc('ball_x', context), '--ball-y', lc('ball_y', context),
@@ -168,7 +165,7 @@ def setup(context):
         robot2 += (sensor_launch.nodes(camera=camera) if opp_sensors else
                    [Node(package='pinky_soccer_bringup', executable='command_watchdog')])
         out += multi_robot.group(opponent, robot2)
-    return out
+    return [LogInfo(msg=f'MuJoCo renderer selection: {renderer}')] + out
 
 
 def default_profile(simulator):
@@ -182,7 +179,9 @@ def generate_launch_description():
     return LaunchDescription([
         *sensor_launch.arguments(),
         *profile_arguments(simulation=True, default=default_profile('mujoco')),
-        DeclareLaunchArgument('use_gpu', default_value='false'),
+        DeclareLaunchArgument('use_gpu', default_value='auto', choices=MODES,
+                              description='auto/true: tested NVIDIA PRIME or system; '
+                              'nvidia: force PRIME; system: system OpenGL; false: CPU'),
         DeclareLaunchArgument('viewer', default_value='true'),
         DeclareLaunchArgument('real_driver_limits', default_value='true',
                               description='true: wheel limits like the real driver (100 rpm '

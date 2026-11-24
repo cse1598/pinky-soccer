@@ -36,12 +36,14 @@ from nav_msgs.msg import Path
 from pinky_soccer_field.field_geometry import Field
 from pinky_soccer_msgs.msg import BehaviorGoal, WorldModel
 from pinky_soccer_viz import style
+from pinky_soccer_viz.clock_monitor import ClockMonitor
+from rosgraph_msgs.msg import Clock
 from pinky_soccer_viz import verify_core as core
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.signals import SignalHandlerOptions
 from std_msgs.msg import Bool, String
 
@@ -93,6 +95,7 @@ class VerifierNode(Node):
         opponent_truth = p('opponent_truth_topic', '/sim/opponent_ground_truth').value or \
             '/sim/opponent_ground_truth'
         self.lock = threading.Lock()
+        self.clock_monitor = ClockMonitor() if self.simulation else None
         self.wm = self.goal = self.status = self.models = None
         self.wm_time = self.status_time = self.goal_time = 0.0
         self.cmd = (0.0, 0.0)
@@ -113,6 +116,7 @@ class VerifierNode(Node):
         self.create_subscription(String, 'behavior_test/status', self.on_status, reliable)
         self.create_subscription(String, 'behavior_test/models', self.on_models, latched)
         if self.simulation:
+            self.create_subscription(Clock, '/clock', self.on_clock, qos_profile_sensor_data)
             self.ball_pub = self.create_publisher(Point, '/sim/set_ball', 10)
             # Own truth follows the namespace; ball and opponent truth are absolute.
             for name, topic in (('self', 'ground_truth'), ('ball', '/sim/ball_ground_truth'),
@@ -122,6 +126,12 @@ class VerifierNode(Node):
         self.create_timer(0.25, lambda: self.send({'command': 'ping'}))
 
     # -------------------------------------------------------------- callbacks
+    def on_clock(self, msg):
+        wall = time.monotonic()
+        sim = msg.clock.sec + msg.clock.nanosec * 1e-9
+        with self.lock:
+            self.clock_monitor.add(sim, wall)
+
     def on_wm(self, msg):
         """Keep the latest world model."""
         with self.lock:
@@ -212,6 +222,7 @@ class VerifierNode(Node):
                     'cmd': self.cmd, 'truth': truth, 'models': self.models,
                     'mpc_path': self.mpc_path if now - self.mpc_path_time < 0.5 else [],
                     'mpc_diag': self.mpc_diag if now-self.mpc_diag_time < .25 else {},
+                    'clock_perf': self.clock_monitor.snapshot(now) if self.simulation else None,
                     't': self.get_clock().now().nanoseconds * 1e-9}
 
 
@@ -454,6 +465,12 @@ class VerifierApp:
             ttk.Label(top, text='실물: 사람이 옆에서 전원/정지 준비', foreground='#ffb000'
                       ).pack(side='right', padx=12)
 
+        if self.node.simulation:
+            perf = ttk.Frame(r, padding=(8, 4))
+            perf.pack(fill='x')
+            self.clock_label = ttk.Label(perf, text='RTF: 대기 · /clock: 대기',
+                                         style='State.TLabel')
+            self.clock_label.pack(side='left')
         panes = ttk.PanedWindow(r, orient='horizontal')
         panes.pack(fill='both', expand=True)
         panes.add(self._build_list(panes), weight=0)
@@ -831,6 +848,18 @@ class VerifierApp:
         bt_ok = st_age is not None and st_age < 1.0
         parts.append('bt_node 검증모드 ' + ('정상' if bt_ok else '응답 없음'))
         if self.node.simulation:
+            clock = s['clock_perf']
+            if clock['clock_state'] == 'stale':
+                self.clock_label.configure(text='RTF: 0.00x · /clock 끊김/일시정지',
+                                           foreground='#f85149')
+            elif clock['rtf'] is None:
+                self.clock_label.configure(text='RTF: 측정 대기 · /clock: 대기',
+                                           foreground=COLORS['muted'])
+            else:
+                rtf = clock['rtf']
+                color = '#3fb950' if .95 <= rtf <= 1.05 else '#ffb000'
+                self.clock_label.configure(text=f"RTF: {rtf:.2f}x · /clock: {clock['clock_hz']:.1f} Hz",
+                                           foreground=color)
             truth = s['truth']
             parts.append('정답 ' + (', '.join(sorted(truth)) if truth else '없음'))
         models = s['models']
@@ -861,7 +890,7 @@ class VerifierApp:
             goal_tuple = (goal.action, (goal.target.x, goal.target.y, goal.target.theta))
         rec.add(s['t'], est, truth.get('self'), ball, wm.ball.state if wm else None,
                 truth.get('ball', (None, None))[:2] if 'ball' in truth else None,
-                s['cmd'], goal_tuple, s['mpc_diag'])
+                s['cmd'], goal_tuple, s['mpc_diag'], s['clock_perf'])
         if status.get('request_id') == rec.number:
             state = status.get('state')
             text = core.STATE_TEXT.get(state, state)

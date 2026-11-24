@@ -174,7 +174,8 @@ class RunRecord:
               'profile_l', 'profile_r', 'wheel_cmd_l', 'wheel_cmd_r', 'feedback_age',
               'feedback_enabled', 'period_s', 'v_bound', 'w_bound', 'mpc_residuals',
               'mpc_reason', 'mpc_goal_id', 'mpc_iterations', 'mpc_backend',
-              'mpc_position_error', 'mpc_heading_error', 'mpc_message')
+              'mpc_position_error', 'mpc_heading_error', 'mpc_message',
+              'rtf', 'clock_hz', 'clock_age_s', 'clock_state', 'sim_time', 'wall_elapsed_s')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -189,13 +190,14 @@ class RunRecord:
         self.goal_scored = False
         self.ball_started_in_goal = None    # a ball already in the goal does not count
         self.initial_prediction = []
+        self.clock_wall_start = None
 
     @property
     def done(self):
         """Return True once the run has a terminal state."""
         return self.state in TERMINAL
 
-    def add(self, t, est, truth, ball, ball_state, ball_truth, cmd, goal, mpc=None):
+    def add(self, t, est, truth, ball, ball_state, ball_truth, cmd, goal, mpc=None, clock=None):
         """Append one sample; est/truth/goal are (x, y, th) or None."""
         def part(v, n):
             return list(v[:n]) if v is not None else [None] * n
@@ -210,6 +212,13 @@ class RunRecord:
             'wheel_l','wheel_r','profile_l','profile_r','wheel_cmd_l','wheel_cmd_r',
             'feedback_age','feedback_enabled','period_s','v_bound','w_bound','residuals',
             'reason','goal_id','iterations','backend','position_error','heading_error','message'))
+        perf = clock or {}
+        wall = perf.get('wall_time')
+        if wall is not None and self.clock_wall_start is None:
+            self.clock_wall_start = wall
+        self.rows[-1].extend([perf.get(k) for k in ('rtf', 'clock_hz', 'clock_age_s',
+                                                   'clock_state', 'sim_time')] +
+                             [wall-self.clock_wall_start if wall is not None else None])
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:
@@ -236,6 +245,15 @@ class RunRecord:
         duration = (self.end if self.end is not None else
                     (self.start + self.rows[-1][0] if self.rows else self.start)) - self.start
         out.append(('소요 시간', f'{duration:.2f} s'))
+        samples = self.column('sim_time', 'wall_elapsed_s')
+        if len(samples)>1 and samples[-1][1]>samples[0][1] and all(
+                b[0]>=a[0] for a,b in zip(samples,samples[1:])):
+            wall = samples[-1][1]-samples[0][1]
+            out.append(('기록 실제 경과 시간', f'{wall:.2f} s'))
+            out.append(('실험 RTF (기록 구간)', f'{(samples[-1][0]-samples[0][0])/wall:.3f}x'))
+        rtfs = [r[0] for r in self.column('rtf')]
+        if rtfs:
+            out.append(('RTF 최소/최대 (2초 창)', f'{min(rtfs):.3f} / {max(rtfs):.3f}x'))
         est = self.column('est_x', 'est_y', 'est_th')
         truth = self.column('true_x', 'true_y', 'true_th')
         if est:

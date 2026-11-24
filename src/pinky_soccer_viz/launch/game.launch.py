@@ -60,6 +60,8 @@ def setup(context):
                        ('ball_x', 'ball_y', 'imu_enabled', 'adc_enabled', 'robots',
                         'opponent_name', 'opponent_mode', 'opponent_speed', 'opponent_travel',
                         'opponent_x', 'opponent_y', 'opponent_yaw')})
+        if mode == 'mujoco':
+            common['use_gpu'] = arg('use_gpu')
         common.update(simulator=mode, publish_debug_image='true',
                       calibration_profile=arg('calibration_profile'))
     path = os.path.join(get_package_share_directory('pinky_soccer_viz'), 'launch', filename)
@@ -92,6 +94,9 @@ def generate_launch_description():
         DeclareLaunchArgument('opponent_x', default_value='auto'),
         DeclareLaunchArgument('opponent_y', default_value='auto'),
         DeclareLaunchArgument('opponent_yaw', default_value='auto'),
+        DeclareLaunchArgument('use_gpu', default_value='auto',
+                              choices=['auto', 'true', 'false', 'nvidia', 'system'],
+                              description='MuJoCo renderer only'),
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('verify', default_value='false', choices=['true', 'false'],
                               description='Behaviour verification mode: verifier window, '
