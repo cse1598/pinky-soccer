@@ -47,10 +47,12 @@ def step(params, x, u, dt):
     return x
 
 
-def symbolic_step(params, dt):
+def symbolic_step(params, dt, with_disturbance=False):
     """CasADi discrete map; heading is continuous, not wrapped within dynamics."""
     import casadi as ca
     x, u = ca.SX.sym('x', NX), ca.SX.sym('u', 2)
+    d = ca.SX.sym('d',2) if with_disturbance else ca.SX.zeros(2)
+    tau = ca.DM([params.m('tau_left'),params.m('tau_right')])
     pos, wheel, ref = x[:3], x[3:5], x[5:7]
     n = max(1, int(math.ceil(dt / .005)))
     h = dt/n
@@ -59,13 +61,14 @@ def symbolic_step(params, dt):
     a = profile_accel(params)*h
     for _ in range(n):
         nxt = ref + ca.fmin(ca.fmax(u-ref, -a), a)
-        wh = decay*wheel + (1-decay)*(ref+nxt)/2
+        wh = decay*wheel + (1-decay)*((ref+nxt)/2+tau*d)
         lin = r*(wheel+wh)/2
         v, w = (lin[0]+lin[1])/2, (lin[1]-lin[0])/params.m('track')
         mid = pos[2]+h*w/2
         pos = pos+h*ca.vertcat(v*ca.cos(mid),v*ca.sin(mid),w)
         wheel, ref = wh, nxt
-    return x, u, ca.vertcat(pos,wheel,ref,u)
+    result = ca.vertcat(pos,wheel,ref,u)
+    return (x,u,d,result) if with_disturbance else (x,u,result)
 
 
 def limit_command(params, command, v_cap, w_cap, direction=0):

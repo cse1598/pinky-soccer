@@ -12,6 +12,7 @@ from pinky_soccer_dynamics import profile_model as profile
 from .acados_setup import acados, cache_dir
 from .ramp_predictor import RampPredictor
 from . import damping
+from .delay_observer import FORECAST_TAU,DISTURBANCE_LIMIT
 from .time_optimal import TimeOptimalMpc
 
 
@@ -31,6 +32,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         self.candidate_timeout = min(.022, self.budget/3.5)
         self.retry_seed = None
         self.predictor=RampPredictor(params,self.dt)
+        self.disturbance=np.zeros(2)
         self.ocp = self.build_ocp()
         name = self.ocp.model.name
         folder = cache_dir(f'c_generated_code_{name}')
@@ -51,10 +53,10 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         # wheel states inside SQP. Exact same 5 ms ramp map as profile_model.
         x = ca.SX.sym('x', 9)
         u = ca.SX.sym('u', 2)
-        p = ca.SX.sym('p', 7)  # goal, terminal flag, v/w caps, sqrt(damping scale)
-        px,pu,pnext=profile.symbolic_step(self.params,self.dt)
-        f=ca.Function('profile_transition',[px,pu],[pnext])
-        physical=f(ca.vertcat(x[:3],x[3:9]*self.wmax),u*self.wmax)
+        p = ca.SX.sym('p', 9)  # goal, terminal flag, caps, damping, wheel disturbances
+        px,pu,pd,pnext=profile.symbolic_step(self.params,self.dt,with_disturbance=True)
+        f=ca.Function('profile_transition',[px,pu,pd],[pnext])
+        physical=f(ca.vertcat(x[:3],x[3:9]*self.wmax),u*self.wmax,p[7:9])
         nxt=ca.vertcat(physical[:3],physical[3:9]/self.wmax)
         e = x[:3]-p[:3]
         # Linear, well-scaled terminal constraints replace the squared radius
@@ -72,7 +74,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         flag = p[3]
         factor = .1+.9*flag
         model = at.AcadosModel()
-        key = json.dumps(dict(version='acados-method-a-v4-damping',
+        key = json.dumps(dict(version='acados-method-a-v5-observer',
                               model=self.params.as_dict(), dt=self.dt,
                               n=self.max_steps, budget=self.candidate_timeout,
                               terminal=[self.pos_tol,self.ang_tol,self.wheel_tol],
@@ -100,7 +102,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         ocp = at.AcadosOcp()
         ocp.model = model
         ocp.parameter_values = np.array([0.,0.,0.,1.,self.v_limit,self.w_limit,
-                                         math.sqrt(self.damping_scale)])
+                                         math.sqrt(self.damping_scale),0.,0.])
         ocp.cost.cost_type = ocp.cost.cost_type_e = 'NONLINEAR_LS'
         ocp.cost.W = np.eye(6)
         ocp.cost.W_e = np.eye(12)
@@ -144,10 +146,13 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
     def step(self,x,u):
         return self.predictor.step(x,u)
 
+    def stage_disturbance(self,k):
+        return self.disturbance*math.exp(-k*self.dt/FORECAST_TAU)
+
     def replay(self,x,us):
         xs = [np.asarray(x,float).copy()]
-        for u in us:
-            xs.append(self.step(xs[-1],u))
+        for k,u in enumerate(us):
+            xs.append(self.predictor.step(xs[-1],u,disturbance=self.stage_disturbance(k)))
         return np.asarray(xs)
 
     def validate_candidate(self,x,goal,prev,us,vb,wb,forward,terminal):
@@ -211,7 +216,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             s.set_new_time_steps(np.full(n,self.dt,dtype=np.float64))
             self.current_n=n
         s.reset()
-        p=np.array([*goal,float(terminal),vb,wb,math.sqrt(self.damping_scale)])
+        p=np.array([*goal,float(terminal),vb,wb,math.sqrt(self.damping_scale),0.,0.])
         hi=np.array([vb,wb,self.slew,self.slew])
         lo=-hi.copy()
         if forward:
@@ -227,12 +232,14 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                 seed,xs=retry,rx
         old=prev
         for k in range(n):
+            p[7:9]=self.stage_disturbance(k)
             s.set(k,'p',p)
             s.set(k,'x',self.pack_state(xs[k],old))
             s.set(k,'u',seed[k]/self.wmax)
             s.constraints_set(k,'lh',lo)
             s.constraints_set(k,'uh',hi)
             old=seed[k]
+        p[7:9]=self.stage_disturbance(n)
         s.set(n,'p',p)
         s.set(n,'x',self.pack_state(xs[-1],old))
         initial=self.pack_state(x,prev)
@@ -304,11 +311,16 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                     planned_time=n*self.dt,terminal_feasible=terminal,
                     cost=cost,damping_cost=damp_cost)
 
-    def solve(self,*args,**kwargs):
+    def solve(self,*args,disturbance=(0.,0.),**kwargs):
+        d=np.asarray(disturbance,float)
+        if d.shape!=(2,) or not np.all(np.isfinite(d)):
+            raise ValueError('invalid wheel disturbance')
+        self.disturbance=np.clip(d,-DISTURBANCE_LIMIT,DISTURBANCE_LIMIT)
         self.attempt_statuses=[]
         self.retry_seed=None
         result=super().solve(*args,**kwargs)
         result['backend']='discrete_time_optimal_acados'
         result['attempt_statuses']=self.attempt_statuses.copy()
         result['damping_scale']=self.damping_scale
+        result['forecast_disturbance']=self.disturbance.tolist()
         return result

@@ -85,6 +85,8 @@ class WorldModelNode(Node):
         self.opponents, self.opp_time = [], None
 
         self.pose = None            # (x, y, theta) map
+        self.pose_source_stamp = None
+        self.last_lookup_stamp = None
         self.velocity = (0.0, 0.0)
         self.pose_cov = [0.0] * 9
         self.last_tick = None
@@ -153,6 +155,7 @@ class WorldModelNode(Node):
                     self.static.sendTransform(self.map_to_odom())
                 self.get_logger().info('Aligned first odom sample to kickoff initial_pose')
             self.pose = compose2d(self.odom_offset, odom_pose)
+            self.pose_source_stamp=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
         if self.pose is not None:
             v = msg.twist.twist.linear.x
             self.velocity = (v * math.cos(self.pose[2]), v * math.sin(self.pose[2]))
@@ -163,6 +166,7 @@ class WorldModelNode(Node):
             try:
                 tf = self.tf.lookup_transform(target, source, when,
                                               timeout=Duration(seconds=0.0))
+                self.last_lookup_stamp=tf.header.stamp.sec+tf.header.stamp.nanosec*1e-9
                 return transform_matrix(tf)
             except TransformException:
                 continue
@@ -208,6 +212,7 @@ class WorldModelNode(Node):
             self.pose_cov = [c[i] for i in (0, 1, 5, 6, 7, 11, 30, 31, 35)]
 
     def update_pose_from_tf(self):
+        self.last_lookup_stamp=None
         rt = self.lookup(self.map_frame, self.base_frame)
         self.tf_pose_ready = rt is not None
         if rt is None:
@@ -221,6 +226,7 @@ class WorldModelNode(Node):
             self.grid.p.fill(self.grid.prior)
             self.opponents, self.opp_time = [], None
         self.pose = pose
+        self.pose_source_stamp=self.last_lookup_stamp
 
     def tick(self):
         """Predict, update the search grid and publish."""
@@ -265,7 +271,7 @@ class WorldModelNode(Node):
                     last_seen=self.opp_time, confidence=1.0 if fresh else 0.5))
 
         me = tracked('self', self.pose, self.velocity, self.pose_cov, TrackedObject.OBSERVED,
-                     now, 1.0)
+                     self.pose_source_stamp or 0., 1.0)
         odom_fresh = (self.odom_timeout <= 0 or self.localization != 'odom_only'
                       or (self.last_odom_received is not None
                           and time.monotonic() - self.last_odom_received <= self.odom_timeout))

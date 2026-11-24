@@ -10,12 +10,13 @@ class RampPredictor:
         self.tau_l,self.tau_r=params.m('tau_left'),params.m('tau_right')
         self.accel=float(params.limits['motor_accel'].value)
 
-    def step(self,x,u,dt=None):
+    def step(self,x,u,dt=None,disturbance=(0.,0.)):
         dt=self.dt if dt is None else float(dt)
         if dt<0 or not math.isfinite(dt):
             raise ValueError('invalid prediction interval')
         px,py,th,wl,wr,fl,fr=map(float,x)
         ul,ur=map(float,u)
+        al,ar=map(float,disturbance)
         if dt==0:
             return np.asarray(x,float).copy()
         n=max(1,math.ceil(dt/.005))
@@ -25,8 +26,8 @@ class RampPredictor:
         for _ in range(n):
             nl=fl+max(-a,min(a,ul-fl))
             nr=fr+max(-a,min(a,ur-fr))
-            ql=dl*wl+(1-dl)*(fl+nl)/2
-            qr=dr*wr+(1-dr)*(fr+nr)/2
+            ql=dl*wl+(1-dl)*((fl+nl)/2+self.tau_l*al)
+            qr=dr*wr+(1-dr)*((fr+nr)/2+self.tau_r*ar)
             l=self.rl*(wl+ql)/2
             r=self.rr*(wr+qr)/2
             v=(l+r)/2

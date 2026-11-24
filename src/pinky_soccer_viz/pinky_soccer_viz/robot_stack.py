@@ -67,7 +67,8 @@ class RobotConfig:
     localization: str = 'lidar'
     controller: str = 'mpc'
     mpc_backend: str = 'acados'
-    mpc_damping_scale: float = 1.0
+    mpc_damping_scale: float = 0.0
+    mpc_observer_mode: str = 'off'
     max_lin: float = 0.0
     max_ang: float = 0.0
     calibration_profile: str = ''
@@ -103,6 +104,7 @@ def controller_node(cfg):
                         'calibration_profile': cfg.calibration_profile,
                         'identification': cfg.identification, 'mpc_backend': cfg.mpc_backend,
                         'mpc_damping_scale': float(cfg.mpc_damping_scale),
+                        'mpc_observer_mode': cfg.mpc_observer_mode,
                         'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang,
                         'wheel_feedback': cfg.wheel_feedback}])
     if cfg.controller != 'reactive':

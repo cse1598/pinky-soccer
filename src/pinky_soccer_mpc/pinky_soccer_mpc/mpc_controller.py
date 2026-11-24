@@ -26,6 +26,7 @@ from .pose_mpc import PoseMpc
 from .time_optimal import TimeOptimalMpc
 from .acados_time_optimal import AcadosTimeOptimalMpc
 from .scheduled_input import ScheduledInput
+from .delay_observer import DelayObserver,FORECAST_TAU
 
 
 class MpcController(Node):
@@ -54,7 +55,17 @@ class MpcController(Node):
         if self.time_backend not in ('acados','slsqp'):
             raise ValueError('mpc_backend must be acados or slsqp')
         solver_cls=AcadosTimeOptimalMpc if self.time_backend=='acados' else TimeOptimalMpc
-        damping_scale=float(p('mpc_damping_scale',1.).value)
+        damping_scale=float(p('mpc_damping_scale',0.).value)
+        self.observer_mode=p('mpc_observer_mode','off').value
+        if self.observer_mode not in ('off','align','ndob'):
+            raise ValueError('mpc_observer_mode must be off, align or ndob')
+        if self.observer_mode!='off' and self.time_backend!='acados':
+            raise ValueError('delay observer requires acados')
+        self.observer=DelayObserver(self.params,enabled=self.observer_mode=='ndob')
+        self.pose_source_sim=None
+        self.wheel_source_sim=None
+        self.wheel_stamp_valid=False
+        self.aligned_pose=None
         kwargs={'damping_scale':damping_scale} if self.time_backend=='acados' else {}
         self.time_mpc=solver_cls(self.params, dt=self.dt,
              max_steps=int(p('time_optimal_max_steps',80).value),
@@ -120,6 +131,8 @@ class MpcController(Node):
         self.pose=(s.pose.x,s.pose.y,s.pose.theta)
         self.pose_time=time.monotonic()
         self.pose_receipt_sim=self.get_clock().now().nanoseconds*1e-9
+        stamp=s.last_seen.sec+s.last_seen.nanosec*1e-9
+        self.pose_source_sim=stamp if stamp>0 else None
         self.world_v=math.hypot(s.velocity.x,s.velocity.y)
         self.pose_valid=(s.state!=s.LOST and s.confidence>0 and
                          all(math.isfinite(v) for v in (*self.pose,self.world_v)))
@@ -129,6 +142,13 @@ class MpcController(Node):
             wheel=wheels_from_joint_state(self.params,msg.name,msg.velocity)
             if all(math.isfinite(v) for v in wheel):
                 self.measured,self.measured_time=wheel,time.monotonic()
+                if self.observer_mode!='off':
+                    receipt=self.get_clock().now().nanoseconds*1e-9
+                    stamp=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+                    self.wheel_stamp_valid=stamp>0
+                    stamp=stamp if stamp>0 else receipt
+                    if self.observer.measure(stamp,receipt,wheel):
+                        self.wheel_source_sim=min(stamp,receipt)
         except (KeyError,ValueError,IndexError):
             pass
 
@@ -147,6 +167,9 @@ class MpcController(Node):
         msg=Twist()
         msg.linear.x,msg.angular.z=float(v),float(w)
         self.pub.publish(msg)
+        if self.observer_mode!='off':
+            wl,wr,_=self.adapter.driver_applied(v,w)
+            self.observer.command(self.get_clock().now().nanoseconds*1e-9,(wl,wr))
         return v,w
 
     def invalidate(self):
@@ -158,12 +181,14 @@ class MpcController(Node):
         self.active_predicted=None
         self.active_solve_id=None
 
-    def job(self,generation,x,goal,v,w,forward,is_pose):
+    def job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.)):
         if self.worker_generation!=generation:
             self.mpc.reset()
             self.time_mpc.reset()
             self.worker_generation=generation
         solver=self.time_mpc if is_pose else self.mpc
+        if is_pose and self.time_backend=='acados':
+            return solver.solve(x,goal,v,w,forward_only=forward,disturbance=disturbance)
         return solver.solve(x,goal,v,w,forward_only=forward)
 
     def report(self,state,reason='',result=MotionResult.RUNNING,dist=0.,ang=0.,**extra):
@@ -187,6 +212,15 @@ class MpcController(Node):
             if state=='track' and self.active_solve_id is not None else None)
         data['pose_receipt_age_sim_s'] = (max(0.,self.last_tick-self.pose_receipt_sim)
             if self.last_tick is not None and self.pose_receipt_sim is not None else None)
+        data.update(observer_mode=self.observer_mode,
+            observer_d_l=float(self.observer.d[0]),observer_d_r=float(self.observer.d[1]),
+            observer_innovation_l=float(self.observer.innovation[0]),
+            observer_innovation_r=float(self.observer.innovation[1]),
+            observer_accepted=self.observer.accepted,observer_rejected=self.observer.rejected,
+            wheel_stamp_valid=self.wheel_stamp_valid,
+            wheel_source_age_s=(self.last_tick-self.wheel_source_sim if self.wheel_source_sim is not None else None),
+            pose_source_age_s=(self.last_tick-self.pose_source_sim if self.pose_source_sim is not None else None),
+            pose_aligned=self.aligned_pose is not None)
         self.status_pub.publish(String(data=json.dumps(data)))
         if gid and self.goal.action=='GoToPose':
             msg=MotionResult()
@@ -210,6 +244,10 @@ class MpcController(Node):
             self.invalidate()
             self.arrival.reset()
             self.omega=self.ref=self.last_cmd=(0.,0.)
+            self.observer.reset()
+            self.aligned_pose=None
+            self.wheel_source_sim=None
+            self.pose_source_sim=None
             return self.stop('clock discontinuity')
         self.omega,self.ref=motor_step(self.params,self.omega,self.ref,self.last_cmd,elapsed)
         self.feedback_age=None if self.measured_time is None else wall-self.measured_time
@@ -237,7 +275,7 @@ class MpcController(Node):
                                                 'iterations','v_bound','w_bound','message','backend',
                                                 'horizon_steps','planned_time','terminal_feasible',
                                                 'attempts','lower_steps','attempt_statuses','replay_violation',
-                                                'damping_cost','damping_scale')}
+                                                'damping_cost','damping_scale','forecast_disturbance')}
                 self.diag.update(activation_diag)
                 self.diag.update(solve_id=completed_id,
                                  solve_input_age_sim_s=now-submitted_sim,
@@ -385,7 +423,23 @@ class MpcController(Node):
         if self.schedule.due is None and self.future is None:
             vb,wb=self.caps()
             physical=np.asarray((*self.pose,*self.omega,*self.ref),float)
-            predicted=self.time_mpc.predictor.step(physical,command,self.dt)
+            disturbance=np.zeros(2)
+            self.aligned_pose=None
+            if self.observer_mode!='off':
+                estimate=self.observer.current(now)
+                if estimate is not None:
+                    wheels,disturbance=estimate
+                    physical[3:7]=wheels
+                    if self.pose_source_sim is not None:
+                        aligned=self.observer.align_pose(self.pose,self.pose_source_sim,now)
+                        if aligned is not None:
+                            physical[:3]=aligned[:3]
+                            self.aligned_pose=aligned[:3]
+            predicted=self.time_mpc.predictor.step(physical,command,self.dt,
+                                                  disturbance=disturbance)
+            # A bounded transient forecast avoids imposing a constant nonzero
+            # disturbance at the stop equilibrium for the entire long horizon.
+            forecast=disturbance*math.exp(-self.dt/FORECAST_TAU)
             state=np.r_[predicted,command]
             self.schedule.begin(now)
             self.future_generation=self.generation
@@ -395,7 +449,7 @@ class MpcController(Node):
             self.future_predicted=predicted
             self.solve_id+=1
             self.future=self.executor_pool.submit(self.job,self.generation,state,
-                 goal,vb,wb,self.goal.action in self.forward_only,True)
+                 goal,vb,wb,self.goal.action in self.forward_only,True,tuple(forecast))
             self.diag['prediction_lead_sim_s']=self.dt
         valid=self.last_solution is not None
         self.report('track' if valid else 'waiting',
