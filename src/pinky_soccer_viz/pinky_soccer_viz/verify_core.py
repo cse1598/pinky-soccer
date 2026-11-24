@@ -209,7 +209,8 @@ class RunRecord:
               'feedback_enabled', 'period_s', 'v_bound', 'w_bound', 'mpc_residuals',
               'mpc_reason', 'mpc_goal_id', 'mpc_iterations', 'mpc_backend',
               'mpc_position_error', 'mpc_heading_error', 'mpc_message',
-              'rtf', 'clock_hz', 'clock_age_s', 'clock_state', 'sim_time', 'wall_elapsed_s')
+              'rtf', 'clock_hz', 'clock_age_s', 'clock_state', 'sim_time', 'wall_elapsed_s', 'mpc_horizon_steps', 'mpc_planned_time',
+              'mpc_terminal_feasible', 'mpc_attempts', 'mpc_lower_steps')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -253,6 +254,8 @@ class RunRecord:
         self.rows[-1].extend([perf.get(k) for k in ('rtf', 'clock_hz', 'clock_age_s',
                                                    'clock_state', 'sim_time')] +
                              [wall-self.clock_wall_start if wall is not None else None])
+        self.rows[-1].extend(diag.get(k) for k in ('horizon_steps','planned_time',
+            'terminal_feasible','attempts','lower_steps'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:

@@ -22,6 +22,7 @@ from std_msgs.msg import String
 
 from .arrival import Arrival, wrap
 from .pose_mpc import PoseMpc
+from .time_optimal import TimeOptimalMpc
 
 
 class MpcController(Node):
@@ -46,6 +47,9 @@ class MpcController(Node):
         self.mpc=PoseMpc(self.params,p('horizon',2.).value,int(p('steps',20).value))
         if abs(self.dt-self.mpc.dt)>1e-6:
             raise ValueError('horizon/steps must match optimization period')
+        self.time_mpc=TimeOptimalMpc(self.params, dt=self.dt,
+             max_steps=int(p('time_optimal_max_steps',80).value),
+             budget=float(p('time_optimal_budget_sec',.075).value))
         self.adapter=CommandAdapter(self.params)
         self.arrival=Arrival(float(p('pos_tol',.02).value),
                              float(p('ang_tol',math.radians(3)).value),
@@ -85,8 +89,8 @@ class MpcController(Node):
         if self.wheel_feedback:
             self.create_subscription(JointState,'joint_states',self.on_joints,qos_profile_sensor_data)
         self.create_timer(1/self.command_rate,self.tick)
-        self.get_logger().info(f'Phase-1 SLSQP NMPC {target}: {self.rate:g} Hz solve, '
-                               f'{self.command_rate:g} Hz command; {self.mpc.steps} stages; '
+        self.get_logger().info(f'Fixed-step time-optimal NMPC {target}: {self.rate:g} Hz solve, '
+                               f'{self.command_rate:g} Hz command; up to {self.time_mpc.max_steps} stages; '
                                f'{self.mpc.wmax*30/math.pi:.1f} RPM')
 
     def on_goal(self,msg):
@@ -130,11 +134,13 @@ class MpcController(Node):
         self.last_solution=self.last_solution_sim=self.last_solution_wall=None
         self.next_solve=0.
 
-    def job(self,generation,x,goal,v,w,forward):
+    def job(self,generation,x,goal,v,w,forward,is_pose):
         if self.worker_generation!=generation:
             self.mpc.reset()
+            self.time_mpc.reset()
             self.worker_generation=generation
-        return self.mpc.solve(x,goal,v,w,forward_only=forward)
+        solver=self.time_mpc if is_pose else self.mpc
+        return solver.solve(x,goal,v,w,forward_only=forward)
 
     def report(self,state,reason='',result=MotionResult.RUNNING,dist=0.,ang=0.,**extra):
         gid=int(self.goal.goal_id) if self.goal is not None else 0
@@ -145,7 +151,9 @@ class MpcController(Node):
                     profile_l=float(self.ref[0]),profile_r=float(self.ref[1]),
                     wheel_cmd_l=self.last_cmd[0],wheel_cmd_r=self.last_cmd[1],
                     feedback_age=self.feedback_age,feedback_enabled=self.wheel_feedback,
-                    position_error=dist,heading_error=ang,backend='slsqp')
+                    position_error=dist,heading_error=ang,
+                    backend=data.get('backend') or ('discrete_time_optimal_slsqp' if
+                        self.goal is not None and self.goal.action=='GoToPose' else 'slsqp'))
         self.status_pub.publish(String(data=json.dumps(data)))
         if gid and self.goal.action=='GoToPose':
             msg=MotionResult()
@@ -188,7 +196,9 @@ class MpcController(Node):
                      'message':str(exc),'residuals':[]}
             if generation==self.generation:
                 self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
-                                                'iterations','v_bound','w_bound','message')}
+                                                'iterations','v_bound','w_bound','message','backend',
+                                                'horizon_steps','planned_time','terminal_feasible',
+                                                'attempts','lower_steps')}
                 if res['ok'] and wall-submitted<=.3:
                     self.last_solution=tuple(res['u'])
                     self.last_solution_sim=now
@@ -237,7 +247,7 @@ class MpcController(Node):
         w_actual=(self.mpc.rr*r-self.mpc.rl*l)/self.mpc.b
         inside,done,dist,ang=self.arrival.update(now,self.pose,goal,
                  max(abs(v_actual),self.world_v),w_actual,self.omega,feedback)
-        if is_pose and inside:
+        if is_pose and inside and self.arrival.since is not None:
             # Braking to zero is not a P alignment controller; if we drift out,
             # tracking resumes immediately with the same NMPC.
             if self.last_solution is not None or (self.future is not None and self.future_generation==self.generation):
@@ -267,7 +277,7 @@ class MpcController(Node):
             self.future_generation=self.generation
             self.future_wall=wall
             self.future=self.executor_pool.submit(self.job,self.generation,x,goal,v,w,
-                                                   self.goal.action in self.forward_only)
+                                                   self.goal.action in self.forward_only,is_pose)
             self.next_solve=now+self.dt
         valid=(self.last_solution is not None and now-self.last_solution_sim<=2*self.dt
                and wall-self.last_solution_wall<=.3)
