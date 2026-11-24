@@ -54,9 +54,11 @@ class MpcController(Node):
         if self.time_backend not in ('acados','slsqp'):
             raise ValueError('mpc_backend must be acados or slsqp')
         solver_cls=AcadosTimeOptimalMpc if self.time_backend=='acados' else TimeOptimalMpc
+        damping_scale=float(p('mpc_damping_scale',1.).value)
+        kwargs={'damping_scale':damping_scale} if self.time_backend=='acados' else {}
         self.time_mpc=solver_cls(self.params, dt=self.dt,
              max_steps=int(p('time_optimal_max_steps',80).value),
-             budget=float(p('time_optimal_budget_sec',.075).value))
+             budget=float(p('time_optimal_budget_sec',.075).value),**kwargs)
         self.schedule=ScheduledInput(self.dt, min(.025,.45*self.dt))
         self.future_scheduled=False
         self.future_predicted=None
@@ -234,7 +236,8 @@ class MpcController(Node):
                 self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
                                                 'iterations','v_bound','w_bound','message','backend',
                                                 'horizon_steps','planned_time','terminal_feasible',
-                                                'attempts','lower_steps','attempt_statuses','replay_violation')}
+                                                'attempts','lower_steps','attempt_statuses','replay_violation',
+                                                'damping_cost','damping_scale')}
                 self.diag.update(activation_diag)
                 self.diag.update(solve_id=completed_id,
                                  solve_input_age_sim_s=now-submitted_sim,

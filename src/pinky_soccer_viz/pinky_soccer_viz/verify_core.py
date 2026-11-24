@@ -217,7 +217,8 @@ class RunRecord:
               'mpc_prediction_lead_sim_s','mpc_activation_jitter_sim_s','mpc_activation_missed',
               'mpc_activation_position_error_m','mpc_activation_heading_error_rad',
               'mpc_activation_wheel_error_rad_s','mpc_pose_receipt_age_sim_s',
-              'mpc_active_solve_id','mpc_compensated_state_age_sim_s')
+              'mpc_active_solve_id','mpc_compensated_state_age_sim_s',
+              'mpc_damping_scale','mpc_damping_cost')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -267,7 +268,7 @@ class RunRecord:
             'command_state_age_sim_s','command_state_age_wall_s','prediction_lead_sim_s',
             'activation_jitter_sim_s','activation_missed','activation_position_error_m',
             'activation_heading_error_rad','activation_wheel_error_rad_s','pose_receipt_age_sim_s',
-            'active_solve_id','compensated_state_age_sim_s'))
+            'active_solve_id','compensated_state_age_sim_s','damping_scale','damping_cost'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:

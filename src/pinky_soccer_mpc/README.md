@@ -140,3 +140,30 @@ speed reduction or extra damping weight has been added. The cache key changes.
 New tests cover model parity, activation timing, and one-period delayed
 closed-loop motion. Upstream acados deprecation warnings are not globally
 suppressed; direct test access to deprecated N has been removed.
+
+### Near-goal velocity damping (method A)
+
+The primary criterion is still the shortest independently feasible integer
+horizon found within the search budget. Within a candidate horizon, add a
+smooth cost on physical forward and yaw velocities (not commanded velocity).
+Defaults: radius 0.08 m, heading gate scale 25 degrees, normalized weights
+q_v=0.15, q_w=0.60. Yaw damping is strongest near both target position and
+orientation, so a necessary large in-place rotation is not penalized as
+strongly. The radius is a continuous cost scale, not a hard speed limit.
+Wheel, slew, terminal acceptance, motor profile and scheduled actuation are
+unchanged. The progress-only fallback retains its prior objective.
+`mpc_damping_scale:=0.0` disables the new residuals, `1.0` is default;
+other nonnegative finite values scale both weights. This runtime OCP
+parameter shares one generated solver across scales. Numerical behavior with
+zero damping need not be bit-identical to the previous generated solver.
+CSV includes damping_scale and the replayed stage damping_cost for each
+selected solution. Neither the weight choice nor overshoot reduction is
+validated on the real robot. No acados warnings are globally suppressed.
+
+Run paired closed-loop numerical cases and both MuJoCo settings with the
+same initial state, goal, ball location and OBS setting:
+```bash
+OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_damping.py src/pinky_soccer_mpc/test/test_scheduled_input.py src/pinky_soccer_mpc/test/test_acados_time_optimal.py
+OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados mpc_damping_scale:=1.0 verify:=true
+# baseline: mpc_damping_scale:=0.0
+```

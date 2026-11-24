@@ -104,19 +104,32 @@ def test_internal_state_scaling(setup):
     assert np.allclose(z[7:9]*m.wmax,prev)
 
 
+@pytest.mark.parametrize('damping_scale',[0.,1.])
 @pytest.mark.parametrize('goal',[(.3,.15,1.2),(0.,0.,math.pi)])
-def test_one_period_delayed_closed_loop(setup,goal):
+def test_one_period_delayed_closed_loop(setup,goal,damping_scale,monkeypatch):
     p,m=setup
     m.reset()
     x=np.zeros(9)
     command=np.zeros(2)
     arrival=Arrival()
+    monkeypatch.setattr(m,'damping_scale',damping_scale)
     failures=0
+    durations=[]
+    first_pose=None
+    peak_pos=peak_angle=0.
     for i in range(150):
         v=(m.rl*x[3]+m.rr*x[4])/2
         w=(m.rr*x[4]-m.rl*x[3])/m.b
-        inside,done,_,_=arrival.update(i*m.dt,x[:3],goal,v,w,x[3:5],True)
+        inside,done,dist,ang=arrival.update(i*m.dt,x[:3],goal,v,w,x[3:5],True)
+        if inside and first_pose is None:
+            first_pose=i*m.dt
+        if first_pose is not None:
+            peak_pos=max(peak_pos,dist)
+            peak_angle=max(peak_angle,ang)
         if done:
+            print(f'damping={damping_scale:g}, goal={goal}, arrival={i*m.dt:.2f}s, '
+                  f'reentry_pos={peak_pos*100:.2f}cm, reentry_yaw={math.degrees(peak_angle):.2f}deg, '
+                  f'median={np.median(durations):.1f}ms, p95={np.percentile(durations,95):.1f}ms')
             return
         if inside and arrival.since is not None:
             command=np.zeros(2)
@@ -125,6 +138,8 @@ def test_one_period_delayed_closed_loop(setup,goal):
             continue
         predicted=m.predictor.step(x[:7],command)
         res=m.solve(np.r_[predicted,command],goal,w_cap=2.)
+        durations.append(res['ms'])
+        assert res['damping_scale']==damping_scale
         failures=0 if res['ok'] else failures+1
         assert failures<3,json.dumps(res['attempt_statuses'],indent=2)
         x=plant.step(p,x,command,m.dt)

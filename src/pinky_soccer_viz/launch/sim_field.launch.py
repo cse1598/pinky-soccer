@@ -134,7 +134,8 @@ def setup(context):
     # ---------------------------------------------------------------- robots
     base = {'simulation': True, 'target': sim, 'field_spec': str(spec),
             'localization': lc('localization', context),
-            'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context), 'max_lin': max_lin, 'max_ang': max_ang,
+            'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context),
+             'mpc_damping_scale': float(lc('mpc_damping_scale', context)), 'max_lin': max_lin, 'max_ang': max_ang,
             'calibration_profile': '' if profile == 'none' else profile,
             'identification': lc('identification', context),
             'wheel_feedback': True, 'headless': headless,
@@ -206,6 +207,8 @@ def generate_launch_description():
         DeclareLaunchArgument('max_ang', default_value='2.0',
                               description='angular cap [rad/s]; faster spins broke localization '
                               'in MuJoCo; 0 = wheel limits only'),
+        DeclareLaunchArgument('mpc_damping_scale', default_value='1.0',
+                              description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
         DeclareLaunchArgument('identification', default_value='',

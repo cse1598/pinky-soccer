@@ -11,6 +11,7 @@ from pinky_soccer_dynamics import profile_model as profile
 
 from .acados_setup import acados, cache_dir
 from .ramp_predictor import RampPredictor
+from . import damping
 from .time_optimal import TimeOptimalMpc
 
 
@@ -20,9 +21,13 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
     state_size = 7
 
     def __init__(self, params, dt=.1, max_steps=80, budget=.075,
-                 pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12):
+                 pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12,
+                 damping_scale=1.):
         super().__init__(params, dt, max_steps, budget, pos_tol, ang_tol,
                          wheel_tol, prepare_problems=False)
+        self.damping_scale=float(damping_scale)
+        if not math.isfinite(self.damping_scale) or self.damping_scale<0:
+            raise ValueError('damping_scale must be finite and nonnegative')
         self.candidate_timeout = min(.022, self.budget/3.5)
         self.retry_seed = None
         self.predictor=RampPredictor(params,self.dt)
@@ -46,7 +51,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         # wheel states inside SQP. Exact same 5 ms ramp map as profile_model.
         x = ca.SX.sym('x', 9)
         u = ca.SX.sym('u', 2)
-        p = ca.SX.sym('p', 4)
+        p = ca.SX.sym('p', 7)  # goal, terminal flag, v/w caps, sqrt(damping scale)
         px,pu,pnext=profile.symbolic_step(self.params,self.dt)
         f=ca.Function('profile_transition',[px,pu],[pnext])
         physical=f(ca.vertcat(x[:3],x[3:9]*self.wmax),u*self.wmax)
@@ -67,18 +72,25 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         flag = p[3]
         factor = .1+.9*flag
         model = at.AcadosModel()
-        key = json.dumps(dict(version='acados-method-a-v3-profile',
+        key = json.dumps(dict(version='acados-method-a-v4-damping',
                               model=self.params.as_dict(), dt=self.dt,
                               n=self.max_steps, budget=self.candidate_timeout,
-                              terminal=[self.pos_tol,self.ang_tol,self.wheel_tol]),
+                              terminal=[self.pos_tol,self.ang_tol,self.wheel_tol],
+                              damping=[damping.RADIUS_M,damping.HEADING_RADIUS_RAD,
+                                       damping.Q_V,damping.Q_W]),
                          sort_keys=True)
         model.name = 'pinky_time_' + hashlib.sha256(key.encode()).hexdigest()[:12]
         model.x, model.u, model.p = x,u,p
         model.disc_dyn_expr = nxt
         # NLS costs are scaled by dt at nonterminal nodes.
-        model.cost_y_expr = factor*ca.vertcat(
-            math.sqrt(.02/self.dt)*u,
-            math.sqrt(.08/self.dt)*(u-x[7:9]))
+        # N remains the primary objective. Penalize physical speed only
+        # within a terminal candidate, not the progress-only fallback.
+        # Heading gate avoids braking a necessary large in-place rotation.
+        vw = ca.DM(self.B)@x[3:5]
+        damp = damping.symbolic_residual(e,vw,p[4],p[5],flag*p[6])
+        model.cost_y_expr = ca.vertcat(
+            factor*math.sqrt(.02/self.dt)*u,
+            factor*math.sqrt(.08/self.dt)*(u-x[7:9]),damp)
         model.cost_y_expr_e = ca.vertcat(
             .5*flag*center, math.sqrt(200)*(1-flag)*e[:2],
             math.sqrt(8)*(1-flag)*ca.sin(e[2]/2))
@@ -87,11 +99,12 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         model.con_h_expr_e = flag*g
         ocp = at.AcadosOcp()
         ocp.model = model
-        ocp.parameter_values = np.array([0.,0.,0.,1.])
+        ocp.parameter_values = np.array([0.,0.,0.,1.,self.v_limit,self.w_limit,
+                                         math.sqrt(self.damping_scale)])
         ocp.cost.cost_type = ocp.cost.cost_type_e = 'NONLINEAR_LS'
-        ocp.cost.W = np.eye(4)
+        ocp.cost.W = np.eye(6)
         ocp.cost.W_e = np.eye(12)
-        ocp.cost.yref = np.zeros(4)
+        ocp.cost.yref = np.zeros(6)
         ocp.cost.yref_e = np.zeros(12)
         c = ocp.constraints
         c.x0 = np.zeros(9)
@@ -198,7 +211,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             s.set_new_time_steps(np.full(n,self.dt,dtype=np.float64))
             self.current_n=n
         s.reset()
-        p=np.array([*goal,float(terminal)])
+        p=np.array([*goal,float(terminal),vb,wb,math.sqrt(self.damping_scale)])
         hi=np.array([vb,wb,self.slew,self.slew])
         lo=-hi.copy()
         if forward:
@@ -273,11 +286,13 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             accepted=bool(bxs is not None and bviolation<=1e-5 and
                 self.progress_merit(predicted,us,prev,goal) <
                 self.progress_merit(bxs,brake,prev,goal)-1e-8)
+        damp_cost=(damping.trajectory_cost(predicted,goal,self.B,self.wmax,
+                        self.dt,vb,wb,self.damping_scale) if terminal and predicted is not None else 0.)
         self.attempt_statuses.append(dict(n=int(n),status=status,
             terminal=bool(terminal),ms=round((time.perf_counter()-started)*1e3,3),
             iterations=iterations,residuals=finite_list(residuals),
             slack_max=float(np.max(slack)) if np.all(np.isfinite(slack)) else None,
-            terminal_errors=errors,accepted=accepted,
+            terminal_errors=errors,accepted=accepted,damping_cost=damp_cost,
             violation=float(violation) if math.isfinite(violation) else None))
         if not accepted:
             return None
@@ -287,7 +302,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                     iterations=iterations,message=message,residuals=residuals.tolist(),
                     replay_violation=float(violation),horizon_steps=n,
                     planned_time=n*self.dt,terminal_feasible=terminal,
-                    cost=cost)
+                    cost=cost,damping_cost=damp_cost)
 
     def solve(self,*args,**kwargs):
         self.attempt_statuses=[]
@@ -295,4 +310,5 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         result=super().solve(*args,**kwargs)
         result['backend']='discrete_time_optimal_acados'
         result['attempt_statuses']=self.attempt_statuses.copy()
+        result['damping_scale']=self.damping_scale
         return result
