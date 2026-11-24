@@ -230,6 +230,7 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 | `bumper_enabled` / `bumper_params_file` | `true` / description 기본 yaml | |
 | `spawn_ball`, `ball_x`, `ball_y`, `ball_radius`, `ball_mass` | `true`, 0.3, 0, 0.02135, 0.0459 | Gazebo와 같은 골프공 |
 | `model_dir` | `~/.cache/pinky_soccer_mujoco` | 생성된 URDF와 scene.xml. 공식 캐시(`~/.cache/pinky_mujoco`)와 분리 |
+| `real_driver_limits` | `true` | 실물 드라이버처럼 한 바퀴가 100 rpm을 넘을 때만 두 바퀴를 같은 비율로 줄임. 공식 브리지의 v 0.25 m/s·ω 1.5 rad/s 개별 제한은 풂(실물에는 없는 제한, 제자리 회전 1.5 vs 실물 5.9 rad/s). `false`면 공식 제한 |
 
 ### 공식 MuJoCo와의 관계
 
@@ -272,7 +273,7 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 | 범퍼 400 g | 0.724 / 0.927 m | 0.020 m | 1.68° |
 
 - 범퍼가 없으면 로봇이 공 앞에서 멈춥니다. 공이 몸체 앞 아래쪽에 끼는 것으로 보입니다.
-- MuJoCo는 공식 설정상 최고 속도가 0.25 m/s(`mujoco.yaml` `max_linear`)라서 400 g 범퍼의 기울기가 Gazebo(1.0 m/s, 9.5°)보다 작게 나옵니다.
+- MuJoCo는 공식 설정상 최고 속도가 0.25 m/s(`mujoco.yaml` `max_linear`)라서 400 g 범퍼의 기울기가 Gazebo(1.0 m/s, 9.5°)보다 작게 나옵니다(이 측정은 `real_driver_limits` 도입 전 공식 제한 기준).
 
 ### 알려진 제한
 

@@ -98,6 +98,12 @@ def setup(context):
     material_path = lc('material_config', context)
     materials = load_materials(material_path)
     physics['physics']['timestep'] = materials['timestep']
+    if lc('real_driver_limits', context).lower() == 'true':
+        # Real robot: no separate v/w clamp, only the driver's 100 rpm ratio-preserving scaling
+        # (pinky_bringup bringup.py). Lift the bridge clamps; the bridge wrapper scales wheels.
+        physics['control']['max_linear'] = 10.0
+        physics['control']['max_angular'] = 100.0
+        args += ['--real-driver-max-rpm', '100']
     args += ['--material-config', material_path]
     physics_path = model_dir / 'physics.yaml'
     physics_path.write_text(yaml.safe_dump(physics))
@@ -145,6 +151,9 @@ def generate_launch_description():
         *profile_arguments(simulation=True, default=default_profile('mujoco')),
         DeclareLaunchArgument('use_gpu', default_value='false'),
         DeclareLaunchArgument('viewer', default_value='true'),
+        DeclareLaunchArgument('real_driver_limits', default_value='true',
+                              description='true: wheel limits like the real driver (100 rpm '
+                              'scaling); false: official bridge clamps 0.25 m/s, 1.5 rad/s'),
         DeclareLaunchArgument('camera', default_value='true'),
         DeclareLaunchArgument('material_config', default_value=str(
             Path(get_package_share_directory('pinky_soccer_sim'))/'config/materials.yaml')),

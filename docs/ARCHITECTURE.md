@@ -18,12 +18,14 @@
             → /world_model    (pinky_soccer_msgs/WorldModel, map, ~30 Hz)
 3. 판단   bt_node (BehaviorTree.CPP v4 + BehaviorTree.ROS2)
             → /behavior_goal  (pinky_soccer_msgs/BehaviorGoal, 10–20 Hz)
-4. 계획   Nav2(원거리, 예정) + reactive_controller(pinky_soccer 패키지)
-            → /cmd_vel
+4. 계획   mpc_controller(pinky_soccer_mpc, 기본: 목표 자세 NMPC, 바퀴 한계 = 모터 사양 90 %)
+          또는 reactive_controller(pinky_soccer, controller:=reactive) → /cmd_vel
+          (Nav2 원거리 계획은 예정)
 5. 제어   command_watchdog(0.5 s) → drive/cmd_vel
           실물: pinky_soccer_bringup / 시뮬레이션: pinky_soccer_sim (둘 다 같은 watchdog 사용)
 
 UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
+         behavior_verifier   ↔ bt_node verify_mode (verify:=true, 행동 하나씩 실행·평가)
          world_model_topview → /world_model/topview (Image, OpenCV)
          game_camera_view   ← ball_detection/source_image · debug_image · debug_mask
 입력     /game/playing (std_msgs/Bool, 임시 경기 시작/정지)
@@ -46,7 +48,8 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `/odom` | `nav_msgs/Odometry` | 센서 계층 | `odom → base_footprint`, TF도 발행 |
 | `/imu_raw` | `sensor_msgs/Imu` | 센서 계층 | `imu_enabled:=true`일 때만. rad/s |
 | `/us_sensor/range` | `sensor_msgs/Range` | 센서 계층 | `adc_enabled:=true`일 때만 |
-| `/cmd_vel` | `geometry_msgs/Twist` | reactive_controller | watchdog 입력 |
+| `/cmd_vel` | `geometry_msgs/Twist` | mpc_controller (또는 reactive_controller) | watchdog 입력 |
+| `/mpc/predicted_path`, `/mpc/status` | `nav_msgs/Path`, `std_msgs/String`(JSON) | mpc_controller | NMPC 예측 궤적·진단 |
 | `/ball_detection` | `geometry_msgs/PointStamped` | ball_detector | `base_link`, 공 중심 |
 | `/world_model` | `pinky_soccer_msgs/WorldModel` | world_model_node / fake_world_model | `map` |
 | `/behavior_goal` | `pinky_soccer_msgs/BehaviorGoal` | bt_node | |
@@ -55,7 +58,10 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `/world_model/topview` | `sensor_msgs/Image` | world_model_topview | bgr8 |
 | `/world_model/search_grid` | `nav_msgs/OccupancyGrid` | world_model_viz | RViz Map 표시용 `ball_search_grid` 복사 |
 | `/sim/ball_ground_truth` | `geometry_msgs/PoseStamped` | `fake_world_model`, `mujoco_eval_bridge`(평가용) | 프레임 `world`/`map`. 판정·UI 평가 전용 |
-| `/ground_truth` | `geometry_msgs/PoseStamped` | MuJoCo 전용 | 프레임 `world`, **로봇 자세만**. Gazebo 브리지에는 없음 |
+| `/ground_truth` | `geometry_msgs/PoseStamped` | MuJoCo 브리지, Gazebo는 검증 모드의 `gazebo_truth_relay` | 프레임 `world`, **로봇 자세만**. 표시·평가 전용 |
+| `/behavior_test/request`, `/behavior_test/status` | `std_msgs/String` (JSON) | 행동 검증 창 ↔ bt_node(`verify_mode`) | 검증 모드 전용. 형식은 `pinky_soccer_bt/verify_mode.hpp` |
+| `/behavior_test/models` | `std_msgs/String` (JSON, transient local) | bt_node(`verify_mode`) | 노드 포트/기본값, 실행 가능한 대상 |
+| `/sim/set_ball` | `geometry_msgs/Point` | 행동 검증 창(시뮬) | 공을 x, y로 옮김. MuJoCo eval bridge / `gazebo_truth_relay`가 처리 |
 
 카메라 서비스 `/camera/capture_frame` (`pinky_soccer_msgs/srv/CaptureFrame`)는 실물·두 시뮬레이터에서 동일합니다. raw/jpeg 중 요청한 새 프레임 한 장과 같은 시각의 CameraInfo를 반환하며 기존 판단 메시지/토픽은 유지합니다. 상세 계약·저장 CLI는 [CAMERA_CAPTURE.md](../src/pinky_soccer_bringup/CAMERA_CAPTURE.md)를 참고합니다.
 
@@ -85,7 +91,7 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `pinky_soccer_msgs` | TrackedObject, WorldModel, BehaviorGoal | msg |
 | `pinky_soccer_world_model` | ball_detector, world_model_node, fake_world_model | Python |
 | `pinky_soccer_dynamics` | 바퀴 단위 동역학 모델, 보정 파라미터(출처 표시), `/cmd_vel` 명령 변환 | Python |
-| `pinky_soccer_mpc` | acados NMPC (`external/acados` 서브모듈, 개발 중: 1단계 완료) | Python |
+| `pinky_soccer_mpc` | acados NMPC: 목표 자세 이동 제어기 `mpc_controller`(경기 기본), 검증 도구 | Python |
 | `pinky_soccer_bt` | bt_node, BT 노드, `trees/*.xml` | C++ |
 | `pinky_soccer` | reactive_controller (기존 축구 제어 패키지) | Python |
 | `pinky_soccer_viz` | world_model_viz, world_model_topview, 런치 | Python |

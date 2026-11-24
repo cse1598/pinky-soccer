@@ -15,6 +15,18 @@
 # Units: m, rad, s.
 schema_version: 1
 
+# Command limits for controllers (NMPC). The same XL330 wheel motor in every target, so the
+# limits are shared; the simulators emulate the real driver (pinky_soccer_sim).
+#   wheel speed command max = usage_ratio * motor_rated_rpm   (capped by model.wheel_speed_max)
+#   wheel accel command max = usage_ratio * motor_accel       (capped by model.wheel_accel_max)
+limits:
+  motor_rated_rpm: {value: 103.0, source: manual,
+                    ref: "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Variant inferred from the official driver MAX_RPM 100; model number and supply voltage NOT read from the robot"}
+  motor_accel:     {value: 74.9, source: official_default,
+                    ref: "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"}
+  usage_ratio:     {value: 0.9, source: user_decision,
+                    ref: "2026-11-24 user: use up to 90 % of the manual maximum (speed and acceleration)"}
+
 targets:
   real:
     model:
@@ -47,13 +59,12 @@ targets:
       tau_left:     {value: 0.05,   source: assumption, ref: "identify with identify_sim (velocity actuator + 74.9 rad/s^2 ramp)"}
       tau_right:    {value: 0.05,   source: assumption, ref: "identify with identify_sim"}
       delay:        {value: 0.0,    source: assumption, ref: "bridge period 10 ms"}
-      wheel_speed_max: {value: 14.0, source: simulation_model, ref: "mujoco.yaml motors.max_speed"}
+      wheel_speed_max: {value: 10.47, source: simulation_model, ref: "pinky_soccer_sim emulates the real driver: 100 rpm ratio-preserving scaling (motor max_speed 14)"}
       wheel_accel_max: {value: 74.9, source: simulation_model, ref: "mujoco.yaml motors.wheel_accel"}
     driver:
       wheel_radius:     {value: 0.028,  source: simulation_model, ref: "Physics.step uses the model radius"}
       wheel_separation: {value: 0.0971, source: simulation_model, ref: "Physics.step uses the model track"}
-      max_linear:       {value: 0.25,   source: simulation_model, ref: "mujoco.yaml control.max_linear (bridge clamps v)"}
-      max_angular:      {value: 1.5,    source: simulation_model, ref: "mujoco.yaml control.max_angular (bridge clamps w)"}
+      max_rpm:          {value: 100.0,  source: simulation_model, ref: "pinky_soccer_sim real_driver_limits (same scaling as bringup.py); the bridge's own 0.25 m/s / 1.5 rad/s clamps are lifted"}
     joint_sign:
       left:  {value: 1, source: simulation_model, ref: "URDF axis 0 1 0, qvel"}
       right: {value: 1, source: simulation_model, ref: "URDF axis 0 1 0, qvel"}

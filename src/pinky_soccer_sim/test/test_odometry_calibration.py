@@ -61,3 +61,15 @@ def test_bundled_profiles_are_valid_simulation_profiles(simulator):
     assert w['trials'] == 12
     with pytest.raises(ValueError):
         read_profile(path, simulation=False)
+
+
+def test_real_driver_scaling_matches_bringup():
+    import math
+    from pinky_soccer_sim.mujoco_soccer_bridge import driver_scale
+    r, b = 0.0275, 0.0982
+    assert driver_scale(0.1, 0.5, r, b, 100) == 1.0                  # under 100 rpm: unchanged
+    k = driver_scale(0.0, 6.0, r, b, 100)                            # spin: 102 rpm -> scaled
+    wheel_rpm = 6.0 * k * b / 2 / r * 60 / (2 * math.pi)
+    assert wheel_rpm == pytest.approx(100.0)
+    k = driver_scale(0.4, 2.0, r, b, 100)                            # ratio kept: v/w same
+    assert 0 < k < 1

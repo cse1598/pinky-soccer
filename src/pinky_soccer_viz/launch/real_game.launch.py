@@ -37,8 +37,8 @@ def setup(context):
             'use_sim_time': False}
     max_lin, max_ang = number('max_lin'), number('max_ang')
     hfov = number('approximate_hfov_deg')
-    if not (0 < max_lin <= 0.25 and 0 < max_ang <= 2.0):
-        raise ValueError('Require 0 < max_lin <= 0.25 m/s and 0 < max_ang <= 2 rad/s')
+    if not (0 < max_lin <= 0.30 and 0 < max_ang <= 6.0):
+        raise ValueError('Require 0 < max_lin <= 0.30 m/s and 0 < max_ang <= 6 rad/s')
     if not 1 < hfov < 179:
         raise ValueError('approximate_hfov_deg must be between 1 and 179')
     lidar = arg('localization') == 'lidar'
@@ -67,18 +67,40 @@ def setup(context):
                                    number('initial_yaw')]}]),
         Node(package='pinky_soccer_bt', executable='bt_node', name='bt_node', output='screen',
              parameters=[config('pinky_soccer_bt', 'bt_node.yaml'),
-                         {'use_sim_time': False, 'groot2_enabled': False}]),
-        Node(package='pinky_soccer', executable='reactive_controller',
-             name='reactive_controller', output='screen', parameters=[
-                 config('pinky_soccer', 'reactive_controller.yaml'),
-                 {'use_sim_time': False, 'max_lin': max_lin, 'max_ang': max_ang}],
-             remappings=[('cmd_vel', arg('command_topic'))]),
+                         {'use_sim_time': False, 'groot2_enabled': False,
+                          'verify_mode': flag('verify')}]),
         Node(package='pinky_soccer_viz', executable='world_model_viz',
              name='world_model_viz', output='screen', parameters=[team]),
         Node(package='pinky_soccer_viz', executable='world_model_topview',
              name='world_model_topview', output='screen',
              parameters=[team, {'show_ground_truth': False, 'camera_hfov_deg': hfov}]),
     ]
+    if arg('controller') == 'mpc':
+        nodes.append(Node(
+            package='pinky_soccer_mpc', executable='mpc_controller', name='mpc_controller',
+            output='screen', remappings=[('cmd_vel', arg('command_topic'))], parameters=[{
+                'use_sim_time': False, 'target': 'real',
+                'calibration_profile': arg('calibration_profile'),
+                'max_lin': max_lin, 'max_ang': max_ang,
+                'wheel_feedback': flag('wheel_feedback')}]))
+    else:
+        nodes.append(Node(
+            package='pinky_soccer', executable='reactive_controller',
+            name='reactive_controller', output='screen', parameters=[
+                config('pinky_soccer', 'reactive_controller.yaml'),
+                {'use_sim_time': False, 'max_lin': min(max_lin, 0.25),
+                 'max_ang': min(max_ang, 2.0)}],
+            remappings=[('cmd_vel', arg('command_topic'))]))
+    if flag('verify'):
+        nodes.append(LogInfo(msg='VERIFY MODE: the game tree is off; behaviours run only from '
+                             'the verifier window. Keep a hand on the robot power switch.'))
+        nodes.append(Node(
+            package='pinky_soccer_viz', executable='behavior_verifier',
+            name='behavior_verifier', output='screen', parameters=[team, {
+                'simulation': False, 'mode_label': 'real',
+                'controller_config': config('pinky_soccer', 'reactive_controller.yaml'),
+                'max_lin': max_lin, 'max_ang': max_ang, 'controller_kind': arg('controller'),
+                'command_topic': arg('command_topic')}]))
     if not flag('headless'):
         nodes.append(Node(package='rviz2', executable='rviz2', name='rviz2', output='screen',
                           arguments=['-d', os.path.join(
@@ -108,6 +130,15 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
         DeclareLaunchArgument('heading_record', default_value=''),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('wheel_feedback', default_value='false',
+                              description='NMPC uses /joint_states wheel speeds (needs the '
+                              'right wheel sign -1 confirmed; open-loop estimate otherwise)'),
+        DeclareLaunchArgument('calibration_profile', default_value='',
+                              description='robot profile.yaml for the NMPC model (empty: '
+                              'official defaults, marked unmeasured)'),
+        DeclareLaunchArgument('verify', default_value='false',
+                              description='behaviour verification window + bt_node verify_mode'),
         DeclareLaunchArgument('command_topic', default_value='/cmd_vel',
                               description='Override for a non-driving dry run'),
         OpaqueFunction(function=setup),

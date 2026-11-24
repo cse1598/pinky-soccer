@@ -23,8 +23,13 @@
 | gazebo | 경기 프로그램에서 Gazebo 자동 실행 | game.launch.py mode:=gazebo | /clock | 자동 |
 | mujoco | 경기 프로그램에서 MuJoCo 자동 실행 | game.launch.py mode:=mujoco | /clock | 자동 |
 
+행동을 하나씩 실행·평가하려면 `verify:=true`를 붙입니다(경기 트리 대신 검증 창에서 고른 행동만
+실행). 자세한 내용은 [VERIFY.md](VERIFY.md).
+
 경기장 기본값은 `field:=hardboard`, 원래 경기장은 `field:=rcj`입니다.
-공통 속도 상한은 전진0.08m/s·회전0.5rad/s이며 `max_lin`, `max_ang`로 변경합니다.
+이동 제어는 기본 NMPC(`controller:=mpc`, 이전 비례 제어는 `controller:=reactive`)입니다.
+속도 상한 기본(`auto`): 실물 전진0.08m/s·회전0.5rad/s, 시뮬레이션은 바퀴 한계(모터 사양 90 %,
+약0.27m/s)와 회전2rad/s(더 빠르면 위치 추정이 깨짐). `max_lin`, `max_ang`로 변경합니다.
 기본 우리 골대는 노랑, +X 파란 골대 방향으로 공격합니다.
 
 위치 추정 기본은 `localization:=lidar`입니다. 경기장 YAML로 만든 LiDAR 지도와

@@ -23,7 +23,7 @@ v  = (r_R Ω_R + r_L Ω_L) / 2          ω  = (r_R Ω_R − r_L Ω_L) / b
 
 `config/dynamics.yaml`에 대상(`real`, `mujoco`, `gazebo`)별 기본값이 있고, 모든 값에
 `source`가 붙습니다: `official_default`, `simulation_model`, `assumption`, `measured`,
-`simulation_identified`. 실측이 아닌 값은 절대 `measured`로 표시되지 않습니다.
+`simulation_identified`, `manual`(제품 사양서), `user_decision`. 실측이 아닌 값은 절대 `measured`로 표시되지 않습니다.
 
 병합 순서 (`params.load(target, profile=..., identification=...)`)
 
@@ -37,6 +37,15 @@ v  = (r_R Ω_R + r_L Ω_L) / 2          ω  = (r_R Ω_R − r_L Ω_L) / b
 
 profile.yaml에는 응답 파라미터 키가 없으므로 새 키를 만들지 않고 별도 식별 파일에 둡니다.
 파라미터가 바뀌면 NMPC 솔버는 파라미터 해시가 달라져 다시 생성됩니다.
+
+## 제어 명령 한계 (`limits`)
+
+`dynamics.yaml` 최상위 `limits`(모든 대상 공통, 같은 XL330 모터):
+`wheel_cmd_max() = usage_ratio × motor_rated_rpm`(0.9 × 103 rpm = 9.71 rad/s, model.wheel_speed_max
+이하로), `wheel_accel_cmd_max() = usage_ratio × motor_accel`(0.9 × 74.9 = 67.4 rad/s²).
+출처: `manual`(ROBOTIS e-Manual, 모터 종류·전압은 로봇에서 미확인), `official_default`(공식
+드라이버 Profile Acceleration), `user_decision`(사용자 90 % 지시, 2026-11-24).
+MuJoCo는 실물 드라이버의 100 rpm 비례 축소를 모사합니다(`pinky_soccer_sim`, `real_driver_limits`).
 
 ## 명령 변환 (보정값 이중 적용 방지)
 

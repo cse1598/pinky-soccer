@@ -179,11 +179,20 @@ def test_adapter_reproduces_driver_rpm_scaling():
     assert wl / wr == pytest.approx(2.0, rel=0.01)               # ratio kept by the driver
 
 
-def test_mujoco_bridge_clamps():
+def test_mujoco_emulates_real_driver_scaling():
     a = CommandAdapter(P.load('mujoco'))
-    v, w = a.to_twist(14.0, 14.0)                                # 0.392 m/s > 0.25
-    wl, wr, sat = a.driver_applied(v, w)
-    assert sat and wl == pytest.approx(0.25 / 0.028)
+    wl, wr, sat = a.round_trip(20.0, 10.0)                       # 191 rpm > 100 rpm
+    assert sat and max(abs(wl), abs(wr)) == pytest.approx(100 * RPM_TO_RAD)
+    assert wl / wr == pytest.approx(2.0)                         # no separate v/w clamp
+
+
+def test_command_limits_from_manual():
+    for target in ('real', 'mujoco', 'gazebo'):
+        p = P.load(target)
+        assert p.wheel_cmd_max() == pytest.approx(0.9 * 103 * RPM_TO_RAD)   # 9.708 rad/s
+        assert p.wheel_accel_cmd_max() == pytest.approx(0.9 * 74.9)        # 67.41 rad/s^2
+        assert p.limits['motor_rated_rpm'].source == 'manual'
+        assert p.wheel_cmd_max() <= p.m('wheel_speed_max')
 
 
 def test_joint_sign_conversion():

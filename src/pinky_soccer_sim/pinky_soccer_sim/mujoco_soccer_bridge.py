@@ -13,12 +13,14 @@ re-check after updating the submodule.
 
 Own arguments (the rest is passed to pinky_mujoco.bridge unchanged):
     --ball / --no-ball, --ball-x, --ball-y, --ball-radius, --ball-mass
+    --real-driver-max-rpm N              real driver wheel scaling instead of v/w clamps
     --wheel-radius, --wheel-separation   odometry/command conversion constants (calibration
         profile `launch` values). Like the physical robot's driver parameters they change only
         how /cmd_vel becomes wheel speeds and how wheel encoders become /odom; the wheel
         collision geometry (the physics) is left untouched.
 """
 import argparse
+import math
 from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
@@ -80,7 +82,37 @@ def parse_args(argv):
     parser.add_argument('--adc-enabled', action='store_true')
     parser.add_argument('--wheel-radius', type=float)
     parser.add_argument('--wheel-separation', type=float)
+    parser.add_argument('--real-driver-max-rpm', type=float, default=0.0,
+                        help='> 0: scale both wheels like pinky_bringup (MAX_RPM, ratio kept)')
     return parser.parse_known_args(argv)
+
+
+def driver_scale(linear, angular, radius, track, max_rpm):
+    """Return the factor the real driver applies so the faster wheel stays <= max_rpm."""
+    peak = max(abs(linear - angular * track / 2), abs(linear + angular * track / 2)) / radius
+    peak_rpm = peak * 60.0 / (2.0 * math.pi)
+    return max_rpm / peak_rpm if peak_rpm > max_rpm else 1.0
+
+
+def install_real_driver(bridge, max_rpm):
+    """
+    Make cmd_vel -> wheels behave like the real pinky_bringup driver.
+
+    The official MuJoCo bridge clamps v and w separately (control.max_linear/max_angular,
+    0.25 m/s and 1.5 rad/s), which the real robot does not do: its driver only scales both
+    wheels by the same factor when one exceeds MAX_RPM. The launch lifts the bridge clamps and
+    this wrapper applies the real scaling before Physics.step.
+    """
+    if not max_rpm or max_rpm <= 0:
+        return
+    base = bridge.Physics
+
+    class RealDriverPhysics(base):
+        def step(self, linear=0.0, angular=0.0, steps=None):
+            k = driver_scale(linear, angular, self.radius, self.track, max_rpm)
+            return super().step(linear * k, angular * k, steps)
+
+    bridge.Physics = RealDriverPhysics
 
 
 def install_drive_constants(bridge, radius=None, separation=None):
@@ -124,6 +156,7 @@ def main(args=None):
     from pinky_soccer_sim.materials import install_mujoco as install_materials, load_materials
     install_materials(bridge, load_materials(options.material_config))
     install_drive_constants(bridge, options.wheel_radius, options.wheel_separation)
+    install_real_driver(bridge, options.real_driver_max_rpm)
     bridge.main(rest)
 
 

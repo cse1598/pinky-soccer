@@ -28,7 +28,9 @@ MODEL_KEYS = ('left_radius', 'right_radius', 'track', 'tau_left', 'tau_right', '
               'wheel_speed_max', 'wheel_accel_max')
 RESPONSE_KEYS = ('tau_left', 'tau_right', 'delay', 'wheel_speed_max', 'wheel_accel_max')
 SOURCES = ('official_default', 'simulation_model', 'assumption', 'measured',
-           'simulation_identified')
+           'simulation_identified', 'manual', 'user_decision')
+LIMIT_KEYS = ('motor_rated_rpm', 'motor_accel', 'usage_ratio')
+RPM_TO_RAD = 2.0 * math.pi / 60.0
 IDENTIFICATION_SCHEMA = 1
 
 
@@ -67,6 +69,7 @@ class DynamicsParams:
     driver: dict
     joint_sign: dict
     inputs: list = field(default_factory=list)       # files merged, in order
+    limits: dict = field(default_factory=dict)       # shared controller command limits
 
     def m(self, key):
         """Return a model parameter value."""
@@ -76,6 +79,16 @@ class DynamicsParams:
         """Return a driver parameter value (or default when absent)."""
         v = self.driver.get(key)
         return default if v is None else float(v.value)
+
+    def wheel_cmd_max(self):
+        """Return the controller wheel speed limit [rad/s] (usage_ratio x manual rating)."""
+        rated = float(self.limits['motor_rated_rpm'].value) * RPM_TO_RAD
+        return min(float(self.limits['usage_ratio'].value) * rated, self.m('wheel_speed_max'))
+
+    def wheel_accel_cmd_max(self):
+        """Return the controller wheel acceleration limit [rad/s^2]."""
+        accel = float(self.limits['usage_ratio'].value) * float(self.limits['motor_accel'].value)
+        return min(accel, self.m('wheel_accel_max'))
 
     @property
     def sign_left(self):
@@ -99,6 +112,7 @@ class DynamicsParams:
                 'model': {k: v.as_dict() for k, v in self.model.items()},
                 'driver': {k: v.as_dict() for k, v in self.driver.items()},
                 'joint_sign': {k: v.as_dict() for k, v in self.joint_sign.items()},
+                'limits': {k: v.as_dict() for k, v in self.limits.items()},
                 'unmeasured': self.unmeasured()}
 
 
@@ -141,6 +155,13 @@ def validate(params):
         if key not in params.driver:
             raise ValueError(f'missing driver parameter {key}')
         _check_positive(key, params.driver[key].value, 0.5)
+    if params.limits:
+        for key in LIMIT_KEYS:
+            if key not in params.limits:
+                raise ValueError(f'missing limit {key}')
+        _check_positive('motor_rated_rpm', params.limits['motor_rated_rpm'].value, 1000.0)
+        _check_positive('motor_accel', params.limits['motor_accel'].value, 1000.0)
+        _check_positive('usage_ratio', params.limits['usage_ratio'].value, 1.0)
     for side in ('left', 'right'):
         if int(params.joint_sign[side].value) not in (-1, 1):
             raise ValueError(f'joint_sign.{side} must be +1 or -1')
@@ -157,7 +178,7 @@ def load_defaults(target, config=None):
         raise ValueError(f'unknown target {target}; have {sorted(data["targets"])}')
     t = data['targets'][target]
     return DynamicsParams(target, _values(t['model']), _values(t['driver']),
-                          _values(t['joint_sign']), [str(path)])
+                          _values(t['joint_sign']), [str(path)], _values(data.get('limits')))
 
 
 def apply_profile(params, path, *, apply_driver=True):

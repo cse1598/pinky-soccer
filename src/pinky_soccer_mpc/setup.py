@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'check_acados = pinky_soccer_mpc.verify:main',
+            'mpc_controller = pinky_soccer_mpc.mpc_controller:main',
         ],
     },
 )
