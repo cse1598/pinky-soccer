@@ -10,3 +10,6 @@ uint8 mode
 geometry_msgs/Pose2D target        # map frame
 float32 max_speed                  # [m/s], 0 = controller default
 nav_msgs/Path planned_path
+
+# Nonzero for a specific GoToPose invocation; zero for streaming goals.
+uint64 goal_id

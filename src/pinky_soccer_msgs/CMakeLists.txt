@@ -13,6 +13,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrackedObject.msg"
   "msg/WorldModel.msg"
   "msg/BehaviorGoal.msg"
+  "msg/MotionResult.msg"
   "srv/CaptureFrame.srv"
   DEPENDENCIES builtin_interfaces geometry_msgs nav_msgs std_msgs sensor_msgs
 )

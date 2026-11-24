@@ -1,6 +1,7 @@
 #include "pinky_soccer_bt/bt_nodes.hpp"
 
 #include <cmath>
+#include <atomic>
 
 namespace pinky_soccer_bt
 {
@@ -421,15 +422,55 @@ PortsList GoToPose::providedPorts()
           InputPort<double>("theta", 0.0, "Final heading [rad, map]")};
 }
 
+NodeStatus GoToPose::onStart()
+{
+  static std::atomic<uint64_t> next_id{
+      static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
+  goal_id_ = ++next_id;
+  target_ = Pose2{input<double>("x"), input<double>("y"), input<double>("theta")};
+  started_ = std::chrono::steady_clock::now();
+  return update();
+}
+
+void GoToPose::onHalted()
+{
+  // Do not overwrite a new action selected by the tree during the same tick.
+  BehaviorGoal current;
+  if(config().blackboard->get(kGoalKey, current) && current.goal_id == goal_id_)
+  {
+    setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
+  }
+}
+
 NodeStatus GoToPose::update()
 {
-  const auto pose = rootSelf(config().blackboard);
-  const Pose2 target{input<double>("x"), input<double>("y"), input<double>("theta")};
-  setGoal(BehaviorGoal::NAVIGATE, target, 0.0);
-  // A pose goal: position and heading (the NMPC drives to both).
-  return reachedPosition(pose, target, kReachTol) && reachedHeading(pose, target.theta, kHeadingTol) ?
-             NodeStatus::SUCCESS :
-             NodeStatus::RUNNING;
+  auto goal = makeGoal(branch_, registrationName(), BehaviorGoal::NAVIGATE, target_, 0.0);
+  goal.goal_id = goal_id_;
+  config().blackboard->set(kGoalKey, goal);
+  ReceivedMotionResult report;
+  const auto now = std::chrono::steady_clock::now();
+  const bool matching = config().blackboard->get("@motion_result", report) &&
+                        report.result.goal_id == goal_id_ &&
+                        now - report.received < std::chrono::milliseconds(700);
+  if(matching)
+  {
+    if(report.result.state == MotionResult::SUCCESS)
+    {
+      setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
+      return NodeStatus::SUCCESS;
+    }
+    if(report.result.state == MotionResult::FAILURE)
+    {
+      setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
+      return NodeStatus::FAILURE;
+    }
+  }
+  else if(now - started_ > std::chrono::seconds(3))
+  {
+    setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
+    return NodeStatus::FAILURE;
+  }
+  return NodeStatus::RUNNING;
 }
 
 // ---------------------------------------------------------------- registration

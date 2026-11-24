@@ -1,284 +1,301 @@
+"""One GoToPose authority: NMPC tracking, zero-command settling, typed result.
+
+The solver worker owns its warm start. The ROS thread owns input callbacks,
+request identity, the 50 Hz command heartbeat and all safety/result decisions.
 """
-NMPC BehaviorGoal follower: /behavior_goal + /world_model -> /cmd_vel (replaces the P control).
-
-Every cycle it solves PoseMpc from the current pose (/world_model self, map frame) and an
-estimate of the wheel speeds, sends the first wheel-speed target through the CommandAdapter
-(the driver's own radius/separation, so calibration is applied once) and publishes the
-predicted trajectory on /mpc/predicted_path.
-
-Wheel speed state: with wheel_feedback:=true the measured /joint_states velocities (with the
-target's joint_sign) are used while fresh; otherwise they are propagated from the commands
-actually sent with the wheel response model (first-order lag + acceleration limit). The real
-robot defaults to the model because its right wheel sign is still unverified
-(pinky_soccer_dynamics README); an open-loop estimate makes the MPC overcorrect when the
-motors respond slower than the model (weaving), so enable feedback once the sign is checked.
-
-Safety (same as reactive_controller, plus): zero command when /behavior_goal or /world_model
-is stale, on STOP, or when the solver fails; the robot-side command_watchdog
-stays in place.
-"""
-
 import json
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Path
 from pinky_soccer_dynamics import params as dyn_params
 from pinky_soccer_dynamics.command_adapter import CommandAdapter, wheels_from_joint_state
-from pinky_soccer_msgs.msg import BehaviorGoal, WorldModel
-import rclpy
+from pinky_soccer_dynamics.profile_model import motor_step
+from pinky_soccer_msgs.msg import BehaviorGoal, WorldModel, MotionResult
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
+import rclpy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
 
+from .arrival import Arrival, wrap
 from .pose_mpc import PoseMpc
-from pinky_soccer_dynamics.profile_model import motor_step, limit_command
-
-
-def wrap(a):
-    """Wrap an angle to [-pi, pi]."""
-    return math.atan2(math.sin(a), math.cos(a))
-
-
-class Arrival:
-    """
-    Final phase at the goal: track -> align (turn in place) -> hold, with hysteresis.
-
-    Within pos_tol the NMPC hands over to a pure turn in place towards the goal heading, then
-    the robot holds still. In MuJoCo the NMPC alone kept correcting around the goal (up to
-    11 cm, 80 deg): pivot turns slip a lot there, so its small corrections never matched.
-    The window is inside the BT's GoToPose tolerance (5 cm, 0.15 rad). The NMPC takes over
-    again when the goal moves or the robot leaves 2 x pos_tol.
-    """
-
-    TRACK, ALIGN, HOLD = 'track', 'align', 'hold'
-
-    def __init__(self, pos_tol=0.04, ang_tol=0.12):
-        self.pos_tol, self.ang_tol = pos_tol, ang_tol
-        self.mode = self.TRACK
-        self.goal = None
-
-    def update(self, pose, goal, wheel_speed):
-        """Return the phase for this cycle and the heading error [rad]."""
-        dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
-        err = wrap(goal[2] - pose[2])
-        if self.mode != self.TRACK:
-            moved = math.hypot(goal[0] - self.goal[0], goal[1] - self.goal[1]) > 0.01 \
-                or abs(wrap(goal[2] - self.goal[2])) > 0.03
-            if moved or dist > 2 * self.pos_tol:
-                self.mode = self.TRACK
-        if self.mode == self.TRACK and dist <= self.pos_tol:
-            self.mode, self.goal = self.ALIGN, tuple(goal)
-        if self.mode == self.ALIGN and abs(err) <= self.ang_tol and wheel_speed < 1.0:
-            self.mode = self.HOLD
-        elif self.mode == self.HOLD and abs(err) > 2 * self.ang_tol:
-            self.mode = self.ALIGN
-        return self.mode, err
 
 
 class MpcController(Node):
-    """BehaviorGoal follower with the point-to-pose NMPC."""
-
     def __init__(self):
         super().__init__('mpc_controller')
-        p = self.declare_parameter
-        target = p('target', 'real').value
-        profile = p('calibration_profile', '').value
-        identification = p('identification', '').value
-        self.params = dyn_params.load(target, profile=profile or None,
-                                      identification=identification or None)
+        p=self.declare_parameter
+        target=p('target','real').value
+        profile=p('calibration_profile','').value
+        identification=p('identification','').value
         if identification:
-            raise ValueError('Legacy single-lag identification is incompatible with profile-v1; '
-                             'identify the two-stage model first')
-        if self.params.m('delay') > 0.0:
-            raise ValueError('NMPC does not yet model command dead time; use a validated '
-                             'zero-delay identification or implement delay compensation first')
-        self.max_lin = float(p('max_lin', 0.0).value)      # 0: only the wheel limits
-        self.max_ang = float(p('max_ang', 0.0).value)
-        self.goal_timeout = p('goal_timeout', 0.5).value
-        self.pose_timeout = p('pose_timeout', 0.5).value
-        rate = p('rate_hz', 20.0).value
-        self.mpc = PoseMpc(self.params, p('horizon', 2.0).value, int(p('steps', 40).value))
-        if abs(self.mpc.dt - 1.0/rate) > 1e-6:
-            raise ValueError('NMPC prediction step must match control period')
-        self.adapter = CommandAdapter(self.params)
-        self.arrival = Arrival(p('pos_tol', 0.04).value, p('ang_tol', 0.12).value)
-        # Ball-related actions keep the camera (front) towards the ball: no reverse driving.
-        self.forward_only = set(p('forward_only_actions', [
-            'GoBehindBall', 'PushBall', 'GoToBlockPoint', 'FaceBall', 'TurnToLastSeen']).value)
-        self.dt = 1.0 / rate
-        self.goal = self.goal_time = None
-        self.pose = self.pose_time = None
-        self.omega = (0.0, 0.0)
-        self.ref = (0.0, 0.0)
-        self.last_cmd = (0.0, 0.0)
-        self.last_tick = None
-        self.feedback_age = None
-        self.failures = 0
-        self.last_goal = None
-        self.measured = self.measured_time = None
-        self.wheel_feedback = p('wheel_feedback', False).value
+            raise ValueError('Legacy identification not validated for phase-1 model')
+        self.params=dyn_params.load(target,profile=profile or None)
+        self.max_lin=float(p('max_lin',0.).value)
+        self.max_ang=float(p('max_ang',0.).value)
+        self.goal_timeout=float(p('goal_timeout',.5).value)
+        self.pose_timeout=float(p('pose_timeout',.5).value)
+        self.rate=float(p('rate_hz',10.).value)
+        self.command_rate=float(p('command_rate_hz',50.).value)
+        self.dt=1/self.rate
+        self.mpc=PoseMpc(self.params,p('horizon',2.).value,int(p('steps',20).value))
+        if abs(self.dt-self.mpc.dt)>1e-6:
+            raise ValueError('horizon/steps must match optimization period')
+        self.adapter=CommandAdapter(self.params)
+        self.arrival=Arrival(float(p('pos_tol',.02).value),
+                             float(p('ang_tol',math.radians(3)).value),
+                             float(p('settle_sec',.3).value))
+        self.wheel_feedback=bool(p('wheel_feedback',False).value)
+        self.forward_only=set(p('forward_only_actions',[
+            'GoBehindBall','PushBall','GoToBlockPoint','FaceBall','TurnToLastSeen']).value)
+        self.goal=self.pose=self.measured=None
+        self.goal_time=self.pose_time=self.measured_time=None
+        self.pose_valid=False
+        self.world_v=0.
+        self.omega=self.ref=self.last_cmd=(0.,0.)
+        self.last_tick=None
+        self.key=None
+        self.generation=0
+        self.worker_generation=None
+        self.future=None
+        self.future_generation=None
+        self.future_wall=None
+        self.next_solve=0.
+        self.last_solution=None
+        self.last_solution_sim=None
+        self.last_solution_wall=None
+        self.failures=0
+        self.failed_reason=None
+        self.feedback_age=None
+        self.diag={}
+        self.progress_time=None
+        self.progress_best=None
+        self.executor_pool=ThreadPoolExecutor(max_workers=1)
+        self.pub=self.create_publisher(Twist,'cmd_vel',10)
+        self.path_pub=self.create_publisher(Path,'mpc/predicted_path',10)
+        self.status_pub=self.create_publisher(String,'mpc/status',10)
+        self.result_pub=self.create_publisher(MotionResult,'motion/result',10)
+        self.create_subscription(BehaviorGoal,'behavior_goal',self.on_goal,10)
+        self.create_subscription(WorldModel,'world_model',self.on_world,10)
         if self.wheel_feedback:
-            from rclpy.qos import qos_profile_sensor_data
-            self.create_subscription(JointState, 'joint_states', self.on_joints, qos_profile_sensor_data)
-        self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.path_pub = self.create_publisher(Path, 'mpc/predicted_path', 10)
-        self.status_pub = self.create_publisher(String, 'mpc/status', 10)
-        self.create_subscription(BehaviorGoal, 'behavior_goal', self.on_goal, 10)
-        self.create_subscription(WorldModel, 'world_model', self.on_world, 10)
-        self.create_timer(self.dt, self.tick)
-        self.get_logger().info(
-            f'NMPC {target}: wheel <= {self.mpc.wmax:.2f} rad/s '
-            f'({self.mpc.wmax * 30 / math.pi:.1f} rpm), accel <= {self.mpc.amax:.1f} rad/s^2, '
-            f'v <= {self.mpc.v_limit:.3f} m/s, '
-            f'w <= {self.mpc.w_limit:.2f} rad/s; caps v {self.max_lin or "-"} w '
-            f'{self.max_ang or "-"}; profile {profile or "none"}')
+            self.create_subscription(JointState,'joint_states',self.on_joints,qos_profile_sensor_data)
+        self.create_timer(1/self.command_rate,self.tick)
+        self.get_logger().info(f'Phase-1 SLSQP NMPC {target}: {self.rate:g} Hz solve, '
+                               f'{self.command_rate:g} Hz command; {self.mpc.steps} stages; '
+                               f'{self.mpc.wmax*30/math.pi:.1f} RPM')
 
-    def on_goal(self, msg):
-        """Store the latest goal."""
-        self.goal, self.goal_time = msg, time.monotonic()
+    def on_goal(self,msg):
+        self.goal,self.goal_time=msg,time.monotonic()
 
-    def on_joints(self, msg):
-        """Store measured wheel speeds in the model convention."""
+    def on_world(self,msg):
+        s=msg.self
+        self.pose=(s.pose.x,s.pose.y,s.pose.theta)
+        self.pose_time=time.monotonic()
+        self.world_v=math.hypot(s.velocity.x,s.velocity.y)
+        self.pose_valid=(s.state!=s.LOST and s.confidence>0 and
+                         all(math.isfinite(v) for v in (*self.pose,self.world_v)))
+
+    def on_joints(self,msg):
         try:
-            measured = wheels_from_joint_state(self.params, msg.name, msg.velocity)
-            if all(math.isfinite(v) for v in measured):
-                self.measured, self.measured_time = measured, time.monotonic()
-        except (KeyError, ValueError):
+            wheel=wheels_from_joint_state(self.params,msg.name,msg.velocity)
+            if all(math.isfinite(v) for v in wheel):
+                self.measured,self.measured_time=wheel,time.monotonic()
+        except (KeyError,ValueError,IndexError):
             pass
 
-    def on_world(self, msg):
-        """Store the latest self pose (map frame)."""
-        s = msg.self.pose
-        self.pose, self.pose_time = (s.x, s.y, s.theta), time.monotonic()
-
-    def caps(self, goal):
-        """Linear/angular speed caps for this goal (0 = none)."""
-        v_cap, w_cap = self.max_lin, self.max_ang
-        if goal.max_speed > 0:
-            if goal.action == 'SpinInPlace':       # max_speed is a turn rate there
-                w_cap = min(w_cap, goal.max_speed) if w_cap else float(goal.max_speed)
+    def caps(self):
+        v,w=self.max_lin,self.max_ang
+        if self.goal.max_speed>0:
+            if self.goal.action=='SpinInPlace':
+                w=min(w,self.goal.max_speed) if w else self.goal.max_speed
             else:
-                v_cap = min(v_cap, goal.max_speed) if v_cap else float(goal.max_speed)
-        return v_cap, w_cap
+                v=min(v,self.goal.max_speed) if v else self.goal.max_speed
+        return v,w
 
-    def send(self, cmd):
-        """Store the transmitted wheel command and publish driver twist."""
-        self.last_cmd = tuple(float(v) for v in cmd)
-        v, w = self.adapter.to_twist(*self.last_cmd)
-        msg = Twist()
-        msg.linear.x, msg.angular.z = float(v), float(w)
+    def send(self,u):
+        self.last_cmd=tuple(float(q) for q in u)
+        v,w=self.adapter.to_twist(*self.last_cmd)
+        msg=Twist()
+        msg.linear.x,msg.angular.z=float(v),float(w)
         self.pub.publish(msg)
-        return v, w
+        return v,w
 
-    def stop(self, reason):
-        self.send((0., 0.))
-        self.mpc.reset()
-        self.publish_status({'state': 'stop', 'reason': reason})
+    def invalidate(self):
+        self.generation+=1
+        self.last_solution=self.last_solution_sim=self.last_solution_wall=None
+        self.next_solve=0.
+
+    def job(self,generation,x,goal,v,w,forward):
+        if self.worker_generation!=generation:
+            self.mpc.reset()
+            self.worker_generation=generation
+        return self.mpc.solve(x,goal,v,w,forward_only=forward)
+
+    def report(self,state,reason='',result=MotionResult.RUNNING,dist=0.,ang=0.,**extra):
+        gid=int(self.goal.goal_id) if self.goal is not None else 0
+        data=dict(self.diag)
+        data.update(extra)
+        data.update(state=state,reason=reason,goal_id=str(gid),
+                    wheel_l=float(self.omega[0]),wheel_r=float(self.omega[1]),
+                    profile_l=float(self.ref[0]),profile_r=float(self.ref[1]),
+                    wheel_cmd_l=self.last_cmd[0],wheel_cmd_r=self.last_cmd[1],
+                    feedback_age=self.feedback_age,feedback_enabled=self.wheel_feedback,
+                    position_error=dist,heading_error=ang,backend='slsqp')
+        self.status_pub.publish(String(data=json.dumps(data)))
+        if gid and self.goal.action=='GoToPose':
+            msg=MotionResult()
+            msg.header.stamp=self.get_clock().now().to_msg()
+            msg.header.frame_id='map'
+            msg.goal_id,msg.state,msg.reason=gid,result,reason
+            msg.position_error,msg.heading_error=float(dist),float(ang)
+            self.result_pub.publish(msg)
+
+    def stop(self,reason,result=MotionResult.RUNNING,dist=0.,ang=0.):
+        self.send((0.,0.))
+        self.report('failed' if result==MotionResult.FAILURE else 'stop',
+                    reason,result,dist,ang)
 
     def tick(self):
-        now = time.monotonic()
-        sim_now = self.get_clock().now().nanoseconds * 1e-9
-        elapsed = self.dt if self.last_tick is None else sim_now-self.last_tick
-        self.last_tick = sim_now
-        if elapsed < 0 or elapsed > .5:
-            self.ref = self.omega = self.last_cmd = (0.,0.)
+        wall=time.monotonic()
+        now=self.get_clock().now().nanoseconds*1e-9
+        elapsed=1/self.command_rate if self.last_tick is None else now-self.last_tick
+        self.last_tick=now
+        if elapsed<0 or elapsed>.5:
+            self.invalidate()
+            self.arrival.reset()
+            self.omega=self.ref=self.last_cmd=(0.,0.)
             return self.stop('clock discontinuity')
-        self.omega, self.ref = motor_step(self.params,self.omega,self.ref,self.last_cmd,elapsed)
-        self.feedback_age = None if self.measured_time is None else now-self.measured_time
-        if self.feedback_age is not None and self.feedback_age < .2:
-            self.omega = self.measured
-        elif self.wheel_feedback:
-            return self.stop('stale wheel feedback')
-        fresh = (self.goal is not None and now-self.goal_time <= self.goal_timeout
-                 and self.pose is not None and now-self.pose_time <= self.pose_timeout)
-        if not fresh or self.goal.mode == BehaviorGoal.STOP:
-            self.arrival.mode, self.arrival.goal = Arrival.TRACK,None
+        self.omega,self.ref=motor_step(self.params,self.omega,self.ref,self.last_cmd,elapsed)
+        self.feedback_age=None if self.measured_time is None else wall-self.measured_time
+        feedback=self.feedback_age is not None and self.feedback_age<.2
+        if feedback:
+            self.omega=self.measured
+        # Drain a finished job even when cancelled or stopped. Never use an old generation.
+        if self.future is not None and self.future.done():
+            future=self.future
+            generation=self.future_generation
+            submitted=self.future_wall
+            self.future=None
+            try:
+                res=future.result()
+            except Exception as exc:
+                res={'ok':False,'status':-1,'ms':(wall-submitted)*1000,
+                     'message':str(exc),'residuals':[]}
+            if generation==self.generation:
+                self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
+                                                'iterations','v_bound','w_bound','message')}
+                if res['ok'] and wall-submitted<=.3:
+                    self.last_solution=tuple(res['u'])
+                    self.last_solution_sim=now
+                    self.last_solution_wall=wall
+                    self.failures=0
+                    self.publish_path(res['xs'])
+                else:
+                    self.last_solution=None
+                    self.failures+=1
+        fresh=(self.goal is not None and wall-self.goal_time<=self.goal_timeout
+               and self.pose is not None and wall-self.pose_time<=self.pose_timeout)
+        if not fresh or self.goal.mode==BehaviorGoal.STOP:
+            if self.key is not None:
+                self.invalidate()
+                self.key=None
+            self.arrival.reset()
+            self.diag={}
             return self.stop('STOP goal' if fresh else 'stale input')
-        t = self.goal.target
-        goal = (t.x,t.y,t.theta)
-        if not all(math.isfinite(v) for v in (*goal,*self.pose)):
-            return self.stop('nonfinite pose/goal')
-        self.last_goal = goal
-        phase, err = self.arrival.update(self.pose,goal,sum(abs(v) for v in self.omega))
-        v_cap,w_cap = self.caps(self.goal)
-        vb = min(v_cap,self.mpc.v_limit) if v_cap else self.mpc.v_limit
-        wb = min(w_cap,self.mpc.w_limit) if w_cap else self.mpc.w_limit
-        if phase == Arrival.HOLD:
-            return self.stop('arrived')
-        if phase == Arrival.ALIGN:
-            return self.align(err,vb,wb)
-        x0 = (*self.pose,*self.omega,*self.ref,*self.last_cmd)
-        try:
-            res = self.mpc.solve(x0,goal,v_cap,w_cap,
-                                 forward_only=self.goal.action in self.forward_only)
-        except (RuntimeError, ValueError) as exc:
-            self.get_logger().warn(f'NMPC exception: {exc}',throttle_duration_sec=1.)
-            return self.stop('solver exception')
-        if not res['ok']:
-            self.failures += 1
-            self.get_logger().warn(f'NMPC status {res["status"]}',throttle_duration_sec=1.)
+        t=self.goal.target
+        goal=(t.x,t.y,t.theta)
+        is_pose=self.goal.action=='GoToPose'
+        key=(self.goal.action,int(self.goal.goal_id))
+        if key!=self.key:
+            self.key=key
+            self.invalidate()
+            self.arrival.reset()
+            self.diag={}
+            self.failures=0
+            self.failed_reason=None
+            self.progress_time=now
+            self.progress_best=None
+        if not self.pose_valid or not all(math.isfinite(v) for v in goal):
+            self.arrival.reset()
+            self.invalidate()
+            return self.stop('invalid localization or target')
+        if is_pose and not self.wheel_feedback:
+            return self.stop('GoToPose requires verified wheel_feedback:=true',MotionResult.FAILURE)
+        if self.wheel_feedback and not feedback:
+            self.arrival.reset()
+            self.invalidate()
+            return self.stop('stale wheel feedback')
+        if self.failed_reason is not None:
+            return self.stop(self.failed_reason,MotionResult.FAILURE)
+        l,r=self.omega
+        v_actual=(self.mpc.rl*l+self.mpc.rr*r)/2
+        w_actual=(self.mpc.rr*r-self.mpc.rl*l)/self.mpc.b
+        inside,done,dist,ang=self.arrival.update(now,self.pose,goal,
+                 max(abs(v_actual),self.world_v),w_actual,self.omega,feedback)
+        if is_pose and inside:
+            # Braking to zero is not a P alignment controller; if we drift out,
+            # tracking resumes immediately with the same NMPC.
+            if self.last_solution is not None or (self.future is not None and self.future_generation==self.generation):
+                self.invalidate()
             self.send((0.,0.))
-            self.mpc.reset()
-            return self.publish_status({'state':'failed','status':res['status'],
-                                        'ms':res['ms'],'residuals':res['residuals']})
-        self.failures = 0
-        v,w = self.send(res['u'])
-        self.publish_path(res['xs'])
-        self.publish_status({'state':'track','status':res['status'],'ms':round(res['ms'],2),
-                             'v':v,'w':w,'v_bound':res['v_bound'],'w_bound':res['w_bound'],
-                             'direction':res['direction'],'residuals':res['residuals'],
-                             'period_s':elapsed})
+            return self.report('arrived' if done else 'settle','settled' if done else 'waiting for rest',
+                               MotionResult.SUCCESS if done else MotionResult.RUNNING,dist,ang)
+        if is_pose:
+            merit=dist+.05*ang
+            if self.progress_best is None or merit<self.progress_best-.005:
+                self.progress_best,self.progress_time=merit,now
+            if self.failures>=3:
+                self.failed_reason='three consecutive optimizer failures'
+            elif now-self.progress_time>4.:
+                self.failed_reason='no pose progress for 4 s'
+            if self.failed_reason:
+                self.invalidate()
+                return self.stop(self.failed_reason,MotionResult.FAILURE,dist,ang)
+        if self.future is not None and wall-self.future_wall>.3:
+            if self.future_generation==self.generation:
+                self.invalidate()
+                self.failures+=1
+            return self.stop('solver deadline')
+        if self.future is None and now+1e-8>=self.next_solve:
+            v,w=self.caps()
+            x=(*self.pose,*self.omega,*self.last_cmd)
+            self.future_generation=self.generation
+            self.future_wall=wall
+            self.future=self.executor_pool.submit(self.job,self.generation,x,goal,v,w,
+                                                   self.goal.action in self.forward_only)
+            self.next_solve=now+self.dt
+        valid=(self.last_solution is not None and now-self.last_solution_sim<=2*self.dt
+               and wall-self.last_solution_wall<=.3)
+        v,w=self.send(self.last_solution if valid else (0.,0.))
+        self.report('track' if valid else 'waiting', 'optimized' if valid else 'no fresh optimized command',
+                    dist=dist,ang=ang,v=v,w=w,period_s=elapsed)
 
-    def align(self, err, vb, wb):
-        """Brake translation, then align without a forced minimum rotation."""
-        v_actual = (self.mpc.rl*self.omega[0]+self.mpc.rr*self.omega[1])/2
-        if abs(err) <= self.arrival.ang_tol or abs(v_actual) > .04:
-            cmd = (0.,0.)
-        else:
-            w = max(-min(wb,2.),min(min(wb,2.),2.5*err))
-            cmd = limit_command(self.params,(-w*self.mpc.b/(2*self.mpc.rl),
-                                              w*self.mpc.b/(2*self.mpc.rr)),vb,wb)
-        self.send(cmd)
-        self.mpc.reset()
-        self.publish_status({'state':'align','heading_error':err})
-
-    def publish_path(self, xs):
-        """Publish the predicted trajectory (map frame)."""
-        path = Path()
-        path.header.stamp = self.get_clock().now().to_msg()
-        path.header.frame_id = 'map'
+    def publish_path(self,xs):
+        path=Path()
+        path.header.stamp=self.get_clock().now().to_msg()
+        path.header.frame_id='map'
         for x in xs:
-            ps = PoseStamped()
-            ps.header = path.header
-            ps.pose.position.x, ps.pose.position.y = float(x[0]), float(x[1])
-            ps.pose.orientation.z, ps.pose.orientation.w = (math.sin(x[2] / 2),
-                                                            math.cos(x[2] / 2))
+            ps=PoseStamped()
+            ps.header=path.header
+            ps.pose.position.x,ps.pose.position.y=float(x[0]),float(x[1])
+            ps.pose.orientation.z,ps.pose.orientation.w=math.sin(x[2]/2),math.cos(x[2]/2)
             path.poses.append(ps)
         self.path_pub.publish(path)
 
-    def publish_status(self, data):
-        """Publish a small JSON diagnostics message."""
-        data.update(wheel_l=float(self.omega[0]),wheel_r=float(self.omega[1]),
-                    profile_l=float(self.ref[0]),profile_r=float(self.ref[1]),
-                    wheel_cmd_l=self.last_cmd[0],wheel_cmd_r=self.last_cmd[1],
-                    feedback_age=self.feedback_age,feedback_enabled=self.wheel_feedback)
-        self.status_pub.publish(String(data=json.dumps(data)))
-
 
 def main(args=None):
-    """Run the controller."""
     rclpy.init(args=args)
-    node = MpcController()
+    node=MpcController()
     try:
         rclpy.spin(node)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+    except (KeyboardInterrupt,rclpy.executors.ExternalShutdownException):
         pass
     finally:
-        try:
-            node.pub.publish(Twist())   # best effort; the command_watchdog also stops
-        except Exception:  # noqa: B902 - context may already be shut down by a signal
-            pass
+        if rclpy.ok():
+            node.send((0.,0.))
+        node.executor_pool.shutdown(wait=True,cancel_futures=True)
         node.destroy_node()
         rclpy.try_shutdown()

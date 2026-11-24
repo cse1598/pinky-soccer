@@ -71,6 +71,12 @@ int main(int argc, char** argv)
   factory.registerBehaviorTreeFromFile(tree_file);
 
   auto blackboard = BT::Blackboard::create();
+  auto motion_sub = node->create_subscription<pinky_soccer_bt::MotionResult>(
+      "motion/result", 10,
+      [blackboard](pinky_soccer_bt::MotionResult::SharedPtr msg) {
+        blackboard->set("motion_result", pinky_soccer_bt::ReceivedMotionResult{
+            *msg, std::chrono::steady_clock::now()});
+      });
   // Kickoff pose (map frame): where the robot returns after a goal (/game/kickoff).
   const auto kickoff = node->declare_parameter<std::vector<double>>("kickoff_pose",
                                                                     {0.0, 0.0, 0.0});

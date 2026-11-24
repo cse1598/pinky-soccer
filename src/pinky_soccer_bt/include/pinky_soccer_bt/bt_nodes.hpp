@@ -13,6 +13,7 @@
 
 #include <geometry_msgs/msg/point.hpp>
 #include <pinky_soccer_msgs/msg/behavior_goal.hpp>
+#include <pinky_soccer_msgs/msg/motion_result.hpp>
 #include <pinky_soccer_msgs/msg/tracked_object.hpp>
 #include <pinky_soccer_msgs/msg/world_model.hpp>
 #include <std_msgs/msg/bool.hpp>
@@ -23,6 +24,11 @@ namespace pinky_soccer_bt
 {
 
 using pinky_soccer_msgs::msg::BehaviorGoal;
+using pinky_soccer_msgs::msg::MotionResult;
+struct ReceivedMotionResult {
+  MotionResult result;
+  std::chrono::steady_clock::time_point received;
+};
 using pinky_soccer_msgs::msg::TrackedObject;
 using pinky_soccer_msgs::msg::WorldModel;
 using geometry_msgs::msg::Point;
@@ -242,9 +248,16 @@ class GoToPose : public GoalAction
 public:
   GoToPose(const std::string& n, const BT::NodeConfig& c) : GoalAction(n, c, "SEARCH") {}
   static BT::PortsList providedPorts();
+  BT::NodeStatus onStart() override;
+  void onHalted() override;
 
 protected:
   BT::NodeStatus update() override;
+
+private:
+  uint64_t goal_id_{0};
+  Pose2 target_;
+  std::chrono::steady_clock::time_point started_{};
 };
 
 // Registers every node used by trees/soccer_1v1.xml.
