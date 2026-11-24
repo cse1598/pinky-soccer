@@ -102,3 +102,32 @@ def test_goal_detection_and_csv(tmp_path, catalog):
 def test_yaw_from_quaternion():
     q = types.SimpleNamespace(x=0.0, y=0.0, z=math.sin(0.4), w=math.cos(0.4))
     assert core.yaw_from_quaternion(q) == pytest.approx(0.8)
+
+
+@pytest.mark.parametrize('theta', [math.pi, -math.pi, 3.14159, -3.14159, None])
+def test_map_pose_limits(catalog, theta):
+    goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
+    # Hardboard playing rectangle: not the surrounding map or catalog extent.
+    area = types.SimpleNamespace(xmin=-.83, xmax=.83, ymin=-.53, ymax=.53)
+    vals = core.map_pose_ports(goto, (2., -2., theta), math.pi, area)
+    assert vals['x'] == '0.83' and vals['y'] == '-0.53'
+    assert abs(float(vals['theta'])) <= 3.1416
+    assert core.run_request(1, goto, vals, 30)['ports'] == vals
+
+
+def test_map_pose_other_field_and_catalog_intersection(catalog):
+    goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
+    area = types.SimpleNamespace(xmin=-1.095, xmax=1.095, ymin=-.79, ymax=.79)
+    vals = core.map_pose_ports(goto, (-5., 5., None), .7, area)
+    assert vals == {'x': '-1.095', 'y': '0.79', 'theta': '0.7'}
+    large = types.SimpleNamespace(xmin=-5., xmax=5., ymin=-5., ymax=5.)
+    vals = core.map_pose_ports(goto, (5., -5., 0.), playing_area=large)
+    assert vals == {'x': '1.5', 'y': '-1', 'theta': '0'}
+    assert core.run_request(1, goto, vals, 30)['ports'] == vals
+
+
+def test_map_pose_nonfinite_previous_heading(catalog):
+    goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
+    vals = core.map_pose_ports(goto, (.12345, -.23456, None), float('nan'))
+    assert vals == {'x': '0.123', 'y': '-0.235', 'theta': '0'}
+    assert core.run_request(1, goto, vals, 30)['ports'] == vals

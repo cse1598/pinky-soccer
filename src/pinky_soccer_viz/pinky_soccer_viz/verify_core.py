@@ -75,6 +75,40 @@ def format_port(value):
     return '0' if text in ('-0', '') else text
 
 
+def map_pose_ports(item, pose, previous_theta=0.0, playing_area=None):
+    """Serialize map inputs within both catalog limits and the playing rectangle.
+
+    Clamp after rounding: e.g. rounding pi to 3 decimals gives 3.142, outside
+    the catalog's 3.1416 rad bound. Use inward six-decimal bounds so the
+    serialized text also passes run_request's strict range check.
+    """
+    mapping = item.get('pose_input', {})
+    if not mapping:
+        return {}
+    x, y, theta = pose
+    if theta is None:
+        theta = previous_theta
+    ports = {p['name']: p for p in item['ports']}
+    result = {}
+    for key, value in (('x', x), ('y', y), ('theta', theta)):
+        name = mapping[key]
+        port = ports[name]
+        lo, hi = float(port['min']), float(port['max'])
+        if playing_area is not None and key != 'theta':
+            lo = max(lo, getattr(playing_area, key + 'min'))
+            hi = min(hi, getattr(playing_area, key + 'max'))
+        lo = math.ceil(lo * 1e6) / 1e6
+        hi = math.floor(hi * 1e6) / 1e6
+        if lo > hi:
+            raise ValueError(f'{name}: no valid map input range')
+        if not math.isfinite(value):
+            value = float(port['default'])
+        if key == 'theta':
+            value = wrap(value)
+        result[name] = format_port(min(hi, max(lo, round(value, 3))))
+    return result
+
+
 def run_request(request_id, item, values, timeout_sec):
     """Build the bt_node run request (see pinky_soccer_bt/verify_mode.hpp)."""
     ports = {}

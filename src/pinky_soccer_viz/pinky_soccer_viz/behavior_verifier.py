@@ -389,6 +389,11 @@ class MapView(tk.Canvas):
         self.on_pick(pose)
 
     def _double(self, event):
+        # A double-click may occur before a second ButtonRelease. Use its actual
+        # coordinates now, rather than running the previous click's target.
+        x, y = self.world(event.x, event.y)
+        self.press, self.drag_pose = None, None
+        self.on_pick((x, y, None))
         self.on_pick_run()
 
     def _motion(self, event):
@@ -660,7 +665,7 @@ class VerifierApp:
                       style='Muted.TLabel', wraplength=390).grid(
                 row=2 * row + 1, column=0, columnspan=3, sticky='w', pady=(0, 3))
         if item.get('pose_input'):
-            ttk.Label(self.ports_frame, text='→ 지도에서 클릭/끌어서 입력', foreground='#ffd27f'
+            ttk.Label(self.ports_frame, text='→ 지도 클릭/끌기: 경기장 내부로 제한', foreground='#ffd27f'
                       ).grid(row=2 * len(item['ports']), column=0, columnspan=3, sticky='w')
         for w in self.inputs_frame.winfo_children():
             w.destroy()
@@ -693,22 +698,21 @@ class VerifierApp:
         for port in self.selected['ports']:
             self.port_vars[port['name']].set(core.format_port(port['default']))
 
-    def on_pick(self, pose):
-        """Map click/drag: fill the pose ports of the selected item."""
-        mapping = self.selected.get('pose_input')
+    def map_pose_values(self, pose):
+        """Map target text, shared by the drag preview and committed inputs."""
+        mapping = self.selected.get('pose_input') if self.selected else None
         if not mapping:
-            return
-        x, y, th = pose
-        if th is None:
-            try:
-                th = float(self.port_vars[mapping['theta']].get())
-            except ValueError:
-                th = 0.0
-        ports = {p['name']: p for p in self.selected['ports']}
-        for key, value in (('x', x), ('y', y), ('theta', th)):
-            port = ports[mapping[key]]
-            value = min(port['max'], max(port['min'], value))
-            self.port_vars[mapping[key]].set(core.format_port(round(value, 3)))
+            return {}
+        try:
+            previous = float(self.port_vars[mapping['theta']].get())
+        except (ValueError, KeyError):
+            previous = 0.0
+        return core.map_pose_ports(self.selected, pose, previous, self.field.playing_area)
+
+    def on_pick(self, pose):
+        """Map click/drag: fill valid pose ports for the selected item."""
+        for name, value in self.map_pose_values(pose).items():
+            self.port_vars[name].set(value)
 
     def on_place_ball(self, x, y):
         """Right-click in simulation: move the ball there."""
@@ -1006,7 +1010,10 @@ class VerifierApp:
         if self.show_truth.get():
             self._draw_truth(truth)
         if mp.drag_pose is not None:
-            mp.arrow(mp.drag_pose[:2] + (mp.drag_pose[2] or 0.0,), 0.15, COLORS['pending'],
+            values = self.map_pose_values(mp.drag_pose)
+            mapping = self.selected.get('pose_input') if self.selected else None
+            preview = tuple(float(values[mapping[k]]) for k in ('x', 'y', 'theta')) if values else mp.drag_pose[:2] + (mp.drag_pose[2] or 0.0,)
+            mp.arrow(preview, 0.15, COLORS['pending'],
                      width=3)
         if mp.hover is not None:
             hx, hy = mp.hover
