@@ -110,51 +110,60 @@ def check_wheel_signs(argv=None):
 
 
 # --------------------------------------------------------------------------- MuJoCo
-def _mujoco_physics(cache):
+def _mujoco_physics(cache, params, profile=None):
     """Official pinky_mujoco Physics with the soccer URDF, field and shared materials."""
     import types
     from ament_index_python.packages import get_package_share_directory as share
     from pinky_mujoco import model as pm
     from pinky_mujoco.description import expand_urdf
     from pinky_soccer_sim import materials, rcj_field
+    from pinky_soccer_bringup.calibration_profile import configure_urdf
+    from pinky_soccer_sim.mujoco_soccer_bridge import (
+        install_drive_constants, install_real_driver)
     out = Path(cache)
     out.mkdir(parents=True, exist_ok=True)
     urdf = expand_urdf(package='pinky_soccer_description',
                        filename='urdf/soccer_robot.urdf.xacro',
                        mappings={'cam_tilt_deg': '8', 'screen_tilt_deg': '-25',
                                  'bumper_enabled': 'true'})
+    if profile:
+        urdf = configure_urdf(urdf, profile, True)
     sim_share = Path(share('pinky_soccer_sim'))
     mat = materials.load_materials(str(sim_share / 'config/materials.yaml'))
     phys = yaml.safe_load((Path(share('pinky_mujoco')) / 'config/mujoco.yaml').read_text())
     phys['physics']['timestep'] = mat['timestep']
     phys['camera']['enabled'] = False
+    # Match the soccer launch: no independent v/w clamp; scale wheels at 100 RPM.
+    phys['control']['max_linear'] = 10.0
+    phys['control']['max_angular'] = 100.0
     path = out / 'physics.yaml'
     path.write_text(yaml.safe_dump(phys))
     ns = types.SimpleNamespace(build_model=pm.build_model, Physics=pm.Physics)
     rcj_field.install_mujoco(ns)
     materials.install_mujoco(ns, mat)
+    install_drive_constants(ns, params.d('wheel_radius'), params.d('wheel_separation'))
+    install_real_driver(ns, params.d('max_rpm'))
     model = ns.build_model(share('pinky_mujoco'), str(out), urdf, str(path),
                            str(sim_share / 'worlds/hardboard_soccer.world'), simple_render=True)
     return ns.Physics(model, str(path))
 
 
-def mujoco_step_log(physics, adapter, wheel_targets, hold=0.6, dt=0.01):
-    """Drive wheel target steps through the bridge command path; log (t, u, w)."""
-    from .command_adapter import RPM_TO_RAD  # noqa: F401  (documents units)
+def mujoco_step_log(physics, adapter, wheel_targets, hold=0.6, dt=None):
+    """Sample state at t, then apply the corresponding command for one bridge period."""
+    dt = physics.bridge_period if dt is None else dt
+    if not math.isclose(dt, physics.bridge_period, rel_tol=1e-9):
+        raise ValueError('dt must match the physics bridge period')
     t, us, ws = [], [], []
     k = 0
     for target in wheel_targets:
         v, w_cmd = adapter.to_twist(*target)
-        # The official bridge clamps v and w separately before Physics.step.
-        v = max(-adapter.max_linear, min(adapter.max_linear, v))
-        w_cmd = max(-adapter.max_angular, min(adapter.max_angular, w_cmd))
-        applied = adapter.driver_wheels(v, w_cmd)
+        left, right, _ = adapter.driver_applied(v, w_cmd)
         for _ in range(int(round(hold / dt))):
-            physics.step(v, w_cmd)
             qv = physics.data.qvel[physics.wheel_v]
             t.append(k * dt)
-            us.append(applied)
+            us.append((left, right))
             ws.append((float(qv[0]), float(qv[1])))
+            physics.step(v, w_cmd)
             k += 1
     return np.array(t), np.array(us), np.array(ws)
 
@@ -164,22 +173,33 @@ def identify_sim(argv=None):
     ap = argparse.ArgumentParser(description=identify_sim.__doc__)
     ap.add_argument('--out', default='identification_mujoco.yaml')
     ap.add_argument('--cache', default=str(Path.home() / '.cache' / 'pinky_soccer_dynamics'))
+    ap.add_argument('--profile', default='auto', help='auto, none, or calibration profile path')
+    ap.add_argument('--zero-delay', action='store_true',
+                    help='fit a zero-delay model compatible with the current NMPC')
     a = ap.parse_args(argv)
+    from ament_index_python.packages import get_package_share_directory as share
     from .command_adapter import CommandAdapter
     from .identification import (fit_response, identification_document, wheel_validation,
                                  write_identification)
-    params = params_mod.load('mujoco')
+    profile = a.profile
+    if profile == 'auto':
+        profile = str(Path(share('pinky_soccer_sim')) / 'config/calibration/mujoco_profile.yaml')
+    elif profile == 'none':
+        profile = None
+    params = params_mod.load('mujoco', profile=profile)
     adapter = CommandAdapter(params)
-    physics = _mujoco_physics(a.cache)
+    physics = _mujoco_physics(a.cache, params, profile)
     train = [(0, 0), (6, 6), (0, 0), (-6, -6), (0, 0), (4, -4), (0, 0), (8, 3), (0, 0)]
     test = [(0, 0), (5, 5), (-3, 3), (0, 0), (7, 7), (2, -2), (0, 0)]
     t, u, w = mujoco_step_log(physics, adapter, train)
     accel = (None, params.m('wheel_accel_max'))
-    fit = fit_response(t, u, w, accel_limits=accel)
+    fit = fit_response(t, u, w, accel_limits=accel,
+                       delays=[0.0] if a.zero_delay else None)
     t2, u2, w2 = mujoco_step_log(physics, adapter, test)
     val = wheel_validation(fit, t2, u2, w2)
     doc = identification_document('mujoco', 'mujoco-sim', fit, val, {'rms_relative': 0.1},
-                                  notes='headless MuJoCo step responses (simulation only)')
+                                  notes=f'headless soccer MuJoCo; profile={profile}; zero_delay={a.zero_delay}')
+    doc['calibration_profile'] = profile
     write_identification(a.out, doc)
     print(json.dumps({'fit': fit, 'validation': val, 'accepted': doc['accepted'],
                       'file': a.out}, indent=1))

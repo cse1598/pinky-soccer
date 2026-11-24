@@ -41,7 +41,8 @@ def setup(context):
               ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
                'controller', 'localization', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
-    common.update(max_lin=str(max_lin), max_ang=str(max_ang))
+    common.update(max_lin=str(max_lin), max_ang=str(max_ang),
+                  identification=arg('identification'))
     if mode == 'real':
         filename = 'real_game.launch.py'
         profile = arg('calibration_profile')
@@ -108,6 +109,8 @@ def generate_launch_description():
                               description='real: NMPC wheel speed feedback from /joint_states'),
         # Passed explicitly in both modes: included launches inherit this configuration, and
         # an empty value here once switched off the simulators' own calibration profiles.
+        DeclareLaunchArgument('identification', default_value='',
+                              description='validated target-specific wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
                               description='auto: simulators use their own odometry profile, '
                               'real none; or a profile.yaml path; none disables'),

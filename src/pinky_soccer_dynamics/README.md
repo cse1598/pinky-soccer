@@ -80,3 +80,21 @@ ros2 run pinky_soccer_dynamics identify_sim --out identification_mujoco.yaml   #
 - 실물 로봇에 명령을 보내는 도구는 이 패키지에 없습니다(1단계). 응답 실험 도구는 2단계에서 안전 조건과 함께 추가합니다.
 - 공식 `pinky_pro` 서브모듈은 수정하지 않습니다.
 - 시뮬레이터 정답값은 식별·검증 도구에서만 씁니다(판단 계층 입력 아님).
+
+### 경기용 MuJoCo와 NMPC의 동적 응답 검증
+
+오도메트리 profile은 유효 반경/축간거리 및 드라이버 변환값을 보정하며, 물리 형상이나 모터 응답을 변경하지 않는다. 별도의 identification 파일은 동일한 soccer MuJoCo 마찰/모터 설정에서 바퀴 속도 응답을 식별한다. 기본 profile은 경기용 mujoco_profile.yaml이며, `--profile none` 또는 명시 경로도 지원한다. 실물과 시뮬레이션의 식별값은 혼용하지 않는다.
+
+```bash
+ros2 run pinky_soccer_dynamics identify_sim --out identification_mujoco.yaml
+ros2 run pinky_soccer_dynamics identify_sim --zero-delay --out identification_mujoco_zero_delay.yaml
+ros2 run pinky_soccer_dynamics show_params --target mujoco \\
+  --profile src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml \\
+  --identification identification_mujoco_zero_delay.yaml
+ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco verify:=true \\
+  identification:="$PWD/identification_mujoco_zero_delay.yaml"
+```
+
+현재 NMPC는 명령 dead time을 모델링하지 않으므로 nonzero-delay 식별값을 적용하면 오류를 낸다. 지연을 허용한 식별 결과는 분석에만 사용하고, zero-delay 모델이 독립 검증에서 accepted=true일 때만 비교 실험에 적용한다. zero-delay 모델의 검증 실패 시 임의로 시정수를 바꾸지 말고 모델 구조(프로파일 램프/지연/슬립)를 개선한다. 바퀴 속도 검증은 전체 자세 예측 검증과 별개다.
+
+Pinky Pro 공식 제품 페이지(https://pinklab.art/pinky-pro/)의 모터는 XL330-M288-T이다. 103 RPM은 5 V 무부하 사양이며 실제 부하 속도 및 가속도는 실측이 필요하다. Profile Acceleration 200은 목표 속도 램프 설정이지 물리적 최대 가속도가 아니다.

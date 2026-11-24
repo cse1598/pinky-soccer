@@ -54,6 +54,7 @@ def setup(context):
         field_spec=str(field_spec), localization=arg('localization'),
         controller=arg('controller'), max_lin=max_lin, max_ang=max_ang,
         calibration_profile=arg('calibration_profile'),
+        identification=arg('identification'),
         wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
         headless=flag('headless'), groot2=False, heading_record=arg('heading_record'),
         command_topic=arg('command_topic'),
@@ -100,6 +101,8 @@ def generate_launch_description():
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='NMPC uses /joint_states wheel speeds (needs the '
                               'right wheel sign -1 confirmed; open-loop estimate otherwise)'),
+        DeclareLaunchArgument('identification', default_value='',
+                              description='validated real robot wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='',
                               description='robot profile.yaml for the NMPC model (empty: '
                               'official defaults, marked unmeasured)'),

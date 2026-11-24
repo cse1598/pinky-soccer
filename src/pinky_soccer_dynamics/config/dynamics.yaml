@@ -21,7 +21,7 @@ schema_version: 1
 #   wheel accel command max = usage_ratio * motor_accel       (capped by model.wheel_accel_max)
 limits:
   motor_rated_rpm: {value: 103.0, source: manual,
-                    ref: "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Variant inferred from the official driver MAX_RPM 100; model number and supply voltage NOT read from the robot"}
+                    ref: "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Model listed on PinkLAB official Pinky Pro product page https://pinklab.art/pinky-pro/; actual supply voltage and hardware registers not read from the robot"}
   motor_accel:     {value: 74.9, source: official_default,
                     ref: "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"}
   usage_ratio:     {value: 0.9, source: user_decision,

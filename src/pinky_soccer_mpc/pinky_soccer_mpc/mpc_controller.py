@@ -84,7 +84,12 @@ class MpcController(Node):
         p = self.declare_parameter
         target = p('target', 'real').value
         profile = p('calibration_profile', '').value
-        self.params = dyn_params.load(target, profile=profile or None)
+        identification = p('identification', '').value
+        self.params = dyn_params.load(target, profile=profile or None,
+                                      identification=identification or None)
+        if self.params.m('delay') > 0.0:
+            raise ValueError('NMPC does not yet model command dead time; use a validated '
+                             'zero-delay identification or implement delay compensation first')
         self.max_lin = float(p('max_lin', 0.0).value)      # 0: only the wheel limits
         self.max_ang = float(p('max_ang', 0.0).value)
         self.goal_timeout = p('goal_timeout', 0.5).value

@@ -135,6 +135,7 @@ def setup(context):
             'localization': lc('localization', context),
             'controller': lc('controller', context), 'max_lin': max_lin, 'max_ang': max_ang,
             'calibration_profile': '' if profile == 'none' else profile,
+            'identification': lc('identification', context),
             'wheel_feedback': True, 'headless': headless,
             'publish_debug_image': flag('publish_debug_image', context)}
     out += decision_stack(RobotConfig(
@@ -203,6 +204,8 @@ def generate_launch_description():
                               description='angular cap [rad/s]; faster spins broke localization '
                               'in MuJoCo; 0 = wheel limits only'),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('identification', default_value='',
+                              description='validated simulator wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
                               description="auto: the simulator's own odometry profile "
                               "(pinky_soccer_sim config/calibration); 'none' disables"),

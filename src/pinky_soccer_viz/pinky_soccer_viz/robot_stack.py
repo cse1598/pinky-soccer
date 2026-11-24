@@ -69,6 +69,7 @@ class RobotConfig:
     max_lin: float = 0.0
     max_ang: float = 0.0
     calibration_profile: str = ''
+    identification: str = ''
     wheel_feedback: bool = True
     verify: bool = False
     ui: bool = True                      # RViz/top view/camera/verifier for this robot
@@ -98,6 +99,7 @@ def controller_node(cfg):
                     remappings=[('cmd_vel', cfg.command_topic)], parameters=[{
                         'use_sim_time': cfg.simulation, 'target': cfg.target,
                         'calibration_profile': cfg.calibration_profile,
+                        'identification': cfg.identification,
                         'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang,
                         'wheel_feedback': cfg.wheel_feedback}])
     if cfg.controller != 'reactive':

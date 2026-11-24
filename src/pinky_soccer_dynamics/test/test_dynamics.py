@@ -247,3 +247,27 @@ def test_trajectory_validation_zero_for_own_model():
     t = np.arange(len(x)) * dt
     res = ident.trajectory_validation(p, t[:-1], inputs, x[:-1], horizon=0.5)
     assert res['position_max_m'] < 1e-9 and res['heading_max_rad'] < 1e-9
+
+
+def test_mujoco_step_log_matches_driver_and_sample_time():
+    from types import SimpleNamespace
+    from pinky_soccer_dynamics.tools import mujoco_step_log
+    from pinky_soccer_dynamics.command_adapter import CommandAdapter
+
+    adapter = CommandAdapter(P.load('mujoco'))
+
+    class FakePhysics:
+        bridge_period = 0.01
+        wheel_v = [0, 1]
+        data = SimpleNamespace(qvel=np.zeros(2))
+
+        def step(self, v, w):
+            self.data.qvel[:] = adapter.driver_applied(v, w)[:2]
+
+    t, u, w = mujoco_step_log(FakePhysics(), adapter, [(20., 10.), (0., 0.)], hold=0.02)
+    assert t == pytest.approx([0., 0.01, 0.02, 0.03])
+    assert max(abs(u[0])) == pytest.approx(100. * 2. * np.pi / 60.)
+    assert w[0] == pytest.approx([0., 0.])
+    assert w[1] == pytest.approx(u[0])
+    assert w[2] == pytest.approx(u[1])
+    assert w[3] == pytest.approx([0., 0.])
