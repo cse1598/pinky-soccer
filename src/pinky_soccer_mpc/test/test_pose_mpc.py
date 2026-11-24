@@ -18,15 +18,14 @@ def setup():
 
 def drive(setup, x0, goal, forward_only=False, w_cap=0.0, limit=8.0, dt=0.05):
     """Return (arrival time or None, trajectory rows (x, u))."""
-    from pinky_soccer_dynamics import model as M
+    from pinky_soccer_dynamics import profile_model as M
     params, mpc = setup
     mpc.reset()
-    sim = M.Simulator(params, np.asarray(x0, float), dt)
-    x, t, rows = np.asarray(x0, float), 0.0, []
+    x, t, rows = np.r_[np.asarray(x0,float), np.zeros(4)], 0.0, []
     while t < limit:
         res = mpc.solve(x, goal, w_cap=w_cap, forward_only=forward_only)
         assert res['ok'], res['status']
-        x = sim.step(res['u'])
+        x = M.step(params,x,res['u'],dt)
         t += dt
         rows.append((x.copy(), np.array(res['u'])))
         err = math.atan2(math.sin(x[2] - goal[2]), math.cos(x[2] - goal[2]))

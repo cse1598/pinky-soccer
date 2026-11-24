@@ -169,7 +169,10 @@ class RunRecord:
 
     FIELDS = ('t', 'est_x', 'est_y', 'est_th', 'true_x', 'true_y', 'true_th', 'ball_x', 'ball_y',
               'ball_state', 'true_ball_x', 'true_ball_y', 'cmd_v', 'cmd_w', 'action',
-              'target_x', 'target_y', 'target_th')
+              'target_x', 'target_y', 'target_th',
+              'mpc_state', 'mpc_status', 'mpc_ms', 'mpc_direction', 'wheel_l', 'wheel_r',
+              'profile_l', 'profile_r', 'wheel_cmd_l', 'wheel_cmd_r', 'feedback_age',
+              'feedback_enabled', 'period_s', 'v_bound', 'w_bound', 'mpc_residuals')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -190,7 +193,7 @@ class RunRecord:
         """Return True once the run has a terminal state."""
         return self.state in TERMINAL
 
-    def add(self, t, est, truth, ball, ball_state, ball_truth, cmd, goal):
+    def add(self, t, est, truth, ball, ball_state, ball_truth, cmd, goal, mpc=None):
         """Append one sample; est/truth/goal are (x, y, th) or None."""
         def part(v, n):
             return list(v[:n]) if v is not None else [None] * n
@@ -200,6 +203,10 @@ class RunRecord:
         self.rows.append([t - self.start] + part(est, 3) + part(truth, 3) + part(ball, 2) +
                          [ball_state] + part(ball_truth, 2) + part(cmd, 2) +
                          [goal[0] if goal else ''] + part(target, 3))
+        diag = mpc or {}
+        self.rows[-1].extend(diag.get(k) for k in ('state','status','ms','direction',
+            'wheel_l','wheel_r','profile_l','profile_r','wheel_cmd_l','wheel_cmd_r',
+            'feedback_age','feedback_enabled','period_s','v_bound','w_bound','residuals'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:

@@ -98,3 +98,5 @@ ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco verify:=true \\
 현재 NMPC는 명령 dead time을 모델링하지 않으므로 nonzero-delay 식별값을 적용하면 오류를 낸다. 지연을 허용한 식별 결과는 분석에만 사용하고, zero-delay 모델이 독립 검증에서 accepted=true일 때만 비교 실험에 적용한다. zero-delay 모델의 검증 실패 시 임의로 시정수를 바꾸지 말고 모델 구조(프로파일 램프/지연/슬립)를 개선한다. 바퀴 속도 검증은 전체 자세 예측 검증과 별개다.
 
 Pinky Pro 공식 제품 페이지(https://pinklab.art/pinky-pro/)의 모터는 XL330-M288-T이다. 103 RPM은 5 V 무부하 사양이며 실제 부하 속도 및 가속도는 실측이 필요하다. Profile Acceleration 200은 목표 속도 램프 설정이지 물리적 최대 가속도가 아니다.
+
+**Motor-profile v1 update:** the legacy identify_sim results identify a single effective lag, not the wheel lag after a separate motor profile. Use them for diagnostics only; the new NMPC rejects legacy identification files. Gazebo uses a per-wheel ramp/lag surrogate before DiffDrive, not a measured torque servo. MuJoCo keeps its 0.15 N·m torque and 0.08 velocity-gain proxies; 103 RPM actuator no-load speed and 100 RPM driver cap are distinct. Existing odometry profiles are unchanged. See the MPC README for the new verification workflow.

@@ -97,6 +97,7 @@ class VerifierNode(Node):
         self.wm_time = self.status_time = self.goal_time = 0.0
         self.cmd = (0.0, 0.0)
         self.mpc_path, self.mpc_path_time = [], 0.0
+        self.mpc_diag, self.mpc_diag_time = {}, 0.0
         self.truth = {}
         self.truth_time = {}
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
@@ -108,6 +109,7 @@ class VerifierNode(Node):
         self.create_subscription(BehaviorGoal, 'behavior_goal', self.on_goal, 10)
         self.create_subscription(Twist, command_topic, self.on_cmd, 10)
         self.create_subscription(Path, 'mpc/predicted_path', self.on_mpc_path, 10)
+        self.create_subscription(String, 'mpc/status', self.on_mpc_diag, 10)
         self.create_subscription(String, 'behavior_test/status', self.on_status, reliable)
         self.create_subscription(String, 'behavior_test/models', self.on_models, latched)
         if self.simulation:
@@ -134,6 +136,14 @@ class VerifierNode(Node):
         """Keep the latest velocity command."""
         with self.lock:
             self.cmd = (msg.linear.x, msg.angular.z)
+
+    def on_mpc_diag(self, msg):
+        try:
+            data = json.loads(msg.data)
+        except ValueError:
+            return
+        with self.lock:
+            self.mpc_diag, self.mpc_diag_time = data, time.monotonic()
 
     def on_mpc_path(self, msg):
         """Keep the NMPC predicted trajectory (map frame)."""
@@ -201,6 +211,7 @@ class VerifierNode(Node):
                     'status_age': now - self.status_time if self.status else None,
                     'cmd': self.cmd, 'truth': truth, 'models': self.models,
                     'mpc_path': self.mpc_path if now - self.mpc_path_time < 0.5 else [],
+                    'mpc_diag': self.mpc_diag if now-self.mpc_diag_time < .25 else {},
                     't': self.get_clock().now().nanoseconds * 1e-9}
 
 
@@ -850,7 +861,7 @@ class VerifierApp:
             goal_tuple = (goal.action, (goal.target.x, goal.target.y, goal.target.theta))
         rec.add(s['t'], est, truth.get('self'), ball, wm.ball.state if wm else None,
                 truth.get('ball', (None, None))[:2] if 'ball' in truth else None,
-                s['cmd'], goal_tuple)
+                s['cmd'], goal_tuple, s['mpc_diag'])
         if status.get('request_id') == rec.number:
             state = status.get('state')
             text = core.STATE_TEXT.get(state, state)

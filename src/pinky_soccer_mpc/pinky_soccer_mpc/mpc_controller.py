@@ -88,6 +88,9 @@ class MpcController(Node):
         identification = p('identification', '').value
         self.params = dyn_params.load(target, profile=profile or None,
                                       identification=identification or None)
+        if identification:
+            raise ValueError('Legacy single-lag identification is incompatible with profile-v1; '
+                             'identify the two-stage model first')
         if self.params.m('delay') > 0.0:
             raise ValueError('NMPC does not yet model command dead time; use a validated '
                              'zero-delay identification or implement delay compensation first')
