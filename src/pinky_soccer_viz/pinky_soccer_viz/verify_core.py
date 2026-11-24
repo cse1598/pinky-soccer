@@ -210,7 +210,10 @@ class RunRecord:
               'mpc_reason', 'mpc_goal_id', 'mpc_iterations', 'mpc_backend',
               'mpc_position_error', 'mpc_heading_error', 'mpc_message',
               'rtf', 'clock_hz', 'clock_age_s', 'clock_state', 'sim_time', 'wall_elapsed_s', 'mpc_horizon_steps', 'mpc_planned_time',
-              'mpc_terminal_feasible', 'mpc_attempts', 'mpc_lower_steps')
+              'mpc_terminal_feasible', 'mpc_attempts', 'mpc_lower_steps',
+              'mpc_attempt_statuses','mpc_replay_violation','mpc_solve_id',
+              'mpc_solve_input_age_sim_s','mpc_solve_input_age_wall_s',
+              'mpc_command_state_age_sim_s','mpc_command_state_age_wall_s')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -255,7 +258,9 @@ class RunRecord:
                                                    'clock_state', 'sim_time')] +
                              [wall-self.clock_wall_start if wall is not None else None])
         self.rows[-1].extend(diag.get(k) for k in ('horizon_steps','planned_time',
-            'terminal_feasible','attempts','lower_steps'))
+            'terminal_feasible','attempts','lower_steps','attempt_statuses','replay_violation',
+            'solve_id','solve_input_age_sim_s','solve_input_age_wall_s',
+            'command_state_age_sim_s','command_state_age_wall_s'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:
@@ -307,6 +312,17 @@ class RunRecord:
                                 f'{100 * math.hypot(goal[0] - x, goal[1] - y):.1f} cm'))
                     out.append((f'목표 방향 오차({label})',
                                 f'{math.degrees(wrap(goal[2] - th)):+.1f}°'))
+            if truth:
+                errors = [(math.hypot(goal[0]-x,goal[1]-y),
+                           abs(math.degrees(wrap(goal[2]-th)))) for x,y,th in truth]
+                first_pos = next((i for i,e in enumerate(errors) if e[0]<=.02),None)
+                first_pose = next((i for i,e in enumerate(errors) if e[0]<=.02 and e[1]<=3),None)
+                if first_pos is not None:
+                    out.append(('위치 첫 진입 후 최대 오차(정답)',
+                                f'{100*max(e[0] for e in errors[first_pos:]):.2f} cm'))
+                if first_pose is not None:
+                    out.append(('자세 첫 동시 진입 후 최대 방향 오차(정답)',
+                                f'{max(e[1] for e in errors[first_pose:]):.2f}°'))
             if self.state == 'success' and truth:
                 x, y, th = truth[-1]
                 within = (math.hypot(goal[0]-x, goal[1]-y) <= .02 and

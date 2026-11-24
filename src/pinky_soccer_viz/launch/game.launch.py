@@ -39,7 +39,7 @@ def setup(context):
                          '(> 0 on the real robot; 0 = wheel limits only in simulation)')
     common = {name: arg(name) for name in
               ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
-               'controller', 'localization', 'heading_record', 'initial_x', 'initial_y',
+               'controller', 'mpc_backend', 'localization', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
                   identification=arg('identification'))
@@ -108,6 +108,7 @@ def generate_launch_description():
         DeclareLaunchArgument('max_ang', default_value='auto',
                               description='auto: real 0.5 rad/s, simulation 2.0 '
                               '(localization limit); 0 = none'),
+        DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive'],
                               description='mpc: NMPC (pinky_soccer_mpc); reactive: old P control'),
         DeclareLaunchArgument('wheel_feedback', default_value='false',

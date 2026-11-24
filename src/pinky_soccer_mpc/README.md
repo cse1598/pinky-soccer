@@ -60,3 +60,39 @@ attempts and lower_steps. Planned time excludes the actual 0.3 s dwell.
 No new obstacle or field path constraints are added by this version. Validate
 in simulation before real robot use. For consistent small-matrix timings
 consider OPENBLAS_NUM_THREADS=1 when launching.
+
+## acados backend comparison (GoToPose)
+
+The default GoToPose solver is now `AcadosTimeOptimalMpc`, using acados SQP
+and HPIPM. `mpc_backend:=slsqp` explicitly selects the previous implementation
+for A/B comparison. Other actions remain unchanged. No silent solver fallback.
+The same 0.1 s interval, candidate N=2..80, 75 ms soft search budget, wheel-lag
+predictor, bounds, terminal tolerances and arrival dwell are retained to isolate
+the optimizer change. The acados OCP includes two previous-command memory states;
+its physical five-state prediction and objective are unchanged. A single
+generated solver changes its horizon with set_new_time_steps(), without
+compiling per candidate. First startup generates code in the solver cache.
+The per-candidate SQP timeout is 15 ms at default settings; neither the native
+timeout nor the outer search budget is a hard real-time guarantee.
+
+A candidate is accepted only after replaying its inputs with the independent
+NumPy predictor and checking all command/slew/body and applicable terminal bounds.
+Statuses 2 or 7 are marked as nonconverged and accepted only if replay and
+dynamics/inequality residuals pass for a terminal-feasible candidate. A
+goal-progress fallback is also solved by acados. It requires status 0.
+No raw seed is sent. This is still a local, bounded discrete-time search,
+not a guarantee of global minimum time.
+
+CSV records candidate statuses, replay violation, solve ID and age of the
+optimization input at result receipt / command transmission in sim and wall
+seconds. These are controller-side timing measurements, not physical motor
+transport delay. The verifier also reports the maximum ground-truth position
+error after first position entry, and maximum heading error after first joint
+pose entry. Model lag, ramp and delay compensation are NOT changed in this
+backend comparison. Validate in simulation before real hardware.
+
+```bash
+OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_acados_time_optimal.py
+OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados verify:=true
+# baseline: change mpc_backend:=slsqp
+```

@@ -23,6 +23,7 @@ from std_msgs.msg import String
 from .arrival import Arrival, wrap
 from .pose_mpc import PoseMpc
 from .time_optimal import TimeOptimalMpc
+from .acados_time_optimal import AcadosTimeOptimalMpc
 
 
 class MpcController(Node):
@@ -47,7 +48,11 @@ class MpcController(Node):
         self.mpc=PoseMpc(self.params,p('horizon',2.).value,int(p('steps',20).value))
         if abs(self.dt-self.mpc.dt)>1e-6:
             raise ValueError('horizon/steps must match optimization period')
-        self.time_mpc=TimeOptimalMpc(self.params, dt=self.dt,
+        self.time_backend=p('mpc_backend','acados').value
+        if self.time_backend not in ('acados','slsqp'):
+            raise ValueError('mpc_backend must be acados or slsqp')
+        solver_cls=AcadosTimeOptimalMpc if self.time_backend=='acados' else TimeOptimalMpc
+        self.time_mpc=solver_cls(self.params, dt=self.dt,
              max_steps=int(p('time_optimal_max_steps',80).value),
              budget=float(p('time_optimal_budget_sec',.075).value))
         self.adapter=CommandAdapter(self.params)
@@ -69,6 +74,10 @@ class MpcController(Node):
         self.future=None
         self.future_generation=None
         self.future_wall=None
+        self.future_sim=None
+        self.solve_id=0
+        self.last_solution_input_sim=None
+        self.last_solution_input_wall=None
         self.next_solve=0.
         self.last_solution=None
         self.last_solution_sim=None
@@ -89,7 +98,7 @@ class MpcController(Node):
         if self.wheel_feedback:
             self.create_subscription(JointState,'joint_states',self.on_joints,qos_profile_sensor_data)
         self.create_timer(1/self.command_rate,self.tick)
-        self.get_logger().info(f'Fixed-step time-optimal NMPC {target}: {self.rate:g} Hz solve, '
+        self.get_logger().info(f'Fixed-step time-optimal NMPC {target}/{self.time_backend}: {self.rate:g} Hz solve, '
                                f'{self.command_rate:g} Hz command; up to {self.time_mpc.max_steps} stages; '
                                f'{self.mpc.wmax*30/math.pi:.1f} RPM')
 
@@ -132,6 +141,7 @@ class MpcController(Node):
     def invalidate(self):
         self.generation+=1
         self.last_solution=self.last_solution_sim=self.last_solution_wall=None
+        self.last_solution_input_sim=self.last_solution_input_wall=None
         self.next_solve=0.
 
     def job(self,generation,x,goal,v,w,forward,is_pose):
@@ -152,8 +162,12 @@ class MpcController(Node):
                     wheel_cmd_l=self.last_cmd[0],wheel_cmd_r=self.last_cmd[1],
                     feedback_age=self.feedback_age,feedback_enabled=self.wheel_feedback,
                     position_error=dist,heading_error=ang,
-                    backend=data.get('backend') or ('discrete_time_optimal_slsqp' if
+                    backend=data.get('backend') or (f'discrete_time_optimal_{self.time_backend}' if
                         self.goal is not None and self.goal.action=='GoToPose' else 'slsqp'))
+        data['command_state_age_sim_s'] = (self.last_tick-self.last_solution_input_sim
+            if state=='track' and self.last_solution_input_sim is not None else None)
+        data['command_state_age_wall_s'] = (time.monotonic()-self.last_solution_input_wall
+            if state=='track' and self.last_solution_input_wall is not None else None)
         self.status_pub.publish(String(data=json.dumps(data)))
         if gid and self.goal.action=='GoToPose':
             msg=MotionResult()
@@ -188,6 +202,8 @@ class MpcController(Node):
             future=self.future
             generation=self.future_generation
             submitted=self.future_wall
+            submitted_sim=self.future_sim
+            completed_id=self.solve_id
             self.future=None
             try:
                 res=future.result()
@@ -198,11 +214,16 @@ class MpcController(Node):
                 self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
                                                 'iterations','v_bound','w_bound','message','backend',
                                                 'horizon_steps','planned_time','terminal_feasible',
-                                                'attempts','lower_steps')}
+                                                'attempts','lower_steps','attempt_statuses','replay_violation')}
+                self.diag.update(solve_id=completed_id,
+                                 solve_input_age_sim_s=now-submitted_sim,
+                                 solve_input_age_wall_s=wall-submitted)
                 if res['ok'] and wall-submitted<=.3:
                     self.last_solution=tuple(res['u'])
                     self.last_solution_sim=now
                     self.last_solution_wall=wall
+                    self.last_solution_input_sim=submitted_sim
+                    self.last_solution_input_wall=submitted
                     self.failures=0
                     self.publish_path(res['xs'])
                 else:
@@ -276,6 +297,8 @@ class MpcController(Node):
             x=(*self.pose,*self.omega,*self.last_cmd)
             self.future_generation=self.generation
             self.future_wall=wall
+            self.future_sim=now
+            self.solve_id+=1
             self.future=self.executor_pool.submit(self.job,self.generation,x,goal,v,w,
                                                    self.goal.action in self.forward_only,is_pose)
             self.next_solve=now+self.dt

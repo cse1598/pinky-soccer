@@ -66,6 +66,7 @@ class RobotConfig:
     field_spec: str = ''
     localization: str = 'lidar'
     controller: str = 'mpc'
+    mpc_backend: str = 'acados'
     max_lin: float = 0.0
     max_ang: float = 0.0
     calibration_profile: str = ''
@@ -99,7 +100,7 @@ def controller_node(cfg):
                     remappings=[('cmd_vel', cfg.command_topic)], parameters=[{
                         'use_sim_time': cfg.simulation, 'target': cfg.target,
                         'calibration_profile': cfg.calibration_profile,
-                        'identification': cfg.identification,
+                        'identification': cfg.identification, 'mpc_backend': cfg.mpc_backend,
                         'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang,
                         'wheel_feedback': cfg.wheel_feedback}])
     if cfg.controller != 'reactive':

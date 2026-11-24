@@ -52,7 +52,7 @@ def setup(context):
     nodes += decision_stack(RobotConfig(
         name=name, color=color, initial=initial, simulation=False, target='real',
         field_spec=str(field_spec), localization=arg('localization'),
-        controller=arg('controller'), max_lin=max_lin, max_ang=max_ang,
+        controller=arg('controller'), mpc_backend=arg('mpc_backend'), max_lin=max_lin, max_ang=max_ang,
         calibration_profile=arg('calibration_profile'),
         identification=arg('identification'),
         wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
@@ -97,6 +97,7 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
         DeclareLaunchArgument('heading_record', default_value=''),
+        DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='NMPC uses /joint_states wheel speeds (needs the '
