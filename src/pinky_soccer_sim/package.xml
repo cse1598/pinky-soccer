@@ -23,6 +23,8 @@
   <exec_depend>pinky_mujoco</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>pinky_soccer_bringup</exec_depend>
+  <exec_depend>pinky_soccer_dynamics</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>pinky_soccer_msgs</exec_depend>
   <!-- calibrate_odometry.py reuses the calibration UI Session/fit/export code -->

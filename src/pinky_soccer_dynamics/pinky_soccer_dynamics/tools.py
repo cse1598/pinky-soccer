@@ -131,6 +131,8 @@ def _mujoco_physics(cache, params, profile=None):
     sim_share = Path(share('pinky_soccer_sim'))
     mat = materials.load_materials(str(sim_share / 'config/materials.yaml'))
     phys = yaml.safe_load((Path(share('pinky_mujoco')) / 'config/mujoco.yaml').read_text())
+    from pinky_soccer_sim.motor_limits import configure_mujoco
+    configure_mujoco(phys)
     phys['physics']['timestep'] = mat['timestep']
     phys['camera']['enabled'] = False
     # Match the soccer launch: no independent v/w clamp; scale wheels at 100 RPM.

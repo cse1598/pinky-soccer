@@ -14,7 +14,7 @@ robot defaults to the model because its right wheel sign is still unverified
 motors respond slower than the model (weaving), so enable feedback once the sign is checked.
 
 Safety (same as reactive_controller, plus): zero command when /behavior_goal or /world_model
-is stale, on STOP, or when the solver fails twice in a row; the robot-side command_watchdog
+is stale, on STOP, or when the solver fails; the robot-side command_watchdog
 stays in place.
 """
 
@@ -32,7 +32,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
 
-from .pose_mpc import PoseMpc, step_wheels
+from .pose_mpc import PoseMpc
+from pinky_soccer_dynamics.profile_model import motor_step, limit_command
 
 
 def wrap(a):
@@ -95,7 +96,9 @@ class MpcController(Node):
         self.goal_timeout = p('goal_timeout', 0.5).value
         self.pose_timeout = p('pose_timeout', 0.5).value
         rate = p('rate_hz', 20.0).value
-        self.mpc = PoseMpc(self.params, p('horizon', 1.5).value, int(p('steps', 30).value))
+        self.mpc = PoseMpc(self.params, p('horizon', 2.0).value, int(p('steps', 40).value))
+        if abs(self.mpc.dt - 1.0/rate) > 1e-6:
+            raise ValueError('NMPC prediction step must match control period')
         self.adapter = CommandAdapter(self.params)
         self.arrival = Arrival(p('pos_tol', 0.04).value, p('ang_tol', 0.12).value)
         # Ball-related actions keep the camera (front) towards the ball: no reverse driving.
@@ -105,11 +108,17 @@ class MpcController(Node):
         self.goal = self.goal_time = None
         self.pose = self.pose_time = None
         self.omega = (0.0, 0.0)
+        self.ref = (0.0, 0.0)
+        self.last_cmd = (0.0, 0.0)
+        self.last_tick = None
+        self.feedback_age = None
         self.failures = 0
         self.last_goal = None
         self.measured = self.measured_time = None
-        if p('wheel_feedback', False).value:
-            self.create_subscription(JointState, 'joint_states', self.on_joints, 20)
+        self.wheel_feedback = p('wheel_feedback', False).value
+        if self.wheel_feedback:
+            from rclpy.qos import qos_profile_sensor_data
+            self.create_subscription(JointState, 'joint_states', self.on_joints, qos_profile_sensor_data)
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
         self.path_pub = self.create_publisher(Path, 'mpc/predicted_path', 10)
         self.status_pub = self.create_publisher(String, 'mpc/status', 10)
@@ -130,8 +139,9 @@ class MpcController(Node):
     def on_joints(self, msg):
         """Store measured wheel speeds in the model convention."""
         try:
-            self.measured = wheels_from_joint_state(self.params, msg.name, msg.velocity)
-            self.measured_time = time.monotonic()
+            measured = wheels_from_joint_state(self.params, msg.name, msg.velocity)
+            if all(math.isfinite(v) for v in measured):
+                self.measured, self.measured_time = measured, time.monotonic()
         except (KeyError, ValueError):
             pass
 
@@ -150,77 +160,86 @@ class MpcController(Node):
                 v_cap = min(v_cap, goal.max_speed) if v_cap else float(goal.max_speed)
         return v_cap, w_cap
 
+    def send(self, cmd):
+        """Store the transmitted wheel command and publish driver twist."""
+        self.last_cmd = tuple(float(v) for v in cmd)
+        v, w = self.adapter.to_twist(*self.last_cmd)
+        msg = Twist()
+        msg.linear.x, msg.angular.z = float(v), float(w)
+        self.pub.publish(msg)
+        return v, w
+
     def stop(self, reason):
-        """Publish zero and reset the predictor."""
-        self.pub.publish(Twist())
-        self.omega = step_wheels(self.params, self.omega, (0.0, 0.0), self.dt, self.mpc.amax)
+        self.send((0., 0.))
         self.mpc.reset()
         self.publish_status({'state': 'stop', 'reason': reason})
 
     def tick(self):
-        """Solve and publish one command."""
         now = time.monotonic()
-        fresh = (self.goal is not None and now - self.goal_time <= self.goal_timeout
-                 and self.pose is not None and now - self.pose_time <= self.pose_timeout)
-        if not fresh:
-            return self.stop('stale input')
-        if self.goal.mode == BehaviorGoal.STOP:
-            return self.stop('STOP goal')
+        sim_now = self.get_clock().now().nanoseconds * 1e-9
+        elapsed = self.dt if self.last_tick is None else sim_now-self.last_tick
+        self.last_tick = sim_now
+        if elapsed < 0 or elapsed > .5:
+            self.ref = self.omega = self.last_cmd = (0.,0.)
+            return self.stop('clock discontinuity')
+        self.omega, self.ref = motor_step(self.params,self.omega,self.ref,self.last_cmd,elapsed)
+        self.feedback_age = None if self.measured_time is None else now-self.measured_time
+        if self.feedback_age is not None and self.feedback_age < .2:
+            self.omega = self.measured
+        elif self.wheel_feedback:
+            return self.stop('stale wheel feedback')
+        fresh = (self.goal is not None and now-self.goal_time <= self.goal_timeout
+                 and self.pose is not None and now-self.pose_time <= self.pose_timeout)
+        if not fresh or self.goal.mode == BehaviorGoal.STOP:
+            self.arrival.mode, self.arrival.goal = Arrival.TRACK,None
+            return self.stop('STOP goal' if fresh else 'stale input')
         t = self.goal.target
-        goal = (t.x, t.y, t.theta)
-        if self.last_goal is None or math.hypot(goal[0] - self.last_goal[0],
-                                                goal[1] - self.last_goal[1]) > 0.3:
-            self.mpc.reset()                       # big jump: drop the warm start
+        goal = (t.x,t.y,t.theta)
+        if not all(math.isfinite(v) for v in (*goal,*self.pose)):
+            return self.stop('nonfinite pose/goal')
         self.last_goal = goal
-        phase, heading_err = self.arrival.update(self.pose, goal,
-                                                 abs(self.omega[0]) + abs(self.omega[1]))
-        v_cap, w_cap = self.caps(self.goal)
+        phase, err = self.arrival.update(self.pose,goal,sum(abs(v) for v in self.omega))
+        v_cap,w_cap = self.caps(self.goal)
+        vb = min(v_cap,self.mpc.v_limit) if v_cap else self.mpc.v_limit
+        wb = min(w_cap,self.mpc.w_limit) if w_cap else self.mpc.w_limit
         if phase == Arrival.HOLD:
             return self.stop('arrived')
         if phase == Arrival.ALIGN:
-            return self.align(heading_err, w_cap)
-        if self.measured is not None and now - self.measured_time < 0.2:
-            self.omega = self.measured
-        x0 = (*self.pose, *self.omega)
-        res = self.mpc.solve(x0, goal, v_cap, w_cap,
-                             forward_only=self.goal.action in self.forward_only)
+            return self.align(err,vb,wb)
+        x0 = (*self.pose,*self.omega,*self.ref,*self.last_cmd)
+        try:
+            res = self.mpc.solve(x0,goal,v_cap,w_cap,
+                                 forward_only=self.goal.action in self.forward_only)
+        except (RuntimeError, ValueError) as exc:
+            self.get_logger().warn(f'NMPC exception: {exc}',throttle_duration_sec=1.)
+            return self.stop('solver exception')
         if not res['ok']:
             self.failures += 1
-            self.get_logger().warn(f'NMPC status {res["status"]} ({self.failures} in a row)',
-                                   throttle_duration_sec=1.0)
-            if self.failures >= 2:
-                return self.stop(f'solver status {res["status"]}')
-        else:
-            self.failures = 0
-        cmd = res['u']
-        v, w = self.adapter.to_twist(*cmd)
-        msg = Twist()
-        msg.linear.x, msg.angular.z = float(v), float(w)
-        self.pub.publish(msg)
-        self.omega = step_wheels(self.params, self.omega, cmd, self.dt, self.mpc.amax)
+            self.get_logger().warn(f'NMPC status {res["status"]}',throttle_duration_sec=1.)
+            self.send((0.,0.))
+            self.mpc.reset()
+            return self.publish_status({'state':'failed','status':res['status'],
+                                        'ms':res['ms'],'residuals':res['residuals']})
+        self.failures = 0
+        v,w = self.send(res['u'])
         self.publish_path(res['xs'])
-        self.publish_status({'state': 'track', 'status': res['status'], 'ms': round(res['ms'], 1),
-                             'v': round(v, 3), 'w': round(w, 2),
-                             'v_bound': round(res['v_bound'], 3),
-                             'w_bound': round(res['w_bound'], 2)})
+        self.publish_status({'state':'track','status':res['status'],'ms':round(res['ms'],2),
+                             'v':v,'w':w,'v_bound':res['v_bound'],'w_bound':res['w_bound'],
+                             'direction':res['direction'],'residuals':res['residuals'],
+                             'period_s':elapsed})
 
-    def align(self, err, w_cap):
-        """Turn in place towards the goal heading (final phase, no translation)."""
-        limit = min(w_cap or self.mpc.w_limit, self.mpc.w_limit, 2.0)
-        w = max(-limit, min(limit, 2.5 * err))
-        if abs(w) < 0.3:                       # below this the wheels barely move
-            w = math.copysign(0.3, err)
-        b = self.mpc.b
-        r = 0.5 * (self.mpc.rl + self.mpc.rr)
-        cmd = (-w * b / (2 * r), w * b / (2 * r))
-        v_out, w_out = self.adapter.to_twist(*cmd)
-        msg = Twist()
-        msg.linear.x, msg.angular.z = float(v_out), float(w_out)
-        self.pub.publish(msg)
-        self.omega = step_wheels(self.params, self.omega, cmd, self.dt, self.mpc.amax)
+    def align(self, err, vb, wb):
+        """Brake translation, then align without a forced minimum rotation."""
+        v_actual = (self.mpc.rl*self.omega[0]+self.mpc.rr*self.omega[1])/2
+        if abs(err) <= self.arrival.ang_tol or abs(v_actual) > .04:
+            cmd = (0.,0.)
+        else:
+            w = max(-min(wb,2.),min(min(wb,2.),2.5*err))
+            cmd = limit_command(self.params,(-w*self.mpc.b/(2*self.mpc.rl),
+                                              w*self.mpc.b/(2*self.mpc.rr)),vb,wb)
+        self.send(cmd)
         self.mpc.reset()
-        self.publish_status({'state': 'align', 'heading_error': round(err, 3),
-                             'w': round(w_out, 2)})
+        self.publish_status({'state':'align','heading_error':err})
 
     def publish_path(self, xs):
         """Publish the predicted trajectory (map frame)."""
@@ -238,6 +257,10 @@ class MpcController(Node):
 
     def publish_status(self, data):
         """Publish a small JSON diagnostics message."""
+        data.update(wheel_l=float(self.omega[0]),wheel_r=float(self.omega[1]),
+                    profile_l=float(self.ref[0]),profile_r=float(self.ref[1]),
+                    wheel_cmd_l=self.last_cmd[0],wheel_cmd_r=self.last_cmd[1],
+                    feedback_age=self.feedback_age,feedback_enabled=self.wheel_feedback)
         self.status_pub.publish(String(data=json.dumps(data)))
 
 

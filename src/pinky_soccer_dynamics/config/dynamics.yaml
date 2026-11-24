@@ -59,7 +59,7 @@ targets:
       tau_left:     {value: 0.05,   source: assumption, ref: "identify with identify_sim (velocity actuator + 74.9 rad/s^2 ramp)"}
       tau_right:    {value: 0.05,   source: assumption, ref: "identify with identify_sim"}
       delay:        {value: 0.0,    source: assumption, ref: "bridge period 10 ms"}
-      wheel_speed_max: {value: 10.47, source: simulation_model, ref: "pinky_soccer_sim emulates the real driver: 100 rpm ratio-preserving scaling (motor max_speed 14)"}
+      wheel_speed_max: {value: 10.47, source: simulation_model, ref: "pinky_soccer_sim emulates the real driver: 100 rpm ratio-preserving scaling (motor max_speed 103 RPM no-load)"}
       wheel_accel_max: {value: 74.9, source: simulation_model, ref: "mujoco.yaml motors.wheel_accel"}
     driver:
       wheel_radius:     {value: 0.028,  source: simulation_model, ref: "Physics.step uses the model radius"}
@@ -77,11 +77,12 @@ targets:
       tau_left:     {value: 0.05,   source: assumption, ref: "not identified"}
       tau_right:    {value: 0.05,   source: assumption, ref: "not identified"}
       delay:        {value: 0.0,    source: assumption, ref: "not identified"}
-      wheel_speed_max: {value: 35.7, source: simulation_model, ref: "DiffDrive max_velocity 1.0 m/s / 0.028"}
+      wheel_speed_max: {value: 10.4719755, source: official_default, ref: "100 RPM real driver limit; gazebo motor adapter"}
       wheel_accel_max: {value: 71.4, source: simulation_model, ref: "DiffDrive max_acceleration 2.0 m/s^2 / 0.028"}
     driver:
       wheel_radius:     {value: 0.028,  source: simulation_model, ref: "DiffDrive plugin"}
       wheel_separation: {value: 0.0961, source: simulation_model, ref: "DiffDrive plugin"}
+      max_rpm:          {value: 100.0, source: official_default, ref: "real driver; gazebo motor adapter"}
     joint_sign:
       left:  {value: 1, source: simulation_model, ref: "URDF axis 0 1 0"}
       right: {value: 1, source: simulation_model, ref: "URDF axis 0 1 0"}

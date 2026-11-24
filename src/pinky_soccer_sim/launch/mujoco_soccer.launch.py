@@ -96,6 +96,8 @@ def setup(context):
     cfg = load_config(sensor_path)
     physics = yaml.safe_load((Path(get_package_share_directory('pinky_mujoco'))
                               / 'config/mujoco.yaml').read_text())
+    from pinky_soccer_sim.motor_limits import configure_mujoco
+    configure_mujoco(physics)
     physics['camera'].update({key: cfg['camera'][key] for key in
                               ('width', 'height', 'fps', 'horizontal_fov')})
     from pinky_soccer_sim.materials import load_materials

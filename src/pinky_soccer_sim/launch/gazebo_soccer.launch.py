@@ -110,7 +110,8 @@ def robot_xml(context, sensors=True):
              ('camera_enabled', 'imu_enabled', 'adc_enabled')]
     urdf = configure_gazebo(urdf, cfg, *flags)
     urdf = configure_urdf(urdf, lc('calibration_profile').perform(context), True)
-    return urdf
+    from pinky_soccer_sim.motor_limits import configure_gazebo as motor_limits
+    return motor_limits(urdf)
 
 
 def robots(context):
@@ -133,6 +134,9 @@ def setup_robot(context):
     with open(lc('bridge_params').perform(context)) as f:
         bridge_entries = yaml.safe_load(f)
     cfg = materials.load_materials(lc('material_config').perform(context))
+    for entry in bridge_entries:
+        if entry['ros_topic_name'].lstrip('/') == 'drive/cmd_vel':
+            entry['ros_topic_name'] = 'drive/motor_cmd_vel'
     actions = []
     shared_bridge = False
     for ns, model, pose, sensors in robots(context):
@@ -158,16 +162,17 @@ def setup_robot(context):
                                         'config_file': str(clock_file), 'use_sim_time': True}]))
                 shared_bridge = True
         else:
-            bridge_file = lc('bridge_params').perform(context)
+            bridge_file = directory/'bridge.yaml'
+            bridge_file.write_text(yaml.safe_dump(bridge_entries))
         nodes = [
             Node(package='robot_state_publisher', executable='robot_state_publisher',
                  name='robot_state_publisher',
                  parameters=[{'robot_description': urdf, 'use_sim_time': True}]),
-            # upload_robot.launch.py equivalent
-            Node(package='joint_state_publisher', executable='joint_state_publisher',
-                 name='joint_state_publisher', output='screen',
-                 parameters=[{'source_list': ['joint_states'], 'rate': 20.0,
-                              'use_sim_time': True}]),
+            Node(package='pinky_soccer_sim', executable='gazebo_motor',
+                 name='gazebo_motor', output='screen',
+                 parameters=[{'use_sim_time': True, 'calibration_profile':
+                              '' if lc('calibration_profile').perform(context) == 'none'
+                              else lc('calibration_profile').perform(context)}]),
             Node(package='ros_gz_sim', executable='create', name='create_robot', output='screen',
                  arguments=['-name', model, '-file', str(sdf), '-x', pose[0], '-y', pose[1],
                             '-z', '0.1', '-Y', pose[2]],

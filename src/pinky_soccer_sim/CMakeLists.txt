@@ -27,6 +27,8 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS ${PROJECT_NAME}/gazebo_motor.py
+  DESTINATION lib/${PROJECT_NAME} RENAME gazebo_motor)
 install(PROGRAMS ${PROJECT_NAME}/sensor_adapter.py
   DESTINATION lib/${PROJECT_NAME} RENAME sensor_adapter)
 install(PROGRAMS ${PROJECT_NAME}/check_interface.py
