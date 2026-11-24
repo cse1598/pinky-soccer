@@ -17,7 +17,8 @@ Pinky Pro용 acados NMPC 패키지입니다. 1단계(acados 연결·검증)와 *
   - T를 끝에만 두면 "지금 돌든 나중에 돌든 같다"가 되어 계속 미루다 멈췄습니다(MuJoCo에서 확인) →
     매 단계에 둠.
 - **방향도 목표**: 목표 근처에서 방향 비용이 켜져 목표 방향을 맞추며 들어가고, 정지 판정은
-  위치 2 cm·방향 0.05 rad(히스테리시스 2배). BT `GoToPose`도 위치 5 cm와 방향 0.15 rad가 모두
+  위치 4 cm·방향 0.12 rad(히스테리시스 2배, BT GoToPose 허용 5 cm·0.15 rad 안쪽). 2 cm·0.05 rad로는
+  MuJoCo에서 목표 주변을 계속 보정하며 맴돌았습니다(최대 11 cm·80°). BT `GoToPose`도 위치 5 cm와 방향 0.15 rad가 모두
   맞아야 SUCCESS입니다.
 - **제약 (제품 사양 90 %)**: 바퀴 |Ω| ≤ 0.9 × 103 rpm = 92.7 rpm(9.71 rad/s),
   |Ω̇| ≤ 0.9 × 74.9 = 67.4 rad/s². 값과 출처는 `pinky_soccer_dynamics/config/dynamics.yaml`의

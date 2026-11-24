@@ -56,10 +56,15 @@ def load_catalog(path):
     return data
 
 
+def enabled_items(catalog):
+    """Items shown and runnable in the verifier (`enabled: false` hides one)."""
+    return [item for item in catalog['items'] if item.get('enabled', True)]
+
+
 def groups(catalog):
-    """Return [(group, [items])] in catalog order."""
+    """Return [(group, [enabled items])] in catalog order."""
     out = {}
-    for item in catalog['items']:
+    for item in enabled_items(catalog):
         out.setdefault(item.get('group', '기타'), []).append(item)
     return list(out.items())
 

@@ -52,11 +52,13 @@ int main(int argc, char** argv)
   const int groot2_port = node->declare_parameter<int>("groot2_port", 1667);
   const bool cout_logger = node->declare_parameter<bool>("cout_logger", false);
   const auto file_log = node->declare_parameter<std::string>("file_logger_path", "");
-  const auto wm_topic = node->declare_parameter<std::string>("world_model_topic", "/world_model");
+  const auto wm_topic = node->declare_parameter<std::string>("world_model_topic", "world_model");
   const auto goal_topic =
-      node->declare_parameter<std::string>("behavior_goal_topic", "/behavior_goal");
+      node->declare_parameter<std::string>("behavior_goal_topic", "behavior_goal");
   const bool verify_mode = node->declare_parameter<bool>("verify_mode", false);
   const double heartbeat = node->declare_parameter<double>("verify_heartbeat_timeout", 1.5);
+  // Composed behaviours (subtrees) stay off while single skills are verified one by one.
+  const bool verify_subtrees = node->declare_parameter<bool>("verify_subtrees", false);
   if(rate <= 0.0)
   {
     RCLCPP_FATAL(node->get_logger(), "tick_rate_hz must be positive");
@@ -69,6 +71,15 @@ int main(int argc, char** argv)
   factory.registerBehaviorTreeFromFile(tree_file);
 
   auto blackboard = BT::Blackboard::create();
+  // Kickoff pose (map frame): where the robot returns after a goal (/game/kickoff).
+  const auto kickoff = node->declare_parameter<std::vector<double>>("kickoff_pose",
+                                                                    {0.0, 0.0, 0.0});
+  if(kickoff.size() != 3)
+  {
+    RCLCPP_FATAL(node->get_logger(), "kickoff_pose needs [x, y, theta]");
+    return 1;
+  }
+  pinky_soccer_bt::setKickoffPose(blackboard, kickoff[0], kickoff[1], kickoff[2]);
   blackboard->set("goal", pinky_soccer_bt::makeGoal("STOP", "Init", BehaviorGoal::STOP,
                                                     pinky_soccer_bt::Pose2{}, 0.0));
   auto tree = factory.createTree("Main", blackboard);
@@ -78,7 +89,8 @@ int main(int argc, char** argv)
   if(verify_mode)
   {
     verifier = std::make_unique<pinky_soccer_bt::VerifyRunner>(node, factory, blackboard,
-                                                               wm_topic, heartbeat);
+                                                               wm_topic, heartbeat,
+                                                               verify_subtrees);
   }
 
   std::unique_ptr<BT::Groot2Publisher> groot;

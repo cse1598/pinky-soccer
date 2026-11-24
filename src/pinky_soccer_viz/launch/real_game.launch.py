@@ -1,15 +1,20 @@
-"""PC perception, world model, BT and low-speed control for an already running robot."""
+"""PC perception, world model, BT and low-speed control for an already running robot.
+
+robot_name:=<name> must match the robot's bringup (pinky_soccer_bringup robot.launch.py
+robot_name:=<name>): all topics are then /<name>/..., with its own /tf. team:=Y|B is the goal
+we defend. The referee (referee:=true) judges goals from this robot's world model ball estimate
+and runs the kickoff cycle; with two robots on one network start it on one PC only.
+"""
 
 import math
-import os
 
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from pinky_soccer_sim import multi_robot
 from pinky_soccer_sim.field_selection import field_files
-from pinky_soccer_world_model.localization_launch import localization_nodes
+from pinky_soccer_viz.robot_stack import decision_stack, RobotConfig
 
 
 def setup(context):
@@ -29,86 +34,41 @@ def setup(context):
             raise ValueError(f'{name} must be finite')
         return value
 
-    def config(package, filename):
-        return os.path.join(get_package_share_directory(package), 'config', filename)
-
     _, field_spec = field_files(arg('field'))
-    team = {'field_spec': str(field_spec), 'our_goal_color': arg('our_goal_color'),
-            'use_sim_time': False}
+    color = multi_robot.team_color(arg('team'), arg('our_goal_color'))
+    name = multi_robot.check_name(arg('robot_name'))
     max_lin, max_ang = number('max_lin'), number('max_ang')
     hfov = number('approximate_hfov_deg')
     if not (0 < max_lin <= 0.30 and 0 < max_ang <= 6.0):
         raise ValueError('Require 0 < max_lin <= 0.30 m/s and 0 < max_ang <= 6 rad/s')
     if not 1 < hfov < 179:
         raise ValueError('approximate_hfov_deg must be between 1 and 179')
-    lidar = arg('localization') == 'lidar'
-    initial = [number('initial_x'), number('initial_y'), number('initial_yaw')]
-    nodes = localization_nodes(
-        field_spec, False, initial, flag('allow_uncalibrated'), hfov, arg('camera_yaml'),
-        arg('heading_record'), flag('image_rotated_180')) if lidar else []
-    nodes += [
-        LogInfo(msg='REAL ROBOT: starts paused. Place robot at kickoff pose BEFORE launch. '
-                'Publish /game/playing=true to move; false to stop.'),
-        Node(package='pinky_soccer_world_model', executable='ball_detector',
-             name='ball_detector', output='screen', parameters=[
-                 config('pinky_soccer_world_model', 'ball_detector.yaml'),
-                 {'use_sim_time': False, 'allow_uncalibrated': flag('allow_uncalibrated'),
-                  'approximate_hfov_deg': hfov, 'camera_yaml': arg('camera_yaml'),
-                  'image_rotated_180': flag('image_rotated_180'), 'publish_debug_image': True}]),
-        Node(package='pinky_soccer_world_model', executable='world_model_node',
-             name='world_model_node', output='screen', parameters=[
-                 config('pinky_soccer_world_model', 'world_model.yaml'),
-                 config('pinky_soccer_world_model', 'ball_filter.yaml'), team,
-                 {'localization': 'tf' if lidar else 'odom_only',
-                  'localization_pose_timeout': 2.0 if lidar else 0.0,
-                  'align_first_odom': True, 'odom_timeout': 0.5,
-                  'playing_default': False, 'grid.camera_hfov_deg': hfov,
-                  'initial_pose': [number('initial_x'), number('initial_y'),
-                                   number('initial_yaw')]}]),
-        Node(package='pinky_soccer_bt', executable='bt_node', name='bt_node', output='screen',
-             parameters=[config('pinky_soccer_bt', 'bt_node.yaml'),
-                         {'use_sim_time': False, 'groot2_enabled': False,
-                          'verify_mode': flag('verify')}]),
-        Node(package='pinky_soccer_viz', executable='world_model_viz',
-             name='world_model_viz', output='screen', parameters=[team]),
-        Node(package='pinky_soccer_viz', executable='world_model_topview',
-             name='world_model_topview', output='screen',
-             parameters=[team, {'show_ground_truth': False, 'camera_hfov_deg': hfov}]),
-    ]
-    if arg('controller') == 'mpc':
-        nodes.append(Node(
-            package='pinky_soccer_mpc', executable='mpc_controller', name='mpc_controller',
-            output='screen', remappings=[('cmd_vel', arg('command_topic'))], parameters=[{
-                'use_sim_time': False, 'target': 'real',
-                'calibration_profile': arg('calibration_profile'),
-                'max_lin': max_lin, 'max_ang': max_ang,
-                'wheel_feedback': flag('wheel_feedback')}]))
-    else:
-        nodes.append(Node(
-            package='pinky_soccer', executable='reactive_controller',
-            name='reactive_controller', output='screen', parameters=[
-                config('pinky_soccer', 'reactive_controller.yaml'),
-                {'use_sim_time': False, 'max_lin': min(max_lin, 0.25),
-                 'max_ang': min(max_ang, 2.0)}],
-            remappings=[('cmd_vel', arg('command_topic'))]))
+    default = multi_robot.kickoff_pose(color, False)
+    initial = tuple(default[i] if arg(k) == 'auto' else number(k)
+                    for i, k in enumerate(('initial_x', 'initial_y', 'initial_yaw')))
+    nodes = multi_robot.dds_environment() + [LogInfo(
+        msg=f'REAL ROBOT {name or "(no namespace)"} team {color}: starts paused. Place robot at '
+        'its kickoff pose BEFORE launch. Publish /game/playing=true to move; false to stop.')]
+    nodes += decision_stack(RobotConfig(
+        name=name, color=color, initial=initial, simulation=False, target='real',
+        field_spec=str(field_spec), localization=arg('localization'),
+        controller=arg('controller'), max_lin=max_lin, max_ang=max_ang,
+        calibration_profile=arg('calibration_profile'),
+        wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
+        headless=flag('headless'), groot2=False, heading_record=arg('heading_record'),
+        command_topic=arg('command_topic'),
+        real={'allow_uncalibrated': flag('allow_uncalibrated'), 'approximate_hfov_deg': hfov,
+              'camera_yaml': arg('camera_yaml'),
+              'image_rotated_180': flag('image_rotated_180')}))
     if flag('verify'):
         nodes.append(LogInfo(msg='VERIFY MODE: the game tree is off; behaviours run only from '
                              'the verifier window. Keep a hand on the robot power switch.'))
-        nodes.append(Node(
-            package='pinky_soccer_viz', executable='behavior_verifier',
-            name='behavior_verifier', output='screen', parameters=[team, {
-                'simulation': False, 'mode_label': 'real',
-                'controller_config': config('pinky_soccer', 'reactive_controller.yaml'),
-                'max_lin': max_lin, 'max_ang': max_ang, 'controller_kind': arg('controller'),
-                'command_topic': arg('command_topic')}]))
-    if not flag('headless'):
-        nodes.append(Node(package='rviz2', executable='rviz2', name='rviz2', output='screen',
-                          arguments=['-d', os.path.join(
-                              get_package_share_directory('pinky_soccer_viz'),
-                              'rviz', 'soccer.rviz')], parameters=[{'use_sim_time': False}]))
-        nodes.append(Node(package='pinky_soccer_viz', executable='game_camera_view',
-                          name='game_camera_view', output='screen',
-                          parameters=[{'use_sim_time': False}]))
+    if flag('referee'):
+        nodes.append(Node(package='pinky_soccer_viz', executable='game_referee',
+                          name='game_referee', output='screen', parameters=[{
+                              'use_sim_time': False, 'field_spec': str(field_spec),
+                              'source': 'world_model', 'reset_ball': False,
+                              'world_model_topics': [multi_robot.topic(name, 'world_model')]}]))
     return nodes
 
 
@@ -116,15 +76,21 @@ def generate_launch_description():
     """Never launch a simulator, sensor driver or automatic start command."""
     return LaunchDescription([
         DeclareLaunchArgument('field', default_value='hardboard', choices=['rcj', 'hardboard']),
+        DeclareLaunchArgument('robot_name', default_value='',
+                              description='namespace; must match the robot bringup'),
+        DeclareLaunchArgument('team', default_value='', choices=['', 'Y', 'B'],
+                              description='goal we defend: Y yellow (-X) | B blue (+X)'),
         DeclareLaunchArgument('our_goal_color', default_value='yellow',
                               choices=['yellow', 'blue']),
         DeclareLaunchArgument('allow_uncalibrated', default_value='false'),
         DeclareLaunchArgument('approximate_hfov_deg', default_value='66.0'),
         DeclareLaunchArgument('camera_yaml', default_value=''),
         DeclareLaunchArgument('image_rotated_180', default_value='false'),
-        DeclareLaunchArgument('initial_x', default_value='0.0'),
-        DeclareLaunchArgument('initial_y', default_value='0.0'),
-        DeclareLaunchArgument('initial_yaw', default_value='0.0'),
+        DeclareLaunchArgument('initial_x', default_value='auto',
+                              description='kickoff pose (auto: centre spot facing the '
+                              'opponent goal)'),
+        DeclareLaunchArgument('initial_y', default_value='auto'),
+        DeclareLaunchArgument('initial_yaw', default_value='auto'),
         DeclareLaunchArgument('max_lin', default_value='0.08'),
         DeclareLaunchArgument('max_ang', default_value='0.5'),
         DeclareLaunchArgument('headless', default_value='false'),
@@ -139,7 +105,10 @@ def generate_launch_description():
                               'official defaults, marked unmeasured)'),
         DeclareLaunchArgument('verify', default_value='false',
                               description='behaviour verification window + bt_node verify_mode'),
-        DeclareLaunchArgument('command_topic', default_value='/cmd_vel',
-                              description='Override for a non-driving dry run'),
+        DeclareLaunchArgument('referee', default_value='true',
+                              description='goal detection + kickoff cycle; one per game'),
+        DeclareLaunchArgument('command_topic', default_value='cmd_vel',
+                              description='Override for a non-driving dry run (relative: '
+                              'inside robot_name)'),
         OpaqueFunction(function=setup),
     ])

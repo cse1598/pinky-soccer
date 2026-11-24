@@ -24,6 +24,9 @@ ros2 launch pinky_soccer_viz game.launch.py mode:=real verify:=true
 - 제어기는 기본 NMPC(`controller:=mpc`, `pinky_soccer_mpc` README)입니다. 속도 상한은 경기와 같이
   `max_lin`, `max_ang`입니다: 실물 기본 0.08 m/s·0.5 rad/s, 시뮬레이션 기본은 바퀴 한계(제품 사양 90 %)
   와 회전 2 rad/s.
+- 여러 로봇: `robot_name`을 주면 검증 창도 그 로봇 네임스페이스의 토픽을 씁니다. 시뮬 `robots:=2`면
+  상대의 정답 화살표(`/<상대>/ground_truth`)와 LiDAR로 추정한 상대가 지도에 함께 나옵니다. 장애물 모드
+  (`opponent_mode:=static|lateral|longitudinal`)와 함께 이동 검증에 쓸 수 있습니다.
 - **실물**: 사람이 로봇 옆에서 전원 스위치를 잡고 있는 상태에서만 실행합니다. 창의 정지 버튼,
   Esc, Space가 STOP을 보냅니다. 창이 꺼지거나 멈추면 bt_node가 1.5초 안에 스스로 멈춥니다.
   기존 command watchdog(0.5초)도 그대로 동작합니다.
@@ -43,7 +46,7 @@ ros2 launch pinky_soccer_viz game.launch.py mode:=real verify:=true
 
 | 영역 | 내용 |
 |---|---|
-| 행동 목록 | `pinky_soccer_bt/config/verify_catalog.yaml`. 지금 경기 트리가 쓰는 것만 있습니다 |
+| 행동 목록 | `pinky_soccer_bt/config/verify_catalog.yaml`. 지금 경기 트리가 쓰는 단일 행동만 보입니다. 조합 행동(공격·수비·공 탐색·전체 경기)과 이동 외 단일 행동은 2026-11-24부터 `enabled: false`로 숨김(스킬을 하나씩 검증하는 동안, 지금은 "지정 위치로 이동"만). 정지는 정지 버튼/Esc로 계속 할 수 있습니다. bt_node도 `verify_subtrees:=false`(기본)면 서브트리 요청을 거부합니다 |
 | 입력 (수정 가능) | 그 행동의 숫자 입력. 기본값은 **경기 트리에서 쓰는 값**과 같습니다(테스트로 확인) |
 | 자동 입력 | 로봇 자세·공·상대·골대처럼 월드 모델에서 자동으로 들어가는 값. 보기만 합니다 |
 | 결과의 의미 | SUCCESS/FAILURE/RUNNING이 이 행동에서 무엇을 뜻하는지 |

@@ -32,6 +32,7 @@ protected:
     factory_.registerBehaviorTreeFromFile(TREE_FILE);
     bb_ = BT::Blackboard::create();
     bb_->set("goal", makeGoal("STOP", "Init", BehaviorGoal::STOP, Pose2{}, 0.0));
+    setKickoffPose(bb_, -0.4, 0.1, 0.5);
     tree_ = factory_.createTree("Main", bb_);
   }
 
@@ -227,4 +228,29 @@ TEST_F(TreeTest, VerifyProbeBuilds)
   EXPECT_NO_THROW(factory_.createTree("VerifyProbeT", BT::Blackboard::create()));
   EXPECT_THROW(pinky_soccer_bt::buildProbeXml(factory_, "X", {{"GoToPose", {}}}, "/world_model"),
                std::invalid_argument);   // actions are not conditions
+}
+
+// ---- referee: after a goal (/game/kickoff true, not playing) return to the kickoff pose --
+TEST_F(TreeTest, KickoffReturnsToStartPose)
+{
+  auto kick = node_->create_publisher<std_msgs::msg::Bool>("/game/kickoff", 10);
+  std_msgs::msg::Bool on;
+  on.data = true;
+  BehaviorGoal g;
+  for(int i = 0; i < 50 && g.action != "GoToPose"; ++i)
+  {
+    kick->publish(on);
+    g = decide(world(0.5, 0.3, 0, 0.6, 0, TrackedObject::OBSERVED, false));
+  }
+  EXPECT_EQ(g.action, "GoToPose");
+  EXPECT_DOUBLE_EQ(g.target.x, -0.4);
+  EXPECT_DOUBLE_EQ(g.target.y, 0.1);
+  EXPECT_DOUBLE_EQ(g.target.theta, 0.5);
+  std_msgs::msg::Bool off;
+  for(int i = 0; i < 50 && g.action != "StopRobot"; ++i)
+  {
+    kick->publish(off);
+    g = decide(world(0.5, 0.3, 0, 0.6, 0, TrackedObject::OBSERVED, false));
+  }
+  EXPECT_EQ(g.action, "StopRobot");   // paused without kickoff: stop in place
 }

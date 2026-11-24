@@ -15,6 +15,7 @@
 #include <pinky_soccer_msgs/msg/behavior_goal.hpp>
 #include <pinky_soccer_msgs/msg/tracked_object.hpp>
 #include <pinky_soccer_msgs/msg/world_model.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include "pinky_soccer_bt/soccer_logic.hpp"
 
@@ -52,6 +53,21 @@ private:
   std::chrono::steady_clock::time_point received_{};
 };
 
+// Copies the referee's /game/kickoff flag (std_msgs/Bool) into `kickoff`; false until a
+// message arrives. Always SUCCESS: a missing referee only means "no kickoff requested".
+class ReadGameState : public BT::RosTopicSubNode<std_msgs::msg::Bool>
+{
+public:
+  ReadGameState(const std::string& name, const BT::NodeConfig& conf,
+                const BT::RosNodeParams& params);
+  static BT::PortsList providedPorts();
+  BT::NodeStatus onTick(const std::shared_ptr<std_msgs::msg::Bool>& last_msg) override;
+  bool latchLastMessage() const override { return true; }
+
+private:
+  bool kickoff_{false};
+};
+
 // Publishes the blackboard goal (ticked as its own tree after the main tree).
 class PublishBehaviorGoal : public BT::RosTopicPubNode<BehaviorGoal>
 {
@@ -64,6 +80,14 @@ public:
 
 // ---- conditions ------------------------------------------------------------------
 class IsPlaying : public BT::ConditionNode
+{
+public:
+  using BT::ConditionNode::ConditionNode;
+  static BT::PortsList providedPorts();
+  BT::NodeStatus tick() override;
+};
+
+class KickoffRequested : public BT::ConditionNode
 {
 public:
   using BT::ConditionNode::ConditionNode;
@@ -226,5 +250,8 @@ protected:
 // Registers every node used by trees/soccer_1v1.xml.
 void registerSoccerNodes(BT::BehaviorTreeFactory& factory, const BT::RosNodeParams& world_model,
                          const BT::RosNodeParams& goal);
+
+// Root blackboard entries the tree reads: the kickoff pose (map frame).
+void setKickoffPose(const BT::Blackboard::Ptr& blackboard, double x, double y, double theta);
 
 }  // namespace pinky_soccer_bt

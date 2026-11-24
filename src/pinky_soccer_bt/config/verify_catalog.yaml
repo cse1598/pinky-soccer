@@ -8,6 +8,10 @@
 # ports: settable numeric inputs; world inputs (pose, ball, ...) are wired automatically
 # pose_input: ports filled by clicking (and dragging for the heading) on the map
 # done_when: optional UI-side end condition, a probe condition label or `goal_scored`
+# enabled: false hides the item in the verifier window (bt_node also refuses subtrees unless
+#          verify_subtrees:=true). 2026-11-24: composed behaviours are off while the single
+#          skills are verified one by one; for now only movement (GoToPose) is enabled
+#          (perception and movement are checked first). Enable the others one at a time.
 schema: 1
 
 world_inputs:
@@ -55,6 +59,7 @@ items:
 
   - id: GoBehindBall
     kind: action
+    enabled: false
     group: 단일 행동
     title: 공 뒤로 자리 잡기
     text: >-
@@ -74,6 +79,7 @@ items:
 
   - id: PushBall
     kind: action
+    enabled: false
     group: 단일 행동
     title: 공 밀어 넣기
     text: >-
@@ -91,6 +97,7 @@ items:
 
   - id: GoToBlockPoint
     kind: action
+    enabled: false
     group: 단일 행동
     title: 막는 자리로 이동
     text: >-
@@ -104,6 +111,7 @@ items:
 
   - id: FaceBall
     kind: action
+    enabled: false
     group: 단일 행동
     title: 제자리에서 공 바라보기
     text: 제자리에서 회전해 공 추정 위치를 바라봅니다.
@@ -113,6 +121,7 @@ items:
 
   - id: TurnToLastSeen
     kind: action
+    enabled: false
     group: 단일 행동
     title: 마지막 공 방향으로 돌기
     text: 공을 잃었을 때 마지막 추정 위치 쪽으로 제자리 회전합니다.
@@ -124,6 +133,7 @@ items:
 
   - id: SpinInPlace
     kind: action
+    enabled: false
     group: 단일 행동
     title: 제자리 회전
     text: 목표 방향을 항상 1 rad 앞에 두어 계속 돌게 합니다(공 탐색).
@@ -135,6 +145,7 @@ items:
 
   - id: StopRobot
     kind: action
+    enabled: false
     group: 단일 행동
     title: 정지
     text: STOP 목표를 내서 제어기가 0 속도를 내게 합니다.
@@ -145,6 +156,7 @@ items:
   # ------------------------------------------------------------------ subtrees
   - id: Attack
     kind: subtree
+    enabled: false
     group: 조합 행동
     title: 공격
     text: >-
@@ -157,6 +169,7 @@ items:
 
   - id: Defend
     kind: subtree
+    enabled: false
     group: 조합 행동
     title: 수비
     text: GoToBlockPoint로 막는 자리에 간 뒤 FaceBall로 공을 바라봅니다.
@@ -166,6 +179,7 @@ items:
 
   - id: SearchBall
     kind: subtree
+    enabled: false
     group: 조합 행동
     title: 공 탐색
     text: >-
@@ -177,6 +191,7 @@ items:
 
   - id: Main
     kind: subtree
+    enabled: false
     group: 전체 경기
     title: 전체 경기 판단
     text: >-

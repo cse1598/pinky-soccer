@@ -47,6 +47,13 @@ Groot2(`~/Groot2/bin/groot2`)로 포트 1667에 연결하면 실시간으로 볼
 
 mode: GoToBlockPoint·GoToPose = NAVIGATE(Nav2 연동 전까지 제어기가 같은 비례 제어), 나머지 이동 = REACTIVE.
 
+## 경기 정지·킥오프 (2026-11-24)
+
+`NotPlaying` 분기: `/game/kickoff`(심판 `game_referee`, `ReadGameState`가 읽음)가 true면 `GoToPose`로
+킥오프 자세(`kickoff_pose` 파라미터 = launch의 시작 자세)로 가서 대기, 아니면 `StopRobot`(제자리 정지).
+트리의 토픽은 상대 이름(`world_model`, `behavior_goal`, 검증 모드 `behavior_test/*`)이라 로봇 네임스페이스
+(`robot_name`)를 따릅니다. `/game/kickoff`만 전역입니다.
+
 ## 검증 모드 (`verify_mode:=true`)
 
 `bt_node`가 `Main` 대신 `/behavior_test/request`(JSON)로 요청받은 **액션 노드 하나 또는 서브트리 하나**를

@@ -2,7 +2,8 @@
 // action node or subtree from the same factory (the real C++ nodes and trees/soccer_1v1.xml),
 // so a person can command and evaluate single behaviours from the behaviour verifier UI.
 //
-// Protocol (std_msgs/String with JSON, no new message types):
+// Protocol (std_msgs/String with JSON, no new message types; topics relative to the robot
+// namespace):
 //   request  /behavior_test/request   {"command": "run", "id": 3, "target": "GoToPose",
 //                                      "ports": {"x": "0.5", "y": "0.2"}, "timeout_sec": 30}
 //                                     {"command": "stop"} | {"command": "ping"}
@@ -60,7 +61,7 @@ class VerifyRunner
 public:
   VerifyRunner(rclcpp::Node::SharedPtr node, BT::BehaviorTreeFactory& factory,
                BT::Blackboard::Ptr blackboard, std::string world_model_topic,
-               double heartbeat_timeout);
+               double heartbeat_timeout, bool allow_subtrees = false);
   // Called by bt_node every cycle instead of ticking "Main".
   void tick();
 
@@ -76,6 +77,7 @@ private:
   BT::Blackboard::Ptr blackboard_;
   std::string wm_topic_;
   double heartbeat_timeout_;
+  bool allow_subtrees_;   // composed behaviours (subtrees) runnable from the verifier
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr request_sub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr models_pub_;

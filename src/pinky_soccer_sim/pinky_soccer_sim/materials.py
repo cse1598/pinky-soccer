@@ -175,8 +175,10 @@ def gazebo_world(path, output, cfg, robot_name, contacts, ball=None):
         box = ET.SubElement(plugin, 'box')
         text(box, 'pose', ' '.join(str(v) for v in pose))
         text(box, 'size', ' '.join(str(v) for v in size))
-    for name, offset, radius, params, mass in contacts:
-        contact_entry(plugin, robot_name, name, offset, radius, mass, params)
+    # One robot name or several (two-robot simulation): same wheel contacts for each model.
+    for model in ([robot_name] if isinstance(robot_name, str) else robot_name):
+        for name, offset, radius, params, mass in contacts:
+            contact_entry(plugin, model, name, offset, radius, mass, params)
     if ball:
         radius, mass = ball
         contact_entry(plugin, 'soccer_ball', 'ball', [0, 0, 0], radius, mass,

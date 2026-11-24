@@ -11,14 +11,24 @@
   <BehaviorTree ID="Main">
     <ReactiveSequence>
       <!-- Copy the latest /world_model into the blackboard (RosTopicSubNode) -->
-      <ReadWorldModel topic_name="/world_model"
+      <!-- Relative topic: resolves inside the robot namespace (robot_name launch option) -->
+      <ReadWorldModel topic_name="world_model"
                       playing="{playing}" pose="{pose}" ball="{ball}"
                       opponents="{opponents}" own_goal="{own_goal}" opp_goal="{opp_goal}"/>
+      <!-- Global referee flag: after a goal every robot returns to its kickoff pose -->
+      <ReadGameState topic_name="/game/kickoff" kickoff="{kickoff}"/>
 
       <ReactiveFallback name="GameState">
         <ReactiveSequence name="NotPlaying">
           <Inverter><IsPlaying playing="{playing}"/></Inverter>
-          <StopRobot/>
+          <ReactiveFallback name="Paused">
+            <!-- kickoff_x/y/theta: bt_node parameters (the robot's start pose) -->
+            <ReactiveSequence name="KickoffReturn">
+              <KickoffRequested kickoff="{kickoff}"/>
+              <GoToPose x="{kickoff_x}" y="{kickoff_y}" theta="{kickoff_theta}"/>
+            </ReactiveSequence>
+            <StopRobot/>
+          </ReactiveFallback>
         </ReactiveSequence>
 
         <ReactiveFallback name="Decide">
@@ -73,7 +83,7 @@
 
   <!-- Ticked by bt_node after Main every cycle (RosTopicPubNode). -->
   <BehaviorTree ID="PublishGoal">
-    <PublishBehaviorGoal topic_name="/behavior_goal"/>
+    <PublishBehaviorGoal topic_name="behavior_goal"/>
   </BehaviorTree>
 
 </root>

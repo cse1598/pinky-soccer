@@ -105,6 +105,27 @@ NodeStatus ReadWorldModel::onTick(const std::shared_ptr<WorldModel>& last_msg)
   return NodeStatus::SUCCESS;
 }
 
+// ---------------------------------------------------------------- ReadGameState
+ReadGameState::ReadGameState(const std::string& name, const BT::NodeConfig& conf,
+                             const BT::RosNodeParams& params)
+  : BT::RosTopicSubNode<std_msgs::msg::Bool>(name, conf, params)
+{}
+
+PortsList ReadGameState::providedPorts()
+{
+  return providedBasicPorts({OutputPort<bool>("kickoff")});
+}
+
+NodeStatus ReadGameState::onTick(const std::shared_ptr<std_msgs::msg::Bool>& last_msg)
+{
+  if(last_msg)
+  {
+    kickoff_ = last_msg->data;
+  }
+  setOutput("kickoff", kickoff_);
+  return NodeStatus::SUCCESS;
+}
+
 // ---------------------------------------------------------------- PublishBehaviorGoal
 PublishBehaviorGoal::PublishBehaviorGoal(const std::string& name, const BT::NodeConfig& conf,
                                          const BT::RosNodeParams& params)
@@ -138,6 +159,16 @@ PortsList IsPlaying::providedPorts()
 NodeStatus IsPlaying::tick()
 {
   return getInput<bool>("playing").value_or(false) ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
+}
+
+PortsList KickoffRequested::providedPorts()
+{
+  return {InputPort<bool>("kickoff")};
+}
+
+NodeStatus KickoffRequested::tick()
+{
+  return getInput<bool>("kickoff").value_or(false) ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
 }
 
 PortsList BallKnown::providedPorts()
@@ -407,7 +438,9 @@ void registerSoccerNodes(BT::BehaviorTreeFactory& factory, const BT::RosNodePara
 {
   factory.registerNodeType<ReadWorldModel>("ReadWorldModel", world_model);
   factory.registerNodeType<PublishBehaviorGoal>("PublishBehaviorGoal", goal);
+  factory.registerNodeType<ReadGameState>("ReadGameState", world_model);
   factory.registerNodeType<IsPlaying>("IsPlaying");
+  factory.registerNodeType<KickoffRequested>("KickoffRequested");
   factory.registerNodeType<BallKnown>("BallKnown");
   factory.registerNodeType<BallInOwnHalf>("BallInOwnHalf");
   factory.registerNodeType<OpponentCloserToBall>("OpponentCloserToBall");
@@ -421,6 +454,13 @@ void registerSoccerNodes(BT::BehaviorTreeFactory& factory, const BT::RosNodePara
   factory.registerNodeType<TurnToLastSeen>("TurnToLastSeen");
   factory.registerNodeType<SpinInPlace>("SpinInPlace");
   factory.registerNodeType<GoToPose>("GoToPose");
+}
+
+void setKickoffPose(const BT::Blackboard::Ptr& blackboard, double x, double y, double theta)
+{
+  blackboard->set("kickoff_x", x);
+  blackboard->set("kickoff_y", y);
+  blackboard->set("kickoff_theta", theta);
 }
 
 }  // namespace pinky_soccer_bt

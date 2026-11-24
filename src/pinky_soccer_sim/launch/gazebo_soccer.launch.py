@@ -14,7 +14,8 @@ Differences from the official launch:
   - screen_tilt_deg is passed through
   - native camera/IMU/ray inputs are bridged under /sim and normalized to public topics
   - optional test ball spawned next to the robot (the world file is not changed)
-  - namespace is not supported yet (official bridge topics are not namespaced either)
+  - namespace:=<name> puts the robot's ROS nodes under /<name>/ (own /tf) and its gz topics
+    under /<name>/; opponent_name:=<name> spawns a second robot the same way
 
 Run it, for instance, as
     ros2 launch pinky_soccer_sim gazebo_soccer.launch.py
@@ -34,10 +35,11 @@ from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from pinky_soccer_bringup.calibration_profile import arguments as profile_arguments, configure_urdf
-from pinky_soccer_sim import sensor_launch
+from pinky_soccer_sim import multi_robot, sensor_launch
 from pinky_soccer_sim.sensor_model import configure_gazebo, load_config
 import xacro
 from pinky_soccer_sim import materials
+import yaml
 
 BALL_SDF = """<?xml version="1.0"?>
 <sdf version="1.9">
@@ -95,7 +97,7 @@ def spawn_ball(context):
         parameters=[{'use_sim_time': True}])]
 
 
-def robot_xml(context):
+def robot_xml(context, sensors=True):
     """Expand official macros then add sensors only in the runtime model."""
     path = os.path.join(get_package_share_directory('pinky_soccer_description'),
                         'urdf', 'soccer_robot.urdf.xacro')
@@ -104,27 +106,80 @@ def robot_xml(context):
     mappings['is_sim'] = 'true'
     urdf = xacro.process_file(path, mappings=mappings).toxml()
     cfg = load_config(lc('sensor_config').perform(context))
-    flags = [lc(name).perform(context).lower() == 'true' for name in
+    flags = [sensors and lc(name).perform(context).lower() == 'true' for name in
              ('camera_enabled', 'imu_enabled', 'adc_enabled')]
     urdf = configure_gazebo(urdf, cfg, *flags)
     urdf = configure_urdf(urdf, lc('calibration_profile').perform(context), True)
     return urdf
 
 
+def robots(context):
+    """[(namespace, model name, (x, y, yaw), sensors)] for robot 1 and the optional opponent."""
+    name = multi_robot.check_name(lc('namespace').perform(context))
+    opponent = multi_robot.check_name(lc('opponent_name').perform(context))
+    if opponent and opponent == name:
+        raise ValueError('namespace and opponent_name must differ')
+    out = [(name, name or lc('robot_name').perform(context),
+            tuple(lc(k).perform(context) for k in ('x', 'y', 'yaw')), True)]
+    if opponent:
+        out.append((opponent, opponent,
+                    tuple(lc(f'opponent_{k}').perform(context) for k in ('x', 'y', 'yaw')),
+                    lc('opponent_sensors').perform(context).lower() == 'true'))
+    return out
+
+
 def setup_robot(context):
-    urdf = robot_xml(context)
-    directory = Path(tempfile.mkdtemp(prefix='pinky-material-robot-'))
-    path = directory/'robot.urdf'
-    path.write_text(urdf)
-    converted = subprocess.run(['gz', 'sdf', '-p', str(path)],
-                               capture_output=True, text=True, check=True)
+    """Per robot: model SDF, state publishers, spawn, gz bridge and sensor nodes."""
+    with open(lc('bridge_params').perform(context)) as f:
+        bridge_entries = yaml.safe_load(f)
     cfg = materials.load_materials(lc('material_config').perform(context))
-    path = directory/'robot.sdf'
-    path.write_text(materials.configure_gazebo_robot(converted.stdout, urdf, cfg))
-    return [SetLaunchConfiguration('material_robot_sdf', str(path)),
+    actions = []
+    shared_bridge = False
+    for ns, model, pose, sensors in robots(context):
+        urdf = robot_xml(context, sensors)
+        directory = Path(tempfile.mkdtemp(prefix='pinky-material-robot-'))
+        path = directory/'robot.urdf'
+        path.write_text(urdf)          # ROS description: plain (topics are a gz matter)
+        gz_path = directory/'robot_gz.urdf'
+        gz_path.write_text(multi_robot.namespace_gz_topics(urdf, ns))
+        converted = subprocess.run(['gz', 'sdf', '-p', str(gz_path)],
+                                   capture_output=True, text=True, check=True)
+        sdf = directory/'robot.sdf'
+        sdf.write_text(materials.configure_gazebo_robot(converted.stdout, urdf, cfg))
+        if ns:
+            entries, shared = multi_robot.namespace_bridge_config(bridge_entries, ns)
+            bridge_file = directory/'bridge.yaml'
+            bridge_file.write_text(yaml.safe_dump(entries))
+            if not shared_bridge:
+                clock_file = directory/'clock_bridge.yaml'
+                clock_file.write_text(yaml.safe_dump(shared))
+                actions.append(Node(package='ros_gz_bridge', executable='parameter_bridge',
+                                    name='clock_bridge', output='screen', parameters=[{
+                                        'config_file': str(clock_file), 'use_sim_time': True}]))
+                shared_bridge = True
+        else:
+            bridge_file = lc('bridge_params').perform(context)
+        nodes = [
             Node(package='robot_state_publisher', executable='robot_state_publisher',
                  name='robot_state_publisher',
-                 parameters=[{'robot_description': urdf, 'use_sim_time': True}])]
+                 parameters=[{'robot_description': urdf, 'use_sim_time': True}]),
+            # upload_robot.launch.py equivalent
+            Node(package='joint_state_publisher', executable='joint_state_publisher',
+                 name='joint_state_publisher', output='screen',
+                 parameters=[{'source_list': ['joint_states'], 'rate': 20.0,
+                              'use_sim_time': True}]),
+            Node(package='ros_gz_sim', executable='create', name='create_robot', output='screen',
+                 arguments=['-name', model, '-file', str(sdf), '-x', pose[0], '-y', pose[1],
+                            '-z', '0.1', '-Y', pose[2]],
+                 parameters=[{'use_sim_time': True}]),
+            Node(package='ros_gz_bridge', executable='parameter_bridge', name='parameter_bridge',
+                 output='screen',
+                 parameters=[{'config_file': str(bridge_file), 'use_sim_time': True}]),
+            *(sensor_launch.nodes() if sensors else
+              [Node(package='pinky_soccer_bringup', executable='command_watchdog')]),
+        ]
+        actions += multi_robot.group(ns, nodes)
+    return actions
 
 
 def setup_world(context):
@@ -147,7 +202,8 @@ def setup_world(context):
                      float(lc('ball_mass').perform(context)))
                     if lc('spawn_ball').perform(context).lower() == 'true' else None)
             output = materials.gazebo_world(path, directory/'world.sdf', cfg,
-                                            lc('robot_name').perform(context), contacts, ball)
+                                            [model for _, model, _, _ in robots(context)],
+                                            contacts, ball)
             return [SetLaunchConfiguration('soccer_world', str(output))]
     raise FileNotFoundError(f'World file not found: {explicit or name}')
 
@@ -180,7 +236,6 @@ def generate_launch_description():
         *profile_arguments(simulation=True, default=default_profile('gazebo')),
         DeclareLaunchArgument('material_config', default_value=str(
             Path(get_package_share_directory('pinky_soccer_sim'))/'config/materials.yaml')),
-        *sensor_launch.nodes(),
         DeclareLaunchArgument('field', default_value='', choices=['', 'rcj', 'hardboard'],
                               description='rcj|hardboard; empty preserves world/world_name'),
         DeclareLaunchArgument('world_name', default_value='empty.world',
@@ -189,7 +244,17 @@ def generate_launch_description():
         DeclareLaunchArgument('bridge_params', default_value=PathJoinSubstitution(
             [get_package_share_directory('pinky_soccer_sim'), 'config', 'gazebo_bridge.yaml'])),
         DeclareLaunchArgument('gui', default_value='true', description='Start the Gazebo GUI'),
-        DeclareLaunchArgument('robot_name', default_value='pinky'),
+        DeclareLaunchArgument('robot_name', default_value='pinky',
+                              description='Gazebo model name when namespace is empty'),
+        DeclareLaunchArgument('namespace', default_value='',
+                              description='robot ROS namespace and model name (empty: none)'),
+        DeclareLaunchArgument('opponent_name', default_value='',
+                              description='second robot namespace/model (empty: one robot)'),
+        DeclareLaunchArgument('opponent_x', default_value='0.4'),
+        DeclareLaunchArgument('opponent_y', default_value='0.0'),
+        DeclareLaunchArgument('opponent_yaw', default_value='3.141592653589793'),
+        DeclareLaunchArgument('opponent_sensors', default_value='false',
+                              description='camera/IMU/ADC sensors on the second robot'),
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
         DeclareLaunchArgument('yaw', default_value='0.0'),
@@ -218,20 +283,6 @@ def generate_launch_description():
             launch_arguments={'gz_args': '-g -v4'}.items(),
             condition=IfCondition(lc('gui'))),
 
-        # upload_robot.launch.py equivalent (robot_state_publisher + joint_state_publisher)
         OpaqueFunction(function=setup_robot),
-        Node(package='joint_state_publisher', executable='joint_state_publisher',
-             name='joint_state_publisher', output='screen',
-             parameters=[{'source_list': ['joint_states'], 'rate': 20.0,
-                          'use_sim_time': True}]),
-
-        Node(package='ros_gz_sim', executable='create', name='create_robot', output='screen',
-             arguments=['-name', lc('robot_name'), '-file', lc('material_robot_sdf'),
-                        '-x', lc('x'), '-y', lc('y'), '-z', '0.1', '-Y', lc('yaw')],
-             parameters=[{'use_sim_time': True}]),
         OpaqueFunction(function=spawn_ball),
-
-        Node(package='ros_gz_bridge', executable='parameter_bridge', name='parameter_bridge',
-             output='screen',
-             parameters=[{'config_file': lc('bridge_params'), 'use_sim_time': True}]),
     ])

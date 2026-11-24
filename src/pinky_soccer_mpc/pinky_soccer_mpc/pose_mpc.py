@@ -84,6 +84,8 @@ class PoseMpc:
         self.forward_only = False
         self.count = 0
         self.reseed_every = 5            # re-check the primitive seeds at 4 Hz (20 Hz loop)
+        self.final_approach = 0.12       # [m] no reseeding closer than this
+        self.switch_margin = 0.85        # a reseeded plan must be 15 % cheaper to replace
 
     # ------------------------------------------------------------------ OCP
     def _time_to_go(self, ca, x, p):
@@ -211,17 +213,24 @@ class PoseMpc:
             xs[:, 2] = x0[2] + np.arctan2(np.sin(xs[:, 2] - x0[2]), np.cos(xs[:, 2] - x0[2]))
             seeds.append((xs, us))
         self.count += 1
-        if self.xs is None or self.count % self.reseed_every == 0:
+        distance = np.hypot(goal[0] - x0[0], goal[1] - x0[1])
+        # Reseed on a cold start, or periodically while still far from the goal. In the final
+        # approach the plan is kept: switching between near-equal forward and reversing plans
+        # there made the robot circle the goal in MuJoCo (plant != model).
+        if self.xs is None or (self.count % self.reseed_every == 0
+                               and distance > self.final_approach):
             seeds.append(self.primitive_guess(x0, goal, True))
             if not forward_only:
                 seeds.append(self.primitive_guess(x0, goal, False))
         if len(seeds) > 1:
             best = None
             s.options_set('max_iter', 4)           # screening: a few SQP steps per candidate
-            for xs, us in seeds:
+            for index, (xs, us) in enumerate(seeds):
                 self._load(xs, us)
                 s.solve_for_x0(x0, fail_on_nonzero_status=False, print_stats_on_failure=False)
                 cost = s.get_cost() if s.status in (0, 2) else np.inf
+                if index > 0 and self.xs is not None:
+                    cost /= self.switch_margin     # hysteresis: keep the current plan
                 if best is None or cost < best[0]:
                     best = (cost, self._read())
             s.options_set('max_iter', self.ocp.solver_options.nlp_solver_max_iter)

@@ -1,189 +1,60 @@
-"""Simulator + full decision stack on the RCJ field.
+"""Simulator + full decision stack, one or two robots, with a referee.
 
-Includes the unchanged pinky_soccer_sim launch (world_name:=rcj_soccer.world) and adds
-ball_detector, AMCL + goal/compass heading, world_model_node (TF), bt_node, the controller
-(controller:=mpc NMPC by default, or reactive)
-and both UIs. All use simulation time.
+Includes the pinky_soccer_sim MuJoCo/Gazebo launch and adds, per playing robot, ball_detector,
+AMCL + goal/compass heading, world_model_node, bt_node and the controller (NMPC by default),
+plus the UIs for our robot and the referee (goal -> kickoff positions -> ball back to the
+centre spot). All use simulation time.
 
-ros2 launch pinky_soccer_viz sim_field.launch.py                       # MuJoCo, viewers
-ros2 launch pinky_soccer_viz sim_field.launch.py headless:=true        # no GUI at all
-ros2 launch pinky_soccer_viz sim_field.launch.py simulator:=gazebo
+ros2 launch pinky_soccer_viz sim_field.launch.py                       # MuJoCo, one robot
+ros2 launch pinky_soccer_viz sim_field.launch.py robots:=2             # + opponent playing
+ros2 launch pinky_soccer_viz sim_field.launch.py robots:=2 opponent_mode:=lateral \
+    opponent_speed:=0.15 opponent_travel:=0.5                         # moving obstacle
+ros2 launch pinky_soccer_viz sim_field.launch.py simulator:=gazebo team:=B
 ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 
-eval_ball_truth:=true (MuJoCo only) swaps in mujoco_eval_bridge, which also publishes
-/sim/ball_ground_truth for scoring and the grey UI overlay (never a decision input).
+Names: robot_name / opponent_name are the ROS namespaces (topics /<name>/..., own /tf).
+With one robot the default is no namespace (as before); with two robots the defaults are
+the team colours (yellow, blue). team:=Y|B is the goal we defend (Y = yellow = -X).
 
-verify:=true is the behaviour verification mode: bt_node runs single behaviours requested by
-the behavior_verifier window instead of the game tree, and ground truth is published for its
-overlay (MuJoCo: eval bridge, Gazebo: gazebo_truth_relay on the world pose stream).
+opponent_mode (robots:=2): game (plays with its own full stack), static (stands still),
+lateral (placed sideways, drives left-right), longitudinal (faces us, drives back and
+forth); opponent_speed [m/s] and opponent_travel [m] set the back-and-forth motion.
+
+verify:=true is the behaviour verification mode for our robot (pinky_soccer_viz VERIFY.md).
+Ground truth (/<name>/ground_truth, /sim/ball_ground_truth) is published for the referee and
+the UI overlays only, never as a decision input.
 """
 
-import importlib.util
 import os
 
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription, LaunchDescriptionSource
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction,
-                            SetLaunchConfiguration)
-from launch.conditions import IfCondition, UnlessCondition
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch.utilities import normalize_to_list_of_substitutions, perform_substitutions
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
+from pinky_soccer_sim import multi_robot
 from pinky_soccer_sim.field_selection import field_files
-from pinky_soccer_world_model.localization_launch import localization_nodes
+from pinky_soccer_viz.robot_stack import decision_stack, RobotConfig
+
+OPPONENT_MODES = ('game', 'static', 'lateral', 'longitudinal')
 
 
 def lc(name, context):
     return LaunchConfiguration(name).perform(context)
 
 
-def text(context, value):
-    """Resolve a str, Substitution or list of them to a plain string."""
-    return perform_substitutions(context, normalize_to_list_of_substitutions(value))
+def flag(name, context):
+    value = lc(name, context).lower()
+    if value not in ('true', 'false'):
+        raise ValueError(f'{name} must be true or false')
+    return value == 'true'
 
 
-def load_mujoco_launch(eval_truth):
-    """Load the sim package's MuJoCo launch; optionally swap its bridge for the eval one."""
-    path = os.path.join(get_package_share_directory('pinky_soccer_sim'), 'launch',
-                        'mujoco_soccer.launch.py')
-    spec = importlib.util.spec_from_file_location('pinky_soccer_sim_mujoco_launch', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    if eval_truth:
-        original = module.setup
-
-        def setup(context):
-            out = []
-            for action in original(context):
-                if isinstance(action, Node) and action.node_executable == 'mujoco_soccer_bridge':
-                    try:
-                        args = [text(context, a) for a in action._Node__arguments]
-                        remaps = [(text(context, a), text(context, b))
-                                  for a, b in action._Node__remappings]
-                        env = {text(context, k): text(context, v)
-                               for k, v in action.process_description
-                               ._Executable__additional_env or []}
-                    except AttributeError as exc:
-                        raise RuntimeError('launch_ros internals changed; run with '
-                                           'eval_ball_truth:=false') from exc
-                    if remaps != [('/cmd_vel', '/drive/cmd_vel'), ('/scan', '/sim/lidar/scan')]:
-                        raise RuntimeError(f'Unexpected MuJoCo bridge remaps {remaps}; '
-                                           'update sim_field.launch.py')
-                    # Parameters mirror mujoco_soccer.launch.py ({'use_sim_time': True}).
-                    action = Node(package='pinky_soccer_viz', executable='mujoco_eval_bridge',
-                                  name='pinky_mujoco', remappings=remaps, arguments=args,
-                                  output='screen', parameters=[{'use_sim_time': True}],
-                                  additional_env=env)
-                out.append(action)
-            return out
-        module.setup = setup
-    return module.generate_launch_description()
-
-
-def simulator(context):
-    sim = lc('simulator', context)
-    headless = lc('headless', context).lower() == 'true'
-    world, spec = field_files(lc('field', context))
-    common = {'field': lc('field', context), 'ball_x': lc('ball_x', context),
-              'ball_y': lc('ball_y', context), 'imu_enabled': lc('imu_enabled', context),
-              'adc_enabled': lc('adc_enabled', context)}
-    verify = lc('verify', context).lower() == 'true'
-    if sim == 'mujoco':
-        ld = load_mujoco_launch(lc('eval_ball_truth', context).lower() == 'true' or verify)
-        args = dict(common, viewer='false' if headless else 'true')
-        return [SetLaunchConfiguration('active_field_spec', str(spec)),
-                IncludeLaunchDescription(LaunchDescriptionSource(ld),
-                                         launch_arguments=args.items())]
-    if sim == 'gazebo':
-        path = os.path.join(get_package_share_directory('pinky_soccer_sim'), 'launch',
-                            'gazebo_soccer.launch.py')
-        args = dict(common, gui='false' if headless else 'true')
-        out = [SetLaunchConfiguration('active_field_spec', str(spec)),
-               IncludeLaunchDescription(PythonLaunchDescriptionSource(path),
-                                        launch_arguments=args.items())]
-        if verify:
-            out += gazebo_truth(world.stem)
-        return out
-    raise ValueError('simulator must be mujoco or gazebo')
-
-
-def gazebo_truth(world_name):
-    """Robot/ball poses from the Gazebo world pose stream (display/evaluation only)."""
-    return [Node(package='pinky_soccer_viz', executable='gazebo_truth_relay',
-                 name='gazebo_truth_relay', output='screen',
-                 parameters=[{'use_sim_time': True, 'world_name': world_name}])]
-
-
-def generate_launch_description():
-    viz = get_package_share_directory('pinky_soccer_viz')
-    wm_cfg = os.path.join(get_package_share_directory('pinky_soccer_world_model'), 'config')
-    bt_cfg = os.path.join(get_package_share_directory('pinky_soccer_bt'), 'config')
-    ctl_cfg = os.path.join(get_package_share_directory('pinky_soccer'), 'config')
-    sim_time = {'use_sim_time': True}
-    team = {'our_goal_color': LaunchConfiguration('our_goal_color'),
-            'field_spec': LaunchConfiguration('active_field_spec')}
-    no_gui = UnlessCondition(LaunchConfiguration('headless'))
-    ui = {**team, **sim_time, 'snapshot_dir': LaunchConfiguration('snapshot_dir'),
-          'snapshot_period': LaunchConfiguration('snapshot_period')}
-    return LaunchDescription([
-        DeclareLaunchArgument('simulator', default_value='mujoco', description='mujoco|gazebo'),
-        DeclareLaunchArgument('field', default_value='rcj', choices=['rcj', 'hardboard']),
-        DeclareLaunchArgument('headless', default_value='false'),
-        DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
-        DeclareLaunchArgument('heading_record', default_value=''),
-        DeclareLaunchArgument('initial_x', default_value='0.0'),
-        DeclareLaunchArgument('initial_y', default_value='0.0'),
-        DeclareLaunchArgument('initial_yaw', default_value='0.0'),
-        DeclareLaunchArgument('imu_enabled', default_value='true'),
-        DeclareLaunchArgument('adc_enabled', default_value='false'),
-        DeclareLaunchArgument('max_lin', default_value='0',
-                              description='extra linear cap [m/s]; 0 = wheel limits only'),
-        DeclareLaunchArgument('max_ang', default_value='2.0',
-                              description='angular cap [rad/s]; faster spins broke localization '
-                              'in MuJoCo; 0 = wheel limits only'),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
-        DeclareLaunchArgument('publish_debug_image', default_value='true'),
-        DeclareLaunchArgument('eval_ball_truth', default_value='false'),
-        DeclareLaunchArgument('verify', default_value='false',
-                              description='behaviour verification window + bt_node verify_mode'),
-        DeclareLaunchArgument('ball_x', default_value='0.3'),
-        DeclareLaunchArgument('ball_y', default_value='0.0'),
-        DeclareLaunchArgument('our_goal_color', default_value='yellow'),
-        DeclareLaunchArgument('snapshot_dir', default_value=''),
-        DeclareLaunchArgument('snapshot_period', default_value='0.0'),
-        OpaqueFunction(function=simulator),
-        Node(package='pinky_soccer_world_model', executable='ball_detector',
-             name='ball_detector', output='screen',
-             parameters=[os.path.join(wm_cfg, 'ball_detector.yaml'), sim_time,
-                         {'publish_debug_image': ParameterValue(
-                             LaunchConfiguration('publish_debug_image'), value_type=bool)}]),
-        OpaqueFunction(function=localization),
-        Node(package='pinky_soccer_bt', executable='bt_node', name='bt_node', output='screen',
-             parameters=[os.path.join(bt_cfg, 'bt_node.yaml'), sim_time,
-                         {'verify_mode': ParameterValue(LaunchConfiguration('verify'),
-                                                        value_type=bool)}]),
-        Node(package='pinky_soccer_viz', executable='behavior_verifier',
-             name='behavior_verifier', output='screen',
-             condition=IfCondition(LaunchConfiguration('verify')),
-             parameters=[team, sim_time, {
-                 'simulation': True, 'mode_label': LaunchConfiguration('simulator'),
-                 'controller_config': os.path.join(ctl_cfg, 'reactive_controller.yaml'),
-                 'max_lin': ParameterValue(LaunchConfiguration('max_lin'), value_type=float),
-                 'max_ang': ParameterValue(LaunchConfiguration('max_ang'), value_type=float),
-                 'controller_kind': LaunchConfiguration('controller')}]),
-        OpaqueFunction(function=controller),
-        Node(package='pinky_soccer_viz', executable='world_model_viz', name='world_model_viz',
-             output='screen', parameters=[team, sim_time]),
-        Node(package='pinky_soccer_viz', executable='world_model_topview',
-             name='world_model_topview', output='screen', parameters=[ui]),
-        Node(package='rviz2', executable='rviz2', name='rviz2', condition=no_gui,
-             arguments=['-d', os.path.join(viz, 'rviz', 'soccer.rviz')],
-             parameters=[sim_time]),
-        Node(package='pinky_soccer_viz', executable='game_camera_view',
-             name='game_camera_view', condition=no_gui, output='screen', parameters=[sim_time]),
-    ])
+def pose_arg(prefix, context, default):
+    """(x, y, yaw) from <prefix>x/y/yaw arguments; 'auto' entries use the default."""
+    values = [lc(prefix + k, context) for k in ('x', 'y', 'yaw')]
+    return tuple(default[i] if v == 'auto' else float(v) for i, v in enumerate(values))
 
 
 def caps(context):
@@ -194,44 +65,153 @@ def caps(context):
     return max_lin, max_ang
 
 
-def controller(context):
-    """NMPC (default) or the old proportional controller, both BehaviorGoal -> /cmd_vel."""
-    max_lin, max_ang = caps(context)
-    kind = lc('controller', context)
+def setup(context):
     sim = lc('simulator', context)
-    if kind == 'mpc':
-        profile = os.path.join(get_package_share_directory('pinky_soccer_sim'), 'config',
-                               'calibration', f'{sim}_profile.yaml')
-        return [Node(package='pinky_soccer_mpc', executable='mpc_controller',
-                     name='mpc_controller', output='screen', parameters=[{
-                         'use_sim_time': True, 'target': sim,
-                         'calibration_profile': profile if os.path.exists(profile) else '',
-                         'max_lin': max_lin, 'max_ang': max_ang,
-                         'wheel_feedback': True}])]
-    if kind != 'reactive':
-        raise ValueError('controller must be mpc or reactive')
-    cfg = os.path.join(get_package_share_directory('pinky_soccer'), 'config',
-                       'reactive_controller.yaml')
-    return [Node(package='pinky_soccer', executable='reactive_controller',
-                 name='reactive_controller', output='screen',
-                 parameters=[cfg, {'use_sim_time': True, 'max_lin': max_lin or 0.25,
-                                   'max_ang': max_ang or 2.0}])]
+    if sim not in ('mujoco', 'gazebo'):
+        raise ValueError('simulator must be mujoco or gazebo')
+    robots = int(lc('robots', context))
+    if robots not in (1, 2):
+        raise ValueError('robots must be 1 or 2')
+    mode = lc('opponent_mode', context)
+    if mode not in OPPONENT_MODES:
+        raise ValueError(f'opponent_mode must be one of {OPPONENT_MODES}')
+    world, spec = field_files(lc('field', context))
+    color = multi_robot.team_color(lc('team', context), lc('our_goal_color', context))
+    two = robots == 2
+    name = multi_robot.check_name(lc('robot_name', context) or (color if two else ''))
+    opponent = multi_robot.check_name(lc('opponent_name', context)
+                                      or multi_robot.other(color)) if two else ''
+    if two and name == opponent:
+        raise ValueError('robot_name and opponent_name must differ')
+    # Kickoff layout also with one robot: 0.4 m behind the centre spot, where the referee puts
+    # the ball back after a goal (a robot kicking off from the centre drove into the ball).
+    ours = pose_arg('initial_', context, multi_robot.kickoff_pose(color, True))
+    other = multi_robot.other(color)
+    opp_pose = pose_arg('opponent_', context, multi_robot.kickoff_pose(other, True)
+                        if mode == 'game' else multi_robot.obstacle_pose(color, mode))
+    ball = (0.0, 0.0)
+    ball = tuple(ball[i] if lc(k, context) == 'auto' else float(lc(k, context))
+                 for i, k in enumerate(('ball_x', 'ball_y')))
+    headless = flag('headless', context)
+    max_lin, max_ang = caps(context)
 
+    # ---------------------------------------------------------------- simulator
+    common = {'field': lc('field', context), 'ball_x': str(ball[0]), 'ball_y': str(ball[1]),
+              'imu_enabled': lc('imu_enabled', context),
+              'adc_enabled': lc('adc_enabled', context),
+              'namespace': name, 'x': str(ours[0]), 'y': str(ours[1]), 'yaw': str(ours[2])}
+    if two:
+        common.update({'opponent_name': opponent, 'opponent_x': str(opp_pose[0]),
+                       'opponent_y': str(opp_pose[1]), 'opponent_yaw': str(opp_pose[2]),
+                       'opponent_sensors': 'true' if mode == 'game' else 'false'})
+    package = get_package_share_directory('pinky_soccer_sim')
+    # Own odometry profile of this simulator by default. Always passed explicitly: an included
+    # launch inherits the parent's configurations, and an inherited empty value disabled it.
+    own = os.path.join(package, 'config', 'calibration', f'{sim}_profile.yaml')
+    profile = lc('calibration_profile', context)
+    if profile in ('', 'auto'):
+        profile = own if os.path.exists(own) else 'none'
+    common['calibration_profile'] = profile
+    if sim == 'mujoco':
+        # The eval bridge adds /sim/ball_ground_truth and /sim/set_ball (referee reset).
+        common.update(viewer='false' if headless else 'true',
+                      bridge_package='pinky_soccer_viz', bridge_executable='mujoco_eval_bridge')
+    else:
+        common.update(gui='false' if headless else 'true')
+    out = multi_robot.dds_environment() + [IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(package, 'launch', f'{sim}_soccer.launch.py')),
+        launch_arguments=common.items())]
+    if sim == 'gazebo':
+        models = [name or 'pinky'] + ([opponent] if two else [])
+        topics = [multi_robot.topic(n, 'ground_truth')
+                  for n in [name] + ([opponent] if two else [])]
+        out.append(Node(package='pinky_soccer_viz', executable='gazebo_truth_relay',
+                        name='gazebo_truth_relay', output='screen', parameters=[{
+                            'use_sim_time': True, 'world_name': world.stem,
+                            'models': models, 'topics': topics}]))
 
-def localization(context):
-    """Exactly one map->odom authority in either localization mode."""
-    _, spec = field_files(lc('field', context))
-    mode = lc('localization', context)
-    initial = tuple(float(lc(k, context)) for k in ('initial_x', 'initial_y', 'initial_yaw'))
-    out = localization_nodes(spec, True, initial, heading_record=lc('heading_record', context)) \
-        if mode == 'lidar' else []
-    cfg = os.path.join(get_package_share_directory('pinky_soccer_world_model'), 'config')
-    out.append(Node(package='pinky_soccer_world_model', executable='world_model_node',
-                    name='world_model_node', output='screen', parameters=[
-                        os.path.join(cfg, 'world_model.yaml'), os.path.join(cfg, 'ball_filter.yaml'),
-                        {'use_sim_time': True, 'field_spec': str(spec),
-                         'our_goal_color': lc('our_goal_color', context),
-                         'localization': 'tf' if mode == 'lidar' else 'odom_only',
-                         'localization_pose_timeout': 2.0 if mode == 'lidar' else 0.0,
-                         'initial_pose': list(initial), 'playing_default': False}]))
+    # ---------------------------------------------------------------- robots
+    base = {'simulation': True, 'target': sim, 'field_spec': str(spec),
+            'localization': lc('localization', context),
+            'controller': lc('controller', context), 'max_lin': max_lin, 'max_ang': max_ang,
+            'calibration_profile': '' if profile == 'none' else profile,
+            'wheel_feedback': True, 'headless': headless,
+            'publish_debug_image': flag('publish_debug_image', context)}
+    out += decision_stack(RobotConfig(
+        name=name, color=color, initial=ours, verify=flag('verify', context), ui=True,
+        heading_record=lc('heading_record', context),
+        opponent_truth=multi_robot.topic(opponent, 'ground_truth') if two else '', **base))
+    if two and mode == 'game':
+        out += decision_stack(RobotConfig(
+            name=opponent, color=other, initial=opp_pose, ui=False, groot2=False, **base))
+    elif two:
+        out += multi_robot.group(opponent, [Node(
+            package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
+            output='screen', parameters=[{
+                'use_sim_time': True, 'mode': mode,
+                'speed': float(lc('opponent_speed', context)),
+                'travel': float(lc('opponent_travel', context)),
+                'pose_topic': multi_robot.topic(opponent, 'ground_truth')}])])
+
+    # ---------------------------------------------------------------- referee
+    out.append(Node(package='pinky_soccer_viz', executable='game_referee', name='game_referee',
+                    output='screen', parameters=[{
+                        'use_sim_time': True, 'field_spec': str(spec), 'source': 'truth',
+                        'reset_ball': True}]))
     return out
+
+
+def generate_launch_description():
+    auto = 'auto'
+    return LaunchDescription([
+        DeclareLaunchArgument('simulator', default_value='mujoco', description='mujoco|gazebo'),
+        DeclareLaunchArgument('field', default_value='rcj', choices=['rcj', 'hardboard']),
+        DeclareLaunchArgument('robots', default_value='1', choices=['1', '2']),
+        DeclareLaunchArgument('robot_name', default_value='',
+                              description='our namespace (default: none for 1 robot, team '
+                              'colour for 2)'),
+        DeclareLaunchArgument('team', default_value='', choices=['', 'Y', 'B'],
+                              description='goal we defend: Y yellow (-X) or B blue (+X); '
+                              'empty: our_goal_color'),
+        DeclareLaunchArgument('our_goal_color', default_value='yellow',
+                              choices=['yellow', 'blue']),
+        DeclareLaunchArgument('opponent_name', default_value='',
+                              description='opponent namespace (default: the other colour)'),
+        DeclareLaunchArgument('opponent_mode', default_value='game',
+                              choices=list(OPPONENT_MODES)),
+        DeclareLaunchArgument('opponent_speed', default_value='0.10',
+                              description='obstacle back-and-forth speed [m/s]'),
+        DeclareLaunchArgument('opponent_travel', default_value='0.40',
+                              description='obstacle back-and-forth distance [m]'),
+        DeclareLaunchArgument('opponent_x', default_value=auto),
+        DeclareLaunchArgument('opponent_y', default_value=auto),
+        DeclareLaunchArgument('opponent_yaw', default_value=auto),
+        DeclareLaunchArgument('headless', default_value='false'),
+        DeclareLaunchArgument('localization', default_value='lidar',
+                              choices=['lidar', 'odom_only']),
+        DeclareLaunchArgument('heading_record', default_value=''),
+        DeclareLaunchArgument('initial_x', default_value=auto,
+                              description='our start = kickoff pose (auto: own half, 0.4 m '
+                              'behind the centre spot, facing the opponent goal)'),
+        DeclareLaunchArgument('initial_y', default_value=auto),
+        DeclareLaunchArgument('initial_yaw', default_value=auto),
+        DeclareLaunchArgument('imu_enabled', default_value='true'),
+        DeclareLaunchArgument('adc_enabled', default_value='false'),
+        DeclareLaunchArgument('max_lin', default_value='0',
+                              description='extra linear cap [m/s]; 0 = wheel limits only'),
+        DeclareLaunchArgument('max_ang', default_value='2.0',
+                              description='angular cap [rad/s]; faster spins broke localization '
+                              'in MuJoCo; 0 = wheel limits only'),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('calibration_profile', default_value='auto',
+                              description="auto: the simulator's own odometry profile "
+                              "(pinky_soccer_sim config/calibration); 'none' disables"),
+        DeclareLaunchArgument('publish_debug_image', default_value='true'),
+        DeclareLaunchArgument('eval_ball_truth', default_value='true',
+                              description='kept for compatibility: ball truth is always on'),
+        DeclareLaunchArgument('verify', default_value='false',
+                              description='behaviour verification window + bt_node verify_mode'),
+        DeclareLaunchArgument('ball_x', default_value=auto, description='auto: centre spot'),
+        DeclareLaunchArgument('ball_y', default_value=auto),
+        OpaqueFunction(function=setup),
+    ])

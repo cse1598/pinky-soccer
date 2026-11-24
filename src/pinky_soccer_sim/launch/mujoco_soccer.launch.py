@@ -8,6 +8,10 @@ handed to the official bridge with --urdf-file through mujoco_soccer_bridge. The
 adds a dynamic ball and native IMU/ray sensors, configures the camera and normalizes
 sensor interfaces to the physical robot. Official wheel physics/odometry/lidar remain.
 
+Several robots: namespace puts robot 1 under /<namespace>/ (own /tf), opponent_name adds a
+second robot in the same world (pinky_soccer_sim.mujoco_multi) under /<opponent_name>/;
+opponent_sensors:=true also simulates its LiDAR/camera/IMU (needed when it plays).
+
 Run it, for instance, as
     ros2 launch pinky_soccer_sim mujoco_soccer.launch.py
     ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
@@ -23,7 +27,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from pinky_soccer_bringup.calibration_profile import (arguments as profile_arguments,
                                                       configure_urdf, drive_constants)
-from pinky_soccer_sim import sensor_launch
+from pinky_soccer_sim import multi_robot, sensor_launch
 from pinky_soccer_sim.field_selection import selected_world
 from pinky_soccer_sim.sensor_model import load_config
 import yaml
@@ -126,16 +130,43 @@ def setup(context):
     else:
         args.append('--no-ball')
 
-    return [
+    name = multi_robot.check_name(lc('namespace', context))
+    opponent = multi_robot.check_name(lc('opponent_name', context))
+    if opponent and opponent == name:
+        raise ValueError('namespace and opponent_name must differ')
+    spawn = [lc(k, context) for k in ('x', 'y', 'yaw')]
+    if any(spawn):
+        args += ['--spawn', *[v or '0' for v in spawn]]
+    opp_sensors = lc('opponent_sensors', context).lower() == 'true'
+    if opponent:
+        args += ['--opponent-name', opponent, '--opponent-spawn',
+                 *[lc(f'opponent_{k}', context) for k in ('x', 'y', 'yaw')]]
+        if opp_sensors:
+            args.append('--opponent-sensors')
+    # The official bridge uses absolute topics; move robot 1's into its namespace.
+    remaps = [('/cmd_vel', 'drive/cmd_vel'), ('/scan', 'sim/lidar/scan')]
+    if name:
+        remaps += [('/odom', 'odom'), ('/joint_states', 'joint_states'),
+                   ('/ground_truth', 'ground_truth'), ('/cmd_vel_stamped', 'cmd_vel_stamped')]
+    else:
+        remaps = [('/cmd_vel', '/drive/cmd_vel'), ('/scan', '/sim/lidar/scan')]
+    state = Node(package='robot_state_publisher', executable='robot_state_publisher',
+                 name='robot_state_publisher', output='screen',
+                 parameters=[{'robot_description': urdf, 'use_sim_time': True}])
+    out = multi_robot.group(name, [
         *sensor_launch.nodes(camera=camera),
-        Node(package='pinky_soccer_sim', executable='mujoco_soccer_bridge', name='pinky_mujoco',
-             remappings=[('/cmd_vel', '/drive/cmd_vel'), ('/scan', '/sim/lidar/scan')],
-             arguments=args, output='screen', additional_env=env,
-             parameters=[{'use_sim_time': True}]),
-        Node(package='robot_state_publisher', executable='robot_state_publisher',
-             name='robot_state_publisher', output='screen',
-             parameters=[{'robot_description': urdf, 'use_sim_time': True}]),
-    ]
+        Node(package=lc('bridge_package', context), executable=lc('bridge_executable', context),
+             name='pinky_mujoco', remappings=remaps, arguments=args, output='screen',
+             additional_env=env, parameters=[{'use_sim_time': True}]),
+        state])
+    if opponent:
+        robot2 = [Node(package='robot_state_publisher', executable='robot_state_publisher',
+                       name='robot_state_publisher', output='screen',
+                       parameters=[{'robot_description': urdf, 'use_sim_time': True}])]
+        robot2 += (sensor_launch.nodes(camera=camera) if opp_sensors else
+                   [Node(package='pinky_soccer_bringup', executable='command_watchdog')])
+        out += multi_robot.group(opponent, robot2)
+    return out
 
 
 def default_profile(simulator):
@@ -173,6 +204,21 @@ def generate_launch_description():
         DeclareLaunchArgument('ball_y', default_value='0.0'),
         DeclareLaunchArgument('ball_radius', default_value='0.02135'),
         DeclareLaunchArgument('ball_mass', default_value='0.0459'),
+        DeclareLaunchArgument('namespace', default_value='',
+                              description='namespace of robot 1 (empty: none, global /tf)'),
+        DeclareLaunchArgument('x', default_value='', description='robot 1 spawn x (empty: 0)'),
+        DeclareLaunchArgument('y', default_value=''),
+        DeclareLaunchArgument('yaw', default_value=''),
+        DeclareLaunchArgument('opponent_name', default_value='',
+                              description='second robot namespace (empty: one robot)'),
+        DeclareLaunchArgument('opponent_x', default_value='0.4'),
+        DeclareLaunchArgument('opponent_y', default_value='0.0'),
+        DeclareLaunchArgument('opponent_yaw', default_value='3.141592653589793'),
+        DeclareLaunchArgument('opponent_sensors', default_value='false',
+                              description='simulate LiDAR/camera/IMU of the second robot'),
+        DeclareLaunchArgument('bridge_package', default_value='pinky_soccer_sim'),
+        DeclareLaunchArgument('bridge_executable', default_value='mujoco_soccer_bridge',
+                              description='pinky_soccer_viz mujoco_eval_bridge adds ball truth'),
         DeclareLaunchArgument('model_dir', default_value=os.environ.get(
             'PINKY_SOCCER_MODEL_DIR', str(Path.home() / '.cache' / 'pinky_soccer_mujoco'))),
         OpaqueFunction(function=setup),

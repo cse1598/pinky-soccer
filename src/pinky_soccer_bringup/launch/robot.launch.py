@@ -21,18 +21,23 @@ upload_robot.launch.py uses 0, which does not match the hardware.
 hardware:=false starts only robot_state_publisher / joint_state_publisher, which is useful
 for checking the description on a PC without the robot's drivers installed.
 
+Several robots on one network: robot_name:=<name> runs every node under /<name>/ with its
+own /tf (frame names unchanged), so two robots' topics never collide. Use the same
+robot_name for the PC game launch (pinky_soccer_viz game.launch.py robot_name:=<name>).
+
 Run it, for instance, as
     ros2 launch pinky_soccer_bringup robot.launch.py
+    ros2 launch pinky_soccer_bringup robot.launch.py robot_name:=yellow
     ros2 launch pinky_soccer_bringup robot.launch.py hardware:=false
 """
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
+from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
                             OpaqueFunction, SetLaunchConfiguration)
 from launch.conditions import IfCondition
 from launch.substitutions import (AndSubstitution, Command, LaunchConfiguration,
                                   NotSubstitution, PathJoinSubstitution)
-from launch_ros.actions import Node
+from launch_ros.actions import Node, PushRosNamespace, SetRemap
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from pinky_soccer_bringup.calibration_profile import arguments as profile_arguments, configure_urdf
@@ -42,6 +47,14 @@ from pinky_soccer_bringup.sensor_launch import SENSOR_ARGUMENTS, sensor_argument
 
 def lc(name):
     return LaunchConfiguration(name)
+
+
+def check_robot_name(context):
+    """Validate robot_name and expose whether a namespace is used."""
+    name = lc('robot_name').perform(context)
+    if name and not (name[0].isalpha() and all(c.isalnum() or c == '_' for c in name)):
+        raise ValueError('robot_name: letters, digits and _ only, starting with a letter')
+    return [SetLaunchConfiguration('namespaced', 'true' if name else 'false')]
 
 
 def generate_launch_description():
@@ -58,6 +71,9 @@ def generate_launch_description():
     ]), value_type=str)
 
     return LaunchDescription([
+        DeclareLaunchArgument('robot_name', default_value='',
+                              description='ROS namespace (empty: none, global /tf)'),
+        OpaqueFunction(function=check_robot_name),
         DeclareLaunchArgument('hardware', default_value='true',
                               description='false: description only (no physical devices)'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
@@ -78,49 +94,59 @@ def generate_launch_description():
                 lc('calibration_profile').perform(context)))]),
 
         # upload_robot.launch.py equivalent
-        Node(package='robot_state_publisher', executable='robot_state_publisher',
-             name='robot_state_publisher',
-             parameters=[{'robot_description': ParameterValue(
-                 lc('calibrated_description'), value_type=str),
-                          'use_sim_time': lc('use_sim_time'),
-                          'ignore_timestamp': False}]),
-        Node(package='joint_state_publisher', executable='joint_state_publisher',
-             name='joint_state_publisher', output='screen',
-             parameters=[{'source_list': ['wheel_joint_states'], 'rate': 20.0,
-                          'use_sim_time': lc('use_sim_time')}]),
-        Node(package='pinky_soccer_bringup', executable='wheel_joint_state_relay',
-             name='wheel_joint_state_relay', output='screen',
-             parameters=[{'use_sim_time': lc('use_sim_time')}]),
+        # Namespaced robot: relative topics under /<robot_name>/, TF on /<robot_name>/tf.
+        # PushRosNamespace with an empty name is a no-op; the TF remaps only apply then.
+        GroupAction([
+            PushRosNamespace(lc('robot_name')),
+            SetRemap('/tf', 'tf', condition=IfCondition(lc('namespaced'))),
+            SetRemap('/tf_static', 'tf_static', condition=IfCondition(lc('namespaced'))),
+            Node(package='robot_state_publisher', executable='robot_state_publisher',
+                 name='robot_state_publisher',
+                 parameters=[{'robot_description': ParameterValue(
+                     lc('calibrated_description'), value_type=str),
+                              'use_sim_time': lc('use_sim_time'),
+                              'ignore_timestamp': False}]),
+            Node(package='joint_state_publisher', executable='joint_state_publisher',
+                 name='joint_state_publisher', output='screen',
+                 parameters=[{'source_list': ['wheel_joint_states'], 'rate': 20.0,
+                              'use_sim_time': lc('use_sim_time')}]),
+            Node(package='pinky_soccer_bringup', executable='wheel_joint_state_relay',
+                 name='wheel_joint_state_relay', output='screen',
+                 parameters=[{'use_sim_time': lc('use_sim_time')}]),
 
-        # Unchanged from bringup_robot.launch.xml
-        IncludeLaunchDescription(
-            PathJoinSubstitution([FindPackageShare('sllidar_ros2'),
-                                  'launch', 'sllidar_c1_launch.py']),
-            launch_arguments={'serial_port': lc('lidar_serial_port'),
-                              'frame_id': 'rplidar_link',
-                              'inverted': 'false',
-                              'angle_compensate': 'true',
-                              'scan_mode': 'DenseBoost'}.items(),
-            condition=hardware),
-        Node(package='pinky_bringup', executable='bringup',
-             parameters=[PathJoinSubstitution([FindPackageShare('pinky_bringup'),
-                                               'config', 'pinky_params.yaml']),
-                         {'wheel_radius': ParameterValue(lc('wheel_radius'), value_type=float),
-                          'wheel_separation': ParameterValue(lc('wheel_separation'),
-                                                             value_type=float)}],
-             remappings=[('joint_states', 'wheel_joint_states_raw'), ('cmd_vel', 'drive/cmd_vel')],
-             condition=hardware),
-        Node(package='pinky_soccer_bringup', executable='command_watchdog', condition=hardware),
-        Node(package='pinky_soccer_bringup', executable='time_sync_status', condition=hardware),
-        # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.
-        Node(package='pinky_bringup', executable='battery_publisher',
-             condition=IfCondition(AndSubstitution(lc('hardware'),
-                                                   NotSubstitution(lc('adc_enabled'))))),
-        IncludeLaunchDescription(
-            PathJoinSubstitution([FindPackageShare('pinky_soccer_bringup'),
-                                  'launch', 'sensors.launch.py']),
-            launch_arguments={
-                'hardware': lc('hardware'), 'use_sim_time': lc('use_sim_time'),
-                **{name: lc(name) for name in SENSOR_ARGUMENTS},
-            }.items(), condition=hardware),
+            # Unchanged from bringup_robot.launch.xml
+            IncludeLaunchDescription(
+                PathJoinSubstitution([FindPackageShare('sllidar_ros2'),
+                                      'launch', 'sllidar_c1_launch.py']),
+                launch_arguments={'serial_port': lc('lidar_serial_port'),
+                                  'frame_id': 'rplidar_link',
+                                  'inverted': 'false',
+                                  'angle_compensate': 'true',
+                                  'scan_mode': 'DenseBoost'}.items(),
+                condition=hardware),
+            Node(package='pinky_bringup', executable='bringup',
+                 parameters=[PathJoinSubstitution([FindPackageShare('pinky_bringup'),
+                                                   'config', 'pinky_params.yaml']),
+                             {'wheel_radius': ParameterValue(lc('wheel_radius'), value_type=float),
+                              'wheel_separation': ParameterValue(lc('wheel_separation'),
+                                                                 value_type=float)}],
+                 remappings=[('joint_states', 'wheel_joint_states_raw'),
+                             ('cmd_vel', 'drive/cmd_vel')],
+                 condition=hardware),
+            Node(package='pinky_soccer_bringup', executable='command_watchdog',
+                 condition=hardware),
+            Node(package='pinky_soccer_bringup', executable='time_sync_status',
+                 condition=hardware),
+            # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.
+            Node(package='pinky_bringup', executable='battery_publisher',
+                 condition=IfCondition(AndSubstitution(lc('hardware'),
+                                                       NotSubstitution(lc('adc_enabled'))))),
+            IncludeLaunchDescription(
+                PathJoinSubstitution([FindPackageShare('pinky_soccer_bringup'),
+                                      'launch', 'sensors.launch.py']),
+                launch_arguments={
+                    'hardware': lc('hardware'), 'use_sim_time': lc('use_sim_time'),
+                    **{name: lc(name) for name in SENSOR_ARGUMENTS},
+                }.items(), condition=hardware),
+        ]),
     ])

@@ -268,3 +268,10 @@ pinky_bringup (bringup) ──joint_states──▶ (remap) /wheel_joint_states_
 설정은 프로세스 시작 시 읽으므로 로봇 launch를 정상 종료 후 같은 명령으로 다시 실행합니다. 이미 실험 기록 중이면 먼저 기록을 마무리하세요. 복구 후 UI와 같은 통신 조건의 검사 노드에서 `/imu_raw` 100Hz, `/wheel_joint_states` 30Hz, `/joint_states` 20Hz와 나머지 센서 수신을 확인했습니다. 이 조치는 해당 발견 문제를 해결한 것이며, 카메라 내부 보정이나 센서 실측 정확도를 보장하지 않습니다.
 
 CycloneDDS의 [정적 peer 발견 설정](https://cyclonedds.io/docs/cyclonedds/latest/config/discovery-config.html)을 참고하세요. launch는 사용자 DDS 파일을 자동으로 덮어쓰지 않습니다.
+
+## 여러 로봇 (`robot_name`)
+
+`ros2 launch pinky_soccer_bringup robot.launch.py robot_name:=yellow`은 로봇의 모든 노드를 `/yellow/` 아래로,
+TF를 `/yellow/tf`·`/yellow/tf_static`으로 분리합니다(프레임 이름은 그대로). 두 대의 토픽이 겹치지 않습니다.
+PC 경기 launch에도 같은 이름을 줍니다(`game.launch.py robot_name:=yellow team:=Y`). 공식 드라이버들은 상대
+토픽 이름을 써서 함께 옮겨집니다. 비우면 예전과 같습니다.

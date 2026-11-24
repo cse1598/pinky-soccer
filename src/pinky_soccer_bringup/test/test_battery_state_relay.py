@@ -5,6 +5,7 @@ from pathlib import Path
 import time
 
 from launch import LaunchContext
+from launch.actions import GroupAction
 from launch_ros.actions import Node as LaunchNode
 from pinky_soccer_bringup.battery_state_relay import battery_values, BatteryStateRelay
 from pinky_soccer_bringup.sensor_launch import generate_sensor_description
@@ -15,6 +16,16 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import BatteryState
 from std_msgs.msg import Float32
+
+
+def flatten(entities):
+    """Launch entities including those nested in GroupActions (robot_name namespace group)."""
+    out = []
+    for entity in entities:
+        out.append(entity)
+        if isinstance(entity, GroupAction):
+            out += flatten(entity.get_sub_entities())
+    return out
 
 
 @pytest.mark.parametrize('voltage,percent', [(6.4, 0), (7.2, 50), (8.4, 100)])
@@ -37,7 +48,7 @@ def test_battery_readers_are_mutually_exclusive(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location('robot_launch_battery_test', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    actions = module.generate_launch_description().entities
+    actions = flatten(module.generate_launch_description().entities)
     official = next(a for a in actions if isinstance(a, LaunchNode)
                     and a.node_executable == 'battery_publisher')
     adapter = next(a for a in generate_sensor_description().entities if isinstance(a, LaunchNode)

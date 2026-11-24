@@ -55,6 +55,8 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
   ament_add_pytest_test(test_odometry_calibration test/test_odometry_calibration.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 120)
+  ament_add_pytest_test(test_multi_robot test/test_multi_robot.py
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   ament_add_pytest_test(test_sensor_noise test/test_sensor_noise.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 300)
 endif()

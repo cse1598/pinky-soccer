@@ -8,7 +8,7 @@ from pathlib import Path
 from builtin_interfaces.msg import Time
 import cv2
 from launch import LaunchContext
-from launch.actions import IncludeLaunchDescription
+from launch.actions import GroupAction, IncludeLaunchDescription
 from launch_ros.actions import Node
 import numpy as np
 from pinky_soccer_bringup.camera_support import camera_info, image_messages
@@ -17,6 +17,16 @@ from pinky_soccer_bringup.sensor_launch import generate_sensor_description, SENS
 import pytest
 from sensor_msgs.msg import Imu
 import yaml
+
+
+def flatten(entities):
+    """Launch entities including those nested in GroupActions (robot_name namespace group)."""
+    out = []
+    for entity in entities:
+        out.append(entity)
+        if isinstance(entity, GroupAction):
+            out += flatten(entity.get_sub_entities())
+    return out
 
 
 @pytest.fixture(autouse=True)
@@ -135,7 +145,7 @@ def test_robot_launch_forwards_all_sensor_arguments():
     spec = importlib.util.spec_from_file_location('robot_launch_test', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    includes = [entity for entity in module.generate_launch_description().entities
+    includes = [entity for entity in flatten(module.generate_launch_description().entities)
                 if isinstance(entity, IncludeLaunchDescription)]
     sensors = [include for include in includes
                if 'camera_enabled' in dict(include.launch_arguments)]

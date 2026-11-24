@@ -21,7 +21,9 @@ def catalog():
 
 def test_catalog_groups_and_requests(catalog):
     names = [g for g, _ in core.groups(catalog)]
-    assert names[0] == '단일 행동' and '전체 경기' in names
+    assert names == ['단일 행동']                    # composed behaviours disabled for now
+    shown = {i['id'] for i in core.enabled_items(catalog)}
+    assert shown == {'GoToPose'}                     # 2026-11-24: movement only
     goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
     req = core.run_request(7, goto, {'x': 0.5, 'y': -0.25, 'theta': 1.5708}, 20)
     assert req == {'command': 'run', 'id': 7, 'target': 'GoToPose',

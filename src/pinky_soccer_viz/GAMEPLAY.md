@@ -147,6 +147,79 @@ env -u CYCLONEDDS_URI ROS_DOMAIN_ID=118 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
 
 118은 연결을 보장하는 특별한 값이 아니라 두 프로세스가 같게 사용해야 하는 domain 번호입니다.
 
+## 로봇 이름·소속·2대 경기 (2026-11-24)
+
+### 로봇 이름과 소속
+
+| 옵션 | 뜻 |
+|---|---|
+| `robot_name:=<이름>` | 그 로봇의 모든 토픽을 `/<이름>/...`으로, TF는 `/<이름>/tf`로 분리. 비우면 예전처럼 이름 없음 |
+| `team:=Y` / `team:=B` | 소속. Y = 노랑 골대를 지킴(−X 수비, +X 공격), B = 파랑 골대를 지킴. 비우면 `our_goal_color` |
+
+실물 2대는 로봇과 PC 양쪽에 같은 이름을 줍니다.
+
+```bash
+# 로봇 1 (로봇에서)            # PC
+ros2 launch pinky_soccer_bringup robot.launch.py robot_name:=yellow
+ros2 launch pinky_soccer_viz game.launch.py mode:=real robot_name:=yellow team:=Y
+# 로봇 2
+ros2 launch pinky_soccer_bringup robot.launch.py robot_name:=blue
+ros2 launch pinky_soccer_viz game.launch.py mode:=real robot_name:=blue team:=B referee:=false
+```
+
+심판(골 판정)은 한 경기에 하나만 실행합니다(두 번째 PC는 `referee:=false`).
+실물 심판은 시뮬레이션의 정답 위치가 없으므로 그 로봇 월드 모델의 공 추정(분실 아님, 2σ 안쪽까지
+골라인을 넘음, 3회 연속)으로 판정합니다. 공이 카메라에 안 보이면 골을 놓칠 수 있습니다.
+
+### 시뮬레이션 1대·2대
+
+```bash
+ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco robots:=2                 # 상대도 경기
+ros2 launch pinky_soccer_viz game.launch.py mode:=gazebo robots:=2 team:=B
+ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco robots:=2 opponent_mode:=lateral \
+    opponent_speed:=0.15 opponent_travel:=0.5                                      # 장애물
+```
+
+| 옵션 | 기본 | 뜻 |
+|---|---|---|
+| `robots` | `1` | `2`면 상대 로봇 추가 |
+| `robot_name` / `opponent_name` | 1대: 없음, 2대: `yellow`/`blue`(소속 색) | 네임스페이스 |
+| `opponent_mode` | `game` | `game` 상대도 전체 판단으로 경기, `static` 가만히, `lateral` 옆으로 놓여 좌우 왕복, `longitudinal` 우리 쪽을 보고 앞뒤 왕복 |
+| `opponent_speed` | `0.10` | 왕복 속도 [m/s] |
+| `opponent_travel` | `0.40` | 왕복 거리 [m] |
+| `opponent_x/y/yaw` | `auto` | game: 상대 진영 킥오프 자리, 장애물: 우리 공격 진영 x = ±0.4 |
+| `initial_x/y/yaw` | `auto` | 우리 시작 = 킥오프 자리(자기 진영, 중앙에서 0.4 m 뒤, 상대 골대 방향) |
+
+장애물 모드의 상대는 판단 없이 `obstacle_driver`만 돌며 `/game/playing`과 무관하게 바로 움직입니다
+(이동 검증용 장애물). 시뮬에서는 정답 위치로 출발선을 유지하므로 왕복 거리·방향이 일정합니다
+(MuJoCo 측정: 좌우 0.525 m/설정 0.5, 방향 90° 유지, 0.143 m/s/설정 0.15).
+시뮬 기본 공 위치는 1대·2대 모두 센터 스팟입니다(2026-11-24부터).
+
+### 골과 킥오프
+
+공 전체가 골라인을 넘으면(공 중심이 라인 + 반지름 0.021 m 너머, 골포스트 사이) `game_referee`가:
+1. `/game/goal`(JSON: 들어간 골대·득점 팀·점수), `/game/score` 발행
+2. `/game/playing` = false → 모든 로봇 경기 정지
+3. `/game/kickoff` = true → 모든 로봇이 자기 킥오프 자리(시작 자세)로 이동해 대기
+4. 시뮬레이션: 1초 뒤 공을 센터 스팟에 정지 상태로 순간이동
+5. 다음 시작 신호(`/game/playing` true)에서 kickoff 해제, 경기 재개
+
+```bash
+ros2 topic echo /game/score        # 점수
+```
+
+### 여러 로봇일 때 DDS 참가자 수
+
+ROS 프로세스 하나가 DDS 참가자 하나입니다. 2대 전체 스택(+시뮬레이터)은 약 45개라 CycloneDDS의 기본
+참가자 번호 한도를 넘어 `Failed to find a free participant index`로 노드가 뜨지 못했습니다.
+경기 launch는 실행하는 프로세스에 한도를 120으로 올려 줍니다(사용자 XML은 그대로 두고 덧붙임).
+**신호를 보내는 터미널에도 같은 설정이 필요합니다.**
+
+```bash
+export CYCLONEDDS_URI="${CYCLONEDDS_URI:+$CYCLONEDDS_URI,}<CycloneDDS><Domain id=\"any\"><Discovery><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
+ros2 topic pub --once /game/playing std_msgs/msg/Bool '{data: true}'
+```
+
 ## RViz 경기장 모니터
 
 `soccer.rviz`를 자동 로드하고 Fixed Frame은 `map`입니다.

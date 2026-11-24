@@ -1,4 +1,4 @@
-goal_heading:
+/**/goal_heading:  # wildcard: also inside a robot namespace (multi-robot)
   ros__parameters:
     # OpenCV HSV; tune to actual coloured panels and lighting.
     blue_low: [95, 90, 45]

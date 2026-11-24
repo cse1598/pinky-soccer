@@ -31,6 +31,8 @@ setup(
             'soccer_trial = pinky_soccer_viz.soccer_trial:main',
             'behavior_verifier = pinky_soccer_viz.behavior_verifier:main',
             'gazebo_truth_relay = pinky_soccer_viz.gazebo_truth_relay:main',
+            'game_referee = pinky_soccer_viz.game_referee:main',
+            'obstacle_driver = pinky_soccer_viz.obstacle_driver:main',
         ],
     },
 )

@@ -48,6 +48,9 @@ def tree_value(tree, node_id, port):
 def test_items_are_the_runnable_behaviours(models, catalog):
     _, runnable = models
     assert {item['id'] for item in catalog['items']} == runnable
+    # Items can be switched off one by one; movement (GoToPose) must stay available.
+    enabled = {item['id'] for item in catalog['items'] if item.get('enabled', True)}
+    assert 'GoToPose' in enabled
 
 
 def test_action_ports_and_defaults(models, catalog, tree):

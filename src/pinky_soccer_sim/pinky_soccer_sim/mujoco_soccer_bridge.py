@@ -82,6 +82,14 @@ def parse_args(argv):
     parser.add_argument('--adc-enabled', action='store_true')
     parser.add_argument('--wheel-radius', type=float)
     parser.add_argument('--wheel-separation', type=float)
+    parser.add_argument('--spawn', type=float, nargs=3, metavar=('X', 'Y', 'YAW'),
+                        help='robot 1 start pose (default: official spawn at the origin)')
+    parser.add_argument('--opponent-name', default='',
+                        help='add a second robot publishing under /<name>/ (mujoco_multi)')
+    parser.add_argument('--opponent-spawn', type=float, nargs=3, default=(0.4, 0.0, math.pi),
+                        metavar=('X', 'Y', 'YAW'))
+    parser.add_argument('--opponent-sensors', action='store_true',
+                        help='also simulate robot 2 LiDAR/camera/IMU/ranges (game mode)')
     parser.add_argument('--real-driver-max-rpm', type=float, default=0.0,
                         help='> 0: scale both wheels like pinky_bringup (MAX_RPM, ratio kept)')
     return parser.parse_known_args(argv)
@@ -140,8 +148,12 @@ def main(args=None):
     from pinky_mujoco import bridge
     from pinky_soccer_sim.rcj_field import install_mujoco
 
+    from pinky_soccer_sim import mujoco_multi
+
     options, rest = parse_args(sys.argv[1:] if args is None else args)
     install_mujoco(bridge)
+    # Two-robot step directly above the official Physics (before every other wrapper).
+    mujoco_multi.install_base(bridge, options.real_driver_max_rpm)
     if options.sensor_config:
         from pinky_soccer_sim.mujoco_sensors import install
         install(bridge, options)
@@ -154,9 +166,25 @@ def main(args=None):
 
         bridge.build_model = build_model_with_ball
     from pinky_soccer_sim.materials import install_mujoco as install_materials, load_materials
-    install_materials(bridge, load_materials(options.material_config))
+    material_cfg = load_materials(options.material_config)
+    install_materials(bridge, material_cfg)
     install_drive_constants(bridge, options.wheel_radius, options.wheel_separation)
     install_real_driver(bridge, options.real_driver_max_rpm)
+    mujoco_multi.install_after(bridge, material_cfg)
+    if options.spawn is not None or options.opponent_name:
+        inner_build = bridge.build_model
+
+        def build_with_robots(*a, **kw):
+            return mujoco_multi.place_robots(
+                inner_build(*a, **kw), options.spawn,
+                options.opponent_spawn if options.opponent_name else None)
+        bridge.build_model = build_with_robots
+    if options.opponent_name:
+        from pinky_soccer_sim.sensor_model import load_config
+        mujoco_multi.install_bridge(
+            bridge, options.opponent_name, options.opponent_sensors,
+            load_config(options.sensor_config) if options.sensor_config else None,
+            options.imu_enabled, options.adc_enabled)
     bridge.main(rest)
 
 

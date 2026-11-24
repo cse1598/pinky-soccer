@@ -12,6 +12,9 @@ The window talks to bt_node in verify_mode (see pinky_soccer_bt/verify_mode.hpp)
 C++ behaviour nodes and controller run in simulation and on the real robot. Ground-truth
 topics are used only for display and evaluation, never as decision inputs.
 
+Topics are relative (they follow the robot namespace) except /game/*, /sim/* and the
+opponent's ground truth (opponent_truth_topic).
+
 Keys: Enter = run, Esc or Space = stop, F5 = repeat the last run.
 Map: click = target position, drag = position + heading (Shift snaps to 15 deg),
 double-click = set and run.
@@ -86,7 +89,9 @@ class VerifierNode(Node):
         self.controller_kind = p('controller_kind', 'mpc').value
         self.default_timeout = p('default_timeout', 30.0).value
         self.log_dir = os.path.expanduser(p('log_dir', '~/.ros/pinky_soccer/verify').value)
-        command_topic = p('command_topic', '/cmd_vel').value
+        command_topic = p('command_topic', 'cmd_vel').value
+        opponent_truth = p('opponent_truth_topic', '/sim/opponent_ground_truth').value or \
+            '/sim/opponent_ground_truth'
         self.lock = threading.Lock()
         self.wm = self.goal = self.status = self.models = None
         self.wm_time = self.status_time = self.goal_time = 0.0
@@ -97,18 +102,19 @@ class VerifierNode(Node):
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         latched = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
                              durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        self.request_pub = self.create_publisher(String, '/behavior_test/request', reliable)
+        self.request_pub = self.create_publisher(String, 'behavior_test/request', reliable)
         self.playing_pub = self.create_publisher(Bool, '/game/playing', 10)
-        self.create_subscription(WorldModel, '/world_model', self.on_wm, 10)
-        self.create_subscription(BehaviorGoal, '/behavior_goal', self.on_goal, 10)
+        self.create_subscription(WorldModel, 'world_model', self.on_wm, 10)
+        self.create_subscription(BehaviorGoal, 'behavior_goal', self.on_goal, 10)
         self.create_subscription(Twist, command_topic, self.on_cmd, 10)
-        self.create_subscription(Path, '/mpc/predicted_path', self.on_mpc_path, 10)
-        self.create_subscription(String, '/behavior_test/status', self.on_status, reliable)
-        self.create_subscription(String, '/behavior_test/models', self.on_models, latched)
+        self.create_subscription(Path, 'mpc/predicted_path', self.on_mpc_path, 10)
+        self.create_subscription(String, 'behavior_test/status', self.on_status, reliable)
+        self.create_subscription(String, 'behavior_test/models', self.on_models, latched)
         if self.simulation:
             self.ball_pub = self.create_publisher(Point, '/sim/set_ball', 10)
-            for name, topic in (('self', '/ground_truth'), ('ball', '/sim/ball_ground_truth'),
-                                ('opponent', '/sim/opponent_ground_truth')):
+            # Own truth follows the namespace; ball and opponent truth are absolute.
+            for name, topic in (('self', 'ground_truth'), ('ball', '/sim/ball_ground_truth'),
+                                ('opponent', opponent_truth)):
                 self.create_subscription(PoseStamped, topic,
                                          lambda m, n=name: self.on_truth(n, m), 10)
         self.create_timer(0.25, lambda: self.send({'command': 'ping'}))
@@ -374,7 +380,7 @@ class VerifierApp:
     def __init__(self, root, node):
         self.root, self.node = root, node
         self.catalog = core.load_catalog(node.catalog_path)
-        self.items = {item['id']: item for item in self.catalog['items']}
+        self.items = {item['id']: item for item in core.enabled_items(self.catalog)}
         self.field = Field.from_file(node.field_spec or None, node.our_goal_color)
         overrides = {k: v for k, v in (('max_lin', node.max_lin), ('max_ang', node.max_ang))
                      if v and v > 0}
@@ -397,7 +403,7 @@ class VerifierApp:
         self.snap = {}
         self.quit_requested = False
         self._build()
-        self.select(self.catalog['items'][0]['id'])
+        self.select(next(iter(self.items)))
         self.root.after(100, self.refresh)
 
     # -------------------------------------------------------------- layout

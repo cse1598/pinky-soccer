@@ -41,24 +41,39 @@ def wrap(a):
 
 
 class Arrival:
-    """Goal reached with hysteresis: hold still until the goal moves or the pose drifts."""
+    """
+    Final phase at the goal: track -> align (turn in place) -> hold, with hysteresis.
 
-    def __init__(self, pos_tol=0.02, ang_tol=0.05):
+    Within pos_tol the NMPC hands over to a pure turn in place towards the goal heading, then
+    the robot holds still. In MuJoCo the NMPC alone kept correcting around the goal (up to
+    11 cm, 80 deg): pivot turns slip a lot there, so its small corrections never matched.
+    The window is inside the BT's GoToPose tolerance (5 cm, 0.15 rad). The NMPC takes over
+    again when the goal moves or the robot leaves 2 x pos_tol.
+    """
+
+    TRACK, ALIGN, HOLD = 'track', 'align', 'hold'
+
+    def __init__(self, pos_tol=0.04, ang_tol=0.12):
         self.pos_tol, self.ang_tol = pos_tol, ang_tol
-        self.holding = None
+        self.mode = self.TRACK
+        self.goal = None
 
     def update(self, pose, goal, wheel_speed):
-        """Return True while the robot should hold still at goal."""
+        """Return the phase for this cycle and the heading error [rad]."""
         dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
-        err = abs(wrap(goal[2] - pose[2]))
-        if self.holding is not None:
-            moved = math.hypot(goal[0] - self.holding[0], goal[1] - self.holding[1]) > 0.01 \
-                or abs(wrap(goal[2] - self.holding[2])) > 0.03
-            if moved or dist > 2 * self.pos_tol or err > 2 * self.ang_tol:
-                self.holding = None
-        elif dist <= self.pos_tol and err <= self.ang_tol and wheel_speed < 1.0:
-            self.holding = tuple(goal)
-        return self.holding is not None
+        err = wrap(goal[2] - pose[2])
+        if self.mode != self.TRACK:
+            moved = math.hypot(goal[0] - self.goal[0], goal[1] - self.goal[1]) > 0.01 \
+                or abs(wrap(goal[2] - self.goal[2])) > 0.03
+            if moved or dist > 2 * self.pos_tol:
+                self.mode = self.TRACK
+        if self.mode == self.TRACK and dist <= self.pos_tol:
+            self.mode, self.goal = self.ALIGN, tuple(goal)
+        if self.mode == self.ALIGN and abs(err) <= self.ang_tol and wheel_speed < 1.0:
+            self.mode = self.HOLD
+        elif self.mode == self.HOLD and abs(err) > 2 * self.ang_tol:
+            self.mode = self.ALIGN
+        return self.mode, err
 
 
 class MpcController(Node):
@@ -77,7 +92,7 @@ class MpcController(Node):
         rate = p('rate_hz', 20.0).value
         self.mpc = PoseMpc(self.params, p('horizon', 1.5).value, int(p('steps', 30).value))
         self.adapter = CommandAdapter(self.params)
-        self.arrival = Arrival(p('pos_tol', 0.02).value, p('ang_tol', 0.05).value)
+        self.arrival = Arrival(p('pos_tol', 0.04).value, p('ang_tol', 0.12).value)
         # Ball-related actions keep the camera (front) towards the ball: no reverse driving.
         self.forward_only = set(p('forward_only_actions', [
             'GoBehindBall', 'PushBall', 'GoToBlockPoint', 'FaceBall', 'TurnToLastSeen']).value)
@@ -152,9 +167,13 @@ class MpcController(Node):
                                                 goal[1] - self.last_goal[1]) > 0.3:
             self.mpc.reset()                       # big jump: drop the warm start
         self.last_goal = goal
-        if self.arrival.update(self.pose, goal, abs(self.omega[0]) + abs(self.omega[1])):
-            return self.stop('arrived')
+        phase, heading_err = self.arrival.update(self.pose, goal,
+                                                 abs(self.omega[0]) + abs(self.omega[1]))
         v_cap, w_cap = self.caps(self.goal)
+        if phase == Arrival.HOLD:
+            return self.stop('arrived')
+        if phase == Arrival.ALIGN:
+            return self.align(heading_err, w_cap)
         if self.measured is not None and now - self.measured_time < 0.2:
             self.omega = self.measured
         x0 = (*self.pose, *self.omega)
@@ -179,6 +198,24 @@ class MpcController(Node):
                              'v': round(v, 3), 'w': round(w, 2),
                              'v_bound': round(res['v_bound'], 3),
                              'w_bound': round(res['w_bound'], 2)})
+
+    def align(self, err, w_cap):
+        """Turn in place towards the goal heading (final phase, no translation)."""
+        limit = min(w_cap or self.mpc.w_limit, self.mpc.w_limit, 2.0)
+        w = max(-limit, min(limit, 2.5 * err))
+        if abs(w) < 0.3:                       # below this the wheels barely move
+            w = math.copysign(0.3, err)
+        b = self.mpc.b
+        r = 0.5 * (self.mpc.rl + self.mpc.rr)
+        cmd = (-w * b / (2 * r), w * b / (2 * r))
+        v_out, w_out = self.adapter.to_twist(*cmd)
+        msg = Twist()
+        msg.linear.x, msg.angular.z = float(v_out), float(w_out)
+        self.pub.publish(msg)
+        self.omega = step_wheels(self.params, self.omega, cmd, self.dt, self.mpc.amax)
+        self.mpc.reset()
+        self.publish_status({'state': 'align', 'heading_error': round(err, 3),
+                             'w': round(w_out, 2)})
 
     def publish_path(self, xs):
         """Publish the predicted trajectory (map frame)."""

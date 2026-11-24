@@ -28,11 +28,16 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
          behavior_verifier   ↔ bt_node verify_mode (verify:=true, 행동 하나씩 실행·평가)
          world_model_topview → /world_model/topview (Image, OpenCV)
          game_camera_view   ← ball_detection/source_image · debug_image · debug_mask
-입력     /game/playing (std_msgs/Bool, 임시 경기 시작/정지)
+입력     /game/playing (std_msgs/Bool, 경기 시작/정지)
+심판     game_referee → /game/goal, /game/score, /game/kickoff (골 → 정지 → 킥오프 자리, 시뮬 공 센터 복귀)
 ```
 
 원칙
-- 행동 트리는 센서를 직접 구독하지 않고 `/world_model`만 본다.
+- 여러 로봇: 로봇마다 `robot_name` 네임스페이스(`/<이름>/...`, TF는 `/<이름>/tf`), 프레임 이름은 같다.
+  경기 전체 토픽 `/game/*`, `/clock`, `/sim/*`만 전역. 노드는 상대 토픽 이름을 쓰고, 절대 이름을 쓰는 노드
+  (goal_heading, RViz)는 launch 재매핑(`pinky_soccer_viz/robot_stack.py`). 노드 이름 키 파라미터 파일은
+  네임스페이스 안에서 적용되지 않으므로 `/**/` 와일드카드 또는 launch가 만든 사본을 쓴다.
+- 행동 트리는 센서를 직접 구독하지 않고 `/world_model`(과 심판 `/game/kickoff`)만 본다.
 - 트리는 **목표만** 바꾸고, 따라가기는 계획·제어 층이 연속적으로 처리한다.
 - 월드 모델은 각 객체의 관측/추정/분실 상태와 공분산을 함께 낸다. UI는 관측 = 진한 실선, 추정 = 흐린 점선 + 불확실성 타원, 분실 = 마지막 위치 X로 일관되게 그린다.
 - `/clock`, `/ground_truth`, `/sim/*`(`/sim/ball_ground_truth` 포함)는 시뮬레이터 전용이다. 판단 입력으로 쓰지 않는다 (UI 평가 표시와 시험 판정만 허용).
@@ -53,15 +58,17 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `/ball_detection` | `geometry_msgs/PointStamped` | ball_detector | `base_link`, 공 중심 |
 | `/world_model` | `pinky_soccer_msgs/WorldModel` | world_model_node / fake_world_model | `map` |
 | `/behavior_goal` | `pinky_soccer_msgs/BehaviorGoal` | bt_node | |
-| `/game/playing` | `std_msgs/Bool` | 사람 (`ros2 topic pub`) | |
+| `/game/playing` | `std_msgs/Bool` | 사람 (`ros2 topic pub`), 골 시 game_referee(false) | 전역 |
+| `/game/kickoff` | `std_msgs/Bool` (transient local, 0.5 s마다 재발행) | game_referee | true면 모든 로봇이 킥오프 자리로 |
+| `/game/goal`, `/game/score` | `std_msgs/String` (JSON) | game_referee | 골 이벤트(골대·득점 팀·점수), 점수(latched) |
 | `/world_model/markers` | `visualization_msgs/MarkerArray` | world_model_viz | 경기장은 `/world_model/field_markers` (transient_local) |
 | `/world_model/topview` | `sensor_msgs/Image` | world_model_topview | bgr8 |
 | `/world_model/search_grid` | `nav_msgs/OccupancyGrid` | world_model_viz | RViz Map 표시용 `ball_search_grid` 복사 |
 | `/sim/ball_ground_truth` | `geometry_msgs/PoseStamped` | `fake_world_model`, `mujoco_eval_bridge`(평가용) | 프레임 `world`/`map`. 판정·UI 평가 전용 |
-| `/ground_truth` | `geometry_msgs/PoseStamped` | MuJoCo 브리지, Gazebo는 검증 모드의 `gazebo_truth_relay` | 프레임 `world`, **로봇 자세만**. 표시·평가 전용 |
+| `/ground_truth` (`/<이름>/ground_truth`) | `geometry_msgs/PoseStamped` | MuJoCo 브리지, Gazebo `gazebo_truth_relay` | 프레임 `world`, 로봇 자세. 표시·평가·심판·시뮬 장애물 전용 |
 | `/behavior_test/request`, `/behavior_test/status` | `std_msgs/String` (JSON) | 행동 검증 창 ↔ bt_node(`verify_mode`) | 검증 모드 전용. 형식은 `pinky_soccer_bt/verify_mode.hpp` |
 | `/behavior_test/models` | `std_msgs/String` (JSON, transient local) | bt_node(`verify_mode`) | 노드 포트/기본값, 실행 가능한 대상 |
-| `/sim/set_ball` | `geometry_msgs/Point` | 행동 검증 창(시뮬) | 공을 x, y로 옮김. MuJoCo eval bridge / `gazebo_truth_relay`가 처리 |
+| `/sim/set_ball` | `geometry_msgs/Point` | 행동 검증 창(시뮬), game_referee(골 후 센터) | 공을 x, y로 옮김. MuJoCo eval bridge / `gazebo_truth_relay`가 처리 |
 
 카메라 서비스 `/camera/capture_frame` (`pinky_soccer_msgs/srv/CaptureFrame`)는 실물·두 시뮬레이터에서 동일합니다. raw/jpeg 중 요청한 새 프레임 한 장과 같은 시각의 CameraInfo를 반환하며 기존 판단 메시지/토픽은 유지합니다. 상세 계약·저장 CLI는 [CAMERA_CAPTURE.md](../src/pinky_soccer_bringup/CAMERA_CAPTURE.md)를 참고합니다.
 

@@ -25,7 +25,8 @@ def test_camera_and_rviz_follow_headless_together(filename, headless, tmp_path, 
             context.launch_configurations[action.name] = perform_substitutions(
                 context, action.default_value)
     context.launch_configurations.update(headless=headless, localization='odom_only')
-    actions = module.setup(context) if filename.startswith('real') else description.entities
+    # Both launches build their nodes in setup() (robot_stack, optional robot namespace).
+    actions = module.setup(context)
     nodes = [action for action in actions if isinstance(action, Node)]
     active = [node.node_executable for node in nodes
               if node.condition is None or node.condition.evaluate(context)]

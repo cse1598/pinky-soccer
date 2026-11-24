@@ -87,6 +87,24 @@ ros2 run pinky_soccer_sim check_interface --imu --adc --duration 15 \
 - 이 PC의 Gazebo는 소프트웨어 EGL과 하드웨어 장치 선택이 충돌했습니다. 설치된 NVIDIA 드라이버가 있는 이 환경에서는 `__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json`과 소프트웨어 강제 옵션 해제 후 실행 확인했습니다. 이 경로를 다른 PC에 그대로 적용하지 마세요.
 - 실물 신규 ROS 노드·IR 채널·실측 기반 카메라/센서 보정은 아직 검증하지 않았습니다. 아래 기존 주행/공 실험 표의 수신 주기는 센서 확장 전 측정 기록입니다.
 
+## 로봇 2대 (2026-11-24)
+
+두 launch 모두 `namespace:=<이름>`(로봇 1을 `/<이름>/`·자체 `/tf`로)과 `opponent_name:=<이름>`(로봇 2 추가),
+`opponent_x/y/yaw`, `opponent_sensors`(로봇 2 카메라/IMU/ADC, 경기 모드에서 true), 로봇 1의 `x/y/yaw`를
+받습니다. 비우면 예전 1대 구성 그대로입니다. 보통은 `pinky_soccer_viz game.launch.py robots:=2`로 씁니다.
+
+- Gazebo: 로봇마다 URDF의 gz 플러그인/센서 토픽을 `/<이름>/...`으로 바꿔 생성하고(`multi_robot.namespace_gz_topics`),
+  브리지 설정도 로봇별로 만듭니다(`/clock`은 하나). 두 모델 모두 공통 접촉 물성 플러그인에 등록합니다.
+- MuJoCo(`mujoco_multi.py`): 공식 브리지는 1대 전용이라 장면에서 로봇 몸체·액추에이터·센서를 `opp_` 접두로
+  복제하고, 두 로봇을 한 스텝에 함께 구동(같은 속도 경사·실물 드라이버 비례 축소·엔코더 odom)합니다.
+  로봇 2는 같은 브리지 노드가 `/<이름>/` 절대 토픽으로 발행합니다(odom, tf, joint_states, ground_truth,
+  센서 켜면 LiDAR·카메라·IMU·거리 센서). 공식 모델의 로봇 충돌 형상은 완전 투명이라 `mj_ray`가 무시해서
+  어떤 레이도 로봇을 못 맞혔습니다. 2대일 때는 충돌 형상을 alpha 0.01, 로봇 1 = 그룹 5, 로봇 2 = 그룹 3으로
+  두고 각 LiDAR 마스크가 상대 그룹만 포함합니다(자기 몸은 안 보고 상대는 보임, 카메라·뷰어에는 안 그려짐).
+  측정: 0.8 m 떨어진 두 로봇이 서로를 0.81 m에서 봄.
+- 로봇 1의 거리 센서(초음파/IR)는 공용 `sensor_model.ray_ranges` 마스크라 로봇 2를 보지 못합니다(로봇 2의 거리
+  센서는 로봇 1을 봄).
+
 ## 시뮬레이터 오도메트리 보정 (2026-11-24)
 
 실물처럼 시뮬레이터도 명령 변환·엔코더 odom 상수를 보정합니다. 피드백 제어가 아니라 상수 보정입니다.

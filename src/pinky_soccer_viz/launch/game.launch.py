@@ -1,4 +1,10 @@
-"""One PC entry point: mode real/gazebo/mujoco, RViz, and a separate start signal."""
+"""
+One PC entry point: mode real/gazebo/mujoco, RViz, and a separate start signal.
+
+robot_name:=<name> puts our robot's topics under /<name>/ (several robots in one ROS graph),
+team:=Y|B selects the goal we defend (Y yellow -X, B blue +X). Simulation only: robots:=2
+adds an opponent (opponent_mode game|static|lateral|longitudinal); see sim_field.launch.py.
+"""
 
 import math
 import os
@@ -32,21 +38,29 @@ def setup(context):
         raise ValueError('Require max_lin <= 0.30 m/s and max_ang <= 6 rad/s '
                          '(> 0 on the real robot; 0 = wheel limits only in simulation)')
     common = {name: arg(name) for name in
-              ('field', 'our_goal_color', 'headless', 'verify', 'controller',
-               'localization', 'heading_record', 'initial_x', 'initial_y', 'initial_yaw')}
+              ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
+               'controller', 'localization', 'heading_record', 'initial_x', 'initial_y',
+               'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang))
     if mode == 'real':
         filename = 'real_game.launch.py'
-        common['calibration_profile'] = arg('calibration_profile')
+        profile = arg('calibration_profile')
+        common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
         common['wheel_feedback'] = arg('wheel_feedback')
         common.update({name: arg(name) for name in (
             'allow_uncalibrated', 'approximate_hfov_deg', 'camera_yaml',
-            'image_rotated_180', 'initial_x', 'initial_y', 'initial_yaw', 'command_topic')})
+            'image_rotated_180', 'command_topic')})
+        if arg('robots') != '1':
+            raise ValueError('robots:=2 is a simulation option; start each real robot with '
+                             'its own robot_name and team')
     else:
         filename = 'sim_field.launch.py'
         common.update({name: arg(name) for name in
-                       ('ball_x', 'ball_y', 'imu_enabled', 'adc_enabled')})
-        common.update(simulator=mode, publish_debug_image='true')
+                       ('ball_x', 'ball_y', 'imu_enabled', 'adc_enabled', 'robots',
+                        'opponent_name', 'opponent_mode', 'opponent_speed', 'opponent_travel',
+                        'opponent_x', 'opponent_y', 'opponent_yaw')})
+        common.update(simulator=mode, publish_debug_image='true',
+                      calibration_profile=arg('calibration_profile'))
     path = os.path.join(get_package_share_directory('pinky_soccer_viz'), 'launch', filename)
     return [IncludeLaunchDescription(PythonLaunchDescriptionSource(path),
                                      launch_arguments=common.items())]
@@ -59,6 +73,24 @@ def generate_launch_description():
         DeclareLaunchArgument('field', default_value='hardboard', choices=['hardboard', 'rcj']),
         DeclareLaunchArgument('our_goal_color', default_value='yellow',
                               choices=['yellow', 'blue']),
+        DeclareLaunchArgument('team', default_value='', choices=['', 'Y', 'B'],
+                              description='goal we defend: Y yellow (-X) | B blue (+X); '
+                              'empty: our_goal_color'),
+        DeclareLaunchArgument('robot_name', default_value='',
+                              description='ROS namespace of our robot (topics /<name>/...); '
+                              'empty: none (simulation with robots:=2: team colour)'),
+        DeclareLaunchArgument('robots', default_value='1', choices=['1', '2'],
+                              description='simulation: 2 adds an opponent robot'),
+        DeclareLaunchArgument('opponent_name', default_value=''),
+        DeclareLaunchArgument('opponent_mode', default_value='game',
+                              choices=['game', 'static', 'lateral', 'longitudinal']),
+        DeclareLaunchArgument('opponent_speed', default_value='0.10',
+                              description='obstacle modes: back-and-forth speed [m/s]'),
+        DeclareLaunchArgument('opponent_travel', default_value='0.40',
+                              description='obstacle modes: back-and-forth distance [m]'),
+        DeclareLaunchArgument('opponent_x', default_value='auto'),
+        DeclareLaunchArgument('opponent_y', default_value='auto'),
+        DeclareLaunchArgument('opponent_yaw', default_value='auto'),
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('verify', default_value='false', choices=['true', 'false'],
                               description='Behaviour verification mode: verifier window, '
@@ -74,18 +106,24 @@ def generate_launch_description():
                               description='mpc: NMPC (pinky_soccer_mpc); reactive: old P control'),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='real: NMPC wheel speed feedback from /joint_states'),
-        DeclareLaunchArgument('calibration_profile', default_value='',
-                              description='real robot profile.yaml for the NMPC model'),
+        # Passed explicitly in both modes: included launches inherit this configuration, and
+        # an empty value here once switched off the simulators' own calibration profiles.
+        DeclareLaunchArgument('calibration_profile', default_value='auto',
+                              description='auto: simulators use their own odometry profile, '
+                              'real none; or a profile.yaml path; none disables'),
         DeclareLaunchArgument('allow_uncalibrated', default_value='false'),
         DeclareLaunchArgument('approximate_hfov_deg', default_value='66.0'),
         DeclareLaunchArgument('camera_yaml', default_value=''),
         DeclareLaunchArgument('image_rotated_180', default_value='false'),
-        DeclareLaunchArgument('initial_x', default_value='0.0'),
-        DeclareLaunchArgument('initial_y', default_value='0.0'),
-        DeclareLaunchArgument('initial_yaw', default_value='0.0'),
-        DeclareLaunchArgument('command_topic', default_value='/cmd_vel'),
-        DeclareLaunchArgument('ball_x', default_value='0.3'),
-        DeclareLaunchArgument('ball_y', default_value='0.0'),
+        DeclareLaunchArgument('initial_x', default_value='auto',
+                              description='start = kickoff pose; auto: own half facing the '
+                              'opponent goal (one robot: centre spot)'),
+        DeclareLaunchArgument('initial_y', default_value='auto'),
+        DeclareLaunchArgument('initial_yaw', default_value='auto'),
+        DeclareLaunchArgument('command_topic', default_value='cmd_vel',
+                              description='relative: follows robot_name'),
+        DeclareLaunchArgument('ball_x', default_value='auto'),
+        DeclareLaunchArgument('ball_y', default_value='auto'),
         DeclareLaunchArgument('imu_enabled', default_value='true'),
         DeclareLaunchArgument('adc_enabled', default_value='true'),
         OpaqueFunction(function=setup),

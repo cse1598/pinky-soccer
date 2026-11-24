@@ -7,5 +7,5 @@ bt_node:
     groot2_port: 1667
     cout_logger: false          # StdCoutLogger (Groot2 Free node-count limit fallback)
     file_logger_path: ""        # e.g. /tmp/soccer.btlog (FileLogger2) when not empty
-    world_model_topic: /world_model
-    behavior_goal_topic: /behavior_goal
+    world_model_topic: world_model        # relative: inside the robot namespace
+    behavior_goal_topic: behavior_goal

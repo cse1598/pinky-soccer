@@ -18,7 +18,8 @@ using json = nlohmann::json;
 
 namespace
 {
-const std::set<std::string> kInfrastructure{"ReadWorldModel", "PublishBehaviorGoal"};
+const std::set<std::string> kInfrastructure{"ReadWorldModel", "PublishBehaviorGoal",
+                                            "ReadGameState"};
 const std::set<std::string> kHiddenTrees{"PublishGoal"};
 
 std::string escape(const std::string& s)
@@ -246,25 +247,38 @@ std::string buildProbeXml(const BT::BehaviorTreeFactory& factory, const std::str
 // ---------------------------------------------------------------- VerifyRunner
 VerifyRunner::VerifyRunner(rclcpp::Node::SharedPtr node, BT::BehaviorTreeFactory& factory,
                            BT::Blackboard::Ptr blackboard, std::string world_model_topic,
-                           double heartbeat_timeout)
+                           double heartbeat_timeout, bool allow_subtrees)
   : node_(std::move(node)), factory_(factory), blackboard_(std::move(blackboard)),
-    wm_topic_(std::move(world_model_topic)), heartbeat_timeout_(heartbeat_timeout)
+    wm_topic_(std::move(world_model_topic)), heartbeat_timeout_(heartbeat_timeout),
+    allow_subtrees_(allow_subtrees)
 {
   const auto reliable = rclcpp::QoS(10).reliable();
-  status_pub_ = node_->create_publisher<std_msgs::msg::String>("/behavior_test/status", reliable);
+  status_pub_ = node_->create_publisher<std_msgs::msg::String>("behavior_test/status", reliable);
   models_pub_ = node_->create_publisher<std_msgs::msg::String>(
-      "/behavior_test/models", rclcpp::QoS(1).reliable().transient_local());
+      "behavior_test/models", rclcpp::QoS(1).reliable().transient_local());
   request_sub_ = node_->create_subscription<std_msgs::msg::String>(
-      "/behavior_test/request", reliable,
+      "behavior_test/request", reliable,
       [this](const std_msgs::msg::String& msg) { onRequest(msg); });
   std_msgs::msg::String models;
+  auto runnable = runnableTargets(factory_);
+  if(!allow_subtrees_)
+  {
+    const auto trees = factory_.registeredBehaviorTrees();
+    runnable.erase(std::remove_if(runnable.begin(), runnable.end(),
+                                  [&](const std::string& id) {
+                                    return std::find(trees.begin(), trees.end(), id) !=
+                                           trees.end();
+                                  }),
+                   runnable.end());
+  }
   json catalog{{"models", BT::writeTreeNodesModelXML(factory_, false)},
-               {"runnable", runnableTargets(factory_)}};
+               {"runnable", runnable},
+               {"subtrees_enabled", allow_subtrees_}};
   models.data = catalog.dump();
   models_pub_->publish(models);
   setStop("VerifyIdle");
   RCLCPP_WARN(node_->get_logger(), "VERIFY MODE: the game tree is not ticked; behaviours run "
-                                   "only on /behavior_test/request");
+                                   "only on behavior_test/request");
 }
 
 void VerifyRunner::setStop(const std::string& action)
@@ -341,6 +355,15 @@ void VerifyRunner::start(int id, const NodeCall& call, double timeout_sec)
   }
   request_id_ = id;
   target_ = call.target;
+  const auto trees = factory_.registeredBehaviorTrees();
+  if(!allow_subtrees_ && std::find(trees.begin(), trees.end(), call.target) != trees.end())
+  {
+    state_ = "error";
+    message_ = "composed behaviour '" + call.target + "' is disabled (verify_subtrees:=false)";
+    setStop("VerifyError");
+    RCLCPP_WARN(node_->get_logger(), "verify: %s", message_.c_str());
+    return;
+  }
   ticks_ = 0;
   elapsed_ = 0.0;
   timeout_sec_ = std::clamp(timeout_sec, 1.0, 600.0);

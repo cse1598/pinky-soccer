@@ -42,9 +42,14 @@ class GazeboTruthRelay(Node):
         world = p('world_name', 'rcj_soccer').value
         self.ball_name = p('ball_name', 'soccer_ball').value
         self.ball_z = p('ball_rest_z', 0.0215).value
-        names = {p('robot_name', 'pinky').value: 'ground_truth',
-                 self.ball_name: 'sim/ball_ground_truth',
-                 p('opponent_name', 'opponent').value: 'sim/opponent_ground_truth'}
+        # Robot models and their truth topics (parallel lists), e.g. two namespaced robots:
+        # models [yellow, blue], topics [/yellow/ground_truth, /blue/ground_truth].
+        models = p('models', ['pinky']).value
+        topics = p('topics', ['/ground_truth']).value
+        if len(models) != len(topics):
+            raise ValueError('models and topics need the same length')
+        names = dict(zip(models, topics))
+        names[self.ball_name] = '/sim/ball_ground_truth'
         self.pubs = {name: self.create_publisher(PoseStamped, topic, 10)
                      for name, topic in names.items()}
         self.topic = f'/world/{world}/dynamic_pose/info'
@@ -53,7 +58,7 @@ class GazeboTruthRelay(Node):
         if not self.gz.subscribe(Pose_V, self.topic, self.on_poses):
             raise RuntimeError(f'cannot subscribe to Gazebo topic {self.topic}')
         self.get_logger().info(f'ground truth from {self.topic} (display/evaluation only)')
-        self.create_subscription(Point, 'sim/set_ball', self.on_set_ball, 10)
+        self.create_subscription(Point, '/sim/set_ball', self.on_set_ball, 10)
 
     def on_set_ball(self, msg):
         """Move the ball model to (x, y) on the floor."""

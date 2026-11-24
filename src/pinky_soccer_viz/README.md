@@ -13,6 +13,11 @@
 `ros2 launch pinky_soccer_viz real_game.launch.py field:=hardboard allow_uncalibrated:=true`
 로 공 인식·판단·저속 제어를 실행하고 `/game/playing`으로 시작/정지합니다.
 
+**여러 로봇·골 판정**: `robot_name`(네임스페이스)·`team:=Y|B`, 시뮬 `robots:=2`와 상대 모드
+(`game`/`static`/`lateral`/`longitudinal`), `game_referee`(골 → 킥오프 자리 → 시뮬 공 센터 복귀),
+`obstacle_driver`(장애물 왕복). 사용법은 [GAMEPLAY.md](GAMEPLAY.md) "로봇 이름·소속·2대 경기".
+로봇별 판단 스택은 `robot_stack.py` 하나로 실물·시뮬 launch가 같이 만듭니다.
+
 **행동 검증 모드**: `game.launch.py ... verify:=true`. 경기에서 쓰는 행동/서브트리를 목록에서 골라
 실행하고 2D 지도(추정값, 시뮬은 정답 겹쳐 보기)·노드 상태·조건·평가·기록으로 확인하는 창이 열립니다.
 사용법은 [VERIFY.md](VERIFY.md) (`behavior_verifier`, `verify_core.py`, Gazebo `gazebo_truth_relay`).
