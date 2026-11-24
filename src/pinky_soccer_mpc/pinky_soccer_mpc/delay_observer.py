@@ -70,7 +70,8 @@ class DelayObserver:
     def measure(self,stamp,receipt,wheel):
         stamp,receipt=float(stamp),float(receipt)
         wheel=np.asarray(wheel,float)
-        if (not np.all(np.isfinite(wheel)) or not math.isfinite(stamp)
+        if (wheel.shape!=(2,) or not np.all(np.isfinite(wheel)) or not math.isfinite(stamp)
+            or not math.isfinite(receipt)
             or stamp>receipt+.005 or receipt-stamp>MAX_AGE):
             self.rejected+=1
             return False
@@ -116,7 +117,8 @@ class DelayObserver:
         Wheel updates correct the replayed speeds at their own times. Pose
         integration is differential-drive dead reckoning, not a slip observer.
         """
-        if not math.isfinite(stamp) or now-stamp>MAX_AGE or stamp>now+1e-8:
+        if (not np.all(np.isfinite(pose)) or not math.isfinite(stamp)
+                or now-stamp>MAX_AGE or stamp>now+1e-8):
             return None
         anchor=None
         for sample in self.samples:

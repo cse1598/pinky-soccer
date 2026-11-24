@@ -23,7 +23,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
 
     def __init__(self, params, dt=.1, max_steps=80, budget=.075,
                  pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12,
-                 damping_scale=1.):
+                 damping_scale=0.):
         super().__init__(params, dt, max_steps, budget, pos_tol, ang_tol,
                          wheel_tol, prepare_problems=False)
         self.damping_scale=float(damping_scale)

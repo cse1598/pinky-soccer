@@ -19,7 +19,7 @@ class RampPredictor:
         al,ar=map(float,disturbance)
         if dt==0:
             return np.asarray(x,float).copy()
-        n=max(1,math.ceil(dt/.005))
+        n=max(1,math.ceil(dt/.005-1e-10))
         h=dt/n
         dl,dr=math.exp(-h/self.tau_l),math.exp(-h/self.tau_r)
         a=self.accel*h

@@ -15,7 +15,7 @@ def profile_accel(params):
 def motor_step(params, wheel, ref, command, dt):
     """Integrate the profile and loaded first-order response."""
     wheel, ref, command = [np.asarray(v, float).copy() for v in (wheel, ref, command)]
-    n = max(1, int(math.ceil(dt / .005)))
+    n = max(1, int(math.ceil(dt / .005 - 1e-10)))
     h = dt / n
     decay = np.exp(-h / np.array([params.m('tau_left'), params.m('tau_right')]))
     a = profile_accel(params)*h
@@ -30,7 +30,7 @@ def step(params, x, u, dt):
     """Numeric prediction, using the same substep map as symbolic_step."""
     x = np.asarray(x, float).copy()
     u = np.asarray(u, float)
-    n = max(1, int(math.ceil(dt / .005)))
+    n = max(1, int(math.ceil(dt / .005 - 1e-10)))
     h = dt/n
     decay = np.exp(-h / np.array([params.m('tau_left'), params.m('tau_right')]))
     r = np.array([params.m('left_radius'), params.m('right_radius')])
@@ -54,7 +54,7 @@ def symbolic_step(params, dt, with_disturbance=False):
     d = ca.SX.sym('d',2) if with_disturbance else ca.SX.zeros(2)
     tau = ca.DM([params.m('tau_left'),params.m('tau_right')])
     pos, wheel, ref = x[:3], x[3:5], x[5:7]
-    n = max(1, int(math.ceil(dt / .005)))
+    n = max(1, int(math.ceil(dt / .005 - 1e-10)))
     h = dt/n
     decay = ca.DM(np.exp(-h / np.array([params.m('tau_left'), params.m('tau_right')])))
     r = ca.DM([params.m('left_radius'), params.m('right_radius')])
