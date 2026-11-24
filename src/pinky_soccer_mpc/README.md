@@ -167,3 +167,47 @@ OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_dam
 OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados mpc_damping_scale:=1.0 verify:=true
 # baseline: mpc_damping_scale:=0.0
 ```
+
+
+### Delay-aware wheel disturbance observer (experimental)
+
+The experiment defaults to damping scale 0.0 and observer mode `off`.
+Choose `mpc_observer_mode:=off|align|ndob` in game.launch.py (or sim_field /
+real_game). All three use the existing scheduled 100 ms compute compensation.
+`align` reconstructs the current pose/wheels using stamped feedback and
+published command history; `ndob` additionally estimates lumped wheel
+acceleration disturbances. Only GoToPose/acados uses the corrected prediction.
+Off is the previous nominal scheduled model with zero new damping residual.
+
+For each new wheel sample at source time t_k, replay the nonlinear ramp/lag
+model with the actual published (driver-rounded) commands over the previous
+sample interval. With h = t_k - t_{k-1}, the constant additive acceleration
+sensitivity is g = tau*(1-exp(-h/tau)). Update
+d_hat <- clip(d_hat + (1-exp(-h/0.12))*(innovation/g), -20, 20).
+Units are rad/s^2. No numerical derivative or ground truth is used.
+Samples out of order, more than 200 ms old, or materially in the future are
+rejected; unstamped joint feedback uses receipt time and is flagged.
+WorldModel.self.last_seen now records the TF/odom source stamp, not publication
+time. Pose extrapolation is dead reckoning using the historical wheel states;
+missing pose history leaves the pose uncorrected and is logged.
+The next scheduled activation state uses the observer estimate; the solver
+receives a transient forecast decaying exponentially with a 0.25 s time
+constant between horizon stages. The disturbance is constant within a stage.
+The independent replay uses the same forecast; terminal checks remain strict.
+This is a pragmatic transient-disturbance forecast, not a proof of robustness
+or guaranteed offset-free tracking under persistent disturbances. The existing
+zero-command settling and measured arrival criterion are unchanged.
+No actual motor-acceptance timestamp is available: input transport delay is
+NOT explicitly identified or compensated, and real machines need synchronized
+ROS clocks. Encoder-only NDOB cannot observe chassis slip. The gain, cap and
+decay time are initial experimental choices, not identified values.
+
+Compare off, align, ndob with damping 0, identical initial/target poses,
+ball position and OBS settings. Inspect activation misses, raw and aligned
+prediction error, timestamp ages, accepted/rejected measurements and d_hat.
+Keep the real robot in off mode until validated at low speeds.
+
+```bash
+OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_delay_observer.py src/pinky_soccer_mpc/test/test_damping.py src/pinky_soccer_mpc/test/test_scheduled_input.py src/pinky_soccer_mpc/test/test_acados_time_optimal.py
+OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados mpc_damping_scale:=0.0 mpc_observer_mode:=ndob verify:=true
+```

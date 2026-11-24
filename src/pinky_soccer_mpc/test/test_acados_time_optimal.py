@@ -14,7 +14,7 @@ from pinky_soccer_mpc.arrival import Arrival
 @pytest.fixture(scope='module')
 def setup():
     p = P.load('mujoco')
-    return p, AcadosTimeOptimalMpc(p)
+    return p, AcadosTimeOptimalMpc(p,damping_scale=0.)
 
 
 def test_generated_solver_resizes(setup):
@@ -145,3 +145,30 @@ def test_one_period_delayed_closed_loop(setup,goal,damping_scale,monkeypatch):
         x=plant.step(p,x,command,m.dt)
         command=np.asarray(res['u'])
     pytest.fail(f'No delayed settled arrival: {x}, target {goal}')
+
+
+def test_disturbed_horizon_replay_and_solver_parameter(setup):
+    import casadi as ca
+    p,m=setup
+    m.reset()
+    d=np.array([2.,-3.])
+    x=np.zeros(9)
+    result=m.solve(x,(.18,0.,.2),w_cap=2.,disturbance=d)
+    assert result['forecast_disturbance']==d.tolist()
+    # Check the exact generated discrete map, not a second copy of replay.
+    model=m.ocp.model
+    f=ca.Function('test_ocp_disturbed',[model.x,model.u,model.p],[model.disc_dyn_expr])
+    us=np.array([[2.,4.],[1.,-2.],[0.,0.]])
+    xs=m.replay(x[:7],us)
+    old=x[7:9]
+    for k,u in enumerate(us):
+        param=np.array([.18,0.,.2,1.,m.v_limit,2.,0.,*m.stage_disturbance(k)])
+        z=m.pack_state(xs[k],old)
+        nxt=np.asarray(f(z,u/m.wmax,param)).ravel()
+        assert np.allclose(nxt[:3],xs[k+1,:3],atol=1e-10)
+        assert np.allclose(nxt[3:7]*m.wmax,xs[k+1,3:7],atol=1e-10)
+        old=u
+    if result['ok']:
+        assert result['replay_violation']<=1e-5
+    m.solve(x,(.18,0.,.2),w_cap=2.)
+    assert np.allclose(m.disturbance,0.)

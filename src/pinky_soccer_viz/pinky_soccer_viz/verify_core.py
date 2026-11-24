@@ -219,7 +219,8 @@ class RunRecord:
               'mpc_activation_wheel_error_rad_s','mpc_pose_receipt_age_sim_s',
               'mpc_active_solve_id','mpc_compensated_state_age_sim_s',
               'mpc_damping_scale','mpc_damping_cost',
-              'mpc_observer_mode','mpc_observer_d_l','mpc_observer_d_r','mpc_observer_innovation_l','mpc_observer_innovation_r','mpc_observer_accepted','mpc_observer_rejected','mpc_wheel_stamp_valid','mpc_wheel_source_age_s','mpc_pose_source_age_s','mpc_pose_aligned','mpc_forecast_disturbance')
+              'mpc_observer_mode','mpc_observer_d_l','mpc_observer_d_r','mpc_observer_innovation_l','mpc_observer_innovation_r','mpc_observer_accepted','mpc_observer_rejected','mpc_wheel_stamp_valid','mpc_wheel_source_age_s','mpc_pose_source_age_s','mpc_pose_aligned','mpc_forecast_disturbance',
+              'mpc_observer_valid','mpc_activation_aligned_position_error_m','mpc_activation_aligned_heading_error_rad','mpc_activation_aligned_wheel_error_rad_s')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -270,7 +271,8 @@ class RunRecord:
             'activation_jitter_sim_s','activation_missed','activation_position_error_m',
             'activation_heading_error_rad','activation_wheel_error_rad_s','pose_receipt_age_sim_s',
             'active_solve_id','compensated_state_age_sim_s','damping_scale','damping_cost',
-            'observer_mode','observer_d_l','observer_d_r','observer_innovation_l','observer_innovation_r','observer_accepted','observer_rejected','wheel_stamp_valid','wheel_source_age_s','pose_source_age_s','pose_aligned','forecast_disturbance'))
+            'observer_mode','observer_d_l','observer_d_r','observer_innovation_l','observer_innovation_r','observer_accepted','observer_rejected','wheel_stamp_valid','wheel_source_age_s','pose_source_age_s','pose_aligned','forecast_disturbance',
+            'observer_valid','activation_aligned_position_error_m','activation_aligned_heading_error_rad','activation_aligned_wheel_error_rad_s'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:

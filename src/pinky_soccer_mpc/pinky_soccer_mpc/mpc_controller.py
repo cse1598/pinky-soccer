@@ -66,6 +66,8 @@ class MpcController(Node):
         self.wheel_source_sim=None
         self.wheel_stamp_valid=False
         self.aligned_pose=None
+        self.aligned_wheels=None
+        self.observer_disturbance=np.zeros(2)
         kwargs={'damping_scale':damping_scale} if self.time_backend=='acados' else {}
         self.time_mpc=solver_cls(self.params, dt=self.dt,
              max_steps=int(p('time_optimal_max_steps',80).value),
@@ -141,14 +143,15 @@ class MpcController(Node):
         try:
             wheel=wheels_from_joint_state(self.params,msg.name,msg.velocity)
             if all(math.isfinite(v) for v in wheel):
-                self.measured,self.measured_time=wheel,time.monotonic()
                 if self.observer_mode!='off':
                     receipt=self.get_clock().now().nanoseconds*1e-9
-                    stamp=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
-                    self.wheel_stamp_valid=stamp>0
-                    stamp=stamp if stamp>0 else receipt
-                    if self.observer.measure(stamp,receipt,wheel):
-                        self.wheel_source_sim=min(stamp,receipt)
+                    source=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+                    stamp=source if source>0 else receipt
+                    if not self.observer.measure(stamp,receipt,wheel):
+                        return
+                    self.wheel_stamp_valid=source>0
+                    self.wheel_source_sim=min(stamp,receipt)
+                self.measured,self.measured_time=wheel,time.monotonic()
         except (KeyError,ValueError,IndexError):
             pass
 
@@ -220,6 +223,7 @@ class MpcController(Node):
             wheel_stamp_valid=self.wheel_stamp_valid,
             wheel_source_age_s=(self.last_tick-self.wheel_source_sim if self.wheel_source_sim is not None else None),
             pose_source_age_s=(self.last_tick-self.pose_source_sim if self.pose_source_sim is not None else None),
+            observer_valid=self.aligned_wheels is not None,
             pose_aligned=self.aligned_pose is not None)
         self.status_pub.publish(String(data=json.dumps(data)))
         if gid and self.goal.action=='GoToPose':
@@ -240,6 +244,9 @@ class MpcController(Node):
         now=self.get_clock().now().nanoseconds*1e-9
         elapsed=1/self.command_rate if self.last_tick is None else now-self.last_tick
         self.last_tick=now
+        self.aligned_pose=None
+        self.aligned_wheels=None
+        self.observer_disturbance=np.zeros(2)
         if elapsed<0 or elapsed>.5:
             self.invalidate()
             self.arrival.reset()
@@ -247,6 +254,8 @@ class MpcController(Node):
             self.observer.reset()
             self.aligned_pose=None
             self.wheel_source_sim=None
+            self.wheel_stamp_valid=False
+            self.measured=self.measured_time=None
             self.pose_source_sim=None
             return self.stop('clock discontinuity')
         self.omega,self.ref=motor_step(self.params,self.omega,self.ref,self.last_cmd,elapsed)
@@ -254,6 +263,14 @@ class MpcController(Node):
         feedback=self.feedback_age is not None and self.feedback_age<.2
         if feedback:
             self.omega=self.measured
+        if self.observer_mode!='off' and feedback:
+            estimate=self.observer.current(now)
+            if estimate is not None:
+                self.aligned_wheels,self.observer_disturbance=estimate
+                if self.pose_valid and self.pose_source_sim is not None:
+                    aligned=self.observer.align_pose(self.pose,self.pose_source_sim,now)
+                    if aligned is not None:
+                        self.aligned_pose=aligned[:3]
         # Drain a finished job even when cancelled or stopped. Never use an old generation.
         if self.future is not None and self.future.done():
             future=self.future
@@ -328,6 +345,10 @@ class MpcController(Node):
             self.arrival.reset()
             self.invalidate()
             return self.stop('stale wheel feedback')
+        if is_pose and self.observer_mode!='off' and self.aligned_wheels is None:
+            self.arrival.reset()
+            self.invalidate()
+            return self.stop('wheel timestamp history unavailable')
         if self.failed_reason is not None:
             return self.stop(self.failed_reason,MotionResult.FAILURE)
         l,r=self.omega
@@ -400,6 +421,13 @@ class MpcController(Node):
                     activation_heading_error_rad=abs(wrap(self.pose[2]-predicted[2])),
                     activation_wheel_error_rad_s=float(np.max(np.abs(
                         np.asarray(self.omega)-predicted[3:5]))))
+                self.diag.update(
+                    activation_aligned_position_error_m=(float(np.linalg.norm(self.aligned_pose[:2]-predicted[:2]))
+                        if self.aligned_pose is not None else None),
+                    activation_aligned_heading_error_rad=(abs(wrap(self.aligned_pose[2]-predicted[2]))
+                        if self.aligned_pose is not None else None),
+                    activation_aligned_wheel_error_rad_s=(float(np.max(np.abs(self.aligned_wheels[:2]-predicted[3:5])))
+                        if self.aligned_wheels is not None else None))
                 self.publish_path(res['xs'])
             else:
                 # No valid solution for this interval: brake, not an old first input.
@@ -409,7 +437,8 @@ class MpcController(Node):
                 self.failures+=1
                 self.diag.update(activation_position_error_m=None,
                     activation_heading_error_rad=None,activation_wheel_error_rad_s=None,
-                    activation_missed=True)
+                    activation_aligned_position_error_m=None,activation_aligned_heading_error_rad=None,
+                    activation_aligned_wheel_error_rad_s=None,activation_missed=True)
                 # Invalidate a late worker so it cannot fill a subsequent slot.
                 self.generation+=1
             self.diag['activation_missed']=result is None
@@ -424,18 +453,15 @@ class MpcController(Node):
             vb,wb=self.caps()
             physical=np.asarray((*self.pose,*self.omega,*self.ref),float)
             disturbance=np.zeros(2)
-            self.aligned_pose=None
+            applied=command
             if self.observer_mode!='off':
-                estimate=self.observer.current(now)
-                if estimate is not None:
-                    wheels,disturbance=estimate
-                    physical[3:7]=wheels
-                    if self.pose_source_sim is not None:
-                        aligned=self.observer.align_pose(self.pose,self.pose_source_sim,now)
-                        if aligned is not None:
-                            physical[:3]=aligned[:3]
-                            self.aligned_pose=aligned[:3]
-            predicted=self.time_mpc.predictor.step(physical,command,self.dt,
+                if self.aligned_wheels is not None:
+                    physical[3:7]=self.aligned_wheels
+                    disturbance=self.observer_disturbance.copy()
+                if self.aligned_pose is not None:
+                    physical[:3]=self.aligned_pose
+                applied=self.adapter.driver_applied(v,w)[:2]
+            predicted=self.time_mpc.predictor.step(physical,applied,self.dt,
                                                   disturbance=disturbance)
             # A bounded transient forecast avoids imposing a constant nonzero
             # disturbance at the stop equilibrium for the entire long horizon.
