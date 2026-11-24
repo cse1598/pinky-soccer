@@ -96,3 +96,23 @@ OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_aca
 OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados verify:=true
 # baseline: change mpc_backend:=slsqp
 ```
+
+### acados elastic terminal convergence revision
+
+The previous 35-iteration hard-terminal OCP failed four of seven movement
+regressions. This revision uses normalized wheel states internally, linear
+terminal projections forming an inscribed octagon, terminal-only elastic
+slacks, a quadratic center penalty, ROBUST HPIPM, 100 SQP/QP iteration caps and
+a ~21 ms default candidate timeout. The exact replay circle (12 mm),
+2-degree yaw and 0.12 rad/s wheel and command limits remain unchanged.
+Rejected terminal plans can initialize another candidate, never directly
+command the robot. Path constraints remain hard. A nonconverged progress-only
+candidate must independently satisfy path bounds, residual thresholds, and
+improve the progress objective over a feasible braking rollout. Its
+terminal_feasible flag stays false. Search budget remains soft, and
+partial condensing horizon 2 stays unchanged to preserve resizing compatibility.
+The generated solver cache key is bumped; JSON is stored in its code directory.
+Each candidate now logs four KKT residuals, iterations, maximum slack,
+terminal errors and acceptance. No calibration, delay, or motor-model changes.
+Re-run the complete acados regression before simulation; the new elastic OCP
+has not yet been compiled/executed on the target machine.

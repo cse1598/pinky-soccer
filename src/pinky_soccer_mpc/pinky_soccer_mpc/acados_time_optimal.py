@@ -1,4 +1,4 @@
-"""Method A with acados SQP/HPIPM. Same physical model and objective as SLSQP."""
+"""Method A: elastic terminal SQP, with strict independent replay acceptance."""
 import fcntl
 import hashlib
 import json
@@ -18,42 +18,52 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                  pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12):
         super().__init__(params, dt, max_steps, budget, pos_tol, ang_tol,
                          wheel_tol, prepare_problems=False)
-        self.candidate_timeout = min(.015, self.budget/5.)
+        self.candidate_timeout = min(.022, self.budget/3.5)
+        self.retry_seed = None
         self.ocp = self.build_ocp()
         name = self.ocp.model.name
         folder = cache_dir(f'c_generated_code_{name}')
-        json_path = cache_dir() / f'{name}.json'
+        json_path = folder / f'{name}.json'
         library = folder / f'libacados_ocp_solver_{name}.so'
         with (cache_dir() / f'{name}.lock').open('w') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             fresh = not (library.is_file() and json_path.is_file())
             self.solver = acados().AcadosOcpSolver(
-                self.ocp, json_file=str(json_path), generate=fresh,
-                build=fresh, verbose=False)
+                self.ocp, generate=fresh, build=fresh, verbose=False)
         self.current_n = min(20, self.max_steps)
         self.attempt_statuses = []
 
     def build_ocp(self):
         import casadi as ca
         at = acados()
-        # Five physical states + two normalized previous wheel commands.
+        # Pose + normalized wheel speeds and previous wheel commands.
+        # Scaling is internal: public predictor and commands stay in SI units.
         x = ca.SX.sym('x', 7)
         u = ca.SX.sym('u', 2)
         p = ca.SX.sym('p', 4)
-        wh = x[3:5]/self.wmax
+        wh = x[3:5]
         vw = ca.DM(self.B) @ (u+ca.DM(self.avg)*(wh-u))
         h = self.dt*vw[1]
         nxt = ca.vertcat(x[0]+self.dt*vw[0]*ca.cos(x[2]+h/2),
                          x[1]+self.dt*vw[0]*ca.sin(x[2]+h/2), x[2]+h,
-                         self.wmax*(u+ca.DM(self.decay)*(wh-u)),u)
+                         u+ca.DM(self.decay)*(wh-u),u)
         e = x[:3]-p[:3]
-        g = ca.vertcat(ca.sumsqr(e[:2]/self.pos_tol),
-                       e[2]/self.ang_tol, x[3:5]/self.wheel_tol,
+        # Linear, well-scaled terminal constraints replace the squared radius
+        # constraint in the SQP subproblem. Four two-sided projections form
+        # an inscribed octagon (conservative by <=7.6% in radial extent).
+        # The final replay still uses the original exact circular tolerance.
+        angles = np.arange(4)*np.pi/4
+        facets = ca.DM(np.column_stack((np.cos(angles),np.sin(angles))))
+        g = ca.vertcat(facets@(e[:2]/self.pos_tol)/math.cos(math.pi/8),
+                       e[2]/self.ang_tol,
+                       x[3:5]*self.wmax/self.wheel_tol,
                        x[5:7]*self.wmax/self.wheel_tol)
+        center = ca.vertcat(e[:2]/self.pos_tol, e[2]/self.ang_tol,
+                            x[3:7]*self.wmax/self.wheel_tol)
         flag = p[3]
         factor = .1+.9*flag
         model = at.AcadosModel()
-        key = json.dumps(dict(version='acados-method-a-v1',
+        key = json.dumps(dict(version='acados-method-a-v2-elastic',
                               model=self.params.as_dict(), dt=self.dt,
                               n=self.max_steps, budget=self.candidate_timeout,
                               terminal=[self.pos_tol,self.ang_tol,self.wheel_tol]),
@@ -66,7 +76,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             math.sqrt(.02/self.dt)*u,
             math.sqrt(.08/self.dt)*(u-x[5:7]))
         model.cost_y_expr_e = ca.vertcat(
-            .2*flag*g, math.sqrt(200)*(1-flag)*e[:2],
+            .5*flag*center, math.sqrt(200)*(1-flag)*e[:2],
             math.sqrt(8)*(1-flag)*ca.sin(e[2]/2))
         model.con_h_expr = model.con_h_expr_0 = ca.vertcat(
             ca.DM(self.B)@u, u-x[5:7])
@@ -76,9 +86,9 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         ocp.parameter_values = np.array([0.,0.,0.,1.])
         ocp.cost.cost_type = ocp.cost.cost_type_e = 'NONLINEAR_LS'
         ocp.cost.W = np.eye(4)
-        ocp.cost.W_e = np.eye(9)
+        ocp.cost.W_e = np.eye(10)
         ocp.cost.yref = np.zeros(4)
-        ocp.cost.yref_e = np.zeros(9)
+        ocp.cost.yref_e = np.zeros(10)
         c = ocp.constraints
         c.x0 = np.zeros(7)
         c.idxbu = np.arange(2)
@@ -86,7 +96,14 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         hi = np.array([self.v_limit,self.w_limit,self.slew,self.slew])
         c.lh,c.uh = -hi,hi
         c.lh_0,c.uh_0 = -hi,hi
-        c.lh_e,c.uh_e = -np.ones(6),np.ones(6)
+        nh = 9
+        c.lh_e,c.uh_e = -np.ones(nh),np.ones(nh)
+        c.idxsh_e = np.arange(nh)
+        c.lsh_e = np.zeros(nh)
+        c.ush_e = np.zeros(nh)
+        # Elastic terminal only. Wheel command, body and slew limits stay hard.
+        ocp.cost.zl_e = ocp.cost.zu_e = 30.*np.ones(nh)
+        ocp.cost.Zl_e = ocp.cost.Zu_e = 60.*np.ones(nh)
         o = ocp.solver_options
         o.N_horizon = min(20,self.max_steps)
         o.tf = o.N_horizon*self.dt
@@ -95,13 +112,16 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         o.qp_solver_cond_N = 2
         o.hessian_approx = 'GAUSS_NEWTON'
         o.nlp_solver_type = 'SQP'
-        o.nlp_solver_max_iter = 35
+        o.nlp_solver_max_iter = 100
+        o.qp_solver_iter_max = 100
+        o.hpipm_mode = 'ROBUST'
         o.globalization = 'MERIT_BACKTRACKING'
-        o.levenberg_marquardt = 1e-5
-        o.tol = 1e-5
+        o.levenberg_marquardt = 1e-3
+        o.tol = 1e-4
         o.timeout_max_time = self.candidate_timeout
         o.timeout_heuristic = 'MAX_CALL'
-        ocp.code_export_directory = str(cache_dir(f'c_generated_code_{model.name}'))
+        ocp.code_gen_options.code_export_directory = str(cache_dir(f'c_generated_code_{model.name}'))
+        ocp.code_gen_options.json_file = f'{model.name}.json'
         return ocp
 
     def replay(self,x,us):
@@ -135,6 +155,31 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             violation = max(violation,float(np.max(np.abs(g)-1)))
         return xs,violation
 
+    def pack_state(self,x,prev):
+        """Convert physical replay state to scaled solver coordinates."""
+        return np.r_[x[:3],x[3:5]/self.wmax,prev/self.wmax]
+
+    def terminal_errors(self,xs,us,goal):
+        e=xs[-1,:3]-goal
+        return dict(position_m=float(np.linalg.norm(e[:2])),
+                    heading_rad=float(abs(e[2])),
+                    wheel_rad_s=float(np.max(np.abs(xs[-1,3:5]))),
+                    command_rad_s=float(np.max(np.abs(us[-1]))))
+
+    def terminal_merit(self,xs,us,goal):
+        e=self.terminal_errors(xs,us,goal)
+        return ((e['position_m']/self.pos_tol)**2+
+                (e['heading_rad']/self.ang_tol)**2+
+                (e['wheel_rad_s']/self.wheel_tol)**2+
+                (e['command_rad_s']/self.wheel_tol)**2)
+
+    def progress_merit(self,xs,us,prev,goal):
+        e=xs[-1,:3]-goal
+        z=us/self.wmax
+        du=np.diff(np.vstack([prev/self.wmax,z]),axis=0)
+        return float(100*np.dot(e[:2],e[:2])+2*(1-np.cos(e[2]))+
+                     .01*(.01*np.sum(z*z)+.04*np.sum(du*du)))
+
     def attempt(self,n,x,goal,prev,vb,wb,forward,seed,deadline,terminal=True):
         started=time.perf_counter()
         if started>=deadline:
@@ -151,17 +196,36 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             lo[0]=0.
         seed=np.asarray(seed,float)
         xs=self.replay(x,seed)
+        # Reuse a rejected elastic solution only as a numerical initialization.
+        # A shorter candidate may have useful geometry even if it cannot stop.
+        if terminal and self.retry_seed is not None:
+            retry=self.resize(self.retry_seed,n,prev,vb,wb,forward)
+            rx=self.replay(x,retry)
+            if self.terminal_merit(rx,retry,goal)<self.terminal_merit(xs,seed,goal):
+                seed,xs=retry,rx
         old=prev
         for k in range(n):
             s.set(k,'p',p)
-            s.set(k,'x',np.r_[xs[k],old/self.wmax])
+            s.set(k,'x',self.pack_state(xs[k],old))
             s.set(k,'u',seed[k]/self.wmax)
             s.constraints_set(k,'lh',lo)
             s.constraints_set(k,'uh',hi)
             old=seed[k]
         s.set(n,'p',p)
-        s.set(n,'x',np.r_[xs[-1],old/self.wmax])
-        initial=np.r_[x,prev/self.wmax]
+        s.set(n,'x',self.pack_state(xs[-1],old))
+        initial=self.pack_state(x,prev)
+        # Initialize terminal slack variables consistently with the seed.
+        if terminal:
+            angles=np.arange(4)*np.pi/4
+            facets=np.column_stack((np.cos(angles),np.sin(angles)))
+            e=xs[-1,:3]-goal
+            g=np.r_[facets@(e[:2]/self.pos_tol)/math.cos(math.pi/8),
+                    e[2]/self.ang_tol,xs[-1,3:5]/self.wheel_tol,
+                    old/self.wheel_tol]
+        else:
+            g=np.zeros(9)
+        s.set(n,'sl',np.maximum(0.,-1-g))
+        s.set(n,'su',np.maximum(0.,g-1))
         s.constraints_set(0,'lbx',initial)
         s.constraints_set(0,'ubx',initial)
         if time.perf_counter()>=deadline:
@@ -172,24 +236,53 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         us=np.array([s.get(k,'u') for k in range(n)])*self.wmax
         predicted,violation=self.validate_candidate(
             x,goal,prev,us,vb,wb,forward,terminal)
+        def finite_list(values):
+            return [float(v) if math.isfinite(v) else None for v in values]
+        errors=self.terminal_errors(predicted,us,goal) if predicted is not None else None
+        slack=np.r_[s.get(n,'sl'),s.get(n,'su')]
+        cost=float(s.get_cost())
+        residual_ok=(len(residuals)>=4 and np.all(np.isfinite(residuals))
+                     and residuals[1]<=1e-3 and residuals[2]<=1e-3)
+        safe_status=status in (0,2,7) and math.isfinite(cost)
+        if terminal and predicted is not None and safe_status:
+            _,path_violation=self.validate_candidate(
+                x,goal,prev,us,vb,wb,forward,False)
+            if path_violation<=1e-5:
+                self.retry_seed=us.copy()
+        accepted=bool(safe_status and predicted is not None and violation<=1e-5
+                      and residual_ok)
+        if accepted and not terminal:
+            # For progress-only fallback, require improvement over a feasible
+            # braking rollout even if SQP reaches its iteration/time limit.
+            brake=[]
+            old=prev
+            for _ in range(n):
+                old=self.project(np.zeros(2),old,vb,wb,1 if forward else 0)
+                brake.append(old)
+            brake=np.asarray(brake)
+            bxs,bviolation=self.validate_candidate(x,goal,prev,brake,vb,wb,forward,False)
+            accepted=bool(bxs is not None and bviolation<=1e-5 and
+                self.progress_merit(predicted,us,prev,goal) <
+                self.progress_merit(bxs,brake,prev,goal)-1e-8)
         self.attempt_statuses.append(dict(n=int(n),status=status,
             terminal=bool(terminal),ms=round((time.perf_counter()-started)*1e3,3),
+            iterations=iterations,residuals=finite_list(residuals),
+            slack_max=float(np.max(slack)) if np.all(np.isfinite(slack)) else None,
+            terminal_errors=errors,accepted=accepted,
             violation=float(violation) if math.isfinite(violation) else None))
-        # Nonconverged candidates can be feasible, never claim optimality.
-        allowed=(0,2,7) if terminal else (0,)
-        if (status not in allowed or predicted is None or violation>1e-5
-                or len(residuals)<4 or not np.all(np.isfinite(residuals))
-                or residuals[1]>1e-3 or residuals[2]>1e-3):
+        if not accepted:
             return None
+        # Nonconverged results are independently feasible, not certified optimal.
         message='acados converged' if status==0 else 'acados feasible iterate, not converged'
         return dict(u=tuple(us[0]),us=us,xs=predicted,ok=True,status=status,
                     iterations=iterations,message=message,residuals=residuals.tolist(),
                     replay_violation=float(violation),horizon_steps=n,
                     planned_time=n*self.dt,terminal_feasible=terminal,
-                    cost=float(s.get_cost()))
+                    cost=cost)
 
     def solve(self,*args,**kwargs):
         self.attempt_statuses=[]
+        self.retry_seed=None
         result=super().solve(*args,**kwargs)
         result['backend']='discrete_time_optimal_acados'
         result['attempt_statuses']=self.attempt_statuses.copy()

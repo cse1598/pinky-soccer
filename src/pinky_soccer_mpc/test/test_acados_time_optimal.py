@@ -1,5 +1,6 @@
 """Explicit acados integration and independent closed-loop regression."""
 import math
+import json
 
 import numpy as np
 import pytest
@@ -59,7 +60,8 @@ def test_acados_closed_loop(setup,goal):
             res=m.solve(np.r_[x[:5],x[7:9]],goal,w_cap=2.)
             durations.append(res['ms'])
             failures=0 if res['ok'] else failures+1
-            assert failures<3,res
+            assert failures<3,json.dumps(dict(goal=goal,step=i,state=x.tolist(),
+                attempts=res['attempt_statuses'],message=res['message']),indent=2)
             u=np.asarray(res['u'])
             if res['ok']:
                 assert res['backend']=='discrete_time_optimal_acados'
@@ -76,3 +78,26 @@ def test_acados_closed_loop(setup,goal):
                     assert np.max(np.abs(end[3:5]))<=m.wheel_tol+1e-5
         x=plant.step(p,x,u,m.dt)
     pytest.fail(f'No settled arrival: {x}, target {goal}')
+
+
+def test_elastic_terminal_does_not_relax_acceptance(setup):
+    _,m=setup
+    assert len(m.ocp.constraints.idxsh_e)==9
+    assert np.all(m.ocp.cost.Zu_e>0)
+    assert len(m.ocp.constraints.idxsh)==0
+    x=np.zeros(5)
+    goal=np.array([.6,0.,0.])
+    u=np.zeros((2,2))
+    _,v_terminal=m.validate_candidate(x,goal,np.zeros(2),u,m.v_limit,2.,False,True)
+    _,v_path=m.validate_candidate(x,goal,np.zeros(2),u,m.v_limit,2.,False,False)
+    assert v_terminal>0 and v_path==0
+
+
+def test_internal_state_scaling(setup):
+    _,m=setup
+    x=np.array([.2,-.1,.4,3.,-4.])
+    prev=np.array([2.,-1.])
+    z=m.pack_state(x,prev)
+    assert np.allclose(z[:3],x[:3])
+    assert np.allclose(z[3:5]*m.wmax,x[3:5])
+    assert np.allclose(z[5:7]*m.wmax,prev)
