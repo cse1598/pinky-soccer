@@ -10,7 +10,8 @@ setup(
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml', 'README.md', 'REAL_GAME.md', 'GAMEPLAY.md']),
+        ('share/' + package_name, ['package.xml', 'README.md', 'REAL_GAME.md',
+                                   'GAMEPLAY.md', 'VERIFY.md']),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
         ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
     ],
@@ -28,6 +29,8 @@ setup(
             'world_model_topview = pinky_soccer_viz.world_model_topview:main',
             'mujoco_eval_bridge = pinky_soccer_viz.mujoco_eval_bridge:main',
             'soccer_trial = pinky_soccer_viz.soccer_trial:main',
+            'behavior_verifier = pinky_soccer_viz.behavior_verifier:main',
+            'gazebo_truth_relay = pinky_soccer_viz.gazebo_truth_relay:main',
         ],
     },
 )

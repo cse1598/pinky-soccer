@@ -122,7 +122,10 @@ public:
 
 protected:
   virtual BT::NodeStatus update() = 0;
-  void setGoal(uint8_t mode, const Pose2& target, double max_speed);
+  // `path`: waypoints the controller will be given in order (planned_path, for display);
+  // empty means the target alone.
+  void setGoal(uint8_t mode, const Pose2& target, double max_speed,
+               const std::vector<Pose2>& path = {});
   template <typename T>
   T input(const std::string& port)
   {

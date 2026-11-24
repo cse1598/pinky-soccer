@@ -1,0 +1,188 @@
+# Behaviour verifier catalog: what the verifier UI lists and explains.
+# Only behaviours used by trees/soccer_1v1.xml are listed. `default` must equal the value the
+# game tree uses (XML attribute, else the C++ port default); test/test_verify_catalog.py
+# checks names, ports and defaults against the tree and `bt_node --print-models`.
+#
+# kind:  action  - one BT action node (pinky_soccer_bt/src/bt_nodes.cpp)
+#        subtree - a BehaviorTree of soccer_1v1.xml (the same XML the game runs)
+# ports: settable numeric inputs; world inputs (pose, ball, ...) are wired automatically
+# pose_input: ports filled by clicking (and dragging for the heading) on the map
+# done_when: optional UI-side end condition, a probe condition label or `goal_scored`
+schema: 1
+
+world_inputs:
+  pose: {label: 로봇 자세, text: "월드 모델이 추정한 내 위치·방향 (map, 경기장 중앙 원점)"}
+  ball: {label: 공, text: "월드 모델의 공 추정 위치와 상태(OBSERVED/ESTIMATED/LOST)·공분산"}
+  opponents: {label: 상대, text: "월드 모델이 추적 중인 상대 로봇 목록"}
+  own_goal: {label: 우리 골대, text: "우리가 지키는 골대 입구 중앙 (our_goal_color 기준)"}
+  opp_goal: {label: 상대 골대, text: "우리가 공격하는 골대 입구 중앙"}
+  playing: {label: 경기 중, text: "/game/playing 최신 값. 전체 경기(Main)만 사용"}
+
+probe:   # live condition panel: the same conditions and thresholds as soccer_1v1.xml
+  - {label: IsPlaying, target: IsPlaying, ports: {}, text: "경기 시작 신호를 받았는가"}
+  - {label: BallKnown, target: BallKnown, ports: {max_sigma: "0.30"},
+     text: "공이 LOST가 아니고 위치 표준편차 ≤ 0.30 m"}
+  - {label: BallInOwnHalf, target: BallInOwnHalf, ports: {margin: "0.30"},
+     text: "공이 우리 진영(+중앙선 너머 0.30 m) 안"}
+  - {label: OpponentCloserToBall, target: OpponentCloserToBall, ports: {},
+     text: "보이는 상대 중 나보다 공에 가까운 로봇이 있음"}
+  - {label: IsBehindBall, target: IsBehindBall, ports: {tol_dist: "0.08", tol_angle: "0.35"},
+     text: "공→상대 골대 슛 선 뒤 0.30 m 이내, 선에서 0.08 m·방향 0.35 rad 이내"}
+  - {label: NotFacingOwnGoal, target: NotFacingOwnGoal, ports: {min_angle: "1.57"},
+     text: "진행 방향과 우리 골대 방향이 1.57 rad 이상 벌어짐(자책골 방지)"}
+
+items:
+  # ------------------------------------------------------------------ single actions
+  - id: GoToPose
+    kind: action
+    group: 단일 행동
+    title: 지정 위치로 이동
+    text: >-
+      지도에서 찍은 목표 자세(위치+방향)로 이동합니다. NMPC가 바퀴 한계 안에서 가장 빨리 도착하는
+      경로를 매 주기 계산하며(후진 포함), 목표 근처에서는 목표 방향을 맞추며 들어갑니다.
+      경기에서는 공 탐색의 마지막 단계로 경기장 중앙(0, 0)에 갈 때 씁니다.
+    result: >-
+      SUCCESS: 위치 오차 5 cm 이내이고 방향 오차 0.15 rad(8.6°) 이내. RUNNING: 이동 중.
+    pose_input: {x: x, y: y, theta: theta}
+    inputs: [pose]
+    ports:
+      - {name: x, label: 목표 X, unit: m, default: 0.0, min: -1.5, max: 1.5, step: 0.05,
+         text: "map X. +X는 파랑 골대 쪽"}
+      - {name: y, label: 목표 Y, unit: m, default: 0.0, min: -1.0, max: 1.0, step: 0.05,
+         text: "map Y. +Y는 +X를 볼 때 왼쪽"}
+      - {name: theta, label: 목표 방향, unit: rad, default: 0.0, min: -3.1416, max: 3.1416,
+         step: 0.1, text: "도착 후 바라볼 방향. 0 = +X(파랑 골대 쪽)"}
+
+  - id: GoBehindBall
+    kind: action
+    group: 단일 행동
+    title: 공 뒤로 자리 잡기
+    text: >-
+      공→상대 골대 선 위, 공 뒤 offset 지점으로 가서 골대를 바라봅니다. 로봇이 공 옆이나 앞에
+      있으면 먼저 자기 쪽 옆 clearance 지점을 거쳐 돌아갑니다(충돌 검사 없는 단순 우회).
+      지도에 우회점과 최종 자리가 경로로 표시됩니다.
+    result: >-
+      항상 RUNNING (경기에서는 IsBehindBall이 참이 되면 PushBall로 넘어감).
+      검증에서는 IsBehindBall이 참이 되면 자동으로 끝내고 성공으로 기록합니다.
+    done_when: IsBehindBall
+    inputs: [pose, ball, opp_goal]
+    ports:
+      - {name: offset, label: 공 뒤 거리, unit: m, default: 0.15, min: 0.05, max: 0.5,
+         step: 0.01, text: "공 중심에서 뒤로 떨어진 목표 거리"}
+      - {name: clearance, label: 우회 옆 거리, unit: m, default: 0.20, min: 0.05, max: 0.6,
+         step: 0.01, text: "공 옆을 돌아갈 때 공 중심에서 옆으로 떨어지는 거리"}
+
+  - id: PushBall
+    kind: action
+    group: 단일 행동
+    title: 공 밀어 넣기
+    text: >-
+      상대 골대 중심을 슛 방향으로 beyond만큼 지난 점을 목표로, speed 이하로 곧게 밀고 갑니다.
+      공 뒤에 서 있는 상태에서 실행해야 의미가 있습니다(먼저 GoBehindBall).
+    result: >-
+      항상 RUNNING. 공이 상대 골대에 들어가면(시뮬은 정답 위치, 실물은 추정 위치) 자동 종료.
+    done_when: goal_scored
+    inputs: [ball, opp_goal]
+    ports:
+      - {name: speed, label: 미는 속도, unit: m/s, default: 0.25, min: 0.02, max: 0.25,
+         step: 0.01, text: "직진 속도 상한. launch의 max_lin이 더 작으면 그 값이 상한"}
+      - {name: beyond, label: 골대 너머 거리, unit: m, default: 0.10, min: 0.0, max: 0.3,
+         step: 0.01, text: "목표점을 골대 입구 중심보다 슛 방향으로 더 보내는 거리"}
+
+  - id: GoToBlockPoint
+    kind: action
+    group: 단일 행동
+    title: 막는 자리로 이동
+    text: >-
+      우리 골대 중심에서 공까지 선분의 ratio 지점으로 가서 공을 바라봅니다.
+      공이 움직이면 목표도 따라 움직입니다.
+    result: "SUCCESS: 목표 5 cm 이내 도착 (이탈 판정은 10 cm 히스테리시스). RUNNING: 이동 중."
+    inputs: [pose, ball, own_goal]
+    ports:
+      - {name: ratio, label: 선분 비율, unit: "-", default: 0.35, min: 0.05, max: 0.95,
+         step: 0.05, text: "0 = 우리 골대, 1 = 공"}
+
+  - id: FaceBall
+    kind: action
+    group: 단일 행동
+    title: 제자리에서 공 바라보기
+    text: 제자리에서 회전해 공 추정 위치를 바라봅니다.
+    result: "항상 RUNNING. 정지 버튼이나 제한 시간으로 끝냅니다. 평가의 '공 방향 오차'를 보세요."
+    inputs: [pose, ball]
+    ports: []
+
+  - id: TurnToLastSeen
+    kind: action
+    group: 단일 행동
+    title: 마지막 공 방향으로 돌기
+    text: 공을 잃었을 때 마지막 추정 위치 쪽으로 제자리 회전합니다.
+    result: >-
+      FAILURE: 그 방향을 바라봤는데(0.15 rad 이내) 이 노드가 계속 돌고 있음 = 공을 못 찾음
+      → 경기에서는 다음 탐색 단계로 넘어가는 정상 종료입니다. RUNNING: 회전 중.
+    inputs: [pose, ball]
+    ports: []
+
+  - id: SpinInPlace
+    kind: action
+    group: 단일 행동
+    title: 제자리 회전
+    text: 목표 방향을 항상 1 rad 앞에 두어 계속 돌게 합니다(공 탐색).
+    result: "항상 RUNNING. 경기에서는 5초 제한으로 끝납니다."
+    inputs: [pose]
+    ports:
+      - {name: speed, label: 회전 속도, unit: rad/s, default: 0.8, min: -2.0, max: 2.0,
+         step: 0.1, text: "부호 = 방향(+ 반시계). 크기 = 회전 속도 상한"}
+
+  - id: StopRobot
+    kind: action
+    group: 단일 행동
+    title: 정지
+    text: STOP 목표를 내서 제어기가 0 속도를 내게 합니다.
+    result: "즉시 SUCCESS."
+    inputs: []
+    ports: []
+
+  # ------------------------------------------------------------------ subtrees
+  - id: Attack
+    kind: subtree
+    group: 조합 행동
+    title: 공격
+    text: >-
+      공 뒤에 있고(IsBehindBall) 우리 골대를 보지 않으면(NotFacingOwnGoal) PushBall,
+      아니면 GoBehindBall. 노드 상태 창에서 어느 쪽이 실행 중인지 볼 수 있습니다.
+    result: "보통 RUNNING. 골이 들어가면 자동 종료."
+    done_when: goal_scored
+    inputs: [pose, ball, opp_goal, own_goal]
+    ports: []
+
+  - id: Defend
+    kind: subtree
+    group: 조합 행동
+    title: 수비
+    text: GoToBlockPoint로 막는 자리에 간 뒤 FaceBall로 공을 바라봅니다.
+    result: "보통 RUNNING (FaceBall이 계속 실행)."
+    inputs: [pose, ball, own_goal]
+    ports: []
+
+  - id: SearchBall
+    kind: subtree
+    group: 조합 행동
+    title: 공 탐색
+    text: >-
+      마지막 공 방향으로 회전(2초 제한) → 제자리 회전(5초 제한) → 경기장 중앙(0, 0)으로 이동.
+      공이 보여도 이 서브트리만 실행하면 멈추지 않으므로, BallKnown 표시를 함께 보세요.
+    result: "SUCCESS: 앞 단계가 끝나고 중앙에 도착. 단계별 상태는 노드 상태 창에 표시."
+    inputs: [pose, ball]
+    ports: []
+
+  - id: Main
+    kind: subtree
+    group: 전체 경기
+    title: 전체 경기 판단
+    text: >-
+      경기와 같은 전체 트리(공 탐색/수비/공격 선택)입니다. 실행하면 /game/playing=true를
+      보내고, 정지하면 false를 보냅니다.
+    result: "끝나지 않음. 정지 버튼이나 제한 시간으로 끝냅니다."
+    playing: true
+    inputs: [playing, pose, ball, opponents, own_goal, opp_goal]
+    ports: []

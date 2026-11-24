@@ -13,6 +13,10 @@
 `ros2 launch pinky_soccer_viz real_game.launch.py field:=hardboard allow_uncalibrated:=true`
 로 공 인식·판단·저속 제어를 실행하고 `/game/playing`으로 시작/정지합니다.
 
+**행동 검증 모드**: `game.launch.py ... verify:=true`. 경기에서 쓰는 행동/서브트리를 목록에서 골라
+실행하고 2D 지도(추정값, 시뮬은 정답 겹쳐 보기)·노드 상태·조건·평가·기록으로 확인하는 창이 열립니다.
+사용법은 [VERIFY.md](VERIFY.md) (`behavior_verifier`, `verify_core.py`, Gazebo `gazebo_truth_relay`).
+
 월드 모델 UI 두 가지와 판단 계층 전체를 띄우는 launch, 시뮬레이션 평가 도구입니다. PC 전용입니다 (로봇에 설치하지 않음).
 
 ## 실행

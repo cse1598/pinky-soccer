@@ -14,6 +14,7 @@ find_package(behaviortree_cpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(pinky_soccer_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # ROS-free geometry, unit tested on its own.
 add_library(soccer_logic src/soccer_logic.cpp)
@@ -21,13 +22,14 @@ target_include_directories(soccer_logic PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-add_library(soccer_bt_nodes src/bt_nodes.cpp)
+add_library(soccer_bt_nodes src/bt_nodes.cpp src/verify_mode.cpp)
 target_link_libraries(soccer_bt_nodes PUBLIC
   soccer_logic
   behaviortree_cpp::behaviortree_cpp
   behaviortree_ros2::behaviortree_ros2
   rclcpp::rclcpp
   ${geometry_msgs_TARGETS}
+  ${std_msgs_TARGETS}
   ${pinky_soccer_msgs_TARGETS})
 
 add_executable(bt_node src/bt_node_main.cpp)
@@ -49,6 +51,12 @@ if(BUILD_TESTING)
   target_link_libraries(test_soccer_tree soccer_bt_nodes)
   target_compile_definitions(test_soccer_tree PRIVATE
     TREE_FILE="${CMAKE_CURRENT_SOURCE_DIR}/trees/soccer_1v1.xml")
+  # The verifier catalog must match the tree XML and the C++ port models.
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_verify_catalog test/test_verify_catalog.py TIMEOUT 60
+    ENV BT_NODE=$<TARGET_FILE:bt_node> ROS_DOMAIN_ID=93
+        TREE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/trees/soccer_1v1.xml
+        CATALOG=${CMAKE_CURRENT_SOURCE_DIR}/config/verify_catalog.yaml)
 endif()
 
 ament_package()

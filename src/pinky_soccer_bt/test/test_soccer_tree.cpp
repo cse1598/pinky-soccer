@@ -7,6 +7,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "pinky_soccer_bt/bt_nodes.hpp"
+#include "pinky_soccer_bt/verify_mode.hpp"
 
 using namespace pinky_soccer_bt;
 using pinky_soccer_msgs::msg::TrackedObject;
@@ -55,21 +56,28 @@ protected:
   }
 
   // Publish until the tree has consumed this message, then return the goal.
-  BehaviorGoal decide(const WorldModel& w)
+  BehaviorGoal decide(const WorldModel& w) { return decideWith(tree_, w); }
+
+  BehaviorGoal decideWith(BT::Tree& tree, const WorldModel& w,
+                          BT::NodeStatus* status = nullptr)
   {
     BehaviorGoal goal;
     for(int i = 0; i < 100; ++i)
     {
       pub_->publish(w);
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
-      tree_.tickOnce();
+      tree.tickOnce();
       TrackedObject pose, ball;
       bool playing = false;
       if(bb_->get("pose", pose) && bb_->get("ball", ball) && bb_->get("playing", playing) &&
          pose.pose.x == w.self.pose.x && ball.pose.x == w.ball.pose.x &&
          playing == static_cast<bool>(w.playing))
       {
-        tree_.tickOnce();
+        const auto result = tree.tickOnce();
+        if(status != nullptr)
+        {
+          *status = result;
+        }
         break;
       }
     }
@@ -149,4 +157,74 @@ TEST_F(TreeTest, PublishTreeSendsGoal)
   ASSERT_TRUE(got);
   EXPECT_EQ(received.action, "Init");
   EXPECT_EQ(received.header.frame_id, "map");
+}
+
+// ---- verification mode: single behaviours built from the same factory -------------------
+TEST_F(TreeTest, VerifyXmlRejectsBadRequests)
+{
+  using pinky_soccer_bt::buildVerifyXml;
+  using pinky_soccer_bt::NodeCall;
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"Nope", {}}, "/world_model"),
+               std::invalid_argument);
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"ReadWorldModel", {}}, "/world_model"),
+               std::invalid_argument);
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"PublishGoal", {}}, "/world_model"),
+               std::invalid_argument);
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"GoToPose", {{"x", "1"}}}, "/world_model"),
+               std::invalid_argument);   // y has no default
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"GoToPose", {{"x", "1"}, {"y", "a"}}},
+                              "/world_model"),
+               std::invalid_argument);
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"PushBall", {{"pose", "1"}}}, "/world_model"),
+               std::invalid_argument);   // world ports are wired, not set
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"Attack", {{"x", "1"}}}, "/world_model"),
+               std::invalid_argument);
+  EXPECT_THROW(buildVerifyXml(factory_, "V", NodeCall{"GoToPose", {{"x", "nan"}, {"y", "0"}}},
+                              "/world_model"),
+               std::invalid_argument);
+}
+
+TEST_F(TreeTest, VerifyRunsRealGoToPose)
+{
+  const auto xml = pinky_soccer_bt::buildVerifyXml(
+      factory_, "VerifyGoTo", {"GoToPose", {{"x", "0.5"}, {"y", "-0.2"}, {"theta", "1.0"}}},
+      "/world_model");
+  factory_.registerBehaviorTreeFromText(xml);
+  auto tree = factory_.createTree("VerifyGoTo", bb_);
+  BT::NodeStatus status = BT::NodeStatus::IDLE;
+  auto g = decideWith(tree, world(0, 0, 0, 0.3, 0, TrackedObject::LOST, false), &status);
+  EXPECT_EQ(g.action, "GoToPose");
+  EXPECT_DOUBLE_EQ(g.target.x, 0.5);
+  EXPECT_DOUBLE_EQ(g.target.y, -0.2);
+  EXPECT_DOUBLE_EQ(g.target.theta, 1.0);
+  EXPECT_EQ(status, BT::NodeStatus::RUNNING);   // runs without /game/playing
+  g = decideWith(tree, world(0.49, -0.2, 0, 0.3, 0, TrackedObject::LOST, false), &status);
+  EXPECT_EQ(status, BT::NodeStatus::RUNNING);   // in place but heading 0 != 1.0
+  g = decideWith(tree, world(0.49, -0.2, 0.95, 0.3, 0, TrackedObject::LOST, false), &status);
+  EXPECT_EQ(status, BT::NodeStatus::SUCCESS);
+}
+
+TEST_F(TreeTest, VerifySubtreeAndDetourPath)
+{
+  factory_.registerBehaviorTreeFromText(pinky_soccer_bt::buildVerifyXml(
+      factory_, "VerifyAttack", {"Attack", {}}, "/world_model"));
+  auto tree = factory_.createTree("VerifyAttack", bb_);
+  // Robot in front of the ball: GoBehindBall detours, planned_path = waypoint then behind pose.
+  const auto g = decideWith(tree, world(0.9, 0.0, 0, 0.5, 0));
+  EXPECT_EQ(g.action, "GoBehindBall");
+  ASSERT_EQ(g.planned_path.poses.size(), 2u);
+  EXPECT_DOUBLE_EQ(g.planned_path.poses[0].pose.position.x, g.target.x);
+  EXPECT_NEAR(g.planned_path.poses[1].pose.position.x, 0.35, 1e-9);   // 0.15 behind the ball
+}
+
+TEST_F(TreeTest, VerifyProbeBuilds)
+{
+  const auto xml = pinky_soccer_bt::buildProbeXml(
+      factory_, "VerifyProbeT",
+      {{"BallKnown", {{"max_sigma", "0.3"}}}, {"IsBehindBall", {{"tol_dist", "0.08"}}}},
+      "/world_model");
+  factory_.registerBehaviorTreeFromText(xml);
+  EXPECT_NO_THROW(factory_.createTree("VerifyProbeT", BT::Blackboard::create()));
+  EXPECT_THROW(pinky_soccer_bt::buildProbeXml(factory_, "X", {{"GoToPose", {}}}, "/world_model"),
+               std::invalid_argument);   // actions are not conditions
 }

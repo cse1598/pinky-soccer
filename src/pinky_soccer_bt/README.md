@@ -42,17 +42,29 @@ Groot2(`~/Groot2/bin/groot2`)로 포트 1667에 연결하면 실시간으로 볼
 | `FaceBall` | 제자리에서 공을 향함 |
 | `TurnToLastSeen` | 마지막 공 추정 방향으로 회전, 그 방향을 보면 FAILURE(다음 탐색 단계로) |
 | `SpinInPlace` | 목표 방향을 현재보다 1 rad 앞에 계속 둠, `max_speed` = 회전 속도 상한 |
-| `GoToPose` | 지정 좌표(기본 경기장 중앙)로 이동 |
+| `GoToPose` | 지정 자세(기본 경기장 중앙, theta 0)로 이동. 위치 5 cm·방향 0.15 rad 안이면 SUCCESS |
 | `StopRobot` | mode STOP |
 
 mode: GoToBlockPoint·GoToPose = NAVIGATE(Nav2 연동 전까지 제어기가 같은 비례 제어), 나머지 이동 = REACTIVE.
+
+## 검증 모드 (`verify_mode:=true`)
+
+`bt_node`가 `Main` 대신 `/behavior_test/request`(JSON)로 요청받은 **액션 노드 하나 또는 서브트리 하나**를
+같은 factory·같은 XML로 만들어 `ReactiveSequence(ReadWorldModel, 대상)`으로 실행합니다
+(`src/verify_mode.cpp`). 요청 노드·포트는 C++ 노드 모델로 검사하고 숫자만 받으며, 월드 입력 포트는
+자동 연결합니다. 상태는 `/behavior_test/status`(노드별 상태, 조건 판정, 목표)로 매 tick 냅니다.
+제한 시간(노드 시계)·월드 모델 끊김·검증 창 무응답(1.5 s)이면 STOP. 화면과 사용법은
+`pinky_soccer_viz/VERIFY.md`, 목록·설명은 `config/verify_catalog.yaml`.
+`bt_node --print-models`는 노드 포트/기본값과 실행 가능한 대상을 출력합니다.
+
+`GoBehindBall`은 이제 `planned_path`에 우회점 → 공 뒤 자리를 채웁니다(표시용, 제어기는 target만 사용).
 
 ## 알려진 한계 / TODO
 
 - XML의 수치(`max_sigma`, `margin`, `tol_*`, `offset`, `speed`, `ratio`)는 모두 시작값 가정입니다.
 - `NotFacingOwnGoal min_angle=1.57`은 상대 골대 쪽 구석(예: 공 (1.0, 0.7))에서 정상 슛도 막습니다. 로봇이 공 뒤에서 계속 자리만 잡습니다. 테스트 `NotFacingOwnGoalBlocksCornerShotsKnownLimit`로 고정해 두었으며, 시뮬레이션에서 `min_angle`을 1.0 근처로 줄이는 것을 검토합니다. 자책골 방지 자체는 "슛 방향은 항상 상대 골대 쪽 x 성분을 가진다"는 성질로 보장됩니다(테스트 `ShotDirectionAlwaysTowardsOpponentSide`).
 - 공을 건드리지 않고 돌아가는 경로 계획은 단순 우회점뿐입니다.
-- `planned_path`는 비어 있습니다 (Nav2 연동 시 채움).
+- `planned_path`는 GoBehindBall만 채웁니다 (나머지는 Nav2 연동 시).
 
 ## 테스트
 
@@ -61,4 +73,5 @@ colcon test --packages-select pinky_soccer_bt && colcon test-result --verbose
 ```
 
 - `test_soccer_logic`: 기하 판정, 자책골 방지 성질, 우회점, 목표점 계산.
+- `test_verify_catalog`: 검증 목록이 실행 가능한 대상과 같고, 포트·기본값이 트리 XML·C++ 모델과 같은지.
 - `test_soccer_tree`: 실제 XML을 로드하고 `/world_model`을 발행해 STOP/PushBall/GoBehindBall/GoToBlockPoint/TurnToLastSeen 선택과 `/behavior_goal` 발행을 확인 (ROS_DOMAIN_ID 93으로 격리).

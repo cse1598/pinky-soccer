@@ -258,10 +258,21 @@ GoalAction::GoalAction(const std::string& name, const BT::NodeConfig& conf, std:
   : BT::StatefulActionNode(name, conf), branch_(std::move(branch))
 {}
 
-void GoalAction::setGoal(uint8_t mode, const Pose2& target, double max_speed)
+void GoalAction::setGoal(uint8_t mode, const Pose2& target, double max_speed,
+                         const std::vector<Pose2>& path)
 {
-  config().blackboard->set(kGoalKey,
-                           makeGoal(branch_, registrationName(), mode, target, max_speed));
+  auto goal = makeGoal(branch_, registrationName(), mode, target, max_speed);
+  for(const auto& p : path)
+  {
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = "map";
+    pose.pose.position.x = p.x;
+    pose.pose.position.y = p.y;
+    pose.pose.orientation.z = std::sin(0.5 * p.theta);
+    pose.pose.orientation.w = std::cos(0.5 * p.theta);
+    goal.planned_path.poses.push_back(pose);
+  }
+  config().blackboard->set(kGoalKey, goal);
 }
 
 NodeStatus StopRobot::update()
@@ -281,10 +292,18 @@ PortsList GoBehindBall::providedPorts()
 NodeStatus GoBehindBall::update()
 {
   const auto pose = toPose(input<TrackedObject>("pose"));
-  const auto target = approachPose(pose, toVec(input<TrackedObject>("ball")),
-                                   toVec(input<Point>("opp_goal")), input<double>("offset"),
-                                   input<double>("clearance"));
-  setGoal(BehaviorGoal::REACTIVE, target, 0.0);
+  const auto ball = toVec(input<TrackedObject>("ball"));
+  const auto goal = toVec(input<Point>("opp_goal"));
+  const double offset = input<double>("offset");
+  const auto target = approachPose(pose, ball, goal, offset, input<double>("clearance"));
+  const auto behind = behindBallPose(ball, goal, offset);
+  // Detour: the side waypoint comes first, then the pose behind the ball (planned_path).
+  std::vector<Pose2> path{target};
+  if(std::hypot(target.x - behind.x, target.y - behind.y) > 1e-6)
+  {
+    path.push_back(behind);
+  }
+  setGoal(BehaviorGoal::REACTIVE, target, 0.0, path);
   return NodeStatus::RUNNING;   // IsBehindBall takes over once in position
 }
 
@@ -376,7 +395,10 @@ NodeStatus GoToPose::update()
   const auto pose = rootSelf(config().blackboard);
   const Pose2 target{input<double>("x"), input<double>("y"), input<double>("theta")};
   setGoal(BehaviorGoal::NAVIGATE, target, 0.0);
-  return reachedPosition(pose, target, kReachTol) ? NodeStatus::SUCCESS : NodeStatus::RUNNING;
+  // A pose goal: position and heading (the NMPC drives to both).
+  return reachedPosition(pose, target, kReachTol) && reachedHeading(pose, target.theta, kHeadingTol) ?
+             NodeStatus::SUCCESS :
+             NodeStatus::RUNNING;
 }
 
 // ---------------------------------------------------------------- registration

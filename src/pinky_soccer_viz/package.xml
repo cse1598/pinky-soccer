@@ -29,6 +29,10 @@
   <exec_depend>pinky_soccer_bt</exec_depend>
   <exec_depend>pinky_soccer</exec_depend>
   <exec_depend>pinky_soccer_sim</exec_depend>
+  <exec_depend>python3-tk</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>gz_transport_vendor</exec_depend>
+  <exec_depend>gz_msgs_vendor</exec_depend>
 
   <test_depend>ament_flake8</test_depend>
   <test_depend>python3-pytest</test_depend>
