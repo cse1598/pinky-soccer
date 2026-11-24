@@ -6,6 +6,7 @@ request identity, the 50 Hz command heartbeat and all safety/result decisions.
 import json
 import math
 import time
+import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 from geometry_msgs.msg import PoseStamped, Twist
@@ -24,6 +25,7 @@ from .arrival import Arrival, wrap
 from .pose_mpc import PoseMpc
 from .time_optimal import TimeOptimalMpc
 from .acados_time_optimal import AcadosTimeOptimalMpc
+from .scheduled_input import ScheduledInput
 
 
 class MpcController(Node):
@@ -55,6 +57,11 @@ class MpcController(Node):
         self.time_mpc=solver_cls(self.params, dt=self.dt,
              max_steps=int(p('time_optimal_max_steps',80).value),
              budget=float(p('time_optimal_budget_sec',.075).value))
+        self.schedule=ScheduledInput(self.dt, min(.025,.45*self.dt))
+        self.future_scheduled=False
+        self.future_predicted=None
+        self.active_predicted=None
+        self.pose_receipt_sim=None
         self.adapter=CommandAdapter(self.params)
         self.arrival=Arrival(float(p('pos_tol',.02).value),
                              float(p('ang_tol',math.radians(3)).value),
@@ -109,6 +116,7 @@ class MpcController(Node):
         s=msg.self
         self.pose=(s.pose.x,s.pose.y,s.pose.theta)
         self.pose_time=time.monotonic()
+        self.pose_receipt_sim=self.get_clock().now().nanoseconds*1e-9
         self.world_v=math.hypot(s.velocity.x,s.velocity.y)
         self.pose_valid=(s.state!=s.LOST and s.confidence>0 and
                          all(math.isfinite(v) for v in (*self.pose,self.world_v)))
@@ -143,6 +151,8 @@ class MpcController(Node):
         self.last_solution=self.last_solution_sim=self.last_solution_wall=None
         self.last_solution_input_sim=self.last_solution_input_wall=None
         self.next_solve=0.
+        self.schedule.clear()
+        self.active_predicted=None
 
     def job(self,generation,x,goal,v,w,forward,is_pose):
         if self.worker_generation!=generation:
@@ -168,6 +178,8 @@ class MpcController(Node):
             if state=='track' and self.last_solution_input_sim is not None else None)
         data['command_state_age_wall_s'] = (time.monotonic()-self.last_solution_input_wall
             if state=='track' and self.last_solution_input_wall is not None else None)
+        data['pose_receipt_age_sim_s'] = (max(0.,self.last_tick-self.pose_receipt_sim)
+            if self.last_tick is not None and self.pose_receipt_sim is not None else None)
         self.status_pub.publish(String(data=json.dumps(data)))
         if gid and self.goal.action=='GoToPose':
             msg=MotionResult()
@@ -204,6 +216,8 @@ class MpcController(Node):
             submitted=self.future_wall
             submitted_sim=self.future_sim
             completed_id=self.solve_id
+            scheduled=self.future_scheduled
+            predicted=self.future_predicted
             self.future=None
             try:
                 res=future.result()
@@ -211,14 +225,21 @@ class MpcController(Node):
                 res={'ok':False,'status':-1,'ms':(wall-submitted)*1000,
                      'message':str(exc),'residuals':[]}
             if generation==self.generation:
+                activation_diag={k:v for k,v in self.diag.items() if k.startswith('activation_') or k=='prediction_lead_sim_s'}
                 self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
                                                 'iterations','v_bound','w_bound','message','backend',
                                                 'horizon_steps','planned_time','terminal_feasible',
                                                 'attempts','lower_steps','attempt_statuses','replay_violation')}
+                self.diag.update(activation_diag)
                 self.diag.update(solve_id=completed_id,
                                  solve_input_age_sim_s=now-submitted_sim,
                                  solve_input_age_wall_s=wall-submitted)
-                if res['ok'] and wall-submitted<=.3:
+                if scheduled:
+                    # Hold the existing stage until its scheduled boundary.
+                    # The new solution is only eligible for that boundary.
+                    if res['ok'] and wall-submitted<=.3:
+                        self.schedule.offer(now,(res,predicted,submitted_sim,submitted))
+                elif res['ok'] and wall-submitted<=.3:
                     self.last_solution=tuple(res['u'])
                     self.last_solution_sim=now
                     self.last_solution_wall=wall
@@ -292,12 +313,16 @@ class MpcController(Node):
                 self.invalidate()
                 self.failures+=1
             return self.stop('solver deadline')
+        if is_pose and self.time_backend=='acados':
+            return self.scheduled_tick(now,wall,goal,dist,ang,elapsed)
         if self.future is None and now+1e-8>=self.next_solve:
             v,w=self.caps()
             x=(*self.pose,*self.omega,*self.last_cmd)
             self.future_generation=self.generation
             self.future_wall=wall
             self.future_sim=now
+            self.future_scheduled=False
+            self.future_predicted=None
             self.solve_id+=1
             self.future=self.executor_pool.submit(self.job,self.generation,x,goal,v,w,
                                                    self.goal.action in self.forward_only,is_pose)
@@ -306,6 +331,64 @@ class MpcController(Node):
                and wall-self.last_solution_wall<=.3)
         v,w=self.send(self.last_solution if valid else (0.,0.))
         self.report('track' if valid else 'waiting', 'optimized' if valid else 'no fresh optimized command',
+                    dist=dist,ang=ang,v=v,w=w,period_s=elapsed)
+
+    def scheduled_tick(self,now,wall,goal,dist,ang,elapsed):
+        """Pipeline exactly one 100 ms stage; optimize the next activation state."""
+        due,result,jitter=self.schedule.take(now)
+        if due:
+            self.diag['activation_jitter_sim_s']=float(jitter)
+            if result is not None:
+                res,predicted,submitted_sim,submitted=result
+                self.last_solution=tuple(res['u'])
+                self.last_solution_sim=now
+                self.last_solution_wall=wall
+                self.last_solution_input_sim=submitted_sim
+                self.last_solution_input_wall=submitted
+                self.active_predicted=predicted
+                self.failures=0
+                self.diag.update(activation_position_error_m=math.hypot(
+                    self.pose[0]-predicted[0],self.pose[1]-predicted[1]),
+                    activation_heading_error_rad=abs(wrap(self.pose[2]-predicted[2])),
+                    activation_wheel_error_rad_s=float(np.max(np.abs(
+                        np.asarray(self.omega)-predicted[3:5]))))
+                self.publish_path(res['xs'])
+            else:
+                # No valid solution for this interval: brake, not an old first input.
+                self.last_solution=None
+                self.active_predicted=None
+                self.failures+=1
+                self.diag.update(activation_position_error_m=None,
+                    activation_heading_error_rad=None,activation_wheel_error_rad_s=None,
+                    activation_missed=True)
+                # Invalidate a late worker so it cannot fill a subsequent slot.
+                self.generation+=1
+            self.diag['activation_missed']=result is None
+        if self.failures>=3:
+            self.failed_reason='three consecutive missed/failed activation slots'
+            self.invalidate()
+            return self.stop(self.failed_reason,MotionResult.FAILURE,dist,ang)
+        command=self.last_solution if self.last_solution is not None else (0.,0.)
+        # Send before snapshotting prediction: this is the known held command.
+        v,w=self.send(command)
+        if self.schedule.due is None and self.future is None:
+            vb,wb=self.caps()
+            physical=np.asarray((*self.pose,*self.omega,*self.ref),float)
+            predicted=self.time_mpc.predictor.step(physical,command,self.dt)
+            state=np.r_[predicted,command]
+            self.schedule.begin(now)
+            self.future_generation=self.generation
+            self.future_wall=wall
+            self.future_sim=now
+            self.future_scheduled=True
+            self.future_predicted=predicted
+            self.solve_id+=1
+            self.future=self.executor_pool.submit(self.job,self.generation,state,
+                 goal,vb,wb,self.goal.action in self.forward_only,True)
+            self.diag['prediction_lead_sim_s']=self.dt
+        valid=self.last_solution is not None
+        self.report('track' if valid else 'waiting',
+                    'scheduled optimized input' if valid else 'waiting for scheduled solution',
                     dist=dist,ang=ang,v=v,w=w,period_s=elapsed)
 
     def publish_path(self,xs):

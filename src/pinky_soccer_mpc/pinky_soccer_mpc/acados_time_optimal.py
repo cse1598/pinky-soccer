@@ -7,12 +7,17 @@ import time
 
 import numpy as np
 
+from pinky_soccer_dynamics import profile_model as profile
+
 from .acados_setup import acados, cache_dir
+from .ramp_predictor import RampPredictor
 from .time_optimal import TimeOptimalMpc
 
 
 class AcadosTimeOptimalMpc(TimeOptimalMpc):
     """Search integer horizons using a single resizable discrete OCP."""
+
+    state_size = 7
 
     def __init__(self, params, dt=.1, max_steps=80, budget=.075,
                  pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12):
@@ -20,6 +25,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                          wheel_tol, prepare_problems=False)
         self.candidate_timeout = min(.022, self.budget/3.5)
         self.retry_seed = None
+        self.predictor=RampPredictor(params,self.dt)
         self.ocp = self.build_ocp()
         name = self.ocp.model.name
         folder = cache_dir(f'c_generated_code_{name}')
@@ -36,17 +42,15 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
     def build_ocp(self):
         import casadi as ca
         at = acados()
-        # Pose + normalized wheel speeds and previous wheel commands.
-        # Scaling is internal: public predictor and commands stay in SI units.
-        x = ca.SX.sym('x', 7)
+        # Pose, measured wheels, motor profile, previous command; normalized
+        # wheel states inside SQP. Exact same 5 ms ramp map as profile_model.
+        x = ca.SX.sym('x', 9)
         u = ca.SX.sym('u', 2)
         p = ca.SX.sym('p', 4)
-        wh = x[3:5]
-        vw = ca.DM(self.B) @ (u+ca.DM(self.avg)*(wh-u))
-        h = self.dt*vw[1]
-        nxt = ca.vertcat(x[0]+self.dt*vw[0]*ca.cos(x[2]+h/2),
-                         x[1]+self.dt*vw[0]*ca.sin(x[2]+h/2), x[2]+h,
-                         u+ca.DM(self.decay)*(wh-u),u)
+        px,pu,pnext=profile.symbolic_step(self.params,self.dt)
+        f=ca.Function('profile_transition',[px,pu],[pnext])
+        physical=f(ca.vertcat(x[:3],x[3:9]*self.wmax),u*self.wmax)
+        nxt=ca.vertcat(physical[:3],physical[3:9]/self.wmax)
         e = x[:3]-p[:3]
         # Linear, well-scaled terminal constraints replace the squared radius
         # constraint in the SQP subproblem. Four two-sided projections form
@@ -57,13 +61,13 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         g = ca.vertcat(facets@(e[:2]/self.pos_tol)/math.cos(math.pi/8),
                        e[2]/self.ang_tol,
                        x[3:5]*self.wmax/self.wheel_tol,
-                       x[5:7]*self.wmax/self.wheel_tol)
+                       x[5:9]*self.wmax/self.wheel_tol)
         center = ca.vertcat(e[:2]/self.pos_tol, e[2]/self.ang_tol,
-                            x[3:7]*self.wmax/self.wheel_tol)
+                            x[3:9]*self.wmax/self.wheel_tol)
         flag = p[3]
         factor = .1+.9*flag
         model = at.AcadosModel()
-        key = json.dumps(dict(version='acados-method-a-v2-elastic',
+        key = json.dumps(dict(version='acados-method-a-v3-profile',
                               model=self.params.as_dict(), dt=self.dt,
                               n=self.max_steps, budget=self.candidate_timeout,
                               terminal=[self.pos_tol,self.ang_tol,self.wheel_tol]),
@@ -74,29 +78,29 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         # NLS costs are scaled by dt at nonterminal nodes.
         model.cost_y_expr = factor*ca.vertcat(
             math.sqrt(.02/self.dt)*u,
-            math.sqrt(.08/self.dt)*(u-x[5:7]))
+            math.sqrt(.08/self.dt)*(u-x[7:9]))
         model.cost_y_expr_e = ca.vertcat(
             .5*flag*center, math.sqrt(200)*(1-flag)*e[:2],
             math.sqrt(8)*(1-flag)*ca.sin(e[2]/2))
         model.con_h_expr = model.con_h_expr_0 = ca.vertcat(
-            ca.DM(self.B)@u, u-x[5:7])
+            ca.DM(self.B)@u, u-x[7:9])
         model.con_h_expr_e = flag*g
         ocp = at.AcadosOcp()
         ocp.model = model
         ocp.parameter_values = np.array([0.,0.,0.,1.])
         ocp.cost.cost_type = ocp.cost.cost_type_e = 'NONLINEAR_LS'
         ocp.cost.W = np.eye(4)
-        ocp.cost.W_e = np.eye(10)
+        ocp.cost.W_e = np.eye(12)
         ocp.cost.yref = np.zeros(4)
-        ocp.cost.yref_e = np.zeros(10)
+        ocp.cost.yref_e = np.zeros(12)
         c = ocp.constraints
-        c.x0 = np.zeros(7)
+        c.x0 = np.zeros(9)
         c.idxbu = np.arange(2)
         c.lbu,c.ubu = -np.ones(2),np.ones(2)
         hi = np.array([self.v_limit,self.w_limit,self.slew,self.slew])
         c.lh,c.uh = -hi,hi
         c.lh_0,c.uh_0 = -hi,hi
-        nh = 9
+        nh = 11
         c.lh_e,c.uh_e = -np.ones(nh),np.ones(nh)
         c.idxsh_e = np.arange(nh)
         c.lsh_e = np.zeros(nh)
@@ -124,6 +128,9 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         ocp.code_gen_options.json_file = f'{model.name}.json'
         return ocp
 
+    def step(self,x,u):
+        return self.predictor.step(x,u)
+
     def replay(self,x,us):
         xs = [np.asarray(x,float).copy()]
         for u in us:
@@ -150,20 +157,21 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         if terminal:
             e = xs[-1,:3]-goal
             g = np.r_[np.sum((e[:2]/self.pos_tol)**2),
-                      e[2]/self.ang_tol,xs[-1,3:5]/self.wheel_tol,
+                      e[2]/self.ang_tol,xs[-1,3:7]/self.wheel_tol,
                       us[-1]/self.wheel_tol]
             violation = max(violation,float(np.max(np.abs(g)-1)))
         return xs,violation
 
     def pack_state(self,x,prev):
         """Convert physical replay state to scaled solver coordinates."""
-        return np.r_[x[:3],x[3:5]/self.wmax,prev/self.wmax]
+        return np.r_[x[:3],x[3:7]/self.wmax,prev/self.wmax]
 
     def terminal_errors(self,xs,us,goal):
         e=xs[-1,:3]-goal
         return dict(position_m=float(np.linalg.norm(e[:2])),
                     heading_rad=float(abs(e[2])),
                     wheel_rad_s=float(np.max(np.abs(xs[-1,3:5]))),
+                    profile_rad_s=float(np.max(np.abs(xs[-1,5:7]))),
                     command_rad_s=float(np.max(np.abs(us[-1]))))
 
     def terminal_merit(self,xs,us,goal):
@@ -171,6 +179,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         return ((e['position_m']/self.pos_tol)**2+
                 (e['heading_rad']/self.ang_tol)**2+
                 (e['wheel_rad_s']/self.wheel_tol)**2+
+                (e['profile_rad_s']/self.wheel_tol)**2+
                 (e['command_rad_s']/self.wheel_tol)**2)
 
     def progress_merit(self,xs,us,prev,goal):
@@ -220,10 +229,10 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             facets=np.column_stack((np.cos(angles),np.sin(angles)))
             e=xs[-1,:3]-goal
             g=np.r_[facets@(e[:2]/self.pos_tol)/math.cos(math.pi/8),
-                    e[2]/self.ang_tol,xs[-1,3:5]/self.wheel_tol,
+                    e[2]/self.ang_tol,xs[-1,3:7]/self.wheel_tol,
                     old/self.wheel_tol]
         else:
-            g=np.zeros(9)
+            g=np.zeros(11)
         s.set(n,'sl',np.maximum(0.,-1-g))
         s.set(n,'su',np.maximum(0.,g-1))
         s.constraints_set(0,'lbx',initial)

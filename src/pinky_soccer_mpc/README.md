@@ -116,3 +116,27 @@ Each candidate now logs four KKT residuals, iterations, maximum slack,
 terminal errors and acceptance. No calibration, delay, or motor-model changes.
 Re-run the complete acados regression before simulation; the new elastic OCP
 has not yet been compiled/executed on the target machine.
+
+### Scheduled actuation and motor-profile prediction
+
+GoToPose/acados now plans for the next 100 ms activation boundary, predicting
+the current held wheel command for one period before solving. Early solutions
+wait; a missing/late result is not reused at the following stage. The first
+stage starts after one period; timing is in ROS/simulation time, with the
+existing monotonic watchdog. The 50 Hz command heartbeat remains. A missed
+slot brakes to zero; three consecutive missed/failed slots fail the skill.
+This is compensation for asynchronous computation/application timing, not
+identified network or sensor acquisition delay. The fused pose is still the
+latest available estimate; receipt age and prediction errors are logged.
+SLSQP and non-GoToPose actions retain their previous scheduling.
+
+The acados OCP now has nine states (pose, actual wheels, ramped motor references,
+previous commands). It uses the 5 ms profile_model symbolic map and an
+independent scalar replay with matching numerical integration. Terminal
+acceptance additionally requires near-zero ramped references. Actual arrival
+tolerances and speed caps are unchanged. The profile rate and lag remain
+configured assumptions, not newly identified dynamics. No arbitrary near-goal
+speed reduction or extra damping weight has been added. The cache key changes.
+New tests cover model parity, activation timing, and one-period delayed
+closed-loop motion. Upstream acados deprecation warnings are not globally
+suppressed; direct test access to deprecated N has been removed.

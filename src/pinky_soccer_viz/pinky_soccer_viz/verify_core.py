@@ -213,7 +213,10 @@ class RunRecord:
               'mpc_terminal_feasible', 'mpc_attempts', 'mpc_lower_steps',
               'mpc_attempt_statuses','mpc_replay_violation','mpc_solve_id',
               'mpc_solve_input_age_sim_s','mpc_solve_input_age_wall_s',
-              'mpc_command_state_age_sim_s','mpc_command_state_age_wall_s')
+              'mpc_command_state_age_sim_s','mpc_command_state_age_wall_s',
+              'mpc_prediction_lead_sim_s','mpc_activation_jitter_sim_s','mpc_activation_missed',
+              'mpc_activation_position_error_m','mpc_activation_heading_error_rad',
+              'mpc_activation_wheel_error_rad_s','mpc_pose_receipt_age_sim_s')
 
     def __init__(self, number, item, ports, start_time, field=None):
         self.number = number
@@ -260,7 +263,9 @@ class RunRecord:
         self.rows[-1].extend(diag.get(k) for k in ('horizon_steps','planned_time',
             'terminal_feasible','attempts','lower_steps','attempt_statuses','replay_violation',
             'solve_id','solve_input_age_sim_s','solve_input_age_wall_s',
-            'command_state_age_sim_s','command_state_age_wall_s'))
+            'command_state_age_sim_s','command_state_age_wall_s','prediction_lead_sim_s',
+            'activation_jitter_sim_s','activation_missed','activation_position_error_m',
+            'activation_heading_error_rad','activation_wheel_error_rad_s','pose_receipt_age_sim_s'))
         if self.field is not None:
             b = ball_truth if ball_truth is not None else ball
             if b is not None:

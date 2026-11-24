@@ -16,6 +16,8 @@ class TimeOptimalMpc(PoseMpc):
     A failed local NLP is not a proof of infeasibility. The budget is soft:
     SLSQP checks it between iterations, not during a native solver call.
     """
+    state_size = 5
+
     def __init__(self, params, dt=.1, max_steps=80, budget=.075,
                  pos_tol=.012, ang_tol=math.radians(2), wheel_tol=.12,
                  prepare_problems=True):
@@ -171,7 +173,9 @@ class TimeOptimalMpc(PoseMpc):
         deadline=start+self.budget
         x0=np.asarray(x0,float)
         goal=np.asarray(goal,float).copy()
-        x=x0[:5]
+        if x0.shape != (self.state_size+2,):
+            raise ValueError('invalid physical state + previous command dimensions')
+        x=x0[:self.state_size]
         goal[2]=x[2]+wrap(goal[2]-x[2])
         vb=min(self.v_limit,v_cap) if v_cap and v_cap>0 else self.v_limit
         wb=min(self.w_limit,w_cap) if w_cap and w_cap>0 else self.w_limit
