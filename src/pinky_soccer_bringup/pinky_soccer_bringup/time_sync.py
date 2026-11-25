@@ -156,12 +156,16 @@ def selected_server(status):
 def pc_reference_check(pc, robot, pc_ip, limit_s=.005, max_status_age_s=15., now=None):
     """Evaluate PC-centred relative synchronization; every state is reported separately.
 
-    Relative bound (robot vs PC clock), seconds, from the robot's own chrony data:
-      |robot system time residual| + robot RMS offset + link_delay/2 + std dev of PC source
-    where link_delay = robot root delay - PC root delay (the robot's root delay includes the
-    PC's upstream path). link_delay/2 bounds a path asymmetry error; it is not a measured
-    one-way delay. The 5 ms limit is the previous gate, unchanged. Missing inputs make the
-    result 'unverified', never 'ready'.
+    Relative error ESTIMATE (robot vs PC clock), seconds, from the robot's own chrony data:
+      |robot system time residual| + robot RMS offset + link_delay/2
+        + std dev of the robot's PC-source measurements (robot sourcestats for pc_ip)
+    link_delay = robot root delay - PC root delay is only an estimate of the LAN round trip
+    (root delays are path sums of different moments), so the total is a heuristic estimate,
+    not a strict bound. The PC's own upstream (internet) std dev is reported separately and
+    is not part of the relative estimate. Quality classes: insufficient_info,
+    insufficient_samples, uncertain (estimate > limit), verified. Status freshness uses the
+    robot publish time (every 5 s), not chrony's update interval (16 s at maxpoll 4), so a
+    normal poll interval does not make the state fail. The 5 ms limit is unchanged.
     """
     now = time.time() if now is None else now
     pc, robot = pc or {}, robot or {}
@@ -191,12 +195,20 @@ def pc_reference_check(pc, robot, pc_ip, limit_s=.005, max_status_age_s=15., now
                  'half_link_delay_s': max(link, 0.) / 2, 'pc_source_std_dev_s': stats['std_dev_s']}
         out['link_delay_estimate_s'] = link
         out['relative_bound_s'] = sum(terms.values())
+        out['bound_kind'] = 'heuristic_estimate'
         out['relative_terms'] = terms
         out['samples'] = stats['samples']
+    upstream = (pc.get('sourcestats') or {}).get(selected_server(pc) or '')
+    out['pc_upstream_std_dev_s'] = upstream['std_dev_s'] if upstream else None
+    out['robot_pc_source_std_dev_s'] = stats['std_dev_s'] if stats else None
     ok = (out['pc_absolute'] and out['robot_status_fresh'] and out['robot_absolute']
           and out['robot_uses_pc'] and terms is not None and out['samples'] >= 4
           and robot.get('leap') == 'Normal')
     out['relative_verified'] = bool(ok and out['relative_bound_s'] <= limit_s)
+    out['quality'] = ('verified' if out['relative_verified'] else
+                      'insufficient_info' if terms is None or not out['robot_status_fresh']
+                      or not out['robot_uses_pc'] else
+                      'insufficient_samples' if out.get('samples', 0) < 4 else 'uncertain')
     if 'reason' not in out:
         if not out['robot_status_received']:
             out['reason'] = '로봇 시간 상태 토픽 미수신'
@@ -207,10 +219,12 @@ def pc_reference_check(pc, robot, pc_ip, limit_s=.005, max_status_age_s=15., now
         elif terms is None:
             out['reason'] = '상대 품질 정보 부족 (로봇 bringup 갱신 필요: sources/sourcestats)'
         elif not out['relative_verified']:
-            out['reason'] = (f"상대 오차 상한 {out['relative_bound_s']*1e3:.2f} ms > "
-                             f'{limit_s*1e3:.1f} ms 또는 표본 부족')
+            out['reason'] = (f"표본 부족 ({out.get('samples')}개 < 4)" if out['quality'] ==
+                             'insufficient_samples' else
+                             f"상대 오차 추정 {out['relative_bound_s']*1e3:.2f} ms > "
+                             f'{limit_s*1e3:.1f} ms (불확실)')
         else:
-            out['reason'] = f"PC 기준 동기화 확인 (상한 {out['relative_bound_s']*1e3:.2f} ms)"
+            out['reason'] = f"PC 기준 동기화 확인 (추정 {out['relative_bound_s']*1e3:.2f} ms)"
     return out
 
 

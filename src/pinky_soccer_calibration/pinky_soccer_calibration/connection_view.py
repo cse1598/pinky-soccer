@@ -136,15 +136,24 @@ class ConnectionView(ttk.Frame):
         put('robot_pc', c.get('robot_uses_pc') if robot else None,
             f"선택 서버 {c.get('robot_selected_server')} / 지정 PC {s.pc_ip or '미입력'}")
         bound = c.get('relative_bound_s')
+        quality = {'verified': '확인됨', 'insufficient_info': '정보 부족',
+                   'insufficient_samples': '표본 부족', 'uncertain': '불확실'}.get(
+            c.get('quality'), '-')
         put('relative', c.get('relative_verified'),
-            (f'상한 {bound*1e3:.2f} ms (기준 {c.get("limit_s", .005)*1e3:.0f} ms) · 표본 '
-             f'{c.get("samples")}' if bound is not None else c.get('reason', '정보 부족')))
+            (f'{quality} · 추정 {bound*1e3:.2f} ms (기준 {c.get("limit_s", .005)*1e3:.0f} ms, '
+             f'엄밀한 상한 아님) · 표본 {c.get("samples")}' if bound is not None
+             else f"{quality} · {c.get('reason', '')}"))
         put('one_way', bool(c.get('relative_verified')),
             '가능 (상한 이내 오차 포함)' if c.get('relative_verified') else
             '불가: 왕복 지연만 측정 (같은 장치 시계)')
         terms = c.get('relative_terms') or {}
+
+        def ms(v):
+            return f'{v*1e3:.3f} ms' if v is not None else '없음'
         self.detail.configure(text=(
-            '상한 구성: ' + ', '.join(f'{k} {v*1e3:.3f} ms' for k, v in terms.items())
-            if terms else c.get('reason', '')) + (
+            '추정 구성: ' + ', '.join(f'{k} {v*1e3:.3f} ms' for k, v in terms.items())
+            if terms else c.get('reason', '')) +
+            f"\n로봇→PC 소스 std {ms(c.get('robot_pc_source_std_dev_s'))} · "
+            f"PC→인터넷 소스 std {ms(c.get('pc_upstream_std_dev_s'))} (상대 추정에 미포함)" + (
             f"\n로봇 상태: {'구버전 bringup(tracking만)' if robot.get('legacy_status') else 'sources/sourcestats 포함'}"
             if robot else '') + f"\n갱신 {time.strftime('%H:%M:%S')}")

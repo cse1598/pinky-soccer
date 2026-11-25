@@ -91,3 +91,19 @@ def test_pc_centred_ready_and_failure_modes():
     # PC without chrony
     assert not pc_reference_check({'synchronized': False, 'error': 'tracking: missing'},
                                   robot_status(), '192.168.204.27', now=NOW)['relative_verified']
+
+
+def test_quality_classes_and_separated_std():
+    pc = parse_tracking_csv(PC_TRACK, now=NOW)
+    pc['sources'] = parse_sources_csv('^,*,122.45.50.24,1,8,377,160,0.00035,0.00031,0.0027')
+    pc['sourcestats'] = parse_sourcestats_csv('122.45.50.24,24,13,1620,-0.07,0.65,0.000187,0.000409')
+    ok = pc_reference_check(pc, robot_status(), '192.168.204.27', now=NOW)
+    assert ok['quality'] == 'verified' and ok['bound_kind'] == 'heuristic_estimate'
+    assert ok['pc_upstream_std_dev_s'] == 0.000409          # PC internet source, reported only
+    assert ok['robot_pc_source_std_dev_s'] == 0.001153      # robot's PC source, in the estimate
+    few = robot_status(sourcestats=parse_sourcestats_csv(ROBOT_STATS.replace(',46,', ',3,')))
+    assert pc_reference_check(pc, few, '192.168.204.27', now=NOW)['quality'] == 'insufficient_samples'
+    assert pc_reference_check(pc, robot_status(sourcestats=None), '192.168.204.27',
+                              now=NOW)['quality'] == 'insufficient_info'
+    noisy = robot_status(sourcestats=parse_sourcestats_csv(ROBOT_STATS.replace('0.001153', '0.004')))
+    assert pc_reference_check(pc, noisy, '192.168.204.27', now=NOW)['quality'] == 'uncertain'
