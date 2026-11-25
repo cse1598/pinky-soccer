@@ -239,6 +239,15 @@ class ProjectStore:
         self.deleted.extend({'type': category, 'record': v, 'deleted_utc': utc()} for v in selected)
         rows[:] = [v for v in rows if v['id'] not in identifiers]
         self.invalidate(category)
+        # Derived analyses that reference a removed experiment become stale (data kept).
+        removed = {v['id'] for v in selected}
+        for dependent in ('command_latency', 'braking'):
+            hits = [r for r in self.measurements.get(dependent, [])
+                    if r.get('source_experiment') in removed]
+            for r in hits:
+                r['source_deleted'] = True
+            if hits:
+                self.invalidate(dependent)
         self.save()
 
     def recalculate(self, category):
@@ -289,6 +298,13 @@ class ProjectStore:
                 result = {'experiments': len(rows), 'by_kind_purpose_status': counts,
                           'identification': 'not_implemented_yet: raw data preserved for later',
                           'applied_to_mpc': False}
+            elif category in ('communication_latency', 'command_latency', 'braking', 'footprint'):
+                # Per-record summaries were computed from each record's raw files; records whose
+                # source experiment was deleted are listed but excluded.
+                kept = [r for r in rows if not r.get('source_deleted')]
+                result = {'records': len(rows), 'used': len(kept),
+                          'excluded_source_deleted': len(rows) - len(kept),
+                          'summaries': [dict(r.get('summary', {}), record_id=r['id']) for r in kept]}
             elif category == 'clock_sync':
                 # One row per measurement; the history is rebuilt from the kept records.
                 history = [dict(row['summary'], record_id=row['id'],

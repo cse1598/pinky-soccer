@@ -27,6 +27,11 @@ from .project_store import utc
 from .project_view import ProjectView
 from .connection_view import ConnectionView
 from .motor_view import MotorView
+from .comm_view import CommView
+from . import footprint_view
+from .footprint_view import FootprintView
+from . import latency_analysis
+from . import braking_analysis
 from . import motor_experiment
 from .camera_view import CameraCalibrationView
 from .ball_review_view import BallReviewView
@@ -101,9 +106,13 @@ class App:
         book.add(self.connection_view, text='연결·시간')
         self.motor_view = MotorView(book, self)
         book.add(self.motor_view, text='모터 동역학')
+        self.comm_view = CommView(book, self)
+        book.add(self.comm_view, text='통신 지연')
+        self.footprint_view = FootprintView(book, self)
+        book.add(self.footprint_view, text='충돌 외형')
         if self.webcam:
-            book.tab(self.connection_view, state='disabled')
-            book.tab(self.motor_view, state='disabled')
+            for view in (self.connection_view, self.motor_view, self.comm_view):
+                book.tab(view, state='disabled')
         self.book = book
         self.fields = {}
         self.range_geometry_label = {}
@@ -131,6 +140,13 @@ class App:
                 for label, kind in [('전진 1m', 'forward'), ('후진 1m', 'backward')]:
                     self.button(tab, label, lambda k=kind: self.move(k))
                 self.field(tab, 'distance', '범퍼 중앙 시작~끝 거리 (m, 전진+/후진-)', '')
+                ttk.Label(tab, foreground='#777777', wraplength=490, text=(
+                    '선택 추가 관측 (비워도 됨, 기존 추정에는 쓰지 않음): 시작 자세 기준 좌표, '
+                    '범퍼 앞면 중앙의 바닥 투영점. X 전방+, Y 왼쪽+, 최종 자세각 반시계+. '
+                    '좌우 편차로 회전각을 추정하지 않습니다.')).pack(fill='x')
+                self.field(tab, 'extra_x', '  전후 이동량 X (m)', '')
+                self.field(tab, 'extra_y', '  좌우 편차 Y (mm)', '')
+                self.field(tab, 'extra_heading', '  최종 자세각 변화 (deg)', '')
                 self.button(tab, '전후진 실측 저장', lambda: self.trial('straight'))
                 ttk.Label(tab, text='② 회전 실험 · 한 바퀴 누적 각도 측정').pack(fill='x')
                 for label, kind in [('좌회전 360°', 'left'), ('우회전 360°', 'right')]:
@@ -237,6 +253,8 @@ class App:
         self.options['lidar_clear'] = self.lidar_clear.get()
         self.options['sync_seconds'] = self.connection_view.sync_seconds.get()
         self.options['connection'] = self.connection_view.current()
+        self.options['comm'] = self.comm_view.inputs()
+        self.options['footprint'] = self.footprint_view.inputs()
         self.options['motor'] = self.motor_view.inputs(getattr(self.node, 'namespace', ''),
                                                        self.robot.get())
         self.busy = True
@@ -419,6 +437,15 @@ class App:
             if self.node.measurement_geometry().sha256 != reference['robot_description_sha256']:
                 raise ValueError('주행 후 모델이 바뀌었습니다. 원래 모델을 복원한 뒤 저장하세요.')
             t.update(distance_measurement(t['kind'], finite(self.inputs['distance']), reference))
+            extra = {key: finite(self.inputs[field]) for key, field in (
+                ('longitudinal_x_m', 'extra_x'), ('lateral_y_mm', 'extra_y'),
+                ('final_heading_change_deg', 'extra_heading'))
+                if self.inputs.get(field, '').strip()}
+            if extra:
+                # Separate optional schema; the shared-radius fit keeps using distance only.
+                t['extra_observations'] = dict(extra, schema='start_pose_frame_v1',
+                    reference='bumper front centre floor projection, start pose frame',
+                    axes='X forward+, Y left+, heading CCW+')
         else:
             t.update(rotation_measurement(t['kind'], finite(self.inputs['angle'])))
         t.update(id=uuid.uuid4().hex, recorded_utc=utc())
@@ -534,8 +561,12 @@ class App:
             approved=o['high_speed'], wheels=motor_experiment.wheel_parameters(session))
         recording = dict(session.meta.get('recordings', [{}])[-1])
         sync = self.node.sync_state.get('check')
+        with self.node.lock:
+            info = self.node.values.get('/motor/info')
+            info = info[-1][2].get('payload') if info else None
         options = {'purpose': o['purpose'], 'floor': o['floor'],
-                   'namespace': self.node.namespace, 'clock_sync': sync}
+                   'namespace': self.node.namespace, 'clock_sync': sync,
+                   'motor_info': info}
         results, total = [], sum(d for d, _, _ in plan['segments'])
         for index in range(repeats):
             row = motor_experiment.start_record(session, plan, options, recording)
@@ -556,7 +587,8 @@ class App:
                 self.node.last_motion = None
                 battery = (self.node.values['/batt_state'][-1][2]
                            if self.node.values.get('/batt_state') else None)
-            done = motor_experiment.finish_record(session, row['id'], self.node, trial, battery)
+            done = motor_experiment.finish_record(session, row['id'], self.node, trial, battery,
+                                                  self.node.sync_state.get('check'))
             rate = motor_experiment.command_rate(trial.get('commands', []))
             results.append(f"#{index+1} {done['status']} · 명령 {done['commands_sent']}개"
                            + (f" ({rate['mean_hz']:.1f} Hz, 최대 간격 {rate['gap_max_s']*1e3:.0f} ms)"
@@ -567,6 +599,128 @@ class App:
                 break
             time.sleep(1.5)            # settle between repeats (zero command is held)
         return '모터 계단응답 ' + plan['kind'] + '\n' + '\n'.join(results)
+
+    def run_pingpong(self):
+        """Diagnostic ping-pong; raw samples to communication_latency/<id>/pingpong.csv."""
+        session = self.require()
+        if self.webcam:
+            raise ValueError('웹캠 모드에서는 로봇 통신이 없습니다.')
+        c = self.options['comm']
+        rate, duration = finite(c['rate']), finite(c['duration'])
+        payload, repeats = int(finite(c['payload'])), int(finite(c['repeats']))
+        if not (1 <= rate <= 100 and 1 <= duration <= 600 and 0 <= payload <= 60000
+                and 1 <= repeats <= 20):
+            raise ValueError('주기 1~100Hz, 시간 1~600s, 페이로드 0~60000B, 반복 1~20')
+        import csv
+        lines = []
+        for index in range(repeats):
+            sync_start = self.node.synchronized()
+            check_start = self.node.sync_state.get('check')
+            sent, replies = self.node.pingpong(rate, duration, payload)
+            sync_end = self.node.synchronized()
+            result, rows = latency_analysis.pingpong(sent, replies, sync_start and sync_end)
+            row = session.add_measurement('communication_latency', {
+                'kind': 'ros2_pingpong', 'rate_hz': rate, 'duration_s': duration,
+                'payload_bytes': payload, 'qos': 'reliable depth 50', 'message': 'std_msgs/String JSON',
+                'namespace': self.node.namespace, 'environment': session.meta['environment'],
+                'clock_sync_start': check_start, 'clock_sync_end': self.node.sync_state.get('check'),
+                'summary': result})
+            folder = session.root / 'communication_latency' / row['id']
+            folder.mkdir(parents=True)
+            with (folder / 'pingpong.csv').open('x', newline='') as f:
+                out = csv.writer(f)
+                out.writerow(['seq', 'pc_send_mono_ns', 'pc_send_unix_ns', 'pc_recv_mono_ns',
+                              'pc_recv_unix_ns', 'robot_recv_mono_ns', 'robot_recv_unix_ns',
+                              'robot_send_mono_ns', 'robot_send_unix_ns'])
+                for recv_mono, recv_unix, reply in replies:
+                    s = sent.get(reply.get('seq'), {})
+                    out.writerow([reply.get('seq'), s.get('pc_send_mono_ns'), s.get('pc_send_unix_ns'),
+                                  recv_mono, recv_unix] + [reply.get(k) for k in (
+                                      'robot_recv_mono_ns', 'robot_recv_unix_ns',
+                                      'robot_send_mono_ns', 'robot_send_unix_ns')])
+            row['files'] = {'pingpong': str((folder / 'pingpong.csv').relative_to(session.root)),
+                            'sent_without_reply': sorted(set(sent) - {r[2].get('seq') for r in replies})}
+            session.save()
+            rtt = result.get('rtt_s')
+            lines.append(f"#{index+1} 수신 {result['received']}/{result['sent']} · 왕복 "
+                         + (f"p50 {rtt['p50']*1e3:.1f} / p95 {rtt['p95']*1e3:.1f} / "
+                            f"max {rtt['max']*1e3:.1f} ms" if rtt else '응답 없음 (latency_echo 확인)')
+                         + f" · 단방향 {result['one_way_status']}")
+        return 'Ping-Pong\n' + '\n'.join(lines)
+
+    def analyze_command_path(self):
+        """command_latency records referencing motor experiments (no raw data duplicated)."""
+        session = self.require()
+        done = {r.get('source_experiment') for r in session.measurements.get('command_latency', [])}
+        lines = []
+        for row in session.measurements.get('motor_response', []):
+            if row['id'] in done or row.get('status') not in ('complete', 'user_stopped',
+                                                              'safety_stopped'):
+                continue
+            folder = session.root / row['files']['folder']
+            if not (folder / 'commands.csv').exists():
+                continue
+            verified = bool((row.get('clock_sync') or {}).get('relative_verified') and
+                            (row.get('clock_sync_end') or {}).get('relative_verified'))
+            result = latency_analysis.command_path(folder, verified)
+            session.add_measurement('command_latency', {
+                'source_experiment': row['id'], 'source_category': 'motor_response',
+                'clock_verified': verified, 'summary': result})
+            lines.append(f"{row['plan']['kind']} {row['id'][:8]}: {result.get('status')}")
+        return '명령 경로 분석\n' + ('\n'.join(lines) or '새로 분석할 모터 실험이 없습니다.')
+
+    def analyze_braking(self):
+        """braking records referencing motor experiments (step-response decelerations too)."""
+        session = self.require()
+        manual = self.options['motor'].get('manual_brake', '').strip()
+        rows = session.measurements.get('motor_response', [])
+        done = {r.get('source_experiment'): r for r in session.measurements.get('braking', [])}
+        lines = []
+        for row in rows:
+            if row['id'] in done or row.get('status') != 'complete':
+                continue
+            if not (row.get('plan', {}).get('commanded', {}).get('v_mps')):
+                continue                         # spins: no braking distance
+            result = braking_analysis.analyze(session.root / row['files']['folder'], row)
+            rec = session.add_measurement('braking', {
+                'source_experiment': row['id'], 'source_kind': row['plan']['kind'],
+                'from_step_response': not row['plan']['kind'].startswith('brake'),
+                'floor': row.get('floor'), 'summary': result})
+            done[row['id']] = rec
+            lines.append(f"{row['plan']['kind']} {row['id'][:8]}: {result.get('status')}"
+                         + (f" · 정지 {result['stop_time_s']:.2f}s · odom {result['odom_braking_distance_m']*100:.1f}cm"
+                            if 'stop_time_s' in result else ''))
+        if manual:
+            value = finite(manual)
+            brakes = [r for r in rows if r.get('plan', {}).get('kind', '').startswith('brake')
+                      and r.get('status') == 'complete']
+            if not brakes:
+                raise ValueError('실측 거리를 붙일 완료된 제동 실험이 없습니다.')
+            target = done.get(brakes[-1]['id'])
+            target['manual_distance_m'] = value
+            target['summary']['manual_chassis_distance_m'] = value
+            session.save()
+            session.recalculate('braking')
+            lines.append(f"실측 차체 제동 거리 {value:.3f} m → 실험 {brakes[-1]['id'][:8]}")
+        return '제동 분석\n' + ('\n'.join(lines) or '새로 분석할 실험이 없습니다.')
+
+    def save_footprint(self):
+        """Store one measured outline as a 'footprint' record (never applied to the MPC)."""
+        session = self.require()
+        v = self.options['footprint']
+        values = [finite(v[k]) for k in ('front', 'rear', 'left', 'right')]
+        points = footprint_view.parse_points(v['points'])
+        result = footprint_view.evaluate(*values, finite(v['origin_offset_x'] or '0'), points)
+        optional = {k: finite(v[k]) for k in ('width', 'length', 'uncertainty') if v[k]}
+        session.add_measurement('footprint', {
+            'frame': 'x forward, y left, origin wheel-axle centre', 'bumper_mounted': v['bumper'],
+            'inputs': dict(zip(('front_m', 'rear_m', 'left_m', 'right_m'), values), **optional),
+            'extra_points_m': points, 'photo': v['photo'] or None, 'summary': result})
+        session.recalculate('footprint')
+        self.events.put(('footprint', result))
+        m = result['disc_cover_min_margin_m']
+        return ('충돌 외형 기록 저장' + (f' · 원 근사 최소 여유 {m*1000:.1f} mm' if m is not None else '')
+                + ' · MPC 미반영')
 
     def record_clock_sync(self):
         """Sample the PC-centred clock state for N s and append a 'clock_sync' record.
@@ -683,6 +837,9 @@ class App:
                                   if self.node.sync_enabled else '리허설: 장치 간 동기화 불필요')
         while not self.events.empty():
             kind, value = self.events.get()
+            if kind == 'footprint':
+                self.footprint_view.draw(value)
+                continue
             if kind == 'done':
                 self.busy = False
                 self.project_view.refresh()

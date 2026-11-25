@@ -20,9 +20,14 @@ KINDS = {   # label, sign of (v, w) used with the entered magnitudes
     'spin_left': ('제자리 좌회전', (0, 1)),
     'spin_right': ('제자리 우회전', (0, -1)),
     'combined': ('복합 (선속도+각속도)', (1, 1)),
+    'brake_forward': ('제동: 전진 정상속도 후 정지', (1, 0)),
+    'brake_backward': ('제동: 후진 정상속도 후 정지', (-1, 0)),
 }
+# Braking runs hold until both wheels are within this band of the commanded wheel speed for
+# STEADY_S (after MIN_HOLD_S), then send zero; 'hold' is the upper limit.
+STEADY_TOLERANCE, STEADY_S, MIN_HOLD_S = .10, .3, .5
 RAW_TOPICS = ('/joint_states', '/odom', '/cmd_vel', '/imu_raw', '/batt_state',
-              '/battery/voltage', '/battery/percent')
+              '/battery/voltage', '/battery/percent', '/motor/diagnostics', '/motor/info')
 SAFE_LIMITS = {'v': .20, 'w': 2.0}           # default caps (m/s, rad/s)
 APPROVED_LIMITS = {'v': .25, 'w': 3.0}       # after explicit high-speed approval
 COMMAND_RATE_HZ = 50.
@@ -55,7 +60,7 @@ def build_plan(kind, speed, rate, pre, hold, post, max_distance, approved=False,
         raise ValueError('실험 종류를 선택하세요.')
     sv, sw = KINDS[kind][1]
     v, w = sv * abs(speed), sw * abs(rate)
-    if kind in ('forward', 'backward') and not speed:
+    if kind in ('forward', 'backward', 'brake_forward', 'brake_backward') and not speed:
         raise ValueError('선속도를 입력하세요.')
     if kind.startswith('spin') and not rate:
         raise ValueError('각속도를 입력하세요.')
@@ -77,7 +82,11 @@ def build_plan(kind, speed, rate, pre, hold, post, max_distance, approved=False,
     limit = wheel_speed_limit()
     if max(abs(left), abs(right)) > limit:
         raise ValueError(f'바퀴 속도 {max(abs(left), abs(right)):.2f} rad/s > 한계 {limit:.2f} rad/s')
+    braking = ({'expected_wheel_radps': max(abs(left), abs(right)),
+                'tolerance': STEADY_TOLERANCE, 'steady_s': STEADY_S, 'min_hold_s': MIN_HOLD_S}
+               if kind.startswith('brake') else None)
     return {'kind': kind, 'segments': [(pre, 0., 0.), (hold, v, w), (post, 0., 0.)],
+            'braking': braking,
             'rate_hz': COMMAND_RATE_HZ, 'max_distance_m': max_distance,
             'max_angle_rad': max(abs(w) * hold * 1.5, .5),
             'commanded': {'v_mps': v, 'w_radps': w,
@@ -94,12 +103,13 @@ def start_record(session, plan, options, recording):
                'purpose': options['purpose'], 'floor': options['floor'],
                'robot_id': session.meta['robot_id'], 'namespace': options['namespace'],
                'started_unix': time.time(), 'files': {'folder': str(folder)},
-               'recording': recording, 'clock_sync': options.get('clock_sync')}
+               'recording': recording, 'clock_sync': options.get('clock_sync'),
+               'motor_info': options.get('motor_info')}
     row = session.add_measurement('motor_response', payload)
     return row
 
 
-def finish_record(session, row_id, node, trial, battery=None):
+def finish_record(session, row_id, node, trial, battery=None, clock_sync_end=None):
     """Write the raw extract and finalize the record status (never deletes data)."""
     rows = session.measurements['motor_response']
     row = next(r for r in rows if r['id'] == row_id)
@@ -116,7 +126,8 @@ def finish_record(session, row_id, node, trial, battery=None):
                 out.writerow([topic, mono, stamp, json.dumps(obs)])
     with (folder / 'commands.csv').open('x', newline='') as f:
         out = csv.writer(f)
-        out.writerow(['publish_monotonic', 'publish_ros_ns', 'publish_unix_ns', 'v_mps', 'w_radps'])
+        out.writerow(['publish_monotonic', 'publish_ros_ns', 'publish_unix_ns', 'v_mps', 'w_radps',
+                      'command_tag'])
         out.writerows(trial.get('commands', []))
     reason = trial.get('reason', '')
     status = ('complete' if trial.get('complete') else
@@ -126,7 +137,9 @@ def finish_record(session, row_id, node, trial, battery=None):
     row.update(status=status, stop_reason=reason, ended_unix=time.time(),
                samples=counts, commands_sent=len(trial.get('commands', [])),
                start_odom=trial.get('start'), odom_angle_rad=trial.get('angle'),
-               battery_at_end=battery, analysis_status='pending')
+               battery_at_end=battery, analysis_status='pending', clock_sync_end=clock_sync_end,
+               braking_steady=trial.get('braking_steady'),
+               braking_cut_s=trial.get('cut_at'))
     row['files'].update(observations='observations.csv', commands='commands.csv')
     (folder / 'meta.yaml').write_text(yaml.safe_dump(row, allow_unicode=True, sort_keys=False))
     session.invalidate('motor_response')

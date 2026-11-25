@@ -87,6 +87,20 @@ class ProjectView(ttk.Frame):
                     detail = (f"{row.get('plan', {}).get('kind')} v={c.get('v_mps', 0):+.2f} "
                               f"w={c.get('w_radps', 0):+.2f} · {row.get('status')} · "
                               f"{'검증용' if row.get('purpose') == 'validation' else '식별용'}")
+                elif category == 'communication_latency':
+                    m = row.get('summary', {})
+                    rtt = m.get('rtt_s') or {}
+                    detail = (f"ping {row.get('rate_hz')}Hz · 수신 {m.get('received')}/{m.get('sent')} · "
+                              f"RTT p50 {rtt.get('p50', 0)*1e3:.1f}ms")
+                elif category == 'braking':
+                    m = row.get('summary', {})
+                    detail = (f"{row.get('source_kind')} · {m.get('status')}"
+                              + (f" · {m['stop_time_s']:.2f}s / odom {m['odom_braking_distance_m']*100:.1f}cm"
+                                 if 'stop_time_s' in m else '')
+                              + (' · 원본 삭제됨' if row.get('source_deleted') else ''))
+                elif category == 'command_latency':
+                    detail = (f"실험 {str(row.get('source_experiment'))[:8]} · "
+                              f"{row.get('summary', {}).get('status')}")
                 elif category == 'clock_sync':
                     m = row.get('summary', {})
                     detail = (f"PC기준 {'예' if m.get('robot_uses_pc_all') else '아니오'} · 상대 "

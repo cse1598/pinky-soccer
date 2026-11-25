@@ -54,6 +54,19 @@ class MotorView(ttk.Frame):
         ttk.Checkbutton(self, textvariable=self.armed_text, variable=self.armed).pack(anchor='w')
         ttk.Button(self, text='계단응답 실험 실행 (반복)',
                    command=lambda: app.job(app.run_motor)).pack(fill='x', pady=6)
+        ttk.Separator(self).pack(fill='x', pady=6)
+        ttk.Label(self, wraplength=520, justify='left', text=(
+            '제동: brake_forward/brake_backward 는 바퀴가 명령 속도 ±10% 로 0.3초 유지되면 정지 '
+            "명령을 보냅니다('명령 유지'는 상한). 일반 계단응답의 감속 구간도 분석합니다. 같은 원본을 "
+            '참조하며 복사하지 않습니다. odom 거리는 미끄러짐을 포함하지 않으므로 실제 차체 제동 '
+            '거리는 줄자로 재서 입력하세요(가장 최근 제동 실험에 저장).')).pack(fill='x')
+        row = ttk.Frame(self)
+        row.pack(fill='x', pady=2)
+        ttk.Label(row, text='실측 차체 제동 거리 (m)', width=22).pack(side='left')
+        self.vars['manual_brake'] = tk.StringVar(value='')
+        ttk.Entry(row, textvariable=self.vars['manual_brake'], width=14).pack(side='left')
+        ttk.Button(self, text='제동 분석 → 기록 추가',
+                   command=lambda: app.job(app.analyze_braking)).pack(fill='x', pady=4)
         self.status = ttk.Label(self, text='프로젝트를 열고 기록 시작/재개 후 실행하세요.',
                                 wraplength=520, justify='left')
         self.status.pack(fill='x')

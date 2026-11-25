@@ -17,7 +17,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.duration import Duration
-from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy, ReliabilityPolicy
 from rclpy.serialization import serialize_message
 import rosbag2_py
 from sensor_msgs.msg import (BatteryState, CameraInfo, CompressedImage, Image, Imu,
@@ -40,6 +40,8 @@ TOPICS = {'/robot_description': String, PREVIEW_TOPIC: CompressedImage, '/camera
           '/imu_raw': Imu, '/imu_native': Imu,
           '/us_sensor/range': Range, '/ir_sensor/range': UInt16MultiArray,
           '/batt_state': BatteryState, '/battery/voltage': Float32, '/battery/percent': Float32,
+          # Robot-side diagnostics (motor_diagnostics:=true on the robot); JSON payloads.
+          '/motor/diagnostics': String, '/motor/info': String,
           **{f'/sim/{link}/distance': Range for link in ('ir_l_link', 'ir_mid_link', 'ir_r_link')}}
 BAG_TOPICS = {**TOPICS, CAPTURE_IMAGE_TOPIC: Image, CAPTURE_INFO_TOPIC: CameraInfo}
 
@@ -90,7 +92,13 @@ class Acquisition(Node):
             self.create_subscription(typ, self.robot_topic(topic),
                                      lambda msg, t=topic: self.receive(t, msg),
                 QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
-                if topic == '/robot_description' else qos_profile_sensor_data)
+                if topic in ('/robot_description', '/motor/info') else
+                QoSProfile(depth=50) if topic == '/motor/diagnostics' else qos_profile_sensor_data)
+        ping_qos = QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE)
+        self.ping_pub = self.create_publisher(String, self.robot_topic('/calibration/ping'), ping_qos)
+        self.pongs = None
+        self.create_subscription(String, self.robot_topic('/calibration/pong'), self.on_pong,
+                                 ping_qos)
         self.running = True
         self.thread = threading.Thread(target=self.loop, daemon=True)
         self.thread.start()
@@ -200,6 +208,11 @@ class Acquisition(Node):
             observation['sim_distance_m'] = float(msg.range)
         elif topic == '/cmd_vel':
             observation.update(linear_x=msg.linear.x, angular_z=msg.angular.z)
+        elif topic in ('/motor/diagnostics', '/motor/info'):
+            try:
+                observation['payload'] = json.loads(msg.data)
+            except ValueError:
+                observation['payload'] = None
         elif topic == '/joint_states':
             observation.update(name=list(msg.name), position=[float(v) for v in msg.position],
                                velocity=[float(v) for v in msg.velocity])
@@ -407,7 +420,8 @@ class Acquisition(Node):
             now = time.monotonic()
             self.motion = dict(kind='profile', plan=plan, start=start, started=now,
                                started_unix=time.time(), joints=self.joints(),
-                               commands=[], next_send=now, last_yaw=start[2], angle=0.)
+                               commands=[], next_send=now, last_yaw=start[2], angle=0.,
+                               tag=0, publisher_check=now)
 
     def watchdog(self):
         with self.lock:
@@ -456,8 +470,18 @@ class Acquisition(Node):
         if abs(m['angle']) > plan.get('max_angle_rad', 4*math.pi):
             return self.stop('최대 회전각 초과 (안전 정지)')
         total = sum(d for d, _, _ in plan['segments'])
+        braking = plan.get('braking')
+        if braking and m.get('cut_at') is None:
+            self.braking_check(m, braking, elapsed)
+        if m.get('cut_at') is not None:
+            total = m['cut_at'] + plan['segments'][2][0]
         if elapsed >= total:
             return self.stop('프로파일 완료')
+        if now - m['publisher_check'] > .25:          # also during the run, not only at start
+            m['publisher_check'] = now
+            others = self.count_publishers(self.robot_topic('/cmd_vel')) - 1
+            if others > 0:
+                return self.stop(f'다른 cmd_vel 발행자 {others}개 감지 (안전 정지)')
         if now < m['next_send']:
             return
         m['next_send'] = max(m['next_send'] + 1/plan['rate_hz'], now)
@@ -467,10 +491,78 @@ class Acquisition(Node):
                 v, w = sv, sw
                 break
             t += duration
+        if m.get('cut_at') is not None and elapsed >= m['cut_at']:
+            v, w = 0., 0.                             # braking: stop after steady speed
         cmd = Twist()
         cmd.linear.x, cmd.angular.z = float(v), float(w)
+        # Tag in a field the drivers ignore, so applied commands can be matched exactly.
+        m['tag'] += 1
+        cmd.linear.z = float(m['tag'])
         self.publisher.publish(cmd)
-        m['commands'].append((now, self.get_clock().now().nanoseconds, time.time_ns(), v, w))
+        m['commands'].append((now, self.get_clock().now().nanoseconds, time.time_ns(), v, w,
+                              m['tag']))
+
+    def on_pong(self, msg):
+        recv_mono, recv_unix = time.monotonic_ns(), time.time_ns()
+        try:
+            reply = json.loads(msg.data)
+        except ValueError:
+            return
+        with self.lock:
+            if self.pongs is not None and isinstance(reply, dict):
+                self.pongs.append((recv_mono, recv_unix, reply))
+
+    def pingpong(self, rate_hz, duration_s, payload_bytes=0):
+        """Send diagnostic pings at rate_hz for duration_s (worker thread); returns raw data."""
+        with self.lock:
+            if self.pongs is not None:
+                raise ValueError('이미 Ping-Pong 측정 중입니다.')
+            self.pongs = []
+        sent, period = {}, 1.0 / rate_hz
+        pad = 'x' * int(payload_bytes)
+        start = time.monotonic()
+        try:
+            for seq in range(1, int(duration_s * rate_hz) + 1):
+                target = start + (seq - 1) * period
+                delay = target - time.monotonic()
+                if delay > 0:
+                    time.sleep(delay)
+                mono, unix = time.monotonic_ns(), time.time_ns()
+                sent[seq] = {'pc_send_mono_ns': mono, 'pc_send_unix_ns': unix}
+                self.ping_pub.publish(String(data=json.dumps(
+                    {'seq': seq, 'pc_send_unix_ns': unix, 'pad': pad})))
+            time.sleep(1.0)                           # late replies
+        finally:
+            with self.lock:
+                replies, self.pongs = self.pongs, None
+        return sent, replies
+
+    def braking_check(self, m, braking, elapsed):
+        """Mark the stop time once both wheels hold the commanded speed (braking runs)."""
+        pre, hold = m['plan']['segments'][0][0], m['plan']['segments'][1][0]
+        if elapsed < pre + braking['min_hold_s']:
+            return
+        if elapsed >= pre + hold:                     # upper limit: stop anyway, not steady
+            m['cut_at'], m['braking_steady'] = elapsed, False
+            return
+        msg = self.latest.get('/joint_states')
+        speeds = []
+        if msg is not None:
+            names = list(msg.name)
+            for aliases in (('l_wheel_joint', 'left_wheel_joint'), ('r_wheel_joint', 'right_wheel_joint')):
+                idx = next((names.index(a) for a in aliases if a in names), None)
+                if idx is not None and idx < len(msg.velocity):
+                    speeds.append(abs(msg.velocity[idx]))
+        target = braking['expected_wheel_radps']
+        steady = len(speeds) == 2 and all(abs(x - target) <= braking['tolerance'] * target
+                                          for x in speeds)
+        now = time.monotonic()
+        if not steady:
+            m['steady_since'] = None
+        elif m.get('steady_since') is None:
+            m['steady_since'] = now
+        elif now - m['steady_since'] >= braking['steady_s']:
+            m['cut_at'], m['braking_steady'] = elapsed, True
 
     def close(self):
         self.stop('UI 종료')

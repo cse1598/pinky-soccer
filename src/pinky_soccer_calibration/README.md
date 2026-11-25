@@ -356,3 +356,81 @@ Nav2 형식 `map.yaml`/`map.pgm`을 저장합니다. 정지·경기장 정리 �
 - 실험에 쓴 바퀴 반경·간격과 출처(프로젝트 wheels 결과 또는 공식 기본값)·project revision을 기록합니다.
 - 모델 식별(램프+1차 지연, 지연)·그래프·독립 검증은 아직 구현하지 않았습니다. 재계산은 현재 기록 집계만 합니다.
 - 새 기록은 `profile.yaml`을 보관 처리하거나 그 결과에 섞이지 않습니다(`CONTROL_CATEGORIES`).
+
+# 우선순위 2: 통신·명령 경로·제동·외형 (2026-11-25)
+
+## 실물에서 읽을 수 있는 모터·엔코더 데이터 (공식 코드 분석, 실물 미확인)
+
+| 항목 | 공식 드라이버 (`pinky_bringup/bringup.py`, `dynamixel_driver.py`) |
+|---|---|
+| JointState | 30 Hz 타이머. `velocity` 있음 = Present Velocity(주소128, 0.229 rpm 단위)→rad/s. `position` = Present Position(132)/4096×2π. **오른쪽은 원시 부호(전진 시 −)**, 이름 `left/right_wheel_joint` → relay가 `l/r_wheel_joint`로 바꿈 |
+| 헤더 시각 | 노드 시계로 읽기 직전 시각 (엔코더 샘플 시각에 가까우나 모터 내부 샘플 시각은 아님) |
+| 명령 | `drive/cmd_vel` 수신 즉시 Goal Velocity(104) 동기 쓰기, rpm→정수 절사(0.229 rpm), 큰 쪽 바퀴가 100 rpm 넘으면 두 바퀴 비례 축소. 오른쪽 부호 반전 |
+| Profile Acceleration | 시작 시 200 (≈74.9 rad/s²) |
+| 명령 경로 | PC `cmd_vel` → 로봇 `command_watchdog`가 **최신 명령을 20 Hz(50 ms)로 재발행**, 0.5 s 무명령 시 0 → `drive/cmd_vel` → 드라이버 |
+| 모터 모델 | 코드에 없음 (사양상 XL330-M288-T). `motor_diagnostics:=true`면 모델 번호(주소0)를 읽어 `motor/info`로 발행 |
+
+`motor_diagnostics:=true` (로봇 bringup, 기본 false): 공식 `Pinky` 클래스를 같은 프로세스에서 실행하고 피드백
+읽기만 124~145 연속 블록으로 넓힙니다 → Present PWM·Current·Velocity·Position·**Velocity Trajectory(모터 내부 램프
+목표)**·Position Trajectory·Input Voltage를 같은 시각에 `motor/diagnostics`(JSON)로 발행. 포트는 한 프로세스만
+사용합니다. 주소는 X 시리즈(XL330) 표 기준이며 실물에서 값이 맞는지 아직 확인하지 않았습니다.
+`motor_feedback_rate_hz`(기본 30=공식)는 50~100 Hz 실험용이며 하드웨어 검증 전입니다.
+
+접근하지 않는 것: Goal Velocity 읽기(쓰기 값은 명령으로 기록), 모터 펌웨어 내부 제어 주기, 실제 토크.
+Wi-Fi 구간 지연은 Ping-Pong과 명령 태그로만 측정합니다.
+
+## 실물 실험 순서 (권장 입력·반복)
+
+| 순서 | 탭 | 실험 | 입력 | 반복 |
+|---|---|---|---|---|
+| 0 | 연결·시간 | IP 저장, 상태 확인, 동기화 기록 | 60 s | 1 (실험 전·후) |
+| 1 | 통신 지연 | Ping-Pong | 10, 20, 50 Hz · 20 s · 0 B | 각 3 |
+| 2 | 모터 동역학 | 직진 저속 | forward 0.05 m/s · 1/2/2 s · 최대 0.3 m | 3 (첫 실물은 1회 후 정지 확인) |
+| 3 | 모터 동역학 | 직진 | forward 0.10, 0.15 (0.20) | 각 3 |
+| 4 | 모터 동역학 | 후진 | backward 0.05, 0.10 | 각 3 |
+| 5 | 모터 동역학 | 제자리 회전 | spin_left/right 0.5, 1.0 (2.0) rad/s | 각 3 |
+| 6 | 모터 동역학 | 복합 | combined 0.10 m/s + 1.0 rad/s | 3 |
+| 7 | 모터 동역학 | 제동 | brake_forward 0.05~0.20 (0.25는 승인 후) · 유지 상한 4 s | 각 3 + 줄자 거리 |
+| 8 | 모터 동역학 | 독립 검증용 | 위 중 일부를 '독립 검증용'으로 | 각 2 |
+| 9 | 통신 지연 | 명령 경로 분석 | (2~8의 기록 대상) | — |
+| 10 | 충돌 외형 | 줄자 실측 | 전후좌우 + 바퀴/범퍼 모서리 외곽점 | 2~3 |
+| 11 | 바퀴 | (선택) 추가 관측 | 전후 X·좌우 Y·최종 자세각 | 기존과 같이 |
+
+모든 주행: 기록 시작/재개 → 로봇·namespace 확인 체크 → 실행. BT/MPC/teleop는 끕니다(시작과 실행 중 모두 감시해
+발견 시 안전 정지). 바퀴 0.9×103 rpm, 기본 0.20 m/s·2.0 rad/s, 최대 이동 거리·각·시간 제한.
+
+## 저장 위치 (프로젝트 폴더 안, 상대 경로)
+
+- `motor_response/<ID>/observations.csv`, `commands.csv`(명령 태그 포함), `meta.yaml`
+- `communication_latency/<ID>/pingpong.csv`
+- 연속 원본: `raw_bag*`, `observations*.csv` (기록 세션별)
+- 분석 기록(`command_latency`, `braking`)은 원본 실험 ID만 참조합니다(복사 없음). 원본 기록을 지우면 참조 분석은
+  `source_deleted`·재계산 필요가 됩니다. 충돌 외형·시간 동기화·통신 기록은 `project.yaml` measurements에 있습니다.
+
+## 재개
+
+UI 실행 → 저장 폴더 불러오기(같은 프로젝트) → 기록 시작/재개 → 이어서 실험. 비정상 종료된 실험은 `interrupted`로
+표시되며 자동 재주행하지 않습니다. 측정 기록 탭에서 기록 삭제·재계산.
+
+## 빌드·실행
+
+```bash
+# PC
+cd ~/pinky-soccer && source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --packages-select pinky_soccer_msgs pinky_soccer_bringup pinky_soccer_calibration
+source install/setup.bash
+ros2 launch pinky_soccer_calibration calibration_ui.launch.py      # robot_namespace:=auto pc_ip:=
+
+# Pinky (pinky_soccer_bringup·pinky_soccer_msgs·pinky_soccer_description 소스 복사 후)
+colcon build --packages-select pinky_soccer_msgs pinky_soccer_description pinky_soccer_bringup
+source install/setup.bash
+ros2 launch pinky_soccer_bringup robot.launch.py motor_diagnostics:=true   # 진단 끄면 공식 드라이버
+```
+
+수신 주기 확인(실물): `ros2 topic hz /joint_states`, `ros2 topic hz /motor/diagnostics`,
+`ros2 topic echo --once /motor/info`, 주기 탭의 10 s 수집.
+
+## 실물 미검증
+
+모든 신규 주행·계측(계단응답·제동·Ping-Pong·명령 태그·모터 진단 블록 주소·피드백 주기 변경·운행 중 발행자 감시)은
+MuJoCo/단위 테스트로만 확인했습니다. 좌우 개별 유효 반경 식별과 모델 식별(우선순위 3)은 아직 없습니다.
