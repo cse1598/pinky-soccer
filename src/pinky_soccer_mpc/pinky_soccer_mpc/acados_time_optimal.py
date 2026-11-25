@@ -31,6 +31,8 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             raise ValueError('damping_scale must be finite and nonnegative')
         self.candidate_timeout = min(.022, self.budget/3.5)
         self.retry_seed = None
+        self.retry_goal = None
+        self.carry_seed = False
         self.predictor=RampPredictor(params,self.dt)
         self.disturbance=np.zeros(2)
         self.ocp = self.build_ocp()
@@ -332,7 +334,14 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
             raise ValueError('invalid wheel disturbance')
         self.disturbance=np.clip(d,-DISTURBANCE_LIMIT,DISTURBANCE_LIMIT)
         self.attempt_statuses=[]
-        self.retry_seed=None
+        # carry_seed (set by the controller only while a GoToPose is INITIALIZING, i.e.
+        # before its first command): keep the previous solve's last path-feasible elastic
+        # iterate for the same goal as an initial guess, so SQP progress made in a missed
+        # slot is not thrown away. Initialization only; acceptance is unchanged.
+        goal=tuple(np.round(np.asarray(args[1] if len(args)>1 else kwargs['goal'],float),9))
+        if not (self.carry_seed and self.retry_goal==goal):
+            self.retry_seed=None
+        self.retry_goal=goal
         result=super().solve(*args,**kwargs)
         result['backend']='discrete_time_optimal_acados'
         result['attempt_statuses']=self.attempt_statuses.copy()

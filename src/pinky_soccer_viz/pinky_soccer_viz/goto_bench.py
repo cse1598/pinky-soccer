@@ -44,7 +44,9 @@ SAMPLE_KEYS = ('state', 'reason', 'ms', 'solve_id', 'active_solve_id', 'horizon_
                'wheel_source_age_s', 'pose_source_age_s', 'pose_receipt_age_sim_s',
                'feedback_age', 'activation_position_error_m',
                'activation_aligned_position_error_m', 'activation_heading_error_rad',
-               'activation_aligned_heading_error_rad', 'observer_d_l', 'observer_d_r')
+               'activation_aligned_heading_error_rad', 'observer_d_l', 'observer_d_r',
+               'tracking', 'init_missed', 'activation_first_s', 'attempt_statuses',
+               'lower_steps', 'status', 'message')
 
 
 def wrap(a):
@@ -112,7 +114,11 @@ def leg_metrics(samples, goal, state, elapsed):
     periods = [s['period_s'] for s in samples if s.get('period_s') is not None]
     walls = [s['wall'] for s in samples]
     sims = [s['t'] for s in samples]
+    firsts = [s['activation_first_s'] for s in samples if s.get('activation_first_s') is not None]
+    inits = [s['init_missed'] for s in samples if s.get('init_missed') is not None]
     m.update(first_command_s=(track[0] - samples[0]['t']) if track else None,
+             init_missed=max(inits) if inits else None,
+             first_activation_s=firsts[0] if firsts else None,
              est_err_mean_cm=100 * sum(est_err) / len(est_err) if est_err else None,
              est_err_max_cm=100 * max(est_err) if est_err else None,
              est_head_max_deg=math.degrees(max(est_head)) if est_head else None,

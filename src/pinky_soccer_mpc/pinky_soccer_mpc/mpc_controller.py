@@ -104,6 +104,17 @@ class MpcController(Node):
                  max_steps=self.time_mpc.max_steps,budget=self.time_mpc.budget,**kwargs)
         self.world_msg=None
         self.avoid_worker_key=None
+        # GoToPose INITIALIZING: until the first optimized command is applied, missed
+        # activation slots are not consecutive tracking failures (the robot holds zero
+        # command) and the worker keeps the same goal_id's warm start; after init_timeout_sec
+        # (node clock) without a first command the request fails. TRACKING is unchanged.
+        self.init_timeout=float(p('init_timeout_sec',1.).value)
+        if not (math.isfinite(self.init_timeout) and self.init_timeout>0):
+            raise ValueError('init_timeout_sec must be positive')
+        self.tracking=False
+        self.init_start=None
+        self.init_missed=0
+        self.worker_key=None
         self.avoid=obstacle_snapshot.AvoidanceOptions()
         self.forward_only=set(p('forward_only_actions',[
             'GoBehindBall','PushBall','GoToBlockPoint','FaceBall','TurnToLastSeen']).value)
@@ -217,15 +228,23 @@ class MpcController(Node):
         return res
 
     def solve_job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.),obstacles=None,
-                  goal_key=None):
+                  goal_key=None,keep_warm=False):
         if self.worker_generation!=generation:
             self.mpc.reset()
-            self.time_mpc.reset()
+            # INITIALIZING only: a missed first slot keeps this goal_id's warm start.
+            if not (keep_warm and goal_key is not None and goal_key==self.worker_key):
+                self.time_mpc.reset()
             self.worker_generation=generation
+        # INITIALIZING only (keep_warm): also carry the last elastic iterate (see solver).
+        self.time_mpc.carry_seed=bool(keep_warm and goal_key is not None and
+                                      goal_key==self.worker_key)
+        if goal_key is not None:
+            self.worker_key=goal_key
         if is_pose and obstacles is not None:
             # Avoidance path only: a missed activation slot discards the late result
             # (generation) but keeps the warm start of the same goal_id, because a cold
             # constrained solve can exceed one slot and would otherwise never warm up.
+            self.avoid_mpc.carry_seed=bool(keep_warm and self.avoid_worker_key==goal_key)
             if self.avoid_worker_key!=goal_key:
                 self.avoid_mpc.reset()
                 self.avoid_worker_key=goal_key
@@ -388,6 +407,9 @@ class MpcController(Node):
             self.failed_reason=None
             self.progress_time=now
             self.progress_best=None
+            self.tracking=False
+            self.init_start=now
+            self.init_missed=0
         if not self.pose_valid or not all(math.isfinite(v) for v in goal):
             self.arrival.reset()
             self.invalidate()
@@ -439,7 +461,8 @@ class MpcController(Node):
         if self.future is not None and wall-self.future_wall>.3:
             if self.future_generation==self.generation:
                 self.invalidate()
-                self.failures+=1
+                if self.tracking or not is_pose:
+                    self.failures+=1
             return self.stop('solver deadline')
         if is_pose and self.time_backend=='acados':
             return self.scheduled_tick(now,wall,goal,dist,ang,elapsed)
@@ -472,6 +495,10 @@ class MpcController(Node):
                     # Latest obstacles collide with this plan: brake for this slot.
                     result=None
             if result is not None:
+                if not self.tracking:
+                    self.tracking=True
+                    self.diag['activation_first_s']=now-self.init_start
+                    self.diag['init_missed']=self.init_missed
                 self.active_solve_id=solve_id
                 self.last_solution=tuple(res['u'])
                 self.last_solution_sim=now
@@ -498,7 +525,10 @@ class MpcController(Node):
                 self.last_solution=None
                 self.active_predicted=None
                 self.active_solve_id=None
-                self.failures+=1
+                if self.tracking:
+                    self.failures+=1
+                else:
+                    self.init_missed+=1
                 self.diag.update(activation_position_error_m=None,
                     activation_heading_error_rad=None,activation_wheel_error_rad_s=None,
                     activation_aligned_position_error_m=None,activation_aligned_heading_error_rad=None,
@@ -506,6 +536,11 @@ class MpcController(Node):
                 # Invalidate a late worker so it cannot fill a subsequent slot.
                 self.generation+=1
             self.diag['activation_missed']=result is None
+        if not self.tracking and now-self.init_start>self.init_timeout:
+            self.failed_reason=(f'no optimized first command within {self.init_timeout:g} s '
+                                f'({self.init_missed} slots missed while initializing)')
+            self.invalidate()
+            return self.stop(self.failed_reason,MotionResult.FAILURE,dist,ang)
         if self.failures>=3:
             self.failed_reason='three consecutive missed/failed activation slots'
             self.invalidate()
@@ -541,12 +576,13 @@ class MpcController(Node):
             obstacles=self.avoid_snapshot(now) if self.avoid.any else None
             self.future=self.executor_pool.submit(self.job,self.generation,state,
                  goal,vb,wb,self.goal.action in self.forward_only,True,tuple(forecast),obstacles,
-                 self.key)
+                 self.key,not self.tracking)
             self.diag['prediction_lead_sim_s']=self.dt
         valid=self.last_solution is not None
-        self.report('track' if valid else 'waiting',
+        self.report('track' if valid else ('waiting' if self.tracking else 'initializing'),
                     'scheduled optimized input' if valid else 'waiting for scheduled solution',
-                    dist=dist,ang=ang,v=v,w=w,period_s=elapsed)
+                    dist=dist,ang=ang,v=v,w=w,period_s=elapsed,tracking=self.tracking,
+                    init_missed=self.init_missed)
 
     # ------------------------------------------------------------------ avoidance
     def avoid_snapshot(self,now):
