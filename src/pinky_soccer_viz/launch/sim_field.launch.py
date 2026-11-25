@@ -153,8 +153,11 @@ def setup(context):
         camera_raw_only=(opponent,) if two and mode != 'game' and sim == 'mujoco' else (),
         **base))
     if two and mode == 'game':
+        # opponent_verify: its bt_node runs verify_mode (no game tree), so a second bench can
+        # drive its GoToPose (two NMPCs at once) or leave it idle (its NMPC never solves).
         out += decision_stack(RobotConfig(
-            name=opponent, color=other, initial=opp_pose, ui=False, groot2=False, **base))
+            name=opponent, color=other, initial=opp_pose, ui=False, groot2=False,
+            verify=flag('opponent_verify', context), **base))
     elif two:
         out += multi_robot.group(opponent, [Node(
             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
@@ -190,6 +193,8 @@ def generate_launch_description():
                               description='opponent namespace (default: the other colour)'),
         DeclareLaunchArgument('opponent_mode', default_value='game',
                               choices=list(OPPONENT_MODES)),
+        DeclareLaunchArgument('opponent_verify', default_value='false',
+                              description='game opponent: bt_node verify_mode (no game tree)'),
         DeclareLaunchArgument('opponent_speed', default_value='0.10',
                               description='obstacle back-and-forth speed [m/s]'),
         DeclareLaunchArgument('opponent_travel', default_value='0.40',

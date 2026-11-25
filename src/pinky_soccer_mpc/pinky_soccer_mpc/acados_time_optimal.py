@@ -311,6 +311,7 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                         self.dt,vb,wb,self.damping_scale) if terminal and predicted is not None else 0.)
         self.attempt_statuses.append(dict(n=int(n),status=status,
             terminal=bool(terminal),ms=round((time.perf_counter()-started)*1e3,3),
+            acados_ms=round(float(s.get_stats('time_tot'))*1e3,3),
             iterations=iterations,residuals=finite_list(residuals),
             slack_max=float(np.max(slack)) if np.all(np.isfinite(slack)) else None,
             terminal_errors=errors,accepted=accepted,damping_cost=damp_cost,

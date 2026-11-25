@@ -59,7 +59,7 @@ def setup(context):
         common.update({name: arg(name) for name in
                        ('ball_x', 'ball_y', 'imu_enabled', 'adc_enabled', 'robots',
                         'opponent_name', 'opponent_mode', 'opponent_speed', 'opponent_travel',
-                        'opponent_x', 'opponent_y', 'opponent_yaw')})
+                        'opponent_x', 'opponent_y', 'opponent_yaw', 'opponent_verify')})
         if mode == 'mujoco':
             common['use_gpu'] = arg('use_gpu')
         common.update(simulator=mode, publish_debug_image='true',
@@ -87,6 +87,8 @@ def generate_launch_description():
         DeclareLaunchArgument('opponent_name', default_value=''),
         DeclareLaunchArgument('opponent_mode', default_value='game',
                               choices=['game', 'static', 'lateral', 'longitudinal']),
+        DeclareLaunchArgument('opponent_verify', default_value='false', choices=['true', 'false'],
+                              description='robots:=2 game opponent: bt_node verify_mode'),
         DeclareLaunchArgument('opponent_speed', default_value='0.10',
                               description='obstacle modes: back-and-forth speed [m/s]'),
         DeclareLaunchArgument('opponent_travel', default_value='0.40',

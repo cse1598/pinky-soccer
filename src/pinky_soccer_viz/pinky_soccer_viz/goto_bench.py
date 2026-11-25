@@ -39,7 +39,12 @@ DEFAULT_TOUR = [-0.4, 0.0, 0.0,
 SAMPLE_KEYS = ('state', 'reason', 'ms', 'solve_id', 'active_solve_id', 'horizon_steps',
                'terminal_feasible', 'activation_missed', 'replay_violation', 'damping_cost',
                'wheel_l', 'wheel_r', 'wheel_cmd_l', 'wheel_cmd_r', 'avoidance',
-               'min_clearance_m')
+               'min_clearance_m', 'acados_ms', 'worker_wait_ms', 'result_pickup_ms',
+               'solve_input_age_wall_s', 'activation_jitter_sim_s', 'period_s',
+               'wheel_source_age_s', 'pose_source_age_s', 'pose_receipt_age_sim_s',
+               'feedback_age', 'activation_position_error_m',
+               'activation_aligned_position_error_m', 'activation_heading_error_rad',
+               'activation_aligned_heading_error_rad', 'observer_d_l', 'observer_d_r')
 
 
 def wrap(a):
@@ -84,11 +89,45 @@ def leg_metrics(samples, goal, state, elapsed):
              reexit_pos_cm=100 * max_pos if first is not None else None,
              path_m=sum(math.hypot(b['true_x'] - a['true_x'], b['true_y'] - a['true_y'])
                         for a, b in zip(rows, rows[1:])))
-    solves = {}
+    solves, acados, waits, pickups, act, act_al = {}, {}, {}, {}, {}, {}
     for s in samples:
-        if s.get('solve_id') is not None and s.get('ms') is not None:
-            solves[s['solve_id']] = s['ms']
+        sid = s.get('solve_id')
+        if sid is not None and s.get('ms') is not None:
+            solves[sid] = s['ms']
+            for store, key in ((acados, 'acados_ms'), (waits, 'worker_wait_ms'),
+                               (pickups, 'result_pickup_ms')):
+                if s.get(key) is not None:
+                    store[sid] = s[key]
+        aid = s.get('active_solve_id')
+        if aid is not None and s.get('activation_position_error_m') is not None:
+            act[aid] = s['activation_position_error_m']
+            if s.get('activation_aligned_position_error_m') is not None:
+                act_al[aid] = s['activation_aligned_position_error_m']
     ms = list(solves.values())
+    track = [s['t'] for s in samples if s.get('state') == 'track']
+    est_err = [math.hypot(s['est_x'] - s['true_x'], s['est_y'] - s['true_y'])
+               for s in rows if s.get('est_x') is not None]
+    est_head = [abs(wrap(s['est_th'] - s['true_th'])) for s in rows
+                if s.get('est_th') is not None]
+    periods = [s['period_s'] for s in samples if s.get('period_s') is not None]
+    walls = [s['wall'] for s in samples]
+    sims = [s['t'] for s in samples]
+    m.update(first_command_s=(track[0] - samples[0]['t']) if track else None,
+             est_err_mean_cm=100 * sum(est_err) / len(est_err) if est_err else None,
+             est_err_max_cm=100 * max(est_err) if est_err else None,
+             est_head_max_deg=math.degrees(max(est_head)) if est_head else None,
+             ms_p99=percentile(ms, 99),
+             acados_p50=percentile(list(acados.values()), 50),
+             acados_p95=percentile(list(acados.values()), 95),
+             acados_max=max(acados.values()) if acados else None,
+             wait_p95=percentile(list(waits.values()), 95),
+             pickup_p95=percentile(list(pickups.values()), 95),
+             act_err_mm=1000 * sum(act.values()) / len(act) if act else None,
+             act_aligned_err_mm=1000 * sum(act_al.values()) / len(act_al) if act_al else None,
+             tick_p95_ms=1000 * percentile(periods, 95) if periods else None,
+             tick_max_ms=1000 * max(periods) if periods else None,
+             rtf=(sims[-1] - sims[0]) / (walls[-1] - walls[0])
+             if len(walls) > 1 and walls[-1] > walls[0] else None)
     missed = sum(1 for a, b in zip(samples, samples[1:])
                  if b.get('activation_missed') and not a.get('activation_missed'))
     clear = [s['min_clearance_m'] for s in samples if s.get('min_clearance_m') is not None]

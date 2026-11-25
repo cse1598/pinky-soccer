@@ -207,8 +207,17 @@ class MpcController(Node):
         self.active_predicted=None
         self.active_solve_id=None
 
-    def job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.),obstacles=None,
-            goal_key=None):
+    def job(self,*args,**kwargs):
+        # Diagnostics only: when the single worker actually started this solve.
+        started=time.monotonic()
+        res=self.solve_job(*args,**kwargs)
+        if isinstance(res,dict):
+            res['job_start_wall']=started
+            res['job_end_wall']=time.monotonic()
+        return res
+
+    def solve_job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.),obstacles=None,
+                  goal_key=None):
         if self.worker_generation!=generation:
             self.mpc.reset()
             self.time_mpc.reset()
@@ -330,6 +339,13 @@ class MpcController(Node):
                 self.diag.update(solve_id=completed_id,
                                  solve_input_age_sim_s=now-submitted_sim,
                                  solve_input_age_wall_s=wall-submitted)
+                if res.get('job_start_wall') is not None:
+                    # Queue wait before the worker started, and the delay until this tick
+                    # collected the finished result (ROS timer / GIL scheduling).
+                    self.diag.update(worker_wait_ms=(res['job_start_wall']-submitted)*1e3,
+                                     result_pickup_ms=(wall-res['job_end_wall'])*1e3,
+                                     acados_ms=sum(a.get('acados_ms',0.) for a in
+                                                   res.get('attempt_statuses') or []))
                 if scheduled:
                     # Hold the existing stage until its scheduled boundary.
                     # The new solution is only eligible for that boundary.
