@@ -15,6 +15,10 @@ install(PROGRAMS ${PROJECT_NAME}/time_sync.py
   DESTINATION lib/${PROJECT_NAME} RENAME time_sync_status)
 install(PROGRAMS ${PROJECT_NAME}/command_watchdog.py
   DESTINATION lib/${PROJECT_NAME} RENAME command_watchdog)
+install(PROGRAMS ${PROJECT_NAME}/latency_echo.py
+  DESTINATION lib/${PROJECT_NAME} RENAME latency_echo)
+install(PROGRAMS ${PROJECT_NAME}/drive_diagnostics.py
+  DESTINATION lib/${PROJECT_NAME} RENAME drive_diagnostics)
 
 install(
   PROGRAMS ${PROJECT_NAME}/wheel_joint_state_relay.py
@@ -48,6 +52,8 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_bno055_magnetic test/test_bno055_magnetic.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   ament_add_pytest_test(test_time_sync test/test_time_sync.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  ament_add_pytest_test(test_drive_diagnostics test/test_drive_diagnostics.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   ament_add_pytest_test(test_battery_state_relay test/test_battery_state_relay.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

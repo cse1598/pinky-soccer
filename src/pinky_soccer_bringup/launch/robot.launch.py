@@ -74,6 +74,12 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_name', default_value='',
                               description='ROS namespace (empty: none, global /tf)'),
         OpaqueFunction(function=check_robot_name),
+        DeclareLaunchArgument('motor_diagnostics', default_value='false',
+                              description='run the official driver class with read-only motor '
+                              'diagnostics (motor/diagnostics, motor/info); false = official'),
+        DeclareLaunchArgument('motor_feedback_rate_hz', default_value='30.0',
+                              description='motor_diagnostics only: feedback/odom/joint rate '
+                              '(30 = official; higher values are not hardware-verified)'),
         DeclareLaunchArgument('hardware', default_value='true',
                               description='false: description only (no physical devices)'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
@@ -132,10 +138,27 @@ def generate_launch_description():
                                                                  value_type=float)}],
                  remappings=[('joint_states', 'wheel_joint_states_raw'),
                              ('cmd_vel', 'drive/cmd_vel')],
-                 condition=hardware),
+                 condition=IfCondition(AndSubstitution(
+                     lc('hardware'), NotSubstitution(lc('motor_diagnostics'))))),
+            # Opt-in (motor_diagnostics:=true): the same official Pinky class in one process,
+            # plus read-only motor diagnostics (pinky_soccer_bringup/drive_diagnostics.py).
+            Node(package='pinky_soccer_bringup', executable='drive_diagnostics',
+                 parameters=[PathJoinSubstitution([FindPackageShare('pinky_bringup'),
+                                                   'config', 'pinky_params.yaml']),
+                             {'wheel_radius': ParameterValue(lc('wheel_radius'), value_type=float),
+                              'wheel_separation': ParameterValue(lc('wheel_separation'),
+                                                                 value_type=float),
+                              'feedback_rate_hz': ParameterValue(
+                                  lc('motor_feedback_rate_hz'), value_type=float)}],
+                 remappings=[('joint_states', 'wheel_joint_states_raw'),
+                             ('cmd_vel', 'drive/cmd_vel')],
+                 condition=IfCondition(AndSubstitution(lc('hardware'),
+                                                       lc('motor_diagnostics')))),
             Node(package='pinky_soccer_bringup', executable='command_watchdog',
                  condition=hardware),
             Node(package='pinky_soccer_bringup', executable='time_sync_status',
+                 condition=hardware),
+            Node(package='pinky_soccer_bringup', executable='latency_echo',
                  condition=hardware),
             # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.
             Node(package='pinky_bringup', executable='battery_publisher',
