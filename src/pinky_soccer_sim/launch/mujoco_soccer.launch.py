@@ -142,6 +142,8 @@ def setup(context):
                  *[lc(f'opponent_{k}', context) for k in ('x', 'y', 'yaw')]]
         if opp_sensors:
             args.append('--opponent-sensors')
+        elif lc('opponent_camera', context).lower() == 'true':
+            args.append('--opponent-camera')
     # The official bridge uses absolute topics; move robot 1's into its namespace.
     remaps = [('/cmd_vel', 'drive/cmd_vel'), ('/scan', 'sim/lidar/scan')]
     if name:
@@ -215,6 +217,9 @@ def generate_launch_description():
         DeclareLaunchArgument('opponent_x', default_value='0.4'),
         DeclareLaunchArgument('opponent_y', default_value='0.0'),
         DeclareLaunchArgument('opponent_yaw', default_value='3.141592653589793'),
+        DeclareLaunchArgument('opponent_camera', default_value='false',
+                              description='obstacle opponent (opponent_sensors false): front '
+                              'camera only, /<opponent>/sim/camera/image_raw, rendered on demand'),
         DeclareLaunchArgument('opponent_sensors', default_value='false',
                               description='simulate LiDAR/camera/IMU of the second robot'),
         DeclareLaunchArgument('bridge_package', default_value='pinky_soccer_sim'),

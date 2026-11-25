@@ -11,8 +11,9 @@
 
 로봇이 여러 대면(시뮬 `robots:=2 opponent_mode:=game`) 카메라 창에서 **1~9 키 또는 Tab**으로
 보여 줄 로봇을 고릅니다(처음은 내 로봇, 원본 패널 제목에 `[robot 1/2: yellow]` 표시). 선택한
-로봇의 토픽만 구독합니다. 장애물 모드(static/lateral/longitudinal) 상대는 시뮬 센서가 꺼져 있어
-목록에 없습니다. 직접 실행할 때는
+로봇의 토픽만 구독합니다. MuJoCo 장애물 모드(static/lateral/longitudinal) 상대는 검출기가 없어
+시뮬 카메라 원본(`/<상대>/sim/camera/image_raw`)만 나오고, 이 영상은 창이 볼 때만 렌더링합니다
+(`opponent_camera`). Gazebo 장애물 상대는 카메라가 없어 목록에 없습니다. 직접 실행할 때는
 `ros2 run pinky_soccer_viz game_camera_view --ros-args -p robots:='[yellow, blue]'`.
 
 창을 닫았다가 다시 열려면 같은 ROS domain/DDS 터미널에서

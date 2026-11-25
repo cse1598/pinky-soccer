@@ -214,8 +214,13 @@ def install_after(bridge, material_cfg=None):
     bridge.Physics = MultiMaterialPhysics
 
 
-def install_bridge(bridge, opponent, sensors, sensor_cfg=None, imu=False, adc=False):
-    """Publish robot 2 from the same bridge node (absolute /<opponent>/ topics)."""
+def install_bridge(bridge, opponent, sensors, sensor_cfg=None, imu=False, adc=False,
+                   camera_only=False):
+    """Publish robot 2 from the same bridge node (absolute /<opponent>/ topics).
+
+    camera_only (obstacle opponents): only the front camera, rendered only while some
+    node subscribes (the camera window), so an obstacle costs nothing otherwise.
+    """
     from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
     from nav_msgs.msg import Odometry
     from rclpy.qos import qos_profile_sensor_data
@@ -240,6 +245,9 @@ def install_bridge(bridge, opponent, sensors, sensor_cfg=None, imu=False, adc=Fa
             self.r2_joints = self.create_publisher(JointState, f'{ns}/joint_states', 10)
             self.r2_truth = self.create_publisher(PoseStamped, f'{ns}/ground_truth', 10)
             self.r2_sensors = sensors
+            self.r2_camera = None
+            if camera_only and not sensors and physics.settings.get('camera', {}).get('enabled'):
+                self.r2_camera = Camera2(self, physics, ns, on_demand=True)
             if sensors:
                 self.r2_scan = self.create_publisher(LaserScan, f'{ns}/sim/lidar/scan',
                                                      qos_profile_sensor_data)
@@ -251,8 +259,9 @@ def install_bridge(bridge, opponent, sensors, sensor_cfg=None, imu=False, adc=Fa
                 self.r2_ranges = {n: self.create_publisher(LaserScan, f'{ns}/sim/{n}/scan',
                                                            qos_profile_sensor_data)
                                   for n in RANGE_LINKS} if adc else {}
-            self.get_logger().info(f'second robot {opponent}: topics under {ns}/, '
-                                   f'sensors {"on" if sensors else "off (obstacle)"}')
+            self.get_logger().info(f'second robot {opponent}: topics under {ns}/, sensors '
+                                   f'{"on" if sensors else "off (obstacle)"}'
+                                   f'{", camera on demand" if self.r2_camera and not sensors else ""}')
 
         def advance(self):
             super().advance()
@@ -270,6 +279,8 @@ def install_bridge(bridge, opponent, sensors, sensor_cfg=None, imu=False, adc=Fa
                     self.publish_imu2(now)
                 if self.r2_ranges and self.tick % 5 == 0:
                     self.publish_ranges2(now)
+            elif self.r2_camera and self.r2_camera.due(self.physics.data.time):
+                self.r2_camera.publish(self.physics.data, now)
 
         def publish_robot2(self, now):
             p, r2 = self.physics, self.physics.robot2
@@ -356,8 +367,9 @@ def ray_ranges2(physics, link, item):
 class Camera2:
     """Offscreen render of robot 2's front camera (same settings as robot 1's)."""
 
-    def __init__(self, node, physics, ns):
+    def __init__(self, node, physics, ns, on_demand=False):
         from rclpy.qos import QoSProfile, ReliabilityPolicy
+        self.on_demand = on_demand
         from sensor_msgs.msg import CameraInfo, Image
         self.Image = Image
         self.cfg = physics.settings['camera']
@@ -382,6 +394,8 @@ class Camera2:
 
     def due(self, sim_time):
         """Return True when the next frame is due."""
+        if self.on_demand and self.image_pub.get_subscription_count() == 0:
+            return False
         return not self.disabled and sim_time - self.last_time >= self.period - 1e-9
 
     def publish(self, data, stamp):

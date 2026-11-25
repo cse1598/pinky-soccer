@@ -90,6 +90,8 @@ def parse_args(argv):
                         metavar=('X', 'Y', 'YAW'))
     parser.add_argument('--opponent-sensors', action='store_true',
                         help='also simulate robot 2 LiDAR/camera/IMU/ranges (game mode)')
+    parser.add_argument('--opponent-camera', action='store_true',
+                        help='obstacle robot 2: front camera only, rendered on demand')
     parser.add_argument('--real-driver-max-rpm', type=float, default=0.0,
                         help='> 0: scale both wheels like pinky_bringup (MAX_RPM, ratio kept)')
     return parser.parse_known_args(argv)
@@ -184,7 +186,7 @@ def main(args=None):
         mujoco_multi.install_bridge(
             bridge, options.opponent_name, options.opponent_sensors,
             load_config(options.sensor_config) if options.sensor_config else None,
-            options.imu_enabled, options.adc_enabled)
+            options.imu_enabled, options.adc_enabled, camera_only=options.opponent_camera)
     bridge.main(rest)
 
 

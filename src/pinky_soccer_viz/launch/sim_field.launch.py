@@ -116,6 +116,8 @@ def setup(context):
         # The eval bridge adds /sim/ball_ground_truth and /sim/set_ball (referee reset).
         common.update(viewer='false' if headless else 'true',
                       use_gpu=lc('use_gpu', context),
+                      # Obstacle opponent: front camera only, rendered while someone watches.
+                      opponent_camera='true' if two and mode != 'game' else 'false',
                       bridge_package='pinky_soccer_viz', bridge_executable='mujoco_eval_bridge')
     else:
         common.update(gui='false' if headless else 'true')
@@ -145,8 +147,11 @@ def setup(context):
         name=name, color=color, initial=ours, verify=flag('verify', context), ui=True,
         heading_record=lc('heading_record', context),
         opponent_truth=multi_robot.topic(opponent, 'ground_truth') if two else '',
-        # Obstacle opponents run without simulated sensors: nothing to show.
-        camera_robots=(name, opponent) if two and mode == 'game' else (), **base))
+        # A game opponent has its own detector; a MuJoCo obstacle opponent only a raw camera
+        # (Gazebo obstacles have no camera).
+        camera_robots=(name, opponent) if two and (mode == 'game' or sim == 'mujoco') else (),
+        camera_raw_only=(opponent,) if two and mode != 'game' and sim == 'mujoco' else (),
+        **base))
     if two and mode == 'game':
         out += decision_stack(RobotConfig(
             name=opponent, color=other, initial=opp_pose, ui=False, groot2=False, **base))

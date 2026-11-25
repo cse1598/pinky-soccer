@@ -65,6 +65,9 @@ class GameCameraView(Node):
             raise ValueError('window_width must be 600..3840')
         robots = list(self.declare_parameter('robots', ['']).value) or ['']
         self.robots = [str(r).strip('/') for r in robots]
+        # Robots without a ball_detector (MuJoCo obstacle opponent): its raw simulator camera.
+        self.raw_only = {str(r).strip('/') for r in
+                         self.declare_parameter('raw_only_robots', ['']).value if r}
         self.index = 0
         self.subscriptions_kept = []
         self.select(0)
@@ -77,9 +80,11 @@ class GameCameraView(Node):
         self.index = index % len(self.robots)
         self.cache = {name: {} for name in ('camera', 'detection', 'mask')}
         robot = self.robots[self.index]
-        for name, topic in [('camera', 'ball_detection/source_image'),
-                            ('detection', 'ball_detection/debug_image'),
-                            ('mask', 'ball_detection/debug_mask')]:
+        topics = ([('camera', 'sim/camera/image_raw')] if robot in self.raw_only else
+                  [('camera', 'ball_detection/source_image'),
+                   ('detection', 'ball_detection/debug_image'),
+                   ('mask', 'ball_detection/debug_mask')])
+        for name, topic in topics:
             self.subscriptions_kept.append(self.create_subscription(
                 Image, robot_topic(robot, topic), lambda msg, key=name: self.receive(key, msg),
                 qos_profile_sensor_data))
@@ -87,7 +92,8 @@ class GameCameraView(Node):
 
     def label(self):
         robot = self.robots[self.index] or '(no namespace)'
-        return f'robot {self.index + 1}/{len(self.robots)}: {robot}'
+        extra = ', no detector' if robot in getattr(self, 'raw_only', ()) else ''
+        return f'robot {self.index + 1}/{len(self.robots)}: {robot}{extra}'
 
     def receive(self, name, msg):
         """Keep a bounded cache keyed by exact exposure time and optical frame."""
