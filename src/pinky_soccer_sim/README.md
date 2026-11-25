@@ -261,6 +261,23 @@ ros2 launch pinky_soccer_sim mujoco_soccer.launch.py viewer:=false camera:=false
 | 물리, odom, LiDAR | 공식 물리 유지. 원본 LiDAR는 `/sim/lidar/scan`으로 remap하여 공통 오차 적용 후 `/scan` 발행 |
 | 카메라·센서 | 자체 설정의 renderer와 네이티브 IMU·ray 관측 → 공통 센서 어댑터 |
 | 테스트 공 | `mujoco_soccer_bridge`가 생성된 `scene.xml`에 동적 공을 추가 |
+| ROS 콜백 처리 | 물리 주기(10 ms)마다 대기 중인 콜백을 최대 `PINKY_BRIDGE_DRAIN`개(기본 8) 처리. 아래 참고 |
+
+#### 물리 주기당 ROS 콜백 처리 (`PINKY_BRIDGE_DRAIN`, 2026-11-25)
+
+공식 브리지 루프는 물리 주기마다 `rclpy.spin_once(timeout_sec=0)`를 한 번 부르므로 **주기당 콜백을 최대 1개**만
+처리합니다. 로봇 2대가 모두 전체 스택으로 돌면(`robots:=2 opponent_mode:=game`) 브리지가 CPU 한 코어를 다 쓰고,
+`/clock`·두 로봇 명령 콜백이 밀려 명령이 시뮬 시간으로 약 200 ms 늦게 적용됐습니다. 그 결과 GoToPose가 목표 주변에서
+진동해 0/24 성공이었습니다(분석 기록: `.agents` 로그, 2026-11-25). 래퍼가 `spin_once`만 바꿔 준비된 콜백이 없을 때까지,
+최대 N개를 처리합니다. 공식 패키지는 수정하지 않습니다.
+
+```bash
+PINKY_BRIDGE_DRAIN=8 ros2 launch ...   # 기본값 (생략 가능)
+PINKY_BRIDGE_DRAIN=1 ros2 launch ...   # 공식 동작 그대로 (비교·재현용)
+```
+
+브리지는 `/sim/bridge_diag`(std_msgs/String JSON, 약 1 Hz)에 주기당 처리한 콜백 수와 로봇별 명령 지연
+(발행 → 브리지 적용, 실제 시간 ms, DDS 발행 시각 기준)을 냅니다. 평가 전용이며 판단 입력이 아닙니다.
 
 공식 `world.py`는 world 물체를 모두 정적 geom으로 만들기 때문에, world 파일에 넣은 공은 밀리지 않습니다. 그래서 `mujoco_soccer_bridge`가 공식 `bridge.build_model`을 감싸서, 생성된 scene의 `<worldbody>` **맨 끝**에 freejoint가 있는 공을 추가합니다.
 

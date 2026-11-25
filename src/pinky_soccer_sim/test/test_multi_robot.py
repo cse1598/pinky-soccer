@@ -89,3 +89,23 @@ def test_second_robot_is_a_prefixed_copy(tmp_path):
     assert root.find(f"sensor/framequat[@name='{PREFIX}soccer_quat']").get('objname') == \
         f'{PREFIX}soccer_imu_link'
     assert world.find("body[@name='soccer_ball']") is not None     # ball not duplicated
+
+
+def test_bridge_callback_drain_setting(monkeypatch):
+    """Default drains up to 8 callbacks per physics period; 1 keeps the official loop."""
+    import types
+    from pinky_soccer_sim import mujoco_soccer_bridge as msb
+
+    class Base:
+        pass
+
+    for env, replaced in (('1', False), (None, True), ('4', True)):
+        if env is None:
+            monkeypatch.delenv('PINKY_BRIDGE_DRAIN', raising=False)
+        else:
+            monkeypatch.setenv('PINKY_BRIDGE_DRAIN', env)
+        fake = types.SimpleNamespace(rclpy=None, Bridge=Base)
+        msb.install_callback_drain(fake)
+        assert (fake.rclpy is not None) == replaced
+        assert issubclass(fake.Bridge, Base) and fake.Bridge is not Base
+    assert msb.DEFAULT_CALLBACKS_PER_STEP == 8

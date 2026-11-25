@@ -187,7 +187,115 @@ def main(args=None):
             bridge, options.opponent_name, options.opponent_sensors,
             load_config(options.sensor_config) if options.sensor_config else None,
             options.imu_enabled, options.adc_enabled, camera_only=options.opponent_camera)
+    install_callback_drain(bridge)
     bridge.main(rest)
+
+
+DEFAULT_CALLBACKS_PER_STEP = 8
+
+
+def install_callback_drain(bridge):
+    """Run up to N ready ROS callbacks per physics period (env PINKY_BRIDGE_DRAIN, default 8).
+
+    The official loop calls rclpy.spin_once(timeout_sec=0) once per 10 ms physics period,
+    which executes at most one callback. With two robots (both stacks running) the command
+    callbacks then queue behind /clock and others: in the 2026-11-25 analysis the commands
+    reached the physics about 200 ms (simulation time) late and GoToPose oscillated.
+    Here each period drains the ready callbacks, stopping as soon as none is ready, at most N.
+    PINKY_BRIDGE_DRAIN=1 reproduces the official behaviour. The official package is unchanged.
+    It also publishes /sim/bridge_diag (std_msgs/String JSON, ~1 Hz): callbacks per period
+    and the command latency publish -> applied (wall ms) per robot (evaluation only).
+    """
+    import json
+    import os
+    import time
+    import rclpy as real
+    from rclpy.executors import ShutdownException, TimeoutException
+    from std_msgs.msg import String
+
+    limit = int(os.environ.get('PINKY_BRIDGE_DRAIN', DEFAULT_CALLBACKS_PER_STEP) or 1)
+    if limit < 1:
+        raise ValueError('PINKY_BRIDGE_DRAIN must be >= 1')
+    stats = {'callbacks': [], 'latency': {}}
+
+    def record_latency(robot, info):
+        if info and info.get('source_timestamp'):
+            ms = (time.time_ns() - info['source_timestamp']) * 1e-6
+            stats['latency'].setdefault(robot, []).append(ms)
+
+    if limit > 1:
+        import types
+
+        def spin_once(node, executor=None, timeout_sec=None):
+            ex = executor or real.get_global_executor()
+            if node not in ex.get_nodes():
+                ex.add_node(node)
+            done = 0
+            while done < limit:
+                try:
+                    handler, _, _ = ex.wait_for_ready_callbacks(timeout_sec=0.0)
+                except (TimeoutException, ShutdownException):
+                    break
+                handler()
+                if handler.exception() is not None:
+                    raise handler.exception()
+                done += 1
+            stats['callbacks'].append(done)
+
+        shim = types.SimpleNamespace(**{k: getattr(real, k) for k in dir(real)
+                                        if not k.startswith('__')})
+        shim.spin_once = spin_once
+        bridge.rclpy = shim
+    base = bridge.Bridge
+
+    class DiagBridge(base):
+        def __init__(self, physics):
+            self.bridge_diag_pub = None
+            super().__init__(physics)
+            self.bridge_diag_pub = self.create_publisher(String, '/sim/bridge_diag', 10)
+            self.bridge_diag_wall = time.monotonic()
+            self.bridge_diag_sim = physics.data.time
+            self.record_command_latency = record_latency
+            self.get_logger().info(f'bridge: up to {limit} ROS callbacks per physics period '
+                                   '(PINKY_BRIDGE_DRAIN; 1 = official)')
+
+        def create_subscription(self, msg_type, topic, callback, *args, **kwargs):
+            # Command subscriptions only: a two-argument wrapper receives the DDS message
+            # info (publish time) and calls the original callback unchanged.
+            if topic == '/cmd_vel' or topic.endswith('/drive/cmd_vel'):
+                robot = (topic.split('/')[1] if topic.endswith('/drive/cmd_vel') else
+                         self.get_namespace().strip('/')) or 'robot'
+
+                def timed(msg, info, robot=robot, callback=callback):
+                    record_latency(robot, info)
+                    callback(msg)
+                return super().create_subscription(msg_type, topic, timed, *args, **kwargs)
+            return super().create_subscription(msg_type, topic, callback, *args, **kwargs)
+
+        def advance(self):
+            super().advance()
+            wall = time.monotonic()
+            if self.bridge_diag_pub is None or wall - self.bridge_diag_wall < 1.0:
+                return
+            sim = self.physics.data.time
+
+            def summary(v):
+                v = sorted(v)
+                return dict(n=len(v), p50=round(v[len(v) // 2], 2),
+                            p95=round(v[min(len(v) - 1, int(.95 * len(v)))], 2),
+                            max=round(v[-1], 2)) if v else None
+            cb = stats['callbacks']
+            data = dict(limit=limit, rtf=round((sim - self.bridge_diag_sim) /
+                                               (wall - self.bridge_diag_wall), 3),
+                        callbacks_mean=round(sum(cb) / len(cb), 3) if cb else None,
+                        callbacks_max=max(cb) if cb else None,
+                        command_latency_ms={k: summary(v) for k, v in
+                                            stats['latency'].items()})
+            self.bridge_diag_pub.publish(String(data=json.dumps(data)))
+            stats['callbacks'], stats['latency'] = [], {}
+            self.bridge_diag_wall, self.bridge_diag_sim = wall, sim
+
+    bridge.Bridge = DiagBridge
 
 
 if __name__ == '__main__':
