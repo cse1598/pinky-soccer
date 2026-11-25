@@ -27,6 +27,8 @@ from .time_optimal import TimeOptimalMpc
 from .acados_time_optimal import AcadosTimeOptimalMpc
 from .scheduled_input import ScheduledInput
 from .delay_observer import DelayObserver,FORECAST_TAU
+from . import collision_geometry
+from . import obstacle_snapshot
 
 
 class MpcController(Node):
@@ -83,6 +85,26 @@ class MpcController(Node):
                              float(p('ang_tol',math.radians(3)).value),
                              float(p('settle_sec',.3).value))
         self.wheel_feedback=bool(p('wheel_feedback',False).value)
+        # Optional GoToPose collision constraints (BehaviorGoal avoid_*). With all options
+        # off the request uses self.time_mpc exactly as before; the extended solver is
+        # generated/loaded here, outside the control loop.
+        self.avoid_config=obstacle_snapshot.AvoidanceConfig(
+            margin=float(p('avoid_margin',.02).value),
+            solver_margin=float(p('avoid_solver_margin',.005).value),
+            opponent_radius=float(p('avoid_opponent_radius',.10).value),
+            ball_radius=float(p('avoid_ball_radius',.02135).value))
+        self.avoid_mpc=None
+        self.avoid_field=None
+        if self.time_backend=='acados' and bool(p('avoidance_solver',True).value):
+            from pinky_soccer_field.field_geometry import Field
+            from .avoidance_mpc import AvoidanceTimeOptimalMpc
+            spec=p('field_spec','').value
+            self.avoid_field=collision_geometry.FieldObstacles(Field.from_file(spec or None))
+            self.avoid_mpc=AvoidanceTimeOptimalMpc(self.params, dt=self.dt,
+                 max_steps=self.time_mpc.max_steps,budget=self.time_mpc.budget,**kwargs)
+        self.world_msg=None
+        self.avoid_worker_key=None
+        self.avoid=obstacle_snapshot.AvoidanceOptions()
         self.forward_only=set(p('forward_only_actions',[
             'GoBehindBall','PushBall','GoToBlockPoint','FaceBall','TurnToLastSeen']).value)
         self.goal=self.pose=self.measured=None
@@ -129,6 +151,7 @@ class MpcController(Node):
         self.goal,self.goal_time=msg,time.monotonic()
 
     def on_world(self,msg):
+        self.world_msg=msg
         s=msg.self
         self.pose=(s.pose.x,s.pose.y,s.pose.theta)
         self.pose_time=time.monotonic()
@@ -184,11 +207,21 @@ class MpcController(Node):
         self.active_predicted=None
         self.active_solve_id=None
 
-    def job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.)):
+    def job(self,generation,x,goal,v,w,forward,is_pose,disturbance=(0.,0.),obstacles=None,
+            goal_key=None):
         if self.worker_generation!=generation:
             self.mpc.reset()
             self.time_mpc.reset()
             self.worker_generation=generation
+        if is_pose and obstacles is not None:
+            # Avoidance path only: a missed activation slot discards the late result
+            # (generation) but keeps the warm start of the same goal_id, because a cold
+            # constrained solve can exceed one slot and would otherwise never warm up.
+            if self.avoid_worker_key!=goal_key:
+                self.avoid_mpc.reset()
+                self.avoid_worker_key=goal_key
+            return self.avoid_mpc.solve(x,goal,v,w,forward_only=forward,
+                                        disturbance=disturbance,obstacles=obstacles)
         solver=self.time_mpc if is_pose else self.mpc
         if is_pose and self.time_backend=='acados':
             return solver.solve(x,goal,v,w,forward_only=forward,disturbance=disturbance)
@@ -325,8 +358,12 @@ class MpcController(Node):
         t=self.goal.target
         goal=(t.x,t.y,t.theta)
         is_pose=self.goal.action=='GoToPose'
-        key=(self.goal.action,int(self.goal.goal_id))
+        avoid=obstacle_snapshot.AvoidanceOptions(
+            bool(self.goal.avoid_walls),bool(self.goal.avoid_opponents),
+            bool(self.goal.avoid_ball)) if is_pose else obstacle_snapshot.AvoidanceOptions()
+        key=(self.goal.action,int(self.goal.goal_id),avoid)
         if key!=self.key:
+            self.avoid=avoid
             self.key=key
             self.invalidate()
             self.arrival.reset()
@@ -349,8 +386,15 @@ class MpcController(Node):
             self.arrival.reset()
             self.invalidate()
             return self.stop('wheel timestamp history unavailable')
+        if self.failed_reason is None and self.avoid.any:
+            self.failed_reason=self.avoidance_precheck(goal)
+            if self.failed_reason is not None:
+                self.invalidate()
         if self.failed_reason is not None:
             return self.stop(self.failed_reason,MotionResult.FAILURE)
+        if self.avoid.any:
+            self.diag['avoidance']=self.avoid_snapshot(now).describe()
+            self.diag['min_clearance_m']=self.current_clearance()
         l,r=self.omega
         v_actual=(self.mpc.rl*l+self.mpc.rr*r)/2
         w_actual=(self.mpc.rr*r-self.mpc.rl*l)/self.mpc.b
@@ -408,6 +452,10 @@ class MpcController(Node):
             self.diag['activation_jitter_sim_s']=float(jitter)
             if result is not None:
                 res,predicted,submitted_sim,submitted,solve_id=result
+                if self.avoid.any and not self.activation_safe(res):
+                    # Latest obstacles collide with this plan: brake for this slot.
+                    result=None
+            if result is not None:
                 self.active_solve_id=solve_id
                 self.last_solution=tuple(res['u'])
                 self.last_solution_sim=now
@@ -474,13 +522,52 @@ class MpcController(Node):
             self.future_scheduled=True
             self.future_predicted=predicted
             self.solve_id+=1
+            obstacles=self.avoid_snapshot(now) if self.avoid.any else None
             self.future=self.executor_pool.submit(self.job,self.generation,state,
-                 goal,vb,wb,self.goal.action in self.forward_only,True,tuple(forecast))
+                 goal,vb,wb,self.goal.action in self.forward_only,True,tuple(forecast),obstacles,
+                 self.key)
             self.diag['prediction_lead_sim_s']=self.dt
         valid=self.last_solution is not None
         self.report('track' if valid else 'waiting',
                     'scheduled optimized input' if valid else 'waiting for scheduled solution',
                     dist=dist,ang=ang,v=v,w=w,period_s=elapsed)
+
+    # ------------------------------------------------------------------ avoidance
+    def avoid_snapshot(self,now):
+        return obstacle_snapshot.take(self.avoid,self.avoid_config,self.avoid_field,
+                                      self.world_msg,now)
+
+    def avoidance_precheck(self,goal):
+        """Reasons an avoidance request cannot run (None: it can)."""
+        if self.avoid_mpc is None:
+            return 'avoidance options require mpc_backend:=acados'
+        if self.avoid.walls:
+            names,clear=obstacle_snapshot.take(self.avoid,self.avoid_config,
+                                               self.avoid_field).clearances(goal)
+            if clear.size and float(clear[0,0])<self.avoid_config.margin:
+                return (f'target footprint {float(clear[0,0])*100:.1f} cm from walls/goal; '
+                        f'needs {self.avoid_config.margin*100:.1f} cm')
+        return None
+
+    def current_clearance(self):
+        if self.pose is None:
+            return None
+        _,clear=self.avoid_snapshot(0.).clearances(self.pose)
+        return float(np.min(clear)) if clear.size else None
+
+    def activation_safe(self,res):
+        """Re-check a scheduled plan against the latest obstacles before applying it."""
+        xs=np.asarray(res.get('xs',[]),float)
+        if xs.ndim!=2 or not len(xs):
+            return False
+        snap=self.avoid_snapshot(self.last_tick or 0.)
+        _,clear=snap.clearances(collision_geometry.interpolate_poses(xs))
+        if not clear.size:
+            return True
+        required=np.minimum(self.avoid_config.margin,clear[0]-1e-3)
+        ok=bool(np.all(clear>=required[None,:]-1e-6))
+        self.diag['activation_collision_rejected']=not ok
+        return ok
 
     def publish_path(self,xs):
         path=Path()

@@ -667,6 +667,19 @@ class VerifierApp:
         if item.get('pose_input'):
             ttk.Label(self.ports_frame, text='→ 지도 클릭/끌기: 경기장 내부로 제한', foreground='#ffd27f'
                       ).grid(row=2 * len(item['ports']), column=0, columnspan=3, sticky='w')
+        self.option_vars = {}
+        row = 2 * len(item['ports']) + 1
+        if item.get('options'):
+            ttk.Label(self.ports_frame, text='회피 옵션 (실행 중 고정, 바꾸면 새 실행):').grid(
+                row=row, column=0, columnspan=3, sticky='w', pady=(4, 0))
+        for i, option in enumerate(item.get('options', [])):
+            var = tk.BooleanVar(value=bool((values or {}).get(option['name'], option['default'])))
+            self.option_vars[option['name']] = var
+            ttk.Checkbutton(self.ports_frame, text=option['label'], variable=var).grid(
+                row=row + 1 + 2 * i, column=0, columnspan=3, sticky='w')
+            ttk.Label(self.ports_frame, text=f'{option["name"]}: {option["text"]}',
+                      style='Muted.TLabel', wraplength=390).grid(
+                row=row + 2 + 2 * i, column=0, columnspan=3, sticky='w', pady=(0, 3))
         for w in self.inputs_frame.winfo_children():
             w.destroy()
         self.input_labels = {}
@@ -691,12 +704,16 @@ class VerifierApp:
                 out[name] = float(var.get())
             except ValueError:
                 raise ValueError(f'{name}: 숫자를 입력하세요') from None
+        for name, var in getattr(self, 'option_vars', {}).items():
+            out[name] = bool(var.get())
         return out
 
     def reset_ports(self):
         """Restore catalog defaults."""
         for port in self.selected['ports']:
             self.port_vars[port['name']].set(core.format_port(port['default']))
+        for option in self.selected.get('options', []):
+            self.option_vars[option['name']].set(option['default'])
 
     def map_pose_values(self, pose):
         """Map target text, shared by the drag preview and committed inputs."""
@@ -804,7 +821,8 @@ class VerifierApp:
             return
         rec = next((r for r in self.records if str(r.number) == sel[0]), None)
         if rec:
-            self.select(rec.item['id'], {k: float(v) for k, v in rec.ports.items()})
+            self.select(rec.item['id'], {k: (v == 'true') if v in ('true', 'false') else float(v)
+                                          for k, v in rec.ports.items()})
             self.show_metrics(rec)
 
     def show_metrics(self, rec):

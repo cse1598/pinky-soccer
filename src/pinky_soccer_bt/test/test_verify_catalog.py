@@ -63,7 +63,11 @@ def test_action_ports_and_defaults(models, catalog, tree):
         model = nodes[item['id']]
         assert model['kind'] == 'Action'
         settable = {k for k in model['ports'] if k not in WORLD}
-        assert {p['name'] for p in item['ports']} == settable, item['id']
+        options = {o['name'] for o in item.get('options', [])}
+        assert {p['name'] for p in item['ports']} | options == settable, item['id']
+        for option in item.get('options', []):
+            assert option['default'] is False, (item['id'], option['name'])
+            assert model['ports'][option['name']] in ('false', None), option['name']
         # GoToPose/SpinInPlace read the root pose directly, so inputs may list more.
         assert set(item['inputs']) >= {k for k in model['ports'] if k in WORLD}, item['id']
         for port in item['ports']:

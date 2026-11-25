@@ -419,7 +419,11 @@ NodeStatus SpinInPlace::update()
 PortsList GoToPose::providedPorts()
 {
   return {InputPort<double>("x"), InputPort<double>("y"),
-          InputPort<double>("theta", 0.0, "Final heading [rad, map]")};
+          InputPort<double>("theta", 0.0, "Final heading [rad, map]"),
+          // Optional NMPC collision constraints; all false = the unchanged GoToPose.
+          InputPort<bool>("avoid_walls", false, "Keep the footprint off walls and goals"),
+          InputPort<bool>("avoid_opponents", false, "Keep clear of tracked opponents"),
+          InputPort<bool>("avoid_ball", false, "Keep clear of the ball")};
 }
 
 NodeStatus GoToPose::onStart()
@@ -428,6 +432,10 @@ NodeStatus GoToPose::onStart()
       static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count())};
   goal_id_ = ++next_id;
   target_ = Pose2{input<double>("x"), input<double>("y"), input<double>("theta")};
+  // Fixed for this goal_id: a different option set is a new request.
+  avoid_walls_ = input<bool>("avoid_walls");
+  avoid_opponents_ = input<bool>("avoid_opponents");
+  avoid_ball_ = input<bool>("avoid_ball");
   started_ = std::chrono::steady_clock::now();
   return update();
 }
@@ -446,6 +454,9 @@ NodeStatus GoToPose::update()
 {
   auto goal = makeGoal(branch_, registrationName(), BehaviorGoal::NAVIGATE, target_, 0.0);
   goal.goal_id = goal_id_;
+  goal.avoid_walls = avoid_walls_;
+  goal.avoid_opponents = avoid_opponents_;
+  goal.avoid_ball = avoid_ball_;
   config().blackboard->set(kGoalKey, goal);
   ReceivedMotionResult report;
   const auto now = std::chrono::steady_clock::now();

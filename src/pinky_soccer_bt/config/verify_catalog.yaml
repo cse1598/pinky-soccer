@@ -6,6 +6,7 @@
 # kind:  action  - one BT action node (pinky_soccer_bt/src/bt_nodes.cpp)
 #        subtree - a BehaviorTree of soccer_1v1.xml (the same XML the game runs)
 # ports: settable numeric inputs; world inputs (pose, ball, ...) are wired automatically
+# options: boolean ports shown as checkboxes (GoToPose avoidance); sent as "true"/"false"
 # pose_input: ports filled by clicking (and dragging for the heading) on the map
 # done_when: optional UI-side end condition, a probe condition label or `goal_scored`
 # enabled: false hides the item in the verifier window (bt_node also refuses subtrees unless
@@ -57,6 +58,14 @@ items:
          text: "map Y. +Y는 +X를 볼 때 왼쪽"}
       - {name: theta, label: 목표 방향, unit: rad, default: 0.0, min: -3.1416, max: 3.1416,
          step: 0.1, text: "도착 후 바라볼 방향. 0 = +X(파랑 골대 쪽)"}
+    # Boolean ports: checkboxes; all false = the unchanged GoToPose NMPC (same solver/path).
+    options:
+      - {name: avoid_walls, label: 벽 및 골대 구조물, default: false,
+         text: "로봇 외형+안전거리가 경기장 벽·골대 구조물에 닿지 않도록 NMPC 제약 추가"}
+      - {name: avoid_opponents, label: 상대 로봇, default: false,
+         text: "월드 모델이 추적 중인 상대 로봇의 안전 반경을 NMPC 제약으로 추가"}
+      - {name: avoid_ball, label: 공, default: false,
+         text: "월드 모델의 공 추정 위치(+불확실성)의 안전 반경을 NMPC 제약으로 추가"}
 
   - id: GoBehindBall
     kind: action

@@ -10,6 +10,9 @@ from pinky_soccer_field.field_geometry import Field
 from pinky_soccer_viz import verify_core as core
 import pytest
 
+# GoToPose avoidance options are always sent explicitly (false = unchanged GoToPose).
+OFF = {'avoid_walls': 'false', 'avoid_opponents': 'false', 'avoid_ball': 'false'}
+
 CATALOG = os.path.join(os.path.dirname(__file__), '..', '..', 'pinky_soccer_bt', 'config',
                        'verify_catalog.yaml')
 
@@ -27,7 +30,10 @@ def test_catalog_groups_and_requests(catalog):
     goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
     req = core.run_request(7, goto, {'x': 0.5, 'y': -0.25, 'theta': 1.5708}, 20)
     assert req == {'command': 'run', 'id': 7, 'target': 'GoToPose',
-                   'ports': {'x': '0.5', 'y': '-0.25', 'theta': '1.5708'}, 'timeout_sec': 20.0}
+                   'ports': {'x': '0.5', 'y': '-0.25', 'theta': '1.5708', **OFF},
+                   'timeout_sec': 20.0}
+    on = core.run_request(8, goto, {'x': 0.5, 'y': -0.25, 'theta': 0.0, 'avoid_walls': True}, 20)
+    assert on['ports']['avoid_walls'] == 'true' and on['ports']['avoid_ball'] == 'false'
     with pytest.raises(ValueError):
         core.run_request(1, goto, {'x': 9.0, 'y': 0.0, 'theta': 0.0}, 20)
     probe = core.probe_request(catalog)
@@ -112,7 +118,7 @@ def test_map_pose_limits(catalog, theta):
     vals = core.map_pose_ports(goto, (2., -2., theta), math.pi, area)
     assert vals['x'] == '0.83' and vals['y'] == '-0.53'
     assert abs(float(vals['theta'])) <= 3.1416
-    assert core.run_request(1, goto, vals, 30)['ports'] == vals
+    assert core.run_request(1, goto, vals, 30)['ports'] == {**vals, **OFF}
 
 
 def test_map_pose_other_field_and_catalog_intersection(catalog):
@@ -123,11 +129,11 @@ def test_map_pose_other_field_and_catalog_intersection(catalog):
     large = types.SimpleNamespace(xmin=-5., xmax=5., ymin=-5., ymax=5.)
     vals = core.map_pose_ports(goto, (5., -5., 0.), playing_area=large)
     assert vals == {'x': '1.5', 'y': '-1', 'theta': '0'}
-    assert core.run_request(1, goto, vals, 30)['ports'] == vals
+    assert core.run_request(1, goto, vals, 30)['ports'] == {**vals, **OFF}
 
 
 def test_map_pose_nonfinite_previous_heading(catalog):
     goto = next(i for i in catalog['items'] if i['id'] == 'GoToPose')
     vals = core.map_pose_ports(goto, (.12345, -.23456, None), float('nan'))
     assert vals == {'x': '0.123', 'y': '-0.235', 'theta': '0'}
-    assert core.run_request(1, goto, vals, 30)['ports'] == vals
+    assert core.run_request(1, goto, vals, 30)['ports'] == {**vals, **OFF}

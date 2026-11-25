@@ -67,6 +67,16 @@ std::string numberLiteral(const std::string& port, const std::string& value)
   return os.str();
 }
 
+// Boolean ports (GoToPose avoidance options): only the literals true/false.
+std::string boolLiteral(const std::string& port, const std::string& value)
+{
+  if(value == "true" || value == "false")
+  {
+    return value;
+  }
+  throw std::invalid_argument("port '" + port + "' needs true or false, got '" + value + "'");
+}
+
 std::string readWorldModelXml(const std::string& topic)
 {
   std::string xml = "<ReadWorldModel topic_name=\"" + escape(topic) + "\"";
@@ -99,7 +109,9 @@ std::string nodeXml(const BT::BehaviorTreeFactory& factory, const NodeCall& call
                                   "'");
     }
     given.insert(name);
-    xml += " " + name + "=\"" + numberLiteral(name, value) + "\"";
+    const bool boolean = ports.at(name).type() == typeid(bool);
+    xml += " " + name + "=\"" +
+           (boolean ? boolLiteral(name, value) : numberLiteral(name, value)) + "\"";
   }
   for(const auto& [name, info] : ports)
   {

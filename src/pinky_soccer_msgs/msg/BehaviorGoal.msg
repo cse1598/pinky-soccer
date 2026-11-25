@@ -13,3 +13,9 @@ nav_msgs/Path planned_path
 
 # Nonzero for a specific GoToPose invocation; zero for streaming goals.
 uint64 goal_id
+
+# GoToPose only: optional NMPC collision constraints, fixed per goal_id.
+# All false = the unchanged GoToPose solver and code path.
+bool avoid_walls                   # field walls and goal structures
+bool avoid_opponents               # tracked opponent robots
+bool avoid_ball                    # the ball

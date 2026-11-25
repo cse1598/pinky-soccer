@@ -106,7 +106,9 @@ def controller_node(cfg):
                         'mpc_damping_scale': float(cfg.mpc_damping_scale),
                         'mpc_observer_mode': cfg.mpc_observer_mode,
                         'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang,
-                        'wheel_feedback': cfg.wheel_feedback}])
+                        'wheel_feedback': cfg.wheel_feedback,
+                        # GoToPose avoid_walls uses the same field as the world model.
+                        'field_spec': cfg.field_spec}])
     if cfg.controller != 'reactive':
         raise ValueError('controller must be mpc or reactive')
     return Node(package='pinky_soccer', executable='reactive_controller',

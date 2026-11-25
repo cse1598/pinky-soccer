@@ -143,6 +143,18 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         ocp.code_gen_options.json_file = f'{model.name}.json'
         return ocp
 
+    # Extension hooks (GoToPose collision constraints, avoidance_mpc.py). The base
+    # implementations return their inputs unchanged, so this solver's values and call
+    # order are those of the unextended GoToPose NMPC.
+    def stage_parameters(self,k,p):
+        return p
+
+    def stage_bounds(self,k,lo,hi):
+        return lo,hi
+
+    def terminal_slack(self,sl,su):
+        return sl,su
+
     def step(self,x,u):
         return self.predictor.step(x,u)
 
@@ -233,14 +245,15 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
         old=prev
         for k in range(n):
             p[7:9]=self.stage_disturbance(k)
-            s.set(k,'p',p)
+            s.set(k,'p',self.stage_parameters(k,p))
             s.set(k,'x',self.pack_state(xs[k],old))
             s.set(k,'u',seed[k]/self.wmax)
-            s.constraints_set(k,'lh',lo)
-            s.constraints_set(k,'uh',hi)
+            klo,khi=self.stage_bounds(k,lo,hi)
+            s.constraints_set(k,'lh',klo)
+            s.constraints_set(k,'uh',khi)
             old=seed[k]
         p[7:9]=self.stage_disturbance(n)
-        s.set(n,'p',p)
+        s.set(n,'p',self.stage_parameters(n,p))
         s.set(n,'x',self.pack_state(xs[-1],old))
         initial=self.pack_state(x,prev)
         # Initialize terminal slack variables consistently with the seed.
@@ -253,8 +266,9 @@ class AcadosTimeOptimalMpc(TimeOptimalMpc):
                     old/self.wheel_tol]
         else:
             g=np.zeros(11)
-        s.set(n,'sl',np.maximum(0.,-1-g))
-        s.set(n,'su',np.maximum(0.,g-1))
+        sl,su=self.terminal_slack(np.maximum(0.,-1-g),np.maximum(0.,g-1))
+        s.set(n,'sl',sl)
+        s.set(n,'su',su)
         s.constraints_set(0,'lbx',initial)
         s.constraints_set(0,'ubx',initial)
         if time.perf_counter()>=deadline:

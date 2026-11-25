@@ -257,6 +257,9 @@ protected:
 private:
   uint64_t goal_id_{0};
   Pose2 target_;
+  bool avoid_walls_{false};
+  bool avoid_opponents_{false};
+  bool avoid_ball_{false};
   std::chrono::steady_clock::time_point started_{};
 };
 

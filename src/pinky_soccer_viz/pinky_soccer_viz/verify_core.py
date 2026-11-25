@@ -47,6 +47,10 @@ def load_catalog(path):
     for item in data['items']:
         item.setdefault('ports', [])
         item.setdefault('inputs', [])
+        item.setdefault('options', [])
+        for option in item['options']:
+            if not isinstance(option.get('default'), bool):
+                raise ValueError(f'{item["id"]}.{option.get("name")}: option default must be bool')
         for port in item['ports']:
             if not port['min'] <= port['default'] <= port['max']:
                 raise ValueError(f'{item["id"]}.{port["name"]}: default outside [min, max]')
@@ -119,6 +123,9 @@ def run_request(request_id, item, values, timeout_sec):
         if not port['min'] <= value <= port['max']:
             raise ValueError(f'{port["label"]}: {port["min"]} ~ {port["max"]} 범위 밖')
         ports[port['name']] = format_port(value)
+    for option in item.get('options', []):
+        ports[option['name']] = 'true' if values.get(option['name'], option['default']) is True \
+            else 'false'
     return {'command': 'run', 'id': int(request_id), 'target': item['id'], 'ports': ports,
             'timeout_sec': float(timeout_sec)}
 
