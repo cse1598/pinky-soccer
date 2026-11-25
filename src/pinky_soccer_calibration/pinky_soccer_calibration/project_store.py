@@ -23,7 +23,10 @@ def utc():
 # the launch calibration: adding/removing them never archives the exported profile.yaml and
 # they are exported separately (identification.yaml / control_results.yaml), not in profile.
 CONTROL_CATEGORIES = ('clock_sync', 'communication_latency', 'command_latency',
-                      'motor_response', 'braking', 'footprint')
+                      'motor_response', 'braking', 'footprint',
+                      'motor_identification', 'wheel_individual')
+# Derived analyses recomputed from other categories (no own measurement rows).
+DERIVED = {'motor_identification': 'motor_response', 'wheel_individual': 'wheels'}
 
 
 class ProjectStore:
@@ -171,6 +174,10 @@ class ProjectStore:
             self.camera = None
             if self.measurements.get('floor'):
                 self.stale.add('floor')
+        for derived, source in DERIVED.items():      # dependent analyses only
+            if category == source and derived != category:
+                self.stale.add(derived)
+                self.results.pop(derived, None)
         if category == 'ball_review' or category in CONTROL_CATEGORIES:
             return  # Validation/control evidence never changes the runtime calibration profile.
         # Previously exported profiles remain immutable, but no stale root profile is advertised.
@@ -179,6 +186,81 @@ class ProjectStore:
             archive = self.root/'exports'
             archive.mkdir(exist_ok=True)
             profile.replace(archive/('previous_'+uuid.uuid4().hex+'.yaml'))
+
+    def recalculate_derived(self, category, selection=None):
+        """Motor identification / individual radii from existing records (raw files read only)."""
+        self.stale.add(category)
+        try:
+            if category == 'wheel_individual':
+                from .wheel_individual import fit_individual
+                result = fit_individual(self.trials, self.results.get('wheels'))
+                result['wheels_revision'] = self.revision
+            else:
+                result = self.identify_motors(selection)
+            self.results[category] = result
+            self.stale.discard(category)
+            return result
+        finally:
+            self.save()
+
+    def identify_motors(self, selection=None):
+        """Identification on completed motor_response runs; writes identification.yaml."""
+        from . import motor_identification as mi
+        rows = [r for r in self.measurements.get('motor_response', [])
+                if r.get('status') == 'complete'
+                and (selection is None or r['id'] in selection)]
+        if not rows:
+            raise ValueError('완료된 모터 응답 실험이 없습니다.')
+        runs, problems = [], []
+        for row in rows:
+            try:
+                runs.append(mi.load_run(self.local_path(row['files']['folder']), row))
+            except (OSError, KeyError, ValueError) as error:
+                problems.append({'experiment_id': row['id'], 'error': str(error)})
+        result = mi.identify(runs)
+        result['load_problems'] = problems
+        result['quality'] = {r.experiment_id: r.quality for r in runs}
+        result['analysed_utc'] = utc()
+        result['project_revision'] = self.revision
+        result['identification_file'] = self.write_identification(result, rows)
+        return result
+
+    def write_identification(self, result, rows):
+        """identification.yaml beside the project (separate from profile.yaml), plus a copy."""
+        best = result.get('best_on_validation') or 'ramp_first_order_delay'
+        model = result['models'].get(best, {})
+        wheels = self.results.get('wheels') if 'wheels' not in self.stale else None
+        doc = {
+            # Deliberately not 'identification_schema': the MPC parameter loader must not
+            # pick this up; applying it is a separate, explicitly approved step.
+            'motor_identification_schema': 1, 'model_version': result['model_version'],
+            'selected_model': best, 'robot_id': self.meta.get('robot_id'),
+            'environment': self.meta.get('environment'), 'analysed_utc': result['analysed_utc'],
+            'experiment_period_unix': [min(r.get('started_unix', 0) for r in rows),
+                                       max(r.get('ended_unix', 0) or 0 for r in rows)],
+            'identification_experiments': result['identification_experiments'],
+            'validation_experiments': result['validation_experiments'],
+            'wheel_kinematics': ({'radius_m': wheels.get('effective_radius_m'),
+                                  'separation_m': wheels.get('separation_m'),
+                                  'source': 'project wheels result', 'revision': self.revision}
+                                 if wheels else 'not_available'),
+            'parameters': model.get('parameters'), 'parameter_status': model.get('parameter_status'),
+            'parameter_std': model.get('std'), 'stages': result.get('stages'),
+            'timelines': result['timelines'],
+            'delay_meaning': ('effective input delay; on pc_receive timelines it includes Wi-Fi, '
+                              'the command watchdog hold and the driver. The current MPC does not '
+                              'compensate an input delay (params delay > 0 is rejected).'),
+            'speed_limits': 'not_identified (no dedicated min/max speed experiment analysed)',
+            'validation': {m: v.get('validation') for m, v in result['models'].items()},
+            'validated': result['validated'], 'raw_data': [r['files']['folder'] for r in rows],
+            'calibration_revision': self.revision, 'applied_to_mpc': False}
+        name = 'identification.yaml'
+        archive = self.root / 'identification'
+        archive.mkdir(exist_ok=True)
+        snapshot = archive / (uuid.uuid4().hex + '.yaml')
+        self.write(str(snapshot.relative_to(self.root)), doc)
+        self.write(name, doc)
+        return {'latest': name, 'snapshot': str(snapshot.relative_to(self.root))}
 
     def assign_photos(self, paths, purpose=None):
         if purpose not in (None, 'training', 'validation'):
@@ -252,6 +334,8 @@ class ProjectStore:
 
     def recalculate(self, category):
         from .suite_model import override_mount_height, scalar_report, wheel_fit
+        if category in DERIVED:
+            return self.recalculate_derived(category)
         if category == 'camera':
             self.camera_fit(self.board.square_mm)
             return self.camera_validate()

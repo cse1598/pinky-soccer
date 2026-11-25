@@ -433,4 +433,34 @@ ros2 launch pinky_soccer_bringup robot.launch.py motor_diagnostics:=true   # 진
 ## 실물 미검증
 
 모든 신규 주행·계측(계단응답·제동·Ping-Pong·명령 태그·모터 진단 블록 주소·피드백 주기 변경·운행 중 발행자 감시)은
-MuJoCo/단위 테스트로만 확인했습니다. 좌우 개별 유효 반경 식별과 모델 식별(우선순위 3)은 아직 없습니다.
+MuJoCo/단위 테스트로만 확인했습니다. 아래 모터 식별·좌우 개별 반경도 합성 자료·MuJoCo 자료로만 검증했습니다.
+
+## 모터 응답 분석 창 (오프라인, 로봇 연결 불필요)
+
+모터 탭 → `분석 창 열기`. 저장된 `motor_response` 기록을 읽기만 하며 주행·구독이 없습니다.
+
+- 실험 목록에서 선택(없으면 전체) → `식별·검증`. 용도 `validation` 실험은 식별에 쓰지 않고 검증에만 씁니다.
+  검증용 실험이 없으면 결과는 `미검증`입니다.
+- 모델(MPC `ramp_predictor`와 같은 5 ms 단계식): `first_order`, `first_order_delay`, `ramp_first_order`,
+  `ramp_first_order_delay`. 파라미터: `tau_left/right`, `motor_accel`(내부 램프 기울기), `delay`(유효 지연).
+- 시간축: `/motor/diagnostics`와 태그된 명령 수신이 있으면 `robot_clock`(로봇 시각, 단계별
+  Goal→Velocity Trajectory→Present Velocity 식별), 없으면 `pc_receive`(PC 수신 시각, 지연에 Wi-Fi·watchdog
+  50 ms 유지·드라이버가 섞임). Goal은 공식 드라이버 변환(0.229 rpm 단위 버림·100 rpm 비례 축소)으로 재구성하며
+  드라이버 반경/간격은 기본 0.027/0.0961 m 가정입니다(실행 값과 다르면 이득·가속 추정이 치우칠 수 있음).
+- 식별 불가 판정: 상대 표준편차 > 25 %, 상관 |ρ| > 0.95, 경계값 도달 → `identification_insufficient`로
+  표시하고 값을 확정하지 않습니다(예: 작은 계단에서는 램프가 드러나지 않아 `motor_accel` 불충분).
+- 자료 품질: 수신 주기, 끊김, 순서 뒤바뀜, 비정상 값(|w| > 25 rad/s) 개수를 실험별로 표시합니다.
+- 그래프: 좌/우 명령·측정 램프·실제 속도·모델 예측·잔차. `반복별 식별 비교`는 실험마다 따로 맞춘 값의
+  평균·표준편차·변동계수, `제동 통계`는 명령 속도별 odom 제동 거리·정지 시간·실측 거리.
+- 저장: 프로젝트 루트 `identification.yaml`(+ `identification/<ID>.yaml` 사본). 실험 ID, 모델 버전, 당시
+  바퀴 보정 리비전·값, 단계별 결과, 검증 결과, `applied_to_mpc: false`. 키가 `motor_identification_schema`라
+  `pinky_soccer_dynamics`의 `apply_identification`이 읽지 않습니다 — MPC 자동 적용 없음(별도 승인 단계 필요).
+  `profile.yaml`은 바뀌지 않습니다. 모터 응답 기록을 추가/삭제하면 이 결과만 stale이 됩니다.
+
+## 좌우 개별 유효 반경 (검토용)
+
+바퀴 탭 → `좌우 개별 반경 추정`. 공통 결과(`wheels`)는 그대로 두고 `wheel_individual`에 따로 저장합니다.
+직진 실험의 추가 관측 `최종 heading 변화`(deg)가 있어야 rL−rR이 구별됩니다(없으면 반경 차와 바퀴 속도 차가
+같은 엔코더 값을 만듦). 전진·후진 각 포함 직진 4회 이상 + 회전 실험이 필요하며, 부족하면
+`insufficient_observations`. 차이가 2σ보다 클 때만 `identified_candidate`, 아니면 `not_significant`.
+leave-one-out 예측 오차를 함께 기록하며, 미끄러짐/바닥 영향과 반경 차를 분리하지 못합니다.

@@ -154,6 +154,7 @@ class App:
                 self.field(tab, 'angle', '실제 누적 회전각 (deg, 좌+/우-)', '')
                 self.button(tab, '회전 실측 저장', lambda: self.trial('rotation'))
                 self.button(tab, '반복 실험으로 바퀴 추정', self.wheels)
+                self.button(tab, '좌우 개별 반경 추정 (검토용·자동 적용 없음)', self.wheel_individual)
             elif key in ('lidar', 'ultrasonic'):
                 self.field(tab, key+'_reference', '범퍼 전면 바깥쪽 중앙~벽 거리 (m)', '')
                 self.range_geometry_label[key] = ttk.Label(tab, text='범퍼 모델 수신 대기',
@@ -721,6 +722,23 @@ class App:
         m = result['disc_cover_min_margin_m']
         return ('충돌 외형 기록 저장' + (f' · 원 근사 최소 여유 {m*1000:.1f} mm' if m is not None else '')
                 + ' · MPC 미반영')
+
+    def open_motor_analysis(self):
+        """Offline analysis window on the open project (raw files are only read)."""
+        if not self.session:
+            messagebox.showinfo('프로젝트 필요', '분석할 프로젝트를 먼저 불러오세요.')
+            return
+        from .motor_analysis_view import MotorAnalysis
+        MotorAnalysis(self)
+
+    def wheel_individual(self):
+        """Review-only left/right radii; the shared 'wheels' result is not changed."""
+        result = self.require().recalculate('wheel_individual')
+        if 'left_radius_m' not in result:
+            return '좌우 개별 반경: ' + result['status'] + ' → 공통 유효 반경 유지'
+        return (f"좌우 개별 반경 (검토용, 미적용): 좌 {result['left_radius_m']*1000:.3f} / 우 "
+                f"{result['right_radius_m']*1000:.3f} mm, 차이 {result['radius_difference_m']*1e6:.0f}"
+                f"±{result['radius_difference_std_m']*1e6:.0f} µm · {result['status']}")
 
     def record_clock_sync(self):
         """Sample the PC-centred clock state for N s and append a 'clock_sync' record.
