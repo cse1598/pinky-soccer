@@ -80,6 +80,7 @@ class RobotConfig:
     groot2: bool = True
     heading_record: str = ''
     publish_debug_image: bool = True
+    camera_robots: tuple = ()          # other robots selectable in the camera window
     command_topic: str = 'cmd_vel'
     opponent_truth: str = ''             # simulation: other robot's ground truth topic
     real: dict = field(default_factory=dict)   # real-robot camera/uncalibrated options
@@ -179,7 +180,9 @@ def ui_nodes(cfg, clock, team):
              arguments=['-d', share('pinky_soccer_viz', 'rviz', 'soccer.rviz')],
              parameters=[clock]),
         Node(package='pinky_soccer_viz', executable='game_camera_view',
-             name='game_camera_view', condition=gui, output='screen', parameters=[clock]),
+             name='game_camera_view', condition=gui, output='screen', parameters=[clock, {
+                 # Absolute namespaces; this robot first, then the others (keys 1-9, Tab).
+                 'robots': [cfg.name] + [r for r in cfg.camera_robots if r != cfg.name]}]),
     ]
     if cfg.verify:
         out.append(Node(

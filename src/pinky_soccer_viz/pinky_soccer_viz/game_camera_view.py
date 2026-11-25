@@ -43,8 +43,19 @@ def compose_camera_view(panels, width=1440):
     return np.hstack(tiles)
 
 
+def robot_topic(robot, name):
+    """Absolute topic of `name` in a robot namespace ('' = no namespace)."""
+    return f'/{robot}/{name}' if robot else f'/{name}'
+
+
 class GameCameraView(Node):
-    """Read-only monitor; annotations and mask come from the actual game detector."""
+    """Read-only monitor; annotations and mask come from the actual game detector.
+
+    `robots` lists the robot namespaces that can be shown ('' = no namespace). Only the
+    selected robot is subscribed (keys 1-9 or Tab), so a real robot's raw image is not
+    pulled over Wi-Fi while another robot is shown. The CAMERA panel is the original
+    camera/image_raw message that ball_detector received, republished unchanged.
+    """
 
     def __init__(self):
         super().__init__('game_camera_view')
@@ -52,14 +63,31 @@ class GameCameraView(Node):
         self.width = int(self.declare_parameter('window_width', 1440).value)
         if not 600 <= self.width <= 3840:
             raise ValueError('window_width must be 600..3840')
-        self.cache = {name: {} for name in ('camera', 'detection', 'mask')}
+        robots = list(self.declare_parameter('robots', ['']).value) or ['']
+        self.robots = [str(r).strip('/') for r in robots]
+        self.index = 0
         self.subscriptions_kept = []
-        for name, topic in [('camera', '/ball_detection/source_image'),
-                            ('detection', '/ball_detection/debug_image'),
-                            ('mask', '/ball_detection/debug_mask')]:
+        self.select(0)
+
+    def select(self, index):
+        """Show robot `index`: drop the old subscriptions and caches."""
+        for sub in self.subscriptions_kept:
+            self.destroy_subscription(sub)
+        self.subscriptions_kept = []
+        self.index = index % len(self.robots)
+        self.cache = {name: {} for name in ('camera', 'detection', 'mask')}
+        robot = self.robots[self.index]
+        for name, topic in [('camera', 'ball_detection/source_image'),
+                            ('detection', 'ball_detection/debug_image'),
+                            ('mask', 'ball_detection/debug_mask')]:
             self.subscriptions_kept.append(self.create_subscription(
-                Image, topic, lambda msg, key=name: self.receive(key, msg),
+                Image, robot_topic(robot, topic), lambda msg, key=name: self.receive(key, msg),
                 qos_profile_sensor_data))
+        self.get_logger().info(f'camera view: {self.label()}')
+
+    def label(self):
+        robot = self.robots[self.index] or '(no namespace)'
+        return f'robot {self.index + 1}/{len(self.robots)}: {robot}'
 
     def receive(self, name, msg):
         """Keep a bounded cache keyed by exact exposure time and optical frame."""
@@ -87,10 +115,11 @@ class GameCameraView(Node):
                          for key, value in cache.items()]
             selected = max(available, key=lambda item: item[1])[0] if available else None
         panels = []
+        tag = f' [{self.label()}]' if len(getattr(self, 'robots', ())) > 1 else ''
         for name, title in [('camera', 'CAMERA'), ('detection', 'BALL DETECTION'),
                             ('mask', 'ORANGE MASK')]:
             frame, seen = self.cache[name].get(selected, (None, now))
-            panels.append((title, frame, now-seen))
+            panels.append((title + (tag if name == 'camera' else ''), frame, now-seen))
         return compose_camera_view(panels, self.width)
 
 
@@ -106,8 +135,13 @@ def main(args=None):
         while rclpy.ok():
             rclpy.spin_once(node, timeout_sec=.01)
             cv2.imshow(TITLE, node.render())
-            if cv2.waitKey(1) & 0xFF in (27, ord('q')):
+            key = cv2.waitKey(1) & 0xFF
+            if key in (27, ord('q')):
                 break
+            if key == 9:                                   # Tab: next robot
+                node.select(node.index + 1)
+            elif ord('1') <= key <= ord('9') and key - ord('1') < len(node.robots):
+                node.select(key - ord('1'))
             if cv2.getWindowProperty(TITLE, cv2.WND_PROP_VISIBLE) < 1:
                 break
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):

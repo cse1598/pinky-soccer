@@ -144,7 +144,9 @@ def setup(context):
     out += decision_stack(RobotConfig(
         name=name, color=color, initial=ours, verify=flag('verify', context), ui=True,
         heading_record=lc('heading_record', context),
-        opponent_truth=multi_robot.topic(opponent, 'ground_truth') if two else '', **base))
+        opponent_truth=multi_robot.topic(opponent, 'ground_truth') if two else '',
+        # Obstacle opponents run without simulated sensors: nothing to show.
+        camera_robots=(name, opponent) if two and mode == 'game' else (), **base))
     if two and mode == 'game':
         out += decision_stack(RobotConfig(
             name=opponent, color=other, initial=opp_pose, ui=False, groot2=False, **base))

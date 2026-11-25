@@ -37,3 +37,9 @@ def test_monitor_never_pairs_new_image_with_old_annotation():
     cache['detection'][current], cache['mask'][current] = (image(150), now), (image(250), now)
     canvas = GameCameraView.render(SimpleNamespace(cache=cache, width=960))
     assert canvas[100, 420, 0] == 150 and canvas[100, 740, 0] == 250
+
+
+def test_robot_topics_follow_namespace():
+    from pinky_soccer_viz.game_camera_view import robot_topic
+    assert robot_topic('', 'ball_detection/source_image') == '/ball_detection/source_image'
+    assert robot_topic('blue', 'ball_detection/debug_mask') == '/blue/ball_detection/debug_mask'

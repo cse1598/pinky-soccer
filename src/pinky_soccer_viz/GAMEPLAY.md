@@ -9,11 +9,18 @@
 0.5초 넘게 끊긴 영상은 STALE로 표시합니다. Q/ESC나 닫기 버튼은 카메라 창만 닫고
 경기는 계속하므로 경기 정지는 기존 시작/정지 신호로 합니다. `headless:=true`는 두 GUI를 끕니다.
 
+로봇이 여러 대면(시뮬 `robots:=2 opponent_mode:=game`) 카메라 창에서 **1~9 키 또는 Tab**으로
+보여 줄 로봇을 고릅니다(처음은 내 로봇, 원본 패널 제목에 `[robot 1/2: yellow]` 표시). 선택한
+로봇의 토픽만 구독합니다. 장애물 모드(static/lateral/longitudinal) 상대는 시뮬 센서가 꺼져 있어
+목록에 없습니다. 직접 실행할 때는
+`ros2 run pinky_soccer_viz game_camera_view --ros-args -p robots:='[yellow, blue]'`.
+
 창을 닫았다가 다시 열려면 같은 ROS domain/DDS 터미널에서
 `ros2 run pinky_soccer_viz game_camera_view`를 실행합니다. 모니터는 읽기 전용이며
 검출 알고리즘을 따로 실행하거나 주행 명령을 발행하지 않습니다.
 원본 패널은 검출 노드가 이미 받은 입력의 `/ball_detection/source_image` 복사본을
-사용합니다. PC 모니터 때문에 로봇 원본 토픽의 원격 구독을 하나 더 만들지 않습니다.
+사용합니다(검출 노드가 받은 `camera/image_raw` 메시지를 가공 없이 그대로 다시 보낸 것이라
+원본 영상입니다. 네임스페이스가 있으면 `/<로봇>/ball_detection/source_image`). PC 모니터 때문에 로봇 원본 토픽의 원격 구독을 하나 더 만들지 않습니다.
 인식·월드 모델·BT·제어를 따로 실행할 필요가 없습니다. 시작 전에는 정지 대기합니다.
 한 번에 한 환경만 실행하고 기존 판단/제어/시뮬레이터는 해당 터미널에서 종료합니다.
 
