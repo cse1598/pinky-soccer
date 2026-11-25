@@ -25,7 +25,7 @@ from sensor_msgs.msg import (BatteryState, CameraInfo, CompressedImage, Image, I
 from std_msgs.msg import Float32, String, UInt16MultiArray
 from tf2_ros import Buffer, TransformException, TransformListener
 from pinky_soccer_world_model.ball_detector import transform_matrix
-from pinky_soccer_bringup.time_sync import relative_ready, tracking
+from pinky_soccer_bringup.time_sync import chrony_status, pc_reference_check
 from .measurement_geometry import MeasurementGeometry
 from .camera_capture import decode_capture
 
@@ -51,6 +51,16 @@ def yaw(q):
 class Acquisition(Node):
     def __init__(self):
         super().__init__('pinky_calibration_ui')
+        # Robot namespace: fixed when the node starts (subscriptions); '' = no namespace.
+        # Logical topic keys below stay '/scan', '/odom', ...; only the subscribed name changes.
+        # 'auto' (default): the saved connection settings (connection_settings.py).
+        from .connection_settings import load as load_connection
+        saved = load_connection()
+        ns = str(self.declare_parameter('robot_namespace', 'auto').value or '')
+        ns = (saved.robot.namespace if ns == 'auto' else ns).strip('/')
+        self.namespace = '/'+ns if ns else ''
+        # PC IPv4 the robot must use as its chrony server (connection settings, editable).
+        self.pc_ip = str(self.declare_parameter('pc_ip', '').value or '') or saved.pc_ip
         self.lock = threading.RLock()
         self.latest, self.seen = {}, {}
         self.geometry = None
@@ -72,11 +82,13 @@ class Acquisition(Node):
         self.sync_state = {'ready': False, 'reason': '실물 모드에서 자동 확인'}
         self.robot_clock = None
         self.robot_clock_seen = -math.inf
-        self.create_subscription(String, '/calibration/time_sync_status', self.clock_received, 10)
+        self.create_subscription(String, self.robot_topic('/calibration/time_sync_status'),
+                                 self.clock_received, 10)
         self.last_motion = None
-        self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.publisher = self.create_publisher(Twist, self.robot_topic('/cmd_vel'), 10)
         for topic, typ in TOPICS.items():
-            self.create_subscription(typ, topic, lambda msg, t=topic: self.receive(t, msg),
+            self.create_subscription(typ, self.robot_topic(topic),
+                                     lambda msg, t=topic: self.receive(t, msg),
                 QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
                 if topic == '/robot_description' else qos_profile_sensor_data)
         self.running = True
@@ -85,28 +97,45 @@ class Acquisition(Node):
         self.sync_thread = threading.Thread(target=self.clock_loop, daemon=True)
         self.sync_thread.start()
 
+    def robot_topic(self, topic):
+        """Absolute robot topic for a logical key, inside the configured namespace."""
+        return self.namespace + topic
+
     def clock_received(self, msg):
         try:
             value = json.loads(msg.data)
             if not isinstance(value, dict):
                 return
+            value['_received_unix'] = time.time()
             self.robot_clock, self.robot_clock_seen = value, time.monotonic()
         except (ValueError, TypeError):
             pass
 
+    @staticmethod
+    def robot_chrony(message):
+        """Chrony data of a robot status message; legacy robots only send tracking()."""
+        if not message:
+            return None
+        if isinstance(message.get('chrony'), dict):
+            return message['chrony']
+        legacy = dict(message)       # old bringup: no sources/sourcestats, absolute offsets
+        legacy['collected_unix'] = message.get('_received_unix')
+        legacy['legacy_status'] = True
+        return legacy
+
     def clock_loop(self):
         while self.running:
             if self.sync_enabled:
-                pc = tracking()
-                robot = self.robot_clock if time.monotonic()-self.robot_clock_seen < 12 else None
+                pc = chrony_status()
+                robot = self.robot_chrony(self.robot_clock)
                 try:
-                    ready = relative_ready(pc, robot)
-                except (ValueError, KeyError, TypeError):
-                    ready = False
-                self.sync_state = {'ready': ready, 'pc': pc, 'robot': robot,
-                    'reason': '자동 동기화 확인 (관측 오차 기준 5ms)' if ready else
-                    '동기화 대기: PC/로봇 chrony 설치·UDP123·상태 토픽 확인',
-                    'observed_monotonic': time.monotonic()}
+                    check = pc_reference_check(pc, robot, self.pc_ip)
+                except (ValueError, KeyError, TypeError) as error:
+                    check = {'relative_verified': False, 'reason': f'판정 오류: {error}'}
+                ready = bool(check.get('relative_verified'))
+                self.sync_state = {'ready': ready, 'pc': pc, 'robot': robot, 'check': check,
+                    'architecture': 'pc_centred', 'reason': check.get('reason', ''),
+                    'observed_monotonic': time.monotonic(), 'observed_unix': time.time()}
             for _ in range(20):
                 if not self.running:
                     return

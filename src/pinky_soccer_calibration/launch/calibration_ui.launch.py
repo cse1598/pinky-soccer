@@ -22,7 +22,11 @@ def start(context):
         if hfov:
             arguments.extend(['--webcam-hfov-deg', hfov])
     return [Node(package='pinky_soccer_calibration', executable='calibration_ui', output='screen',
-                 arguments=arguments, parameters=[{'use_sim_time': simulated_time}])]
+                 arguments=arguments, parameters=[{
+                     'use_sim_time': simulated_time,
+                     # 'auto': saved connection settings (연결·시간 탭); fixed at start.
+                     'robot_namespace': LaunchConfiguration('robot_namespace', default='auto').perform(context),
+                     'pc_ip': LaunchConfiguration('pc_ip', default='').perform(context)}])]
 
 
 def generate_launch_description():
@@ -34,5 +38,10 @@ def generate_launch_description():
         DeclareLaunchArgument('webcam_fps', default_value='15'),
         DeclareLaunchArgument('webcam_hfov_deg', default_value=''),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('robot_namespace', default_value='auto',
+                              description="robot namespace ('' none, auto = saved settings)"),
+        DeclareLaunchArgument('pc_ip', default_value='',
+                              description='PC IPv4 the robot must use as chrony server '
+                                          '(empty = saved settings)'),
         OpaqueFunction(function=start),
     ])

@@ -25,6 +25,7 @@ from .monitor_view import SensorMonitor
 from .wheel_measurement import distance_measurement, rotation_measurement
 from .project_store import utc
 from .project_view import ProjectView
+from .connection_view import ConnectionView
 from .camera_view import CameraCalibrationView
 from .ball_review_view import BallReviewView
 from .lidar_field import save_field
@@ -94,6 +95,10 @@ class App:
         book.add(self.ball_review, text='공 인식 검토')
         self.project_view = ProjectView(book, self)
         book.add(self.project_view, text='측정 기록')
+        self.connection_view = ConnectionView(book, self)
+        book.add(self.connection_view, text='연결·시간')
+        if self.webcam:
+            book.tab(self.connection_view, state='disabled')
         self.book = book
         self.fields = {}
         self.range_geometry_label = {}
@@ -225,6 +230,8 @@ class App:
                             robot=self.robot.get(), confirm=self.confirm.get(),
                             armed=self.armed.get(), floor_confirm=self.floor_confirm.get())
         self.options['lidar_clear'] = self.lidar_clear.get()
+        self.options['sync_seconds'] = self.connection_view.sync_seconds.get()
+        self.options['connection'] = self.connection_view.current()
         self.busy = True
 
         def run():
@@ -493,9 +500,48 @@ class App:
             raise ValueError('수신 데이터가 없습니다.')
         self.session.results['time_sync'] = self.node.sync_state.copy()
         self.session.add_measurement('timing', {'topics': topics,
+                                              'time_sync_state': self.node.sync_state.copy(),
                                               'clock_sync_verified': self.node.synchronized()
                                               and self.session.meta['environment'] == 'real'})
         return self.session.recalculate('timing')
+
+    def record_clock_sync(self):
+        """Sample the PC-centred clock state for N s and append a 'clock_sync' record.
+
+        History is kept per record; the legacy results['time_sync'] snapshot is not changed.
+        """
+        session = self.require()
+        if session.meta['environment'] != 'real':
+            raise ValueError('실물 프로젝트에서만 장치 간 시간 동기화를 기록합니다.')
+        seconds = finite(self.options['sync_seconds'])
+        if not 6 <= seconds <= 600:
+            raise ValueError('측정 시간은 6~600초입니다.')
+        conn = self.options['connection']
+        self.node.pc_ip = conn.pc_ip
+        samples, end = [], time.monotonic() + seconds
+        while time.monotonic() < end:
+            time.sleep(2.0)
+            state = dict(self.node.sync_state)
+            if 'check' in state:
+                samples.append({k: state.get(k) for k in ('check', 'pc', 'robot', 'observed_unix')})
+        checks = [v['check'] for v in samples]
+        bounds = [c['relative_bound_s'] for c in checks if c.get('relative_bound_s') is not None]
+        result = {
+            'architecture': 'pc_centred', 'pc_ip': conn.pc_ip, 'robot_ip': conn.robot.ip,
+            'robot_namespace': self.node.namespace, 'samples': len(samples),
+            'pc_absolute_all': bool(checks) and all(c.get('pc_absolute') for c in checks),
+            'robot_uses_pc_all': bool(checks) and all(c.get('robot_uses_pc') for c in checks),
+            'relative_verified_all': bool(checks) and all(c.get('relative_verified') for c in checks),
+            'relative_bound_s': stats(bounds) if bounds else None,
+            'limit_s': checks[-1].get('limit_s') if checks else None,
+            'last_reason': checks[-1].get('reason') if checks else '상태 표본 없음'}
+        row = session.add_measurement('clock_sync', {
+            'started_unix': time.time() - seconds, 'duration_s': seconds,
+            'connection': {'pc_ip': conn.pc_ip, 'pc_interface': conn.pc_interface,
+                           'ros_domain_id': conn.ros_domain_id, 'robot': vars(conn.robot)},
+            'samples': samples, 'summary': result})
+        session.recalculate('clock_sync')
+        return dict(result, record_id=row['id'])
 
     def pose(self):
         session = self.require()
@@ -562,6 +608,14 @@ class App:
                 except (ValueError, KeyError):
                     pass
         self.node.sync_enabled = self.environment.get() == 'real'
+        if not self.webcam:
+            now = time.monotonic()
+            with self.node.lock:
+                seen = dict(self.node.seen)
+            fresh = {t: now - v < 1.0 for t, v in seen.items()}
+            fresh['any'] = any(v for k, v in fresh.items() if k != '/cmd_vel')
+            self.connection_view.show(self.node.sync_state, fresh, ('/odom', '/joint_states'),
+                                      self.node.sync_enabled)
         self.sync_label.configure(text=self.node.sync_state.get('reason', '동기화 대기')
                                   if self.node.sync_enabled else '리허설: 장치 간 동기화 불필요')
         while not self.events.empty():
