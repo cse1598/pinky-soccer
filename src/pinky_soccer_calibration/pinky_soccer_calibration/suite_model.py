@@ -331,7 +331,9 @@ class Session(ProjectStore):
             raise ValueError('웹캠 보정은 rehearsal 프로필로만 내보낼 수 있습니다.')
         if not confirmed or not self.results:
             raise ValueError('분석 결과와 사람이 수행한 독립 확인이 필요합니다.')
+        from .project_store import CONTROL_CATEGORIES
         export_results = {k: v for k, v in self.results.items() if k not in self.stale and k != 'ball_review'
+                          and k not in CONTROL_CATEGORIES
                           and not (k == 'camera' and not v.get('passed'))}
         if not any(k != 'time_sync' for k in export_results):
             raise ValueError('현재 기록으로 계산·검증한 유효 결과가 없습니다. 먼저 다시 계산하세요.')

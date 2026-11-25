@@ -19,6 +19,13 @@ def utc():
     return datetime.now(timezone.utc).isoformat()
 
 
+# Control/communication measurements (2026-11-25). They are evidence for MPC work, not part of
+# the launch calibration: adding/removing them never archives the exported profile.yaml and
+# they are exported separately (identification.yaml / control_results.yaml), not in profile.
+CONTROL_CATEGORIES = ('clock_sync', 'communication_latency', 'command_latency',
+                      'motor_response', 'braking', 'footprint')
+
+
 class ProjectStore:
     def init_project(self):
         self.measurements = {}
@@ -164,8 +171,8 @@ class ProjectStore:
             self.camera = None
             if self.measurements.get('floor'):
                 self.stale.add('floor')
-        if category == 'ball_review':
-            return  # Validation evidence never changes runtime calibration.
+        if category == 'ball_review' or category in CONTROL_CATEGORIES:
+            return  # Validation/control evidence never changes the runtime calibration profile.
         # Previously exported profiles remain immutable, but no stale root profile is advertised.
         profile = self.root/'profile.yaml'
         if profile.exists():
@@ -274,6 +281,11 @@ class ProjectStore:
                         result['legacy_runs_not_pooled'] = True
                 else:
                     result = rows[-1]['legacy_report']
+            elif category == 'clock_sync':
+                # One row per measurement; the history is rebuilt from the kept records.
+                history = [dict(row['summary'], record_id=row['id'],
+                                recorded_utc=row.get('recorded_utc')) for row in rows]
+                result = {'history': history, 'latest': history[-1]}
             elif category == 'timing':
                 result = []
                 for row in rows:
