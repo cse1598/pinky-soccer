@@ -26,6 +26,8 @@ from .wheel_measurement import distance_measurement, rotation_measurement
 from .project_store import utc
 from .project_view import ProjectView
 from .connection_view import ConnectionView
+from .motor_view import MotorView
+from . import motor_experiment
 from .camera_view import CameraCalibrationView
 from .ball_review_view import BallReviewView
 from .lidar_field import save_field
@@ -97,8 +99,11 @@ class App:
         book.add(self.project_view, text='측정 기록')
         self.connection_view = ConnectionView(book, self)
         book.add(self.connection_view, text='연결·시간')
+        self.motor_view = MotorView(book, self)
+        book.add(self.motor_view, text='모터 동역학')
         if self.webcam:
             book.tab(self.connection_view, state='disabled')
+            book.tab(self.motor_view, state='disabled')
         self.book = book
         self.fields = {}
         self.range_geometry_label = {}
@@ -232,6 +237,8 @@ class App:
         self.options['lidar_clear'] = self.lidar_clear.get()
         self.options['sync_seconds'] = self.connection_view.sync_seconds.get()
         self.options['connection'] = self.connection_view.current()
+        self.options['motor'] = self.motor_view.inputs(getattr(self.node, 'namespace', ''),
+                                                       self.robot.get())
         self.busy = True
 
         def run():
@@ -329,7 +336,10 @@ class App:
         self.session = session
         self.node.last_motion = session.meta.get('pending_motion')
         self.events.put(('project_loaded', session.meta.copy()))
-        return f'프로젝트 불러옴: {session.root}. 과거 기록 검토/재계산 또는 기록 재개가 가능합니다.'
+        interrupted = motor_experiment.recover_interrupted(session)
+        return (f'프로젝트 불러옴: {session.root}. 과거 기록 검토/재계산 또는 기록 재개가 가능합니다.'
+                + (f'\n미완료 모터 실험 {interrupted}건을 중단됨으로 표시 (자료 보존, 자동 재개 없음).'
+                   if interrupted else ''))
 
     def save_project(self):
         self.configure_board()
@@ -504,6 +514,59 @@ class App:
                                               'clock_sync_verified': self.node.synchronized()
                                               and self.session.meta['environment'] == 'real'})
         return self.session.recalculate('timing')
+
+    def run_motor(self):
+        """Repeated step-response experiments; each run is saved before the next starts."""
+        session = self.require_recording()
+        if self.webcam:
+            raise ValueError('웹캠 모드에서는 주행 실험이 없습니다.')
+        o = self.options['motor']
+        if not o['armed']:
+            raise ValueError('로봇·namespace를 확인하고 주행 허용을 선택하세요.')
+        if self.options['robot'] != session.meta['robot_id']:
+            raise ValueError('화면의 로봇 식별명과 프로젝트 로봇이 다릅니다.')
+        repeats = int(finite(o['repeats']))
+        if not 1 <= repeats <= 20:
+            raise ValueError('반복 횟수는 1~20입니다.')
+        plan = motor_experiment.build_plan(
+            o['kind'], finite(o['speed']), finite(o['rate']), finite(o['pre']),
+            finite(o['hold']), finite(o['post']), finite(o['max_distance']),
+            approved=o['high_speed'], wheels=motor_experiment.wheel_parameters(session))
+        recording = dict(session.meta.get('recordings', [{}])[-1])
+        sync = self.node.sync_state.get('check')
+        options = {'purpose': o['purpose'], 'floor': o['floor'],
+                   'namespace': self.node.namespace, 'clock_sync': sync}
+        results, total = [], sum(d for d, _, _ in plan['segments'])
+        for index in range(repeats):
+            row = motor_experiment.start_record(session, plan, options, recording)
+            try:
+                self.node.start_profile(plan)
+            except Exception as error:
+                trial = {'reason': '시작 실패: ' + str(error), 'started': time.monotonic(),
+                         'stopped_monotonic': time.monotonic()}
+                motor_experiment.finish_record(session, row['id'], self.node, trial)
+                raise
+            deadline = time.monotonic() + total + 3.
+            while self.node.motion is not None:
+                if time.monotonic() > deadline:
+                    self.node.stop('실험 시간 제한 (안전 정지)')
+                time.sleep(.05)
+            with self.node.lock:
+                trial = dict(self.node.last_motion or {})
+                self.node.last_motion = None
+                battery = (self.node.values['/batt_state'][-1][2]
+                           if self.node.values.get('/batt_state') else None)
+            done = motor_experiment.finish_record(session, row['id'], self.node, trial, battery)
+            rate = motor_experiment.command_rate(trial.get('commands', []))
+            results.append(f"#{index+1} {done['status']} · 명령 {done['commands_sent']}개"
+                           + (f" ({rate['mean_hz']:.1f} Hz, 최대 간격 {rate['gap_max_s']*1e3:.0f} ms)"
+                              if rate else '')
+                           + f" · joint_states {done['samples'].get('/joint_states', 0)}개")
+            if done['status'] != 'complete':
+                results.append('중단: ' + done['stop_reason'] + ' → 남은 반복 취소')
+                break
+            time.sleep(1.5)            # settle between repeats (zero command is held)
+        return '모터 계단응답 ' + plan['kind'] + '\n' + '\n'.join(results)
 
     def record_clock_sync(self):
         """Sample the PC-centred clock state for N s and append a 'clock_sync' record.

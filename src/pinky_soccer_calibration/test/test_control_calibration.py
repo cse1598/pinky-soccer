@@ -78,3 +78,60 @@ def test_control_category_removal_keeps_profile(tmp_path, category):
     session.remove_measurements(category, [row['id']])
     assert profile.exists() and session.deleted[-1]['type'] == category
     session.release()
+
+
+# ---- motor step-response experiments -------------------------------------------------
+import csv as _csv          # noqa: E402
+import threading            # noqa: E402
+
+from pinky_soccer_calibration import motor_experiment as me   # noqa: E402
+
+
+def test_plan_limits():
+    plan = me.build_plan('forward', .10, 0, 1, 2, 2, .5)
+    assert plan['segments'] == [(1, 0., 0.), (2, .10, 0.), (2, 0., 0.)]
+    assert plan['rate_hz'] == 50 and plan['commanded']['wheel_left_radps'] > 0
+    with pytest.raises(ValueError, match='속도 제한'):
+        me.build_plan('forward', .25, 0, 1, 1, 1, .5)            # needs approval
+    assert me.build_plan('forward', .25, 0, 1, 1, 1, .5, approved=True)
+    with pytest.raises(ValueError, match='최대 이동'):
+        me.build_plan('forward', .20, 0, 1, 3, 1, .5)            # 0.6 m > 0.5 m
+    with pytest.raises(ValueError, match='바퀴 속도'):
+        me.build_plan('spin_left', 0, 3.0, 1, 1, 1, .5, approved=True,
+                      wheels={'radius_m': .01, 'separation_m': .1})
+    spin = me.build_plan('spin_right', 0, 1.0, 1, 2, 1, .3)
+    assert spin['commanded']['w_radps'] == -1.0 and spin['commanded']['v_mps'] == 0
+    with pytest.raises(ValueError):
+        me.build_plan('forward', .1, 0, 0, 2, 2, .5)              # zero pre time
+
+
+class FakeNode:
+    def __init__(self):
+        self.lock = threading.RLock()
+        self.values = {'/joint_states': [(10.0, 9.99, {'velocity': [1., 1.]}),
+                                         (11.0, 10.99, {'velocity': [2., 2.]}),
+                                         (99.0, 98.0, {'velocity': [0., 0.]})]}
+
+
+def test_record_lifecycle_and_interrupted_recovery(tmp_path):
+    session, profile = lidar_profile(tmp_path)
+    plan = me.build_plan('forward', .05, 0, 1, 2, 2, .5)
+    opts = {'purpose': 'identification', 'floor': 'yoga mat', 'namespace': ''}
+    row = me.start_record(session, plan, opts, {'bag': 'raw_bag'})
+    assert session.measurements['motor_response'][0]['status'] == 'running'
+    trial = {'started': 10.2, 'stopped_monotonic': 15.0, 'complete': True, 'reason': '프로파일 완료',
+             'commands': [(10.2, 1, 2, 0., 0.), (11.2, 3, 4, .05, 0.)]}
+    done = me.finish_record(session, row['id'], FakeNode(), trial)
+    assert done['status'] == 'complete' and done['samples']['/joint_states'] == 2
+    folder = session.root / done['files']['folder']
+    assert len(list(_csv.reader((folder / 'commands.csv').open()))) == 3
+    assert (folder / 'meta.yaml').exists() and profile.exists()
+    stuck = me.start_record(session, plan, opts, {'bag': 'raw_bag'})   # crash during a run
+    root = session.root
+    session.release()
+    reopened = type(session).open(root)
+    assert me.recover_interrupted(reopened) == 1
+    status = {r['id']: r['status'] for r in reopened.measurements['motor_response']}
+    assert status == {row['id']: 'complete', stuck['id']: 'interrupted'}
+    assert reopened.recalculate('motor_response')['experiments'] == 2
+    reopened.release()

@@ -310,3 +310,49 @@ Nav2 형식 `map.yaml`/`map.pgm`을 저장합니다. 정지·경기장 정리 �
 
 **장착** 탭에는 내부 보정과 독립된 체커보드 규격 입력란이 있습니다. 다른 보드로 바꾸어도
 내부 보정값과 사진은 유지되며, 장착 사진은 각자의 촬영 규격으로 저장·재계산됩니다.
+
+# 실물 제어 캘리브레이션 확장 (2026-11-25)
+
+기존 `calibration_ui`에 탭 두 개를 추가했습니다. 기존 탭·프로젝트·`profile.yaml` 형식은 그대로이며,
+새 측정은 같은 프로젝트(`project.yaml` measurements)에 이어서 쌓입니다. MPC는 변경하지 않습니다.
+
+## 연결·시간 탭 (PC 중심 시간 동기화)
+
+구조: 인터넷 NTP → **노트북 PC**(chrony 클라이언트 + LAN 서버) → 각 Pinky(PC의 chrony 클라이언트).
+
+- PC IPv4·인터페이스·ROS_DOMAIN_ID·RMW, 로봇 식별명·Pinky IPv4·namespace·SSH 사용자를 직접 입력하고 저장합니다
+  (`~/.config/pinky_soccer/calibration_connection.yaml`, 보정 결과와 별개). IP는 코드에 고정되어 있지 않습니다.
+- PC 인터페이스 목록은 참고로만 보여 주며 입력값을 덮어쓰지 않습니다.
+- `설정 명령 복사`: 입력값으로 만든 chrony.conf 줄(PC `allow <Pinky>`, Pinky `server <PC> iburst prefer minpoll 2 maxpoll 4`),
+  재시작·확인 명령, CycloneDDS peer 항목, UI 재시작 명령. **UI는 관리자 명령을 실행하지 않고 파일을 고치지 않습니다.**
+- 상태는 각각 따로 판정합니다: ROS 연결 · 필수 센서 · PC 절대 동기화 · Pinky 절대 동기화 · Pinky가 지정 PC를 기준으로
+  사용 · 상대 동기화 품질 · 단방향 지연 측정 가능 여부. 동기화가 안 되어도 카메라 등 다른 보정은 막지 않습니다.
+- 상대 품질 상한(초) = 로봇 system time 잔차 + 로봇 RMS offset + (로봇 root delay − PC root delay)/2 + PC 소스 std dev.
+  기준은 기존과 같은 5 ms이며 완화하지 않았습니다. `chronyc ntpdata`는 root가 필요해 쓰지 않습니다. 정보가 부족하면
+  "미검증"입니다. Pinky가 예비 인터넷 서버로 넘어가면 "PC 기준 아님"입니다.
+- `측정 → 프로젝트에 기록 추가`: N초 동안 상태를 표본으로 모아 `clock_sync` 기록을 추가합니다(이력 보존).
+  예전 `results.time_sync`(당시 chronyc 미설치 기록)는 바꾸지 않습니다.
+- namespace·DDS는 프로세스 시작 시에만 적용됩니다. 설정과 다르면 화면에 재시작 필요가 표시됩니다.
+  `ros2 launch pinky_soccer_calibration calibration_ui.launch.py robot_namespace:=auto pc_ip:=`(빈 값=저장 설정).
+- **로봇 쪽**: sources/sourcestats를 함께 보내는 `time_sync_status`는 이 커밋의 `pinky_soccer_bringup`이 필요합니다.
+  예전 bringup이면 "PC 기준 사용" 여부만 판정되고 상대 품질은 미검증으로 남습니다.
+
+## 모터 동역학 탭 (계단응답 자동 실험)
+
+1. 프로젝트를 열고 `기록 시작/재개`(원본 Bag/CSV 필수).
+2. 종류(직진·후진·제자리 좌/우·복합), 크기, 정지 준비/명령 유지/정지 후 기록 시간(기본 1/2/2 s), 반복, 최대 이동 거리,
+   용도(식별용/독립 검증용), 바닥 재질을 입력하고 로봇·namespace를 확인해 주행 허용 후 실행합니다.
+3. 상단 `■ 즉시 정지`로 언제든 멈춥니다.
+
+- 안전: 한 번에 하나의 주행만, `/cmd_vel`에 다른 발행자(BT/MPC/teleop)가 있으면 거부, 기본 |v|≤0.20 m/s·|w|≤2.0 rad/s
+  (고속 승인 시 0.25/3.0), 바퀴 0.9×103 rpm, 최대 이동 거리·회전각·시간 제한, odom/joint_states 끊김 시 정지,
+  UI 종료 시 정지. 통신이 끊기면 PC 정지 명령은 도달하지 않으므로 로봇 `command_watchdog`(0.5 s)가 정지를 담당합니다.
+- 기록: 실험 시작 시 `motor_response` 기록을 `running`으로 먼저 저장하고, 끝나면 `complete`/`user_stopped`/
+  `safety_stopped`/`system_error`로 확정합니다. 프로그램이 도중에 꺼지면 다음에 불러올 때 `interrupted`로 표시하며
+  주행은 자동으로 재개하지 않습니다.
+- 파일: `motor_response/<실험 ID>/observations.csv`(joint_states 위치·속도, odom, 수신한 cmd_vel, IMU, 배터리;
+  수신 monotonic·헤더 시각), `commands.csv`(발행한 모든 명령의 monotonic·ROS·Unix 시각), `meta.yaml`. 연속 원본은
+  해당 기록 세션의 `raw_bag*`/`observations*.csv`에 그대로 있습니다.
+- 실험에 쓴 바퀴 반경·간격과 출처(프로젝트 wheels 결과 또는 공식 기본값)·project revision을 기록합니다.
+- 모델 식별(램프+1차 지연, 지연)·그래프·독립 검증은 아직 구현하지 않았습니다. 재계산은 현재 기록 집계만 합니다.
+- 새 기록은 `profile.yaml`을 보관 처리하거나 그 결과에 섞이지 않습니다(`CONTROL_CATEGORIES`).

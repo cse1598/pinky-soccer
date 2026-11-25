@@ -58,7 +58,10 @@ class ProjectView(ttk.Frame):
         self.details.delete('1.0', 'end')
         groups = {'wheels': session.trials, **session.measurements}
         labels = {'wheels': '바퀴', 'floor': '장착', 'lidar': 'LiDAR', 'ultrasonic': '초음파',
-                  'imu_stationary': 'IMU 정지', 'timing': '주기', 'ball_review': '공 실측 비교'}
+                  'imu_stationary': 'IMU 정지', 'timing': '주기', 'ball_review': '공 실측 비교',
+                  'clock_sync': '시간 동기화', 'motor_response': '모터 응답',
+                  'communication_latency': '통신 지연', 'command_latency': '명령 경로',
+                  'braking': '제동', 'footprint': '충돌 외형'}
         counts = {k: sum(v.get('kind') == k for v in session.trials)
                   for k in ('forward', 'backward', 'left', 'right')}
         self.counts.configure(text='바퀴: 전진 {forward} / 후진 {backward} / 좌회전 {left} / 우회전 {right}회'
@@ -79,6 +82,16 @@ class ProjectView(ttk.Frame):
                         detail += f" s={row.get('distance_m')}m / θ={row.get('angle_rad')}rad"
                 elif category == 'floor':
                     detail = Path(row.get('image_file', '')).name
+                elif category == 'motor_response':
+                    c = row.get('plan', {}).get('commanded', {})
+                    detail = (f"{row.get('plan', {}).get('kind')} v={c.get('v_mps', 0):+.2f} "
+                              f"w={c.get('w_radps', 0):+.2f} · {row.get('status')} · "
+                              f"{'검증용' if row.get('purpose') == 'validation' else '식별용'}")
+                elif category == 'clock_sync':
+                    m = row.get('summary', {})
+                    detail = (f"PC기준 {'예' if m.get('robot_uses_pc_all') else '아니오'} · 상대 "
+                              f"{'검증' if m.get('relative_verified_all') else '미검증'} · "
+                              f"표본 {m.get('samples')}")
                 elif category == 'ball_review':
                     detail = (f"위치 오차 {row['error_m']*1000:.1f}mm → "
                               f"오프셋 적용 후 {row['corrected_error_m']*1000:.1f}mm")

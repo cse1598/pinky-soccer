@@ -281,6 +281,14 @@ class ProjectStore:
                         result['legacy_runs_not_pooled'] = True
                 else:
                     result = rows[-1]['legacy_report']
+            elif category == 'motor_response':
+                counts = {}
+                for row in rows:
+                    key = f"{row.get('plan', {}).get('kind')}/{row.get('purpose')}/{row.get('status')}"
+                    counts[key] = counts.get(key, 0) + 1
+                result = {'experiments': len(rows), 'by_kind_purpose_status': counts,
+                          'identification': 'not_implemented_yet: raw data preserved for later',
+                          'applied_to_mpc': False}
             elif category == 'clock_sync':
                 # One row per measurement; the history is rebuilt from the kept records.
                 history = [dict(row['summary'], record_id=row['id'],

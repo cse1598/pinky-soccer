@@ -200,6 +200,13 @@ class Acquisition(Node):
             observation['sim_distance_m'] = float(msg.range)
         elif topic == '/cmd_vel':
             observation.update(linear_x=msg.linear.x, angular_z=msg.angular.z)
+        elif topic == '/joint_states':
+            observation.update(name=list(msg.name), position=[float(v) for v in msg.position],
+                               velocity=[float(v) for v in msg.velocity])
+        elif topic == '/odom':
+            p, t = msg.pose.pose, msg.twist.twist
+            observation.update(x=p.position.x, y=p.position.y, yaw=yaw(p.orientation),
+                               v=t.linear.x, w=t.angular.z)
         with self.lock:
             self.latest[topic], self.seen[topic] = msg, now
             self.values[topic].append((now, stamp, observation))
@@ -362,22 +369,53 @@ class Acquisition(Node):
             if self.motion:
                 trial = self.motion
                 trial['reason'] = reason
-                trial['complete'] = reason == '목표 도달'
+                trial['complete'] = reason in ('목표 도달', '프로파일 완료')
+                trial['stopped_monotonic'] = time.monotonic()
                 if '/joint_states' in self.latest:
                     end = self.joints()
                     trial['left_rad'] = end[0]-trial['joints'][0]
                     trial['right_rad'] = end[1]-trial['joints'][1]
                 self.last_motion = trial
                 self.motion = None
+                if trial['kind'] == 'profile':
+                    return          # saved by the experiment runner, not a wheel trial
                 if self.recording_session:
                     self.recording_session.meta['pending_motion'] = dict(trial)
                     self.recording_session.save()
+
+    def start_profile(self, plan):
+        """Run a timed command profile [(duration_s, v, w), ...] (motor/braking experiments).
+
+        Shares the single motion slot, the sensor-loss stop and the stop() path with the
+        wheel experiments; adds a total time limit, an odom distance limit and a 50 Hz
+        command schedule. Every published command is logged with its own timestamps.
+        """
+        with self.lock:
+            if not self.writer:
+                raise ValueError('기록 시작/재개 후 실행하세요 (원본 Bag/CSV 필요).')
+            if self.motion:
+                raise ValueError('다른 주행이 진행 중입니다. 먼저 정지하세요.')
+            if not self.fresh('/odom') or not self.fresh('/joint_states'):
+                raise ValueError('최신 odom·joint_states가 모두 필요합니다.')
+            topic = self.robot_topic('/cmd_vel')
+            others = self.count_publishers(topic) - 1
+            if others > 0:
+                raise ValueError(f'{topic}에 다른 발행자 {others}개 (BT/MPC/teleop). 모두 끄고 실행하세요.')
+            msg = self.latest['/odom']
+            start = [msg.pose.pose.position.x, msg.pose.pose.position.y,
+                     yaw(msg.pose.pose.orientation)]
+            now = time.monotonic()
+            self.motion = dict(kind='profile', plan=plan, start=start, started=now,
+                               started_unix=time.time(), joints=self.joints(),
+                               commands=[], next_send=now, last_yaw=start[2], angle=0.)
 
     def watchdog(self):
         with self.lock:
             m = self.motion
             if not m:
                 return
+            if m['kind'] == 'profile':
+                return self.profile_step(m)
             if not self.fresh('/odom') or not self.fresh('/joint_states'):
                 self.stop('센서 수신 중단')
                 return
@@ -400,6 +438,39 @@ class Acquisition(Node):
             else:
                 msg.linear.x = MOTION_LINEAR_SPEED if m['kind'] == 'forward' else -MOTION_LINEAR_SPEED
             self.publisher.publish(msg)
+
+    def profile_step(self, m):
+        """One watchdog pass of a profile experiment (lock held by the caller)."""
+        if not self.fresh('/odom') or not self.fresh('/joint_states'):
+            return self.stop('센서 수신 중단')
+        now = time.monotonic()
+        elapsed = now - m['started']
+        plan = m['plan']
+        pose = self.latest['/odom'].pose.pose
+        current = yaw(pose.orientation)
+        m['angle'] += math.atan2(math.sin(current-m['last_yaw']), math.cos(current-m['last_yaw']))
+        m['last_yaw'] = current
+        distance = math.hypot(pose.position.x-m['start'][0], pose.position.y-m['start'][1])
+        if distance > plan['max_distance_m']:
+            return self.stop('최대 이동 거리 초과 (안전 정지)')
+        if abs(m['angle']) > plan.get('max_angle_rad', 4*math.pi):
+            return self.stop('최대 회전각 초과 (안전 정지)')
+        total = sum(d for d, _, _ in plan['segments'])
+        if elapsed >= total:
+            return self.stop('프로파일 완료')
+        if now < m['next_send']:
+            return
+        m['next_send'] = max(m['next_send'] + 1/plan['rate_hz'], now)
+        t, v, w = 0., 0., 0.
+        for duration, sv, sw in plan['segments']:
+            if elapsed < t + duration:
+                v, w = sv, sw
+                break
+            t += duration
+        cmd = Twist()
+        cmd.linear.x, cmd.angular.z = float(v), float(w)
+        self.publisher.publish(cmd)
+        m['commands'].append((now, self.get_clock().now().nanoseconds, time.time_ns(), v, w))
 
     def close(self):
         self.stop('UI 종료')
