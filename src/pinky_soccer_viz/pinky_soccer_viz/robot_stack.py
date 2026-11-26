@@ -161,8 +161,12 @@ def decision_stack(cfg):
                                      cfg.name), clock, {
                  'verify_mode': cfg.verify, 'groot2_enabled': cfg.groot2,
                  'kickoff_pose': [float(v) for v in cfg.initial]}]),
-        controller_node(cfg),
     ]
+    if cfg.controller == 'nav2':
+        from .nav2_stack import nav2_nodes
+        nodes += nav2_nodes(cfg)
+    else:
+        nodes.append(controller_node(cfg))
     if cfg.ui:
         nodes += ui_nodes(cfg, clock, team)
     return multi_robot.group(cfg.name, remaps(cfg) + nodes)
