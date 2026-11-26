@@ -30,6 +30,7 @@ setup(
             'mujoco_eval_bridge = pinky_soccer_viz.mujoco_eval_bridge:main',
             'soccer_trial = pinky_soccer_viz.soccer_trial:main',
             'behavior_verifier = pinky_soccer_viz.behavior_verifier:main',
+            'nav2_verifier = pinky_soccer_viz.nav2_verifier:main',
             'goto_bench = pinky_soccer_viz.goto_bench:main',
             'gazebo_truth_relay = pinky_soccer_viz.gazebo_truth_relay:main',
             'game_referee = pinky_soccer_viz.game_referee:main',
