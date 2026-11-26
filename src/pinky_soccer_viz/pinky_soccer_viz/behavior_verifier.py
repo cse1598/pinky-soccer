@@ -413,7 +413,8 @@ class VerifierApp:
                      if v and v > 0}
         self.gains = core.load_gains(node.controller_config, overrides)
         self.session_dir = os.path.join(
-            node.log_dir, datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+            node.log_dir, datetime.datetime.now().strftime('%Y%m%d_%H%M%S') +
+            ('_nav2' if node.controller_kind == 'nav2' else ''))
         self.selected = None
         self.port_vars = {}
         self.input_labels = {}
@@ -460,7 +461,8 @@ class VerifierApp:
         top = ttk.Frame(r, padding=(8, 4))
         top.pack(fill='x')
         mode = self.node.mode_label.upper()
-        ctl = 'NMPC' if self.node.controller_kind == 'mpc' else '비례 제어'
+        ctl = {'mpc': 'NMPC (acados)', 'nav2': 'Nav2 (A* + MPPI)',
+               'reactive': '비례 제어'}.get(self.node.controller_kind, self.node.controller_kind)
         ttk.Label(top, text=f'모드: {mode} · 제어: {ctl}', style='State.TLabel').pack(side='left')
         self.conn_label = ttk.Label(top, text='', style='Muted.TLabel')
         self.conn_label.pack(side='left', padx=16)
@@ -644,6 +646,9 @@ class VerifierApp:
         self.id_label.configure(text=f'{item["id"]} · {kind}')
         self.text_label.configure(text=' '.join(item['text'].split()))
         self.result_label.configure(text='결과: ' + ' '.join(item['result'].split()))
+        if self.node.controller_kind == 'nav2' and item['id'] == 'GoToPose':
+            self.text_label.configure(text='Nav2 A* 전역 경로 + MPPI 주행 제어. 지도/라이다 Costmap 장애물 회피는 항상 적용됩니다.')
+            self.result_label.configure(text='Nav2 완료 후 공통 위치 2 cm / 자세 3° 및 정지 조건 확인. 점선은 전역 경로입니다.')
         for w in self.ports_frame.winfo_children():
             w.destroy()
         self.port_vars = {}
@@ -670,12 +675,15 @@ class VerifierApp:
         self.option_vars = {}
         row = 2 * len(item['ports']) + 1
         if item.get('options'):
-            ttk.Label(self.ports_frame, text='회피 옵션 (실행 중 고정, 바꾸면 새 실행):').grid(
+            ttk.Label(self.ports_frame, text=('Nav2: 지도/라이다 회피 고정 (아래 옵션은 NMPC 전용)'
+                      if self.node.controller_kind == 'nav2' else
+                      '회피 옵션 (실행 중 고정, 바꾸면 새 실행):')).grid(
                 row=row, column=0, columnspan=3, sticky='w', pady=(4, 0))
         for i, option in enumerate(item.get('options', [])):
             var = tk.BooleanVar(value=bool((values or {}).get(option['name'], option['default'])))
             self.option_vars[option['name']] = var
-            ttk.Checkbutton(self.ports_frame, text=option['label'], variable=var).grid(
+            ttk.Checkbutton(self.ports_frame, text=option['label'], variable=var,
+                            state='disabled' if self.node.controller_kind == 'nav2' else 'normal').grid(
                 row=row + 1 + 2 * i, column=0, columnspan=3, sticky='w')
             ttk.Label(self.ports_frame, text=f'{option["name"]}: {option["text"]}',
                       style='Muted.TLabel', wraplength=390).grid(
@@ -770,6 +778,8 @@ class VerifierApp:
         self.sent_time = time.monotonic()
         t = self.snap.get('t', 0.0)
         self.record = core.RunRecord(self.run_number, item, request['ports'], t, self.field)
+        if self.node.controller_kind == 'nav2':
+            self.record.item = dict(self.record.item, title=item['title'] + ' [Nav2]')
         self.last_run = (item['id'], values)
         self.done_streak = 0
         self.trail, self.truth_trail = [], []
@@ -1055,7 +1065,7 @@ class VerifierApp:
             start = pose_of(wm.self)
             if self.show_predict.get():
                 # NMPC: its own optimal trajectory; reactive: simulate the P controller law.
-                self.prediction = (s['mpc_path'] if self.node.controller_kind == 'mpc'
+                self.prediction = (s['mpc_path'] if self.node.controller_kind in ('mpc', 'nav2')
                                    else core.predict_path(start, waypoints, self.gains,
                                                           float(goal.max_speed)))
                 mp.polyline(self.prediction, fill=COLORS['predict'], width=2, dash=(4, 3))
