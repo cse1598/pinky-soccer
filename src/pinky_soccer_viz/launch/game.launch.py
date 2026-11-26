@@ -114,8 +114,8 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive'],
-                              description='mpc: NMPC (pinky_soccer_mpc); reactive: old P control'),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive'],
+                              description='mpc: NMPC; nav2: native NavFn + MPPI (simulation verify); reactive: old P control'),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='real: NMPC wheel speed feedback from /joint_states'),
         # Passed explicitly in both modes: included launches inherit this configuration, and
