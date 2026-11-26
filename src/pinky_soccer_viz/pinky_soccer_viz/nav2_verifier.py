@@ -41,7 +41,7 @@ class Nav2Verifier(Node):
         self.goal_at = self.world_at = 0.
         self.key = None
         self.generation = 0
-        self.pending = self.handle = None
+        self.pending = self.goal_handle = None
         self.canceling = False
         self.result = None
         self.cmd_at = 0.
@@ -90,7 +90,7 @@ class Nav2Verifier(Node):
         self.cmd_at = time.monotonic()
 
     def on_path(self, msg):
-        if self.active() and self.handle is not None and not self.canceling:
+        if self.active() and self.goal_handle is not None and not self.canceling:
             self.path.publish(msg)
 
     def send(self, v=0., w=0.):
@@ -104,9 +104,9 @@ class Nav2Verifier(Node):
         self.cmd = (0., 0.)
         self.settle_since = None
         self.send()
-        if self.handle is not None and not self.canceling:
+        if self.goal_handle is not None and not self.canceling:
             self.canceling = True
-            self.handle.cancel_goal_async()
+            self.goal_handle.cancel_goal_async()
         # A pending send is retained until its response; stale accepted handles are cancelled.
         self.key = None
         self.result = None
@@ -124,7 +124,7 @@ class Nav2Verifier(Node):
             if generation == self.generation:
                 self.result = (False, 'Nav2 rejected goal')
             return
-        self.handle = handle
+        self.goal_handle = handle
         self.cmd_at = 0.
         self.canceling = generation != self.generation or not self.active()
         if self.canceling:
@@ -133,7 +133,7 @@ class Nav2Verifier(Node):
             lambda f: self.on_result(f, generation))
 
     def on_result(self, future, generation):
-        self.handle = None
+        self.goal_handle = None
         self.canceling = False
         self.cmd_at = 0.
         self.send()
@@ -203,7 +203,7 @@ class Nav2Verifier(Node):
         if self.key != key:
             if self.key is not None:
                 self.cancel()
-            if self.pending is not None or self.handle is not None:
+            if self.pending is not None or self.goal_handle is not None:
                 self.send()
                 return
             self.start(key)
@@ -235,12 +235,12 @@ class Nav2Verifier(Node):
                     return
             self.report(MotionResult.SUCCESS if ok else MotionResult.FAILURE, reason)
             return
-        if self.handle is None and self.pending is None:
+        if self.goal_handle is None and self.pending is None:
             if self.client.server_is_ready():
                 self.dispatch()
             elif now-self.started > 10.:
                 self.result = (False, 'Nav2 action server not ready')
-        if (self.handle is None or self.canceling or now-self.cmd_at > .25
+        if (self.goal_handle is None or self.canceling or now-self.cmd_at > .25
                 or now-self.odom_at > .25):
             self.send()
         else:
