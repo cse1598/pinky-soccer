@@ -157,7 +157,9 @@ def setup(context):
         # drive its GoToPose (two NMPCs at once) or leave it idle (its NMPC never solves).
         out += decision_stack(RobotConfig(
             name=opponent, color=other, initial=opp_pose, ui=False, groot2=False,
-            verify=flag('opponent_verify', context), **base))
+            verify=flag('opponent_verify', context),
+            **({**base, 'controller': 'mpc'} if base['controller'] == 'nav2' and
+               not flag('opponent_verify', context) else base)))
     elif two:
         out += multi_robot.group(opponent, [Node(
             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
@@ -224,7 +226,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive']),
         DeclareLaunchArgument('identification', default_value='',
                               description='validated simulator wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
