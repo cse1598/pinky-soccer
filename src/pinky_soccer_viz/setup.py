@@ -27,6 +27,7 @@ setup(
         'console_scripts': [
             'sim_ball_reset = pinky_soccer_viz.sim_ball_reset:main',
             'attack_controller = pinky_soccer_viz.attack_controller:main',
+            'path_lqr_controller = pinky_soccer_viz.path_lqr_controller:main',
             'match_preparation = pinky_soccer_viz.match_preparation:main',
             'preparation_view = pinky_soccer_viz.preparation_view:main',
             'remote_robot = pinky_soccer_viz.remote_robot:main',

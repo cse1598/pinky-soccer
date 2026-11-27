@@ -67,6 +67,9 @@ class MotorView(ttk.Frame):
         ttk.Entry(row, textvariable=self.vars['manual_brake'], width=14).pack(side='left')
         ttk.Button(self, text='제동 분석 → 기록 추가',
                    command=lambda: app.job(app.analyze_braking)).pack(fill='x', pady=4)
+        ttk.Separator(self).pack(fill='x', pady=6)
+        ttk.Button(self, text='분석 창 열기 (식별·그래프·제동 통계 · 로봇 연결 불필요)',
+                   command=app.open_motor_analysis).pack(fill='x', pady=2)
         self.status = ttk.Label(self, text='프로젝트를 열고 기록 시작/재개 후 실행하세요.',
                                 wraplength=520, justify='left')
         self.status.pack(fill='x')
