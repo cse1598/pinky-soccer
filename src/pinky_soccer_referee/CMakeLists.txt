@@ -10,5 +10,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES std_msgs geometry_msgs)
 install(PROGRAMS scripts/referee_node.py DESTINATION lib/${PROJECT_NAME} RENAME referee_node)
 install(FILES scripts/referee_core.py DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
