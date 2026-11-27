@@ -286,3 +286,94 @@ TEST_F(TreeTest, HandoffSuccessDoesNotInsertStopButExplicitHaltStillStops)
   ASSERT_TRUE(bb_->get("goal", g));
   EXPECT_EQ(g.mode, BehaviorGoal::STOP);
 }
+
+TEST_F(TreeTest, AttackOnlyBoundsBlindPushAndExplicitlyBacksUp)
+{
+  const char* xml = R"(<root BTCPP_format="4" main_tree_to_execute="ProbeAttack">
+    <BehaviorTree ID="ProbeAttack"><AttackBall ball="{attack_ball}" pose="{attack_pose}"
+      opp_goal="{attack_goal}"/></BehaviorTree></root>)";
+  auto probe = factory_.createTreeFromText(xml, bb_);
+  auto w = world(-0.15, 0., 0., 0., 0.);
+  bb_->set("attack_pose", w.self); bb_->set("attack_ball", w.ball);
+  geometry_msgs::msg::Point goal; goal.x = .83;
+  bb_->set("attack_goal", goal); bb_->set("world_stamp", 1.0);
+  probe.tickOnce();
+  EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action, "PushBall");
+  w.self.pose.x = .03; w.ball.state = TrackedObject::ESTIMATED;
+  bb_->set("attack_pose", w.self); bb_->set("attack_ball", w.ball);
+  bb_->set("world_stamp", 1.2);
+  probe.tickOnce();
+  EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action, "PushBall");
+  bb_->set("world_stamp", 2.5);
+  probe.tickOnce();
+  auto command = bb_->get<BehaviorGoal>("goal");
+  EXPECT_EQ(command.action, "Backoff");
+  EXPECT_NEAR(command.target.x, -.13, 1e-6);
+  probe.haltTree();
+  w.ball.state = TrackedObject::LOST;
+  bb_->set("attack_ball", w.ball);
+  probe.tickOnce();
+  EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action, "SpinInPlace");
+}
+
+TEST_F(TreeTest, AttackKeepsPushingWithCurrentPartialArcEvidence)
+{
+  const char* xml = R"(<root BTCPP_format="4" main_tree_to_execute="ProbeAttack">
+    <BehaviorTree ID="ProbeAttack"><AttackBall ball="{attack_ball}" pose="{attack_pose}"
+      opp_goal="{attack_goal}"/></BehaviorTree></root>)";
+  auto probe = factory_.createTreeFromText(xml, bb_);
+  auto w = world(-0.15, 0., 0., 0., 0.);
+  bb_->set("attack_pose", w.self); bb_->set("attack_ball", w.ball);
+  geometry_msgs::msg::Point goal; goal.x = .83;
+  bb_->set("attack_goal", goal); bb_->set("world_stamp", 1.0);
+  probe.tickOnce();
+  w.ball.state = TrackedObject::ESTIMATED;
+  bb_->set("attack_ball", w.ball); bb_->set("ball_contact", true);
+  bb_->set("world_stamp", 5.0);
+  probe.tickOnce();
+  EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action, "PushBall");
+  bb_->set("ball_contact", false); bb_->set("world_stamp", 7.0);
+  probe.tickOnce();
+  EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action, "Backoff");
+  bb_->set("world_stamp", 10.0);
+  probe.tickOnce();
+  EXPECT_NE(bb_->get<BehaviorGoal>("goal").action, "Backoff");
+}
+
+TEST_F(TreeTest, AttackApproachRetainsOrbitSideThroughSmallPoseNoise)
+{
+  const char* xml = R"(<root BTCPP_format="4" main_tree_to_execute="ProbeAttack">
+    <BehaviorTree ID="ProbeAttack"><AttackBall ball="{attack_ball}" pose="{attack_pose}"
+      opp_goal="{attack_goal}"/></BehaviorTree></root>)";
+  auto probe = factory_.createTreeFromText(xml, bb_);
+  auto w = world(.1, .003, 0., 0., 0.);
+  bb_->set("attack_ball", w.ball); bb_->set("attack_pose", w.self);
+  geometry_msgs::msg::Point goal;goal.x=.83;
+  bb_->set("attack_goal",goal);bb_->set("world_stamp",1.);
+  probe.tickOnce();
+  EXPECT_GT(bb_->get<BehaviorGoal>("goal").target.y,0.);
+  w.self.pose.y=-.003;bb_->set("attack_pose",w.self);bb_->set("world_stamp",1.1);
+  probe.tickOnce();
+  EXPECT_GT(bb_->get<BehaviorGoal>("goal").target.y,0.);
+  w.self.pose.y=-.12;bb_->set("attack_pose",w.self);bb_->set("world_stamp",1.2);
+  probe.tickOnce();
+  EXPECT_LT(bb_->get<BehaviorGoal>("goal").target.y,0.);
+}
+
+TEST_F(TreeTest, AttackAlignsInPlaceWhenAlreadyBehindBall)
+{
+  const char* xml = R"(<root BTCPP_format="4" main_tree_to_execute="ProbeAttack">
+    <BehaviorTree ID="ProbeAttack"><AttackBall ball="{attack_ball}" pose="{attack_pose}"
+      opp_goal="{attack_goal}"/></BehaviorTree></root>)";
+  auto probe = factory_.createTreeFromText(xml, bb_);
+  auto w = world(-.1, 0., .4, 0., 0.);
+  bb_->set("attack_ball", w.ball); bb_->set("attack_pose", w.self);
+  geometry_msgs::msg::Point goal;goal.x=.83;
+  bb_->set("attack_goal",goal);bb_->set("world_stamp",1.);
+  probe.tickOnce();
+  const auto g=bb_->get<BehaviorGoal>("goal");
+  EXPECT_EQ(g.action,"AlignToBall");EXPECT_NEAR(g.target.x,-.1,1e-6);
+  EXPECT_NEAR(g.target.theta,0.,1e-6);
+  w.self.pose.theta=.1;bb_->set("attack_pose",w.self);bb_->set("world_stamp",1.1);
+  probe.tickOnce();EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action,"PushBall");
+}

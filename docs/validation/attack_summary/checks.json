@@ -1,0 +1,11 @@
+{
+  "python_tests": "28 passed",
+  "bt_ctest_targets": "3 passed",
+  "compileall": "passed",
+  "diff_check": "passed",
+  "built_packages": 8,
+  "real_hardware_tested": false,
+  "ssh_used": false,
+  "realsense_used": false,
+  "notes": "MuJoCo image-referee cutaway; one autonomous round, one rules fixture, static and lateral obstacle GoToPose cases. Not exhaustive."
+}

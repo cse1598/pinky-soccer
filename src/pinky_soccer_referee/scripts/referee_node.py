@@ -43,6 +43,7 @@ class Referee(Node):
             "debug_log": False, "record_video": False,
             "debug_dir": "~/pinky_referee_logs", "record_fps": 30.0,
             "match_controls": False, "robot_namespaces": "",
+            "stop_on_reacquired_exit": False,
             "robot_black_max_channel": 65, "robot_black_max_spread": 20,
             "robot_position_sigma_m": .008,
         }
@@ -68,7 +69,7 @@ class Referee(Node):
         self.field=None
         self.camera=None
         self.goals={}
-        self.rules=Rules()
+        self.rules=Rules(p["stop_on_reacquired_exit"])
         self.ball=Track(0)
         self.robots=[RobotTrack(i,p['robot_position_sigma_m']) for i in (1,2)]
         self.frames=0
@@ -262,7 +263,7 @@ class Referee(Node):
                 self.get_logger().warning("Debug recorder: "+self.recorder.error,throttle_duration_sec=5.)
 
     def _process(self,image,stamp,t,record=None,images=None):
-        self.last_arrival=time.monotonic()
+        self.last_arrival=self.arrival_clock()
         self.stale=False
         if self.last_stamp is not None and t<=self.last_stamp:
             self.ball.miss()
@@ -430,12 +431,17 @@ class Referee(Node):
         if self.controls:
             self.controls.key(key)
 
+    def arrival_clock(self):
+        if self.get_parameter('use_sim_time').value:
+            return self.get_clock().now().nanoseconds/1e9
+        return time.monotonic()
+
     def watchdog(self):
         # Controls remain available before calibration and when overhead frames stop.
         self.show_frame()
         if self.last_arrival is None or self.stale:
             return
-        if time.monotonic()-self.last_arrival>self.params["frame_timeout_s"]:
+        if self.arrival_clock()-self.last_arrival>self.params["frame_timeout_s"]:
             self.stale=True
             self.ball.miss()
             for tr in self.robots:

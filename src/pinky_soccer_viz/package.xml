@@ -23,6 +23,7 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>rqt_image_view</exec_depend>
+  <exec_depend>pinky_soccer_referee</exec_depend>
   <exec_depend>pinky_soccer_msgs</exec_depend>
   <exec_depend>pinky_soccer_field</exec_depend>
   <exec_depend>pinky_soccer_world_model</exec_depend>

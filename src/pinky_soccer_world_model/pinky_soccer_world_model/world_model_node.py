@@ -110,6 +110,24 @@ class WorldModelNode(Node):
             self.static = StaticTransformBroadcaster(self)
             if self.odom_offset is not None:
                 self.static.sendTransform(self.map_to_odom())
+        self.ball_contact = dict(stamp=-1., present=False)
+        self.referee_ball_assist = bool(p('referee_ball_assist', False).value)
+        source = p('ball_source', 'auto').value
+        self.ball_input = ('assist' if self.referee_ball_assist else 'robot') if source == 'auto' else source
+        if self.ball_input not in ('robot','assist','referee'):
+            raise ValueError('ball_source must be auto, robot, assist or referee')
+        self.referee_observation = None
+        self.referee_observation_valid = False
+        self.last_referee_state_stamp = -math.inf
+        self.ball_source = 'none'
+        self.last_local_ball = -math.inf
+        self.last_referee_ball = -math.inf
+        if self.ball_input in ('assist','referee'):
+            from pinky_soccer_referee.msg import RefereeState
+            self.create_subscription(RefereeState, '/referee/state', self.on_referee_ball,
+                QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        self.contact_pub = self.create_publisher(String, 'world_model/ball_contact', 10)
+        self.create_subscription(String, 'ball_detection/status', self.on_ball_evidence, qos_profile_sensor_data)
         self.pub = self.create_publisher(WorldModel, 'world_model', 10)
         # Existing unconfirmed clusters remain available for collision avoidance.
         self.obstacle_pub = self.create_publisher(WorldModel, 'world_model/obstacles', 10)
@@ -130,6 +148,66 @@ class WorldModelNode(Node):
             f'attack {"+X" if self.field.attack_sign > 0 else "-X"}')
 
     # ------------------------------------------------------------------ inputs
+    def on_referee_ball(self, msg):
+        stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+        now = self.now()
+        if self.ball_input == 'referee':
+            if stamp < self.last_referee_state_stamp:
+                return
+            self.last_referee_state_stamp = stamp
+            xy = (msg.ball.position.x,msg.ball.position.y)
+            self.referee_observation_valid = bool(msg.metric_valid and msg.calibrated and
+                msg.ball.visible and -.05 <= now-stamp < .4 and all(math.isfinite(v) for v in xy))
+            if self.referee_observation_valid:
+                velocity = (msg.ball.velocity.x,msg.ball.velocity.y)
+                if not msg.ball.velocity_valid or not all(math.isfinite(v) for v in velocity):
+                    velocity = (0.,0.)
+                self.referee_observation = dict(xy=xy,velocity=velocity,stamp=stamp,
+                    confidence=float(msg.ball.tracking_confidence))
+                self.ball_source = 'referee_camera'
+                self.grid.observe(np.zeros_like(self.grid.p,bool),0.,xy)
+            return
+        if (not msg.metric_valid or not msg.calibrated or not msg.ball.visible or
+                not 0 <= now-stamp < .4 or now-self.last_local_ball < .5 or
+                stamp <= self.last_referee_ball):
+            return
+        xy = (msg.ball.position.x,msg.ball.position.y)
+        if not all(math.isfinite(v) for v in xy):
+            return
+        self.last_referee_ball = stamp
+        if self.ball.update(xy,stamp,1.):
+            self.ball_source = 'referee_camera'
+        self.grid.observe(np.zeros_like(self.grid.p,bool),0.,xy)
+
+    def referee_ball_object(self, now):
+        """Exact referee XY; neither local-camera fusion nor prediction is permitted."""
+        observation = self.referee_observation
+        valid = bool(observation and self.referee_observation_valid and
+                     -.05 <= now-observation['stamp'] < .4)
+        xy = observation['xy'] if observation else (0.,0.)
+        sigma = self.ball.p.meas_sigma_base
+        return tracked('ball', (*xy,0.), observation['velocity'] if valid else (0.,0.),
+            [sigma*sigma,0.,0.,0.,sigma*sigma,0.,0.,0.,0.],
+            TrackedObject.OBSERVED if valid else TrackedObject.LOST,
+            observation['stamp'] if observation else 0.,
+            observation['confidence'] if valid else 0.)
+
+    def on_ball_evidence(self, msg):
+        if self.ball_input == 'referee':
+            return
+        # Bearing-only partial arcs are evidence of a ball at the bumper, not a
+        # fabricated metric fix. Keep the distance Kalman filter unchanged.
+        try:
+            d = json.loads(msg.data)
+            h,w = float(d.get('image_height',480)),float(d.get('image_width',640))
+            u,v = d.get('bearing_horizontal_px'),d.get('bearing_vertical_px')
+            present = bool(d.get('bearing_valid') and u is not None and v is not None and
+                math.isfinite(u) and math.isfinite(v) and abs(u)<.17*w and v>.70*h and
+                d.get('confidence',0.)>=.25)
+            self.ball_contact = dict(stamp=float(d['stamp']),present=present)
+        except (ValueError,TypeError,KeyError):
+            self.ball_contact = dict(stamp=-1.,present=False)
+
     def now(self):
         """Return node clock seconds (sim time when use_sim_time)."""
         return self.get_clock().now().nanoseconds * 1e-9
@@ -196,6 +274,8 @@ class WorldModelNode(Node):
 
     def on_ball(self, msg):
         """Fuse a detection (any frame) after moving it into map."""
+        if self.ball_input == 'referee':
+            return
         rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
         if rt is None:
             return
@@ -203,8 +283,10 @@ class WorldModelNode(Node):
         local = np.array([msg.point.x, msg.point.y, msg.point.z])
         world = R @ local + t
         t_obs = Time.from_msg(msg.header.stamp).nanoseconds * 1e-9
-        self.ball.update(world[:2], t_obs if t_obs > 0 else self.now(),
-                         float(np.hypot(local[0], local[1])))
+        if self.ball.update(world[:2], t_obs if t_obs > 0 else self.now(),
+                         float(np.hypot(local[0], local[1]))):
+            self.last_local_ball = self.now()
+            self.ball_source = 'robot_camera'
         self.grid.observe(np.zeros_like(self.grid.p, bool), 0.0, world[:2])
 
     def scan_transform(self, target, source, stamp):
@@ -327,18 +409,33 @@ class WorldModelNode(Node):
         if self.pose is None:
             self.get_logger().warn('Waiting for self pose', throttle_duration_sec=5.0)
             return
-        self.ball.predict(now)
-        state = self.ball.state(now)
+        referee_ball = self.referee_ball_object(now) if self.ball_input == 'referee' else None
+        contact = dict(self.ball_contact)
+        if referee_ball is not None:
+            dx,dy = referee_ball.pose.x-self.pose[0],referee_ball.pose.y-self.pose[1]
+            forward = math.cos(self.pose[2])*dx+math.sin(self.pose[2])*dy
+            lateral = -math.sin(self.pose[2])*dx+math.cos(self.pose[2])*dy
+            contact = dict(stamp=referee_ball.last_seen.sec+referee_ball.last_seen.nanosec*1e-9,
+                present=referee_ball.state == TrackedObject.OBSERVED and .03<forward<.16 and abs(lateral)<.07)
+        contact['input_mode'] = self.ball_input
+        contact['metric_source'] = self.ball_source
+        contact['present'] = contact['present'] and 0 <= now-contact['stamp'] < .35
+        self.contact_pub.publish(String(data=json.dumps(contact)))
+        if referee_ball is None:
+            self.ball.predict(now)
+        state = referee_ball.state if referee_ball is not None else self.ball.state(now)
 
         self.grid.relax(dt)
         camera_alive = self.camera_seen is not None and now - self.camera_seen < 0.5
-        if camera_alive and state != OBSERVED:
+        if self.ball_input != 'referee' and camera_alive and state != OBSERVED:
             mask = self.grid.fov_mask(self.pose[0], self.pose[1], self.pose[2],
                                       self.hfov or self.hfov_fallback,
                                       self.fov_min, self.fov_max)
             self.grid.observe(mask, dt)
 
-        if self.ball.initialized:
+        if referee_ball is not None:
+            ball = referee_ball
+        elif self.ball.initialized:
             x, y, vx, vy = self.ball.x
             sigma = self.ball.max_sigma()
             confidence = {OBSERVED: 1.0, LOST: 0.0}.get(

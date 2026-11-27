@@ -22,7 +22,9 @@ def allowed(action, statuses, now, pending=False):
         return False
     if action == 'start':
         return all(s.get('state') in ('READY', 'STOPPED') and s.get('ready') is True
-                   and s.get('localization_valid') is True for s, _ in statuses)
+                   and s.get('localization_valid') is True
+                   and s.get('referee_start_allowed', True) and not s.get('start_pending', False)
+                   for s, _ in statuses)
     if action in ('prepare', 'retry'):
         return all(s.get('state') in ('IDLE', 'ERROR', 'STOPPED', 'READY') for s, _ in statuses)
     return False

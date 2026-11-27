@@ -448,7 +448,8 @@ def associate(tracks, candidates, t, gate=.28):
 
 class Rules:
     """Events are latched until reset. Unknown/occluded ball is never an OUT."""
-    def __init__(self):
+    def __init__(self, stop_on_reacquired_exit=False):
+        self.stop_on_reacquired_exit=stop_on_reacquired_exit
         self.sequence=0
         self.scores={"yellow":0,"blue":0}
         self.reset()
@@ -468,6 +469,20 @@ class Rules:
         x,y=map(float,p)
         l,w=field.length/2,field.width/2
         inside=abs(x)+radius<l and abs(y)+radius<w
+        outside=abs(x)-radius>l or abs(y)-radius>w
+        if (self.stop_on_reacquired_exit and outside and not self.last_event
+                and (not self.armed or self.previous is None)):
+            # A visible ball certainly outside must stop play, but an unseen
+            # crossing must NEVER award a goal. Unknown ball (p=None) stays unknown.
+            candidate=("UNVERIFIED_EXIT", "")
+            self.count=self.count+1 if self.pending==candidate else 1
+            self.pending=candidate
+            if self.count>=3:
+                self.sequence+=1
+                self.last_event=self.status="UNVERIFIED_EXIT"
+                self.armed=False
+                return candidate
+            return None
         if not self.armed:
             if inside and not self.last_event:
                 self.armed=True

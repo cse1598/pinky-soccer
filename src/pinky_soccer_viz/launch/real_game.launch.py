@@ -137,7 +137,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive', 'attack']),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='NMPC uses /joint_states wheel speeds (needs the '
                               'right wheel sign -1 confirmed; open-loop estimate otherwise)'),

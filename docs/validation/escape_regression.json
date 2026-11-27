@@ -1,0 +1,18 @@
+{
+  "7": {
+    "longest_recovery": {
+      "robot": "blue",
+      "duration_s": 0.25,
+      "displacement_m": 0.016554286945325472
+    },
+    "continued_after_progress_samples": 0
+  },
+  "8": {
+    "longest_recovery": {
+      "robot": "yellow",
+      "duration_s": 0.5700000000000003,
+      "displacement_m": 0.05773022672028281
+    },
+    "continued_after_progress_samples": 133
+  }
+}

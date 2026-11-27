@@ -1,0 +1,83 @@
+{
+  "attack_autonomous_4": {
+    "error": null,
+    "autonomous_goal": true,
+    "ready": true,
+    "final_truth_error_m": 0.0057576507533705175,
+    "final_world_error_m": 0.005966769353934584,
+    "final_truth_yaw_deg": -4.7502819104354925,
+    "peak_cmd_mps": 0.2669680899755139,
+    "events": [
+      {
+        "sequence": 1,
+        "event": "GOAL",
+        "color": "blue"
+      }
+    ],
+    "processing_ms": {
+      "median": 6.206035000104748,
+      "p95": 13.570122300143336,
+      "maximum": 34.880665999935445
+    },
+    "attack_to_goal_sim_s": 8.379999999999999,
+    "goal_to_ready_sim_s": 7.469999999999999
+  },
+  "attack_rules_4": {
+    "error": null,
+    "autonomous_goal": null,
+    "ready": true,
+    "final_truth_error_m": 0.009101657865834764,
+    "final_world_error_m": 0.008839944355562868,
+    "final_truth_yaw_deg": -4.809452721638539,
+    "peak_cmd_mps": 0.2669671824101154,
+    "events": [
+      {
+        "sequence": 1,
+        "event": "OUT",
+        "color": ""
+      },
+      {
+        "sequence": 2,
+        "event": "GOAL",
+        "color": "blue"
+      }
+    ],
+    "processing_ms": {}
+  },
+  "attack_obstacle_1": {
+    "error": null,
+    "autonomous_goal": null,
+    "ready": true,
+    "final_truth_error_m": 0.007789839609784838,
+    "final_world_error_m": 0.007880997848076892,
+    "final_truth_yaw_deg": -4.771345911956117,
+    "peak_cmd_mps": 0.2667294910428301,
+    "events": null,
+    "processing_ms": {
+      "median": 5.661437999833652,
+      "p95": 11.79177400001663,
+      "maximum": 29.518408000058116
+    },
+    "minimum_centre_distance_m": 0.25455770650516746,
+    "conservative_disc_gap_m": 0.07552374324679573
+  },
+  "attack_moving_2": {
+    "error": null,
+    "moving_trial": true,
+    "manual_gotopose_only": true,
+    "opponent_travel_observed_m": [
+      4.4553478452680965e-08,
+      0.21278470731635768
+    ],
+    "minimum_centre_distance_m": 0.31012693164957694,
+    "conservative_disc_gap_m": 0.1310929683912052,
+    "final_truth_error_m": 0.006080300138031167,
+    "motion_result": {
+      "state": 1,
+      "reason": "position/heading accepted; stopped",
+      "position_error": 0.006502672869197255,
+      "heading_error": 0.08307615819090432
+    },
+    "peak_cmd_mps": 0.262920802255259
+  }
+}

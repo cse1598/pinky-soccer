@@ -1,0 +1,48 @@
+{
+  "result": "INVALID TEST: post-goal return counted against completed rally timeout; incomplete match (yellow 2 blue 0)",
+  "score_version": 2,
+  "events": [
+    [
+      15.23,
+      "GOAL",
+      "blue"
+    ],
+    [
+      94.02000000000001,
+      "GOAL",
+      "blue"
+    ]
+  ],
+  "starts": 2,
+  "scores": [
+    0,
+    2
+  ],
+  "reward": {
+    "yellow": {
+      "total": 127.21931244040863,
+      "stationary_s": 1.180000000000014,
+      "far_ball_s": 0.0,
+      "distance_m": 5.707375119187592,
+      "recoveries": 6,
+      "goals": 2,
+      "conceded": 0,
+      "outs": 0,
+      "playing_s": 77.64,
+      "stagnant_ball_s": 43.260000000000005
+    },
+    "blue": {
+      "total": -300.19759498715194,
+      "stationary_s": 1.5200000000000244,
+      "far_ball_s": 1.310000000000004,
+      "distance_m": 6.923189974291527,
+      "recoveries": 5,
+      "goals": 0,
+      "conceded": 2,
+      "outs": 0,
+      "playing_s": 77.64,
+      "stagnant_ball_s": 67.6
+    }
+  },
+  "original_result": "FAIL: no completed rally within 75 simulation seconds"
+}

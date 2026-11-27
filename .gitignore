@@ -24,3 +24,11 @@ __pycache__/
 
 # Read-only reference code (cloned locally, never committed)
 refs/
+
+# Raw experimental data
+docs/validation/**/*.mcap
+docs/validation/**/*.db3
+docs/validation/**/*.mp4
+docs/validation/**/*.bag
+docs/validation/**/bag.tar.gz
+docs/validation/attack_match_*/topics.jsonl

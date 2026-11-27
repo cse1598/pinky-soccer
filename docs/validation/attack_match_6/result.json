@@ -1,0 +1,42 @@
+{
+  "result": "FAIL: no goal after 80 simulation seconds; discarded to test wheel-gated stagnation and safe ball clearance",
+  "score_version": 2,
+  "events": [
+    [
+      20.73,
+      "OUT",
+      ""
+    ]
+  ],
+  "reward": {
+    "yellow": {
+      "total": -102.2735821648338,
+      "stationary_s": 1.4200000000000088,
+      "far_ball_s": 1.8800000000000043,
+      "distance_m": 7.623164329670298,
+      "recoveries": 8,
+      "goals": 0,
+      "conceded": 0,
+      "outs": 1,
+      "playing_s": 91.4,
+      "stagnant_ball_s": 53.42000000000001
+    },
+    "blue": {
+      "total": -138.95027133902374,
+      "stationary_s": 1.709999999999983,
+      "far_ball_s": 0.0,
+      "distance_m": 7.0525426780461,
+      "recoveries": 12,
+      "goals": 0,
+      "conceded": 0,
+      "outs": 1,
+      "playing_s": 91.36,
+      "stagnant_ball_s": 81.33
+    }
+  },
+  "scores": [
+    0,
+    0
+  ],
+  "interrupted": true
+}

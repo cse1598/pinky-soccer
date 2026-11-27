@@ -1,0 +1,52 @@
+{
+  "result": "FAIL: three OUT events without a goal; discarded",
+  "score_version": 2,
+  "events": [
+    [
+      48.220000000000006,
+      "OUT",
+      ""
+    ],
+    [
+      73.53,
+      "OUT",
+      ""
+    ],
+    [
+      103.92,
+      "OUT",
+      ""
+    ]
+  ],
+  "reward": {
+    "yellow": {
+      "total": -122.28801144780137,
+      "stationary_s": 1.2800000000000011,
+      "far_ball_s": 0.269999999999996,
+      "distance_m": 7.778022895607499,
+      "recoveries": 6,
+      "goals": 0,
+      "conceded": 0,
+      "outs": 3,
+      "playing_s": 86.27000000000001,
+      "stagnant_ball_s": 59.04
+    },
+    "blue": {
+      "total": -105.8982811472097,
+      "stationary_s": 0.7400000000000091,
+      "far_ball_s": 4.140000000000001,
+      "distance_m": 8.340562294422512,
+      "recoveries": 3,
+      "goals": 0,
+      "conceded": 0,
+      "outs": 3,
+      "playing_s": 86.27000000000001,
+      "stagnant_ball_s": 49.82
+    }
+  },
+  "scores": [
+    0,
+    0
+  ],
+  "interrupted": true
+}

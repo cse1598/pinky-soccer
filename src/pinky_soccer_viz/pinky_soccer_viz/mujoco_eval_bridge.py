@@ -12,6 +12,7 @@ the ball is moved there at rest. The request is applied inside publish_state, i.
 physics steps in the bridge loop (under the viewer lock), never concurrently with a step.
 """
 
+import os
 import sys
 
 BALL_BODY = 'soccer_ball'
@@ -40,6 +41,11 @@ def install(bridge_module):
 
     def publish_state(self, now):
         original(self, now)
+        if os.environ.get('PINKY_SOCCER_OVERHEAD_CAMERA') == '1':
+            if not hasattr(self, '_overhead_camera'):
+                from .overhead_camera import OverheadCamera
+                self._overhead_camera = OverheadCamera(self, self.physics.model)
+            self._overhead_camera.publish(self.physics.data, now)
         if not hasattr(self, '_ball_truth_pub'):
             self._ball_truth_pub = self.create_publisher(PoseStamped, TOPIC, 10)
             self._ball_request = None

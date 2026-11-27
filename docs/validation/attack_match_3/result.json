@@ -1,0 +1,37 @@
+{
+  "result": "FAIL: no completed rally within 75 simulation seconds",
+  "events": [
+    [
+      16.43,
+      "GOAL",
+      "blue"
+    ]
+  ],
+  "starts": 2,
+  "scores": [
+    0,
+    1
+  ],
+  "reward": {
+    "yellow": {
+      "total": 95.11529183761756,
+      "stationary_s": 0.7400000000000091,
+      "far_ball_s": 0.0,
+      "distance_m": 3.229416324772739,
+      "recoveries": 4,
+      "goals": 1,
+      "conceded": 0,
+      "outs": 0
+    },
+    "blue": {
+      "total": -109.8001068495831,
+      "stationary_s": 1.000000000000007,
+      "far_ball_s": 0.8699999999999974,
+      "distance_m": 4.388213699172573,
+      "recoveries": 5,
+      "goals": 0,
+      "conceded": 1,
+      "outs": 0
+    }
+  }
+}

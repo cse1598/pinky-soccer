@@ -24,6 +24,8 @@ def setup(context):
     mode = arg('mode')
     if mode not in ('real', 'gazebo', 'mujoco'):
         raise ValueError('mode must be real, gazebo or mujoco')
+    if mode == 'gazebo' and arg('controller') == 'attack':
+        raise ValueError('Attack-only update is real/MuJoCo only; Gazebo is deferred')
     # Real GoToPose uses only the MPC's motor/input limits (user request 2026-11-27).
     # Simulators turn at most 2 rad/s: faster
     # spins (up to 5.4 rad/s) broke LiDAR/heading localization in MuJoCo (180 deg reseeds,
@@ -132,7 +134,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive'],
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive', 'attack'],
                               description='mpc: NMPC; nav2: native NavFn + MPPI (simulation verify); reactive: old P control'),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='real: NMPC wheel speed feedback from /joint_states'),

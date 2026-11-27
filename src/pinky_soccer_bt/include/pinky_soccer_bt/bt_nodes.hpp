@@ -57,6 +57,9 @@ public:
 
 private:
   std::shared_ptr<WorldModel> seen_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr contact_sub_;
+  double contact_stamp_{-1.};
+  bool contact_present_{false};
   std::chrono::steady_clock::time_point received_{};
 };
 
@@ -181,6 +184,24 @@ public:
 
 protected:
   BT::NodeStatus update() override;
+};
+
+// Attack-only policy: bounded blind push, deliberate camera reacquisition backup.
+class AttackBall : public GoalAction
+{
+public:
+  AttackBall(const std::string& n, const BT::NodeConfig& c) : GoalAction(n, c, "ATTACK") {}
+  static BT::PortsList providedPorts();
+  void onHalted() override { stage_ = 0; progress_time_ = -1.; approach_side_ = 0; approach_orbit_ = false; }
+protected:
+  BT::NodeStatus update() override;
+private:
+  int stage_{0}, approach_side_{0};
+  bool approach_orbit_{false};
+  Pose2 anchor_{}, backup_{}, flank_{};
+  Vec2 ball_progress_{};
+  double progress_time_{-1.}, flank_until_{0.};
+  double seen_{0.0}, backup_started_{0.0};
 };
 
 class GoBehindBall : public GoalAction

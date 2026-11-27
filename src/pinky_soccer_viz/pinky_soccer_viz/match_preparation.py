@@ -17,6 +17,7 @@ from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool, Trigger
 
 from .preparation_core import Preparation, start_pose
+from .attack_match import RefereeGate
 
 
 class MatchPreparation(Node):
@@ -24,6 +25,14 @@ class MatchPreparation(Node):
         super().__init__('match_preparation')
         p = self.declare_parameter
         self.core = Preparation(p('our_goal_color', 'yellow').value)
+        self.require_referee = bool(p('require_referee', False).value)
+        self.return_after_out = bool(p('return_after_out', self.require_referee).value)
+        self.referee_gate = RefereeGate(float(p('restart_center_radius', .15).value))
+        self.referee_reset = None
+        self.start_requested = None
+        self.start_announce = True
+        self.referee_pause_until = -math.inf
+        self.referee_client = self.create_client(Trigger, '/referee/reset_play')
         self.field = Field.from_file(p('field_spec', '').value or None, self.core.team)
         self.goal_offset = float(p('start_goal_offset', -1.).value)
         self.explicit_start = p('start_pose', [float('nan')]*3).value
@@ -91,6 +100,10 @@ class MatchPreparation(Node):
             self.create_service(Trigger, 'preparation/'+name,
                 lambda req, res, fn=action: self.reply(res, fn()))
         self.create_service(SetBool, 'preparation/set_team', self.set_team)
+        if self.require_referee:
+            from pinky_soccer_referee.msg import RefereeState, RefereeEvent
+            self.create_subscription(RefereeState, '/referee/state', self.on_referee, latched)
+            self.create_subscription(RefereeEvent, '/referee/events', self.on_referee_event, latched)
         self.create_timer(.05, self.tick)
         self.publish_team()
 
@@ -134,15 +147,50 @@ class MatchPreparation(Node):
             self.publish_stop_goal()
         return result
 
+    def referee_now(self):
+        return self.get_clock().now().nanoseconds/1e9
+
+    def on_referee(self, msg):
+        age = self.get_clock().now().nanoseconds/1e9-msg.header.stamp.sec-msg.header.stamp.nanosec/1e9
+        self.referee_gate.update(self.referee_now(), bool(msg.metric_valid and msg.calibrated and -.05 <= age < .5),
+            (msg.ball.position.x, msg.ball.position.y) if msg.ball.visible else None, msg.armed)
+
+    def on_referee_event(self, msg):
+        age = self.get_clock().now().nanoseconds/1e9-msg.header.stamp.sec-msg.header.stamp.nanosec/1e9
+        action = self.referee_gate.event(msg.sequence, msg.event,
+            -.05 <= age < 1. and self.core.prepared and (self.core.state == 'PLAYING' or
+                (self.core.state == 'STOPPED' and self.referee_now() <= self.referee_pause_until)))
+        if action:
+            self.stop()
+            self.core.reason = 'Referee: '+msg.event
+            if (action == 'RETURN' or self.return_after_out) and self.localization_valid():
+                self.kickoff_pending = time.monotonic()+.15
+
     def start(self, announce=True):
         if self.core.state == 'PLAYING':
             return True, 'Already playing'
+        if self.require_referee:
+            if self.start_requested is not None:
+                return False, 'Start already pending referee confirmation'
+            if not self.referee_gate.can_start(self.referee_now()):
+                return False, 'Fresh referee and ball at centre required'
+            if not self.core.prepared or self.core.state not in ('READY', 'STOPPED') or not self.localization_valid():
+                return False, 'Preparation must be complete before start'
+            if not self.referee_client.service_is_ready():
+                return False, 'Referee reset_play service unavailable'
+            self.referee_reset = self.referee_client.call_async(Trigger.Request())
+            self.start_requested, self.start_announce = time.monotonic(), announce
+            return True, 'Waiting for referee to arm; robot remains stopped'
         result = self.core.start(self.localization_valid())
         if result[0] and announce:
             self.global_playing_pub.publish(Bool(data=True))
         return result
 
     def stop(self, announce=True):
+        self.referee_pause_until = -math.inf
+        if self.referee_reset is not None:
+            self.referee_reset.cancel()
+        self.start_requested = self.referee_reset = None
         calibration = self.core.state == 'CALIBRATING'
         self.core.stop()
         if announce or not self.kickoff_seen:
@@ -169,7 +217,10 @@ class MatchPreparation(Node):
             if not ok:
                 self.get_logger().warn(reason, throttle_duration_sec=2.)
         elif self.core.state in ('CALIBRATING', 'MOVING_TO_START', 'PLAYING'):
+            was_playing = self.core.state == 'PLAYING'
             self.stop(announce=False)
+            if was_playing:
+                self.referee_pause_until = self.referee_now()+.5
 
     def on_kickoff(self, msg):
         rising = msg.data and not self.kickoff_seen
@@ -288,6 +339,30 @@ class MatchPreparation(Node):
             self.goal_id = time.time_ns()
             self.motion_received = -math.inf
             self.stopped_since = None
+        if self.require_referee:
+            if self.start_requested is not None:
+                if now-self.start_requested > 3. or not self.referee_gate.can_start(self.referee_now()):
+                    self.stop()
+                    self.core.reason = 'Referee start confirmation failed'
+                elif self.referee_reset is not None and self.referee_reset.done():
+                    try:
+                        reply = self.referee_reset.result()
+                    except Exception:
+                        reply = None
+                    self.referee_reset = None
+                    if not reply or not reply.success:
+                        self.stop()
+                        self.core.reason = 'Referee rejected reset_play'
+                elif self.referee_reset is None and self.referee_gate.armed:
+                    ok, reason = self.core.start(self.localization_valid())
+                    self.start_requested = None
+                    if ok and self.start_announce:
+                        self.global_playing_pub.publish(Bool(data=True))
+                    elif not ok:
+                        self.core.reason = reason
+            if self.core.state in ('PLAYING', 'MOVING_TO_START') and not self.referee_gate.fresh(self.referee_now()):
+                self.stop()
+                self.core.reason = 'Referee disconnected or invalid'
         state = self.core.state
         if state == 'CALIBRATING':
             if not self.calibrate_sent and self.calibrate_client.service_is_ready():
@@ -339,6 +414,8 @@ class MatchPreparation(Node):
                 state=self.core.state, ready=self.core.prepared,
                 stamp_ros=self.get_clock().now().nanoseconds*1e-9,
                 reason=self.core.reason, team=self.core.team, start_pose=self.target,
+                start_pending=self.start_requested is not None,
+                referee_start_allowed=(not self.require_referee or self.referee_gate.can_start(self.referee_now())),
                 own_goal=self.field.own_goal if self.core.team == self.field.our_goal_color
                          else self.field.opp_goal,
                 localization=self.loc, localization_valid=self.localization_valid(),

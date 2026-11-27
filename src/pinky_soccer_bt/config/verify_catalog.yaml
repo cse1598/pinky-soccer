@@ -37,6 +37,18 @@ probe:   # live condition panel: the same conditions and thresholds as soccer_1v
      text: "진행 방향과 우리 골대 방향이 1.57 rad 이상 벌어짐(자책골 방지)"}
 
 items:
+  - id: AttackBall
+    kind: action
+    enabled: false
+    group: 공격 전용
+    title: 공 탐색과 밀기
+    text: 공 뒤로 접근하고 짧게 밀며, 사각지대에서는 후진해 공을 다시 관측합니다.
+    result: "항상 RUNNING. 심판 또는 사용자의 정지 신호로 종료합니다."
+    inputs: [pose, ball, opp_goal]
+    ports:
+      - {name: blind_distance, label: 미관측 이동 거리, unit: m, default: 0.22, min: 0.05, max: 0.4, step: 0.01}
+      - {name: blind_seconds, label: 미관측 이동 시간, unit: s, default: 1.25, min: 0.1, max: 2.0, step: 0.1}
+      - {name: backup_distance, label: 재관측 후진 거리, unit: m, default: 0.16, min: 0.05, max: 0.3, step: 0.01}
   # ------------------------------------------------------------------ single actions
   - id: GoToPose
     kind: action

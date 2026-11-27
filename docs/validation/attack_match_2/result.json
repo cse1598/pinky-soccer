@@ -1,0 +1,42 @@
+{
+  "result": "FAIL: wall time limit",
+  "events": [
+    [
+      24.520000000000003,
+      "GOAL",
+      "blue"
+    ],
+    [
+      63.32000000000001,
+      "GOAL",
+      "yellow"
+    ]
+  ],
+  "starts": 3,
+  "scores": [
+    1,
+    1
+  ],
+  "reward": {
+    "yellow": {
+      "total": -185.20371240166332,
+      "stationary_s": 29.289999999999996,
+      "far_ball_s": 3.799999999999997,
+      "distance_m": 6.3794248033253265,
+      "recoveries": 20,
+      "goals": 1,
+      "conceded": 1,
+      "outs": 0
+    },
+    "blue": {
+      "total": -94.02857854237648,
+      "stationary_s": 5.31000000000004,
+      "far_ball_s": 1.8900000000000006,
+      "distance_m": 6.793157084753649,
+      "recoveries": 35,
+      "goals": 1,
+      "conceded": 1,
+      "outs": 0
+    }
+  }
+}

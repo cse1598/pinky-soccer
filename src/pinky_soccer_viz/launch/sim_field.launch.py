@@ -176,13 +176,14 @@ def setup(context):
                 'pose_topic': multi_robot.topic(opponent, 'ground_truth')}])])
 
     # ---------------------------------------------------------------- referee
-    out.append(Node(package='pinky_soccer_viz', executable='game_referee', name='game_referee',
-                    output='screen', parameters=[{
-                        'use_sim_time': True, 'field_spec': str(spec), 'source': 'truth',
-                        'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
-                            if base['preparation'] and base['localization'] == 'rectangle'
-                            else '/game/playing',
-                        'reset_ball': True}]))
+    if base['controller'] != 'attack':
+        out.append(Node(package='pinky_soccer_viz', executable='game_referee', name='game_referee',
+                        output='screen', parameters=[{
+                            'use_sim_time': True, 'field_spec': str(spec), 'source': 'truth',
+                            'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
+                                if base['preparation'] and base['localization'] == 'rectangle'
+                                else '/game/playing',
+                            'reset_ball': True}]))
     return out
 
 
@@ -240,7 +241,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive']),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive', 'attack']),
         DeclareLaunchArgument('identification', default_value='',
                               description='validated simulator wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',

@@ -67,7 +67,16 @@ constexpr double kHeadingTol = 0.15;   // [rad]
 ReadWorldModel::ReadWorldModel(const std::string& name, const BT::NodeConfig& conf,
                                const BT::RosNodeParams& params)
   : BT::RosTopicSubNode<WorldModel>(name, conf, params)
-{}
+{
+  contact_sub_ = node_.lock()->create_subscription<std_msgs::msg::String>("world_model/ball_contact", 10,
+    [this](const std_msgs::msg::String& msg) {
+      try {
+        const auto d = nlohmann::json::parse(msg.data);
+        contact_stamp_ = d.at("stamp").get<double>();
+        contact_present_ = d.at("present").get<bool>();
+      } catch(const std::exception&) { contact_present_ = false; }
+    });
+}
 
 PortsList ReadWorldModel::providedPorts()
 {
@@ -99,6 +108,10 @@ NodeStatus ReadWorldModel::onTick(const std::shared_ptr<WorldModel>& last_msg)
                                                  BehaviorGoal::STOP, Pose2{}, 0.0));
     return NodeStatus::FAILURE;
   }
+  config().blackboard->set("@world_stamp", seen_->header.stamp.sec + 1e-9 * seen_->header.stamp.nanosec);
+  const double world_stamp = seen_->header.stamp.sec + 1e-9 * seen_->header.stamp.nanosec;
+  config().blackboard->set("@ball_contact", contact_present_ && world_stamp-contact_stamp_ >= -.05 &&
+                           world_stamp-contact_stamp_ < .35);
   setOutput("playing", static_cast<bool>(seen_->playing));
   setOutput("pose", seen_->self);
   setOutput("ball", seen_->ball);
@@ -320,6 +333,128 @@ NodeStatus StopRobot::update()
   return NodeStatus::SUCCESS;
 }
 
+PortsList AttackBall::providedPorts()
+{
+  return {InputPort<TrackedObject>("ball"), InputPort<TrackedObject>("pose"),
+          InputPort<Point>("opp_goal"), InputPort<double>("blind_distance", 0.22, "Max unobserved push distance [m]"),
+          InputPort<double>("blind_seconds", 1.25, "Max unobserved push time [s]"), InputPort<double>("backup_distance", 0.16, "Camera reacquisition backup [m]")};
+}
+
+NodeStatus AttackBall::update()
+{
+  const auto self = input<TrackedObject>("pose");
+  const auto p = toPose(self);
+  const auto b = input<TrackedObject>("ball");
+  const auto ball = toVec(b);
+  const auto goal = toVec(input<Point>("opp_goal"));
+  double now = 0.;
+  (void)config().blackboard->get("@world_stamp", now);
+  const bool known = ballKnown(b.state == TrackedObject::LOST, cov(b), 0.20);
+  const auto emit = [&](const std::string& action, const Pose2& target) {
+    config().blackboard->set(kGoalKey, makeGoal("ATTACK", action, BehaviorGoal::REACTIVE, target, 0.0));
+  };
+  if(known)
+  {
+    const double old_distance = std::hypot(goal.x-ball_progress_.x,goal.y-ball_progress_.y);
+    const double distance = std::hypot(goal.x-ball.x,goal.y-ball.y);
+    if(progress_time_ < 0. || old_distance-distance > .06)
+    { ball_progress_ = ball; progress_time_ = now; }
+    if((stage_ == 0 || (stage_ == 1 && now-seen_ < input<double>("blind_seconds"))) &&
+       now-progress_time_ > 8. &&
+       std::hypot(p.x-ball.x,p.y-ball.y) < .4)
+    {
+      const double dx=goal.x-ball.x,dy=goal.y-ball.y,n=std::max(.01,std::hypot(dx,dy));
+      const double ux=dx/n,uy=dy/n;
+      const double side = ux*(p.y-ball.y)-uy*(p.x-ball.x) >= 0. ? -1. : 1.;
+      flank_ = {ball.x-.12*ux-.18*side*uy, ball.y-.12*uy+.18*side*ux,std::atan2(uy,ux)};
+      flank_until_ = now+2.5; stage_ = 3;
+    }
+  }
+  if(stage_ == 3)
+  {
+    if(now < flank_until_ && std::hypot(p.x-flank_.x,p.y-flank_.y) > .04)
+    { emit("GoBehindBall",flank_); return NodeStatus::RUNNING; }
+    stage_ = 0; progress_time_ = now; ball_progress_ = ball;
+  }
+  if(stage_ == 2)
+  {
+    if(std::hypot(p.x-backup_.x, p.y-backup_.y) > 0.035 && now-backup_started_ < 2.0)
+    {
+      emit("Backoff", backup_);
+      return NodeStatus::RUNNING;
+    }
+    stage_ = 0;
+  }
+  bool contact = false;
+  (void)config().blackboard->get("@ball_contact", contact);
+  if(stage_ == 1)
+  {
+    if(contact) { anchor_ = p; seen_ = now; }
+    if(b.state == TrackedObject::OBSERVED)
+    {
+      anchor_ = p;
+      seen_ = now;
+      const double lateral = std::abs(-std::sin(p.theta)*(ball.x-p.x)+std::cos(p.theta)*(ball.y-p.y));
+      if(lateral > 0.10 && !contact) stage_ = 0;
+    }
+    if(stage_ == 1)
+    {
+      if(now-seen_ > input<double>("blind_seconds") ||
+         std::hypot(p.x-anchor_.x, p.y-anchor_.y) > input<double>("blind_distance"))
+      {
+        const double d = input<double>("backup_distance");
+        backup_ = {p.x-d*std::cos(p.theta), p.y-d*std::sin(p.theta), p.theta};
+        stage_ = 2; backup_started_ = now;
+        emit("Backoff", backup_);
+      }
+      else
+      {
+        emit("PushBall", {goal.x, goal.y, std::atan2(goal.y-p.y, goal.x-p.x)});
+      }
+      return NodeStatus::RUNNING;
+    }
+  }
+  if(!known)
+  {
+    emit("SpinInPlace", {p.x, p.y, wrapAngle(p.theta+1.0)});
+  }
+  else if(isBehindBall(p, ball, goal, 0.05, 0.25, 0.30))
+  {
+    stage_ = 1; anchor_ = p; seen_ = now;
+    emit("PushBall", {goal.x, goal.y, std::atan2(goal.y-p.y, goal.x-p.x)});
+  }
+  else if(isBehindBall(p,ball,goal,.05,3.141592653589793,.30))
+  {
+    // Position is already behind the ball: adjust yaw here, do not drive back
+    // to a new approach point and orbit the ball merely to fix heading.
+    emit("AlignToBall", {p.x,p.y,std::atan2(goal.y-ball.y,goal.x-ball.x)});
+  }
+  else
+  {
+    // Shorten the behind offset near our end wall. A fixed 15 cm offset
+    // can make the side waypoint reachable but its behind condition impossible.
+    const double offset = ball.x*goal.x < 0. ?
+        std::min(.15,std::max(.055,std::abs(goal.x)-std::abs(ball.x)-.02)) : .15;
+    const double norm = std::max(.01,std::hypot(goal.x-ball.x,goal.y-ball.y));
+    const double ux=(goal.x-ball.x)/norm,uy=(goal.y-ball.y)/norm;
+    const double along=(p.x-ball.x)*ux+(p.y-ball.y)*uy;
+    const double cross=(p.y-ball.y)*ux-(p.x-ball.x)*uy;
+    // Separate entry/exit thresholds and retain the orbit side through small
+    // observation noise. Reversing the detour every tick prevents real progress.
+    if(approach_orbit_ && along < -.6*offset) approach_orbit_ = false;
+    else if(!approach_orbit_ && along > -.25*offset) approach_orbit_ = true;
+    if(approach_side_ == 0 || cross*approach_side_ < -.08)
+      approach_side_ = cross >= 0. ? 1 : -1;
+    auto approach = behindBallPose(ball,goal,offset);
+    if(approach_orbit_)
+    { approach.x -= .20*approach_side_*uy; approach.y += .20*approach_side_*ux; }
+    if(std::abs(ball.y)>.25 && (approach.y-ball.y)*ball.y>0.)
+      approach.y = 2*ball.y-approach.y;
+    emit("GoBehindBall", approach);
+  }
+  return NodeStatus::RUNNING;
+}
+
 PortsList GoBehindBall::providedPorts()
 {
   return {InputPort<TrackedObject>("ball"), InputPort<TrackedObject>("pose"),
@@ -525,6 +660,7 @@ void registerSoccerNodes(BT::BehaviorTreeFactory& factory, const BT::RosNodePara
   factory.registerNodeType<IsBehindBall>("IsBehindBall");
   factory.registerNodeType<NotFacingOwnGoal>("NotFacingOwnGoal");
   factory.registerNodeType<StopRobot>("StopRobot");
+  factory.registerNodeType<AttackBall>("AttackBall");
   factory.registerNodeType<GoBehindBall>("GoBehindBall");
   factory.registerNodeType<PushBall>("PushBall");
   factory.registerNodeType<GoToBlockPoint>("GoToBlockPoint");

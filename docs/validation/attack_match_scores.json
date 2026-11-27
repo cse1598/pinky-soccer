@@ -1,0 +1,295 @@
+[
+  {
+    "trial": "attack_match_1",
+    "result": "FAIL: repeated OUT, ball reset under stopped robots prevented visible-centre restart; discarded before 3 goals",
+    "reward": null
+  },
+  {
+    "trial": "attack_match_2",
+    "result": "FAIL: wall time limit",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -276.7757124016633,
+        "stationary_s": 29.289999999999996,
+        "far_ball_s": 3.799999999999997,
+        "distance_m": 6.3794248033253265,
+        "recoveries": 20,
+        "goals": 1,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 91.51,
+        "stagnant_ball_s": 73.27
+      },
+      "blue": {
+        "total": -161.2305785423765,
+        "stationary_s": 5.31000000000004,
+        "far_ball_s": 1.8900000000000006,
+        "distance_m": 6.793157084753649,
+        "recoveries": 35,
+        "goals": 1,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 91.41000000000001,
+        "stagnant_ball_s": 48.92000000000001
+      }
+    },
+    "quality_total": -438.00629094403985
+  },
+  {
+    "trial": "attack_match_3",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 21.481291837617547,
+        "stationary_s": 0.7400000000000091,
+        "far_ball_s": 0.0,
+        "distance_m": 3.229416324772739,
+        "recoveries": 4,
+        "goals": 1,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 87.37,
+        "stagnant_ball_s": 56.16000000000001
+      },
+      "blue": {
+        "total": -204.7941068495831,
+        "stationary_s": 1.000000000000007,
+        "far_ball_s": 0.8699999999999974,
+        "distance_m": 4.388213699172573,
+        "recoveries": 5,
+        "goals": 0,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 87.47000000000001,
+        "stagnant_ball_s": 77.50000000000001
+      }
+    },
+    "quality_total": -183.31281501196554
+  },
+  {
+    "trial": "attack_match_4",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -223.62534169488018,
+        "stationary_s": 1.4100000000000321,
+        "far_ball_s": 0.0,
+        "distance_m": 9.008683389764279,
+        "recoveries": 6,
+        "goals": 0,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 118.01000000000002,
+        "stagnant_ball_s": 84.29
+      },
+      "blue": {
+        "total": -25.85142254429202,
+        "stationary_s": 1.980000000000004,
+        "far_ball_s": 0.0,
+        "distance_m": 8.884845088589795,
+        "recoveries": 9,
+        "goals": 1,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 118.01000000000002,
+        "stagnant_ball_s": 78.82000000000002
+      }
+    },
+    "quality_total": -249.4767642391722
+  },
+  {
+    "trial": "attack_match_5",
+    "result": "FAIL: three OUT events without a goal; discarded",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -122.28801144780137,
+        "stationary_s": 1.2800000000000011,
+        "far_ball_s": 0.269999999999996,
+        "distance_m": 7.778022895607499,
+        "recoveries": 6,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 3,
+        "playing_s": 87.11,
+        "stagnant_ball_s": 59.04
+      },
+      "blue": {
+        "total": -105.8982811472097,
+        "stationary_s": 0.7400000000000091,
+        "far_ball_s": 4.140000000000001,
+        "distance_m": 8.340562294422512,
+        "recoveries": 3,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 3,
+        "playing_s": 87.11,
+        "stagnant_ball_s": 49.82
+      }
+    },
+    "quality_total": -228.18629259501108
+  },
+  {
+    "trial": "attack_match_6",
+    "result": "FAIL: no goal after 80 simulation seconds; discarded to test wheel-gated stagnation and safe ball clearance",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -102.2735821648338,
+        "stationary_s": 1.4200000000000088,
+        "far_ball_s": 1.8800000000000043,
+        "distance_m": 7.623164329670298,
+        "recoveries": 8,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 1,
+        "playing_s": 91.84,
+        "stagnant_ball_s": 53.92000000000001
+      },
+      "blue": {
+        "total": -138.95027133902374,
+        "stationary_s": 1.709999999999983,
+        "far_ball_s": 0.0,
+        "distance_m": 7.0525426780461,
+        "recoveries": 12,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 1,
+        "playing_s": 91.84,
+        "stagnant_ball_s": 81.87
+      }
+    },
+    "quality_total": -241.22385350385753
+  },
+  {
+    "trial": "attack_match_7",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -19.479857869907416,
+        "stationary_s": 1.970000000000013,
+        "far_ball_s": 0.3400000000000034,
+        "distance_m": 7.935715739818102,
+        "recoveries": 11,
+        "goals": 1,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 86.44,
+        "stagnant_ball_s": 69.77
+      },
+      "blue": {
+        "total": -206.36703092371445,
+        "stationary_s": 2.4299999999999997,
+        "far_ball_s": 1.83,
+        "distance_m": 5.45406184741975,
+        "recoveries": 13,
+        "goals": 0,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 86.44,
+        "stagnant_ball_s": 54.02
+      }
+    },
+    "quality_total": -225.84688879362187
+  },
+  {
+    "trial": "attack_match_8",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -68.8550689603432,
+        "stationary_s": 0.9900000000000011,
+        "far_ball_s": 0.0,
+        "distance_m": 5.130137920683388,
+        "recoveries": 4,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 74.8,
+        "stagnant_ball_s": 44.850000000000016
+      },
+      "blue": {
+        "total": -90.79713662809391,
+        "stationary_s": 0.9399999999999888,
+        "far_ball_s": 0.0,
+        "distance_m": 5.804273256188085,
+        "recoveries": 4,
+        "goals": 0,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 74.8,
+        "stagnant_ball_s": 64.79
+      }
+    },
+    "quality_total": -159.6522055884371
+  },
+  {
+    "trial": "attack_match_9",
+    "result": "INVALID TEST: post-goal return counted against completed rally timeout; incomplete match (yellow 2 blue 0)",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 127.21931244040863,
+        "stationary_s": 1.180000000000014,
+        "far_ball_s": 0.0,
+        "distance_m": 5.707375119187592,
+        "recoveries": 6,
+        "goals": 2,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 77.57000000000001,
+        "stagnant_ball_s": 43.260000000000005
+      },
+      "blue": {
+        "total": -300.19759498715194,
+        "stationary_s": 1.5200000000000244,
+        "far_ball_s": 1.310000000000004,
+        "distance_m": 6.923189974291527,
+        "recoveries": 5,
+        "goals": 0,
+        "conceded": 2,
+        "outs": 0,
+        "playing_s": 77.57000000000001,
+        "stagnant_ball_s": 67.6
+      }
+    },
+    "quality_total": -172.97828254674332
+  },
+  {
+    "trial": "attack_match_10",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -236.49673679582915,
+        "stationary_s": 4.499999999999943,
+        "far_ball_s": 2.17,
+        "distance_m": 6.461473591647019,
+        "recoveries": 15,
+        "goals": 0,
+        "conceded": 1,
+        "outs": 0,
+        "playing_s": 87.83999999999999,
+        "stagnant_ball_s": 67.4
+      },
+      "blue": {
+        "total": -0.28867546604758276,
+        "stationary_s": 1.3200000000000074,
+        "far_ball_s": 0.8299999999999983,
+        "distance_m": 8.049350932100204,
+        "recoveries": 6,
+        "goals": 1,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 87.91000000000001,
+        "stagnant_ball_s": 63.83
+      }
+    },
+    "quality_total": -236.78541226187673
+  }
+]

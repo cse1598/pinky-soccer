@@ -1,0 +1,376 @@
+{
+  "scenario": "observe",
+  "idle_zero": true,
+  "preparation": {
+    "state": "READY",
+    "ready": true,
+    "stamp_ros": 2.6500000000000004,
+    "reason": "",
+    "team": "yellow",
+    "start_pose": [
+      -0.4,
+      0.0,
+      0.0
+    ],
+    "start_pending": false,
+    "referee_start_allowed": true,
+    "own_goal": [
+      -0.83,
+      0.0
+    ],
+    "localization": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "stamp": 2.5500000000000003,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9374999999999997,
+      "hypotheses": [
+        [
+          -0.39996740591715063,
+          -4.5849988192459e-05,
+          -2.4726301154916085e-05
+        ],
+        [
+          0.39996740591715063,
+          4.5849988192459e-05,
+          3.141567927288638
+        ]
+      ],
+      "pose": [
+        -0.39996740591715063,
+        -4.5849988192459e-05,
+        0.00021390519215822894
+      ],
+      "selected_goal_sign": 1,
+      "provisional_goal_sign": 1,
+      "selected_goal_color": "blue",
+      "debug_enabled": false,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": 3.45000094800243e-05,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 4428
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": -0.0012162529268140586,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 11,
+      "fit_successes": 11,
+      "fit_source_hz": 10.0,
+      "imu_outliers": 1,
+      "processing_ms": {
+        "mean": 9.588912272709587,
+        "p95": 35.634543500009386,
+        "maximum": 65.04329900008088
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "records": "/home/cse/.ros/pinky_soccer/localization/bb6a5a326d054f66a68147d0b5f63a37/rectangle_09db88da9e4f4865936f46b614707244",
+      "rotation_rad": 0.012028150548719191,
+      "imu_yaw_deg": -0.021718826341525416,
+      "goal_axis_imu_deg": {
+        "yellow": 179.9275117395575,
+        "blue": -0.07248826044249936
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.005291894105378321
+    },
+    "localization_valid": true,
+    "arrived": true,
+    "odom_fresh": true,
+    "sensors": {
+      "lidar": true,
+      "imu": true,
+      "odom": true,
+      "camera": true
+    },
+    "led": {
+      "color": [
+        96,
+        96,
+        0
+      ],
+      "blink": false,
+      "service": "pending"
+    },
+    "led_callback_ms": {
+      "mean": 0.055016169808196826,
+      "p95": 0.2853670000604325,
+      "maximum": 0.5171029999928578
+    },
+    "goal_id": 1795791416418871857
+  },
+  "final": {
+    "localization/status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "stamp": 27.76,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9249999999999972,
+      "hypotheses": [
+        [
+          0.7698999504516428,
+          0.001354984679966198,
+          0.10116819926789805
+        ],
+        [
+          -0.7698999504516428,
+          -0.001354984679966198,
+          -3.0404244543218955
+        ]
+      ],
+      "pose": [
+        0.7698999339261312,
+        0.001354983002341004,
+        0.1015482330507448
+      ],
+      "selected_goal_sign": 1,
+      "provisional_goal_sign": 1,
+      "selected_goal_color": "blue",
+      "debug_enabled": false,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": 3.45000094800243e-05,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 4428
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": 0.0013896493791090145,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 263,
+      "fit_successes": 263,
+      "fit_source_hz": 10.0,
+      "imu_outliers": 11,
+      "processing_ms": {
+        "mean": 7.308770684414737,
+        "p95": 15.913267899850322,
+        "maximum": 65.04329900008088
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "records": "/home/cse/.ros/pinky_soccer/localization/bb6a5a326d054f66a68147d0b5f63a37/rectangle_09db88da9e4f4865936f46b614707244",
+      "rotation_rad": 0.012028150548719191,
+      "imu_yaw_deg": 5.838338649550575,
+      "goal_axis_imu_deg": {
+        "yellow": 179.9275117395575,
+        "blue": -0.07248826044249936
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.00556498844528727
+    },
+    "referee": {
+      "valid": true,
+      "calibrated": true,
+      "armed": false,
+      "state": "WAIT_FOR_BALL",
+      "ball": null,
+      "robots": [
+        [
+          1,
+          0.8047212619527836,
+          0.0015159649790971144
+        ]
+      ]
+    },
+    "truth": [
+      0.7705079425653857,
+      0.0014050062408096132,
+      0.05051164963315045,
+      0.9987234718636274
+    ],
+    "motion/status": {
+      "state": "stop",
+      "reason": "no collision-free path",
+      "backend": "geometric_path",
+      "phase": "TRAVEL",
+      "goal_id": "0"
+    },
+    "cmd": [
+      0.0,
+      0.0
+    ],
+    "preparation/status": {
+      "state": "PLAYING",
+      "ready": true,
+      "stamp_ros": 27.75,
+      "reason": "",
+      "team": "yellow",
+      "start_pose": [
+        -0.4,
+        0.0,
+        0.0
+      ],
+      "start_pending": false,
+      "referee_start_allowed": false,
+      "own_goal": [
+        -0.83,
+        0.0
+      ],
+      "localization": {
+        "source": "rectangle_lidar_goal_imu",
+        "state": "READY",
+        "ready": true,
+        "stamp": 27.67,
+        "calibration_requested": true,
+        "team": "yellow",
+        "learned_colors": [
+          "blue"
+        ],
+        "initialization_complete": true,
+        "valid": true,
+        "confidence": 0.9124999999999996,
+        "hypotheses": [
+          [
+            0.7698238840746843,
+            0.0012764021859044128,
+            0.10103628399639483
+          ],
+          [
+            -0.7698238840746843,
+            -0.0012764021859044128,
+            -3.0405563695933986
+          ]
+        ],
+        "pose": [
+          0.7698238678977151,
+          0.0012764005458186917,
+          0.10045214432544802
+        ],
+        "selected_goal_sign": 1,
+        "provisional_goal_sign": 1,
+        "selected_goal_color": "blue",
+        "debug_enabled": false,
+        "goal_centers": [
+          [
+            -0.9099999999999999,
+            0.0
+          ],
+          [
+            0.9099999999999999,
+            0.0
+          ]
+        ],
+        "target_error_rad": 3.45000094800243e-05,
+        "goal_pixel_counts": {
+          "yellow": 0,
+          "blue": 4428
+        },
+        "goal_streak": 3,
+        "imu_map_offset_rad": 0.0014108667290836454,
+        "fit_accepted": true,
+        "rejected_fits": 0,
+        "fit_attempts": 262,
+        "fit_successes": 262,
+        "fit_source_hz": 10.0,
+        "imu_outliers": 11,
+        "processing_ms": {
+          "mean": 7.321488141225671,
+          "p95": 15.922782949837709,
+          "maximum": 65.04329900008088
+        },
+        "startup_inputs_ready": false,
+        "missing_inputs": [],
+        "led": "service_unavailable",
+        "records": "/home/cse/.ros/pinky_soccer/localization/bb6a5a326d054f66a68147d0b5f63a37/rectangle_09db88da9e4f4865936f46b614707244",
+        "rotation_rad": 0.012028150548719191,
+        "imu_yaw_deg": 5.823724483849826,
+        "goal_axis_imu_deg": {
+          "yellow": 179.9275117395575,
+          "blue": -0.07248826044249936
+        },
+        "sensors": {
+          "imu": true,
+          "lidar_outer_walls": true,
+          "odom": true,
+          "camera_intrinsics_tf": false
+        },
+        "fit_residual_m": 0.005606787833117436
+      },
+      "localization_valid": true,
+      "arrived": true,
+      "odom_fresh": true,
+      "sensors": {
+        "lidar": true,
+        "imu": true,
+        "odom": true,
+        "camera": true
+      },
+      "led": {
+        "color": [
+          96,
+          96,
+          0
+        ],
+        "blink": false,
+        "service": "ok"
+      },
+      "led_callback_ms": {
+        "mean": 0.02648414954958892,
+        "p95": 0.19072500003858295,
+        "maximum": 0.8756189999985509
+      },
+      "goal_id": 1795791416418871857
+    },
+    "world": {
+      "pose": [
+        0.7698999292714078,
+        0.001354982433012122,
+        0.10148818252530153
+      ],
+      "ball": [
+        0.775643554407497,
+        -0.008527531178850896
+      ],
+      "ball_state": 2,
+      "playing": true
+    }
+  },
+  "events": [],
+  "peak_cmd_v": 0.2669679987693138
+}

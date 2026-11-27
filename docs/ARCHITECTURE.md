@@ -42,6 +42,18 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 - 월드 모델은 각 객체의 관측/추정/분실 상태와 공분산을 함께 낸다. UI는 관측 = 진한 실선, 추정 = 흐린 점선 + 불확실성 타원, 분실 = 마지막 위치 X로 일관되게 그린다.
 - `/clock`, `/ground_truth`, `/sim/*`(`/sim/ball_ground_truth` 포함)는 시뮬레이터 전용이다. 판단 입력으로 쓰지 않는다 (UI 평가 표시와 시험 판정만 허용).
 
+## 공격 전용 실행 경로
+
+`pinky_soccer_viz attack.launch.py`는 센서/World Model/준비 관리자/심판을 재사용하고
+`attack_only.xml` → `AttackBall` → `attack_controller`(A* + 기하 추종)로 연결한다.
+이 실행에서는 MPC/LQR 노드를 생성하지 않는다. 수비는 없으며 bounded push와
+재관측 후진, 도착 완료 유지, 외벽/골대/원본 LiDAR 기반 footprint 검사를 사용한다.
+심판의 OUT/UNVERIFIED_EXIT는 정지, GOAL은 준비 관리자 소유의 시작 위치 복귀 후
+READY 대기다. 재시작은 사람의 START와 중앙 공 관측/판정 armed 확인이 필요하다.
+MuJoCo 상부 RGB 영상도 같은 영상 심판을 사용한다. Ground Truth는 평가 전용이고
+로봇 센서 위치/공 추정 대신 사용하지 않는다. 기존 기본 실행과 보정 원본은 보존한다.
+실행·설계값·cutaway 표시·검증 한계는 [ATTACK_SOCCER.md](ATTACK_SOCCER.md)를 참고한다.
+
 ## 토픽 (2026-11-21 확인)
 
 | 토픽 | 타입 | 발행 | 비고 |
@@ -161,3 +173,19 @@ solver 비용·제약·물리·주기·watchdog는 유지한다. 신규 제어�
 - `pinky_soccer_msgs` 필드를 바꿀 때 (모든 층에 영향)
 - 기존 패키지(`pinky_soccer_description`, `_bringup`, `_sim`, `_calibration`)를 고칠 때
 - 경기장 치수 원본(`rcj_field.yaml`)의 위치를 옮길 때
+
+
+MuJoCo 공격 경기의 `sim_ball_reset`은 심판 종료 이벤트 후 모든 경기 로봇의 준비/정지
+상태를 확인하고 `/sim/set_ball`로 중앙 배치만 수행하는 시뮬레이션 운영 노드다.
+로봇 제어·World Model에는 참 위치를 입력하지 않으며 경기 START는 사람이 입력한다.
+공 굴림저항 override와 창 옵션은 `attack.launch.py` 범위에만 적용한다.
+
+
+공 하단의 방향-only 영상 관측은 거리 필터에 가짜 점을 만들지 않고
+`world_model/ball_contact`를 통해 BT에 전달한다. `referee_ball_assist` opt-in 시
+로봇의 거리 관측 단절을 유효한 영상 심판 공 위치로 보조할 수 있다(사용자 2026-11-28 허용).
+Ground Truth는 여전히 평가 전용이다. 반복 시험의 자동 START는 시험 스크립트에만 있다.
+
+`ball_source:=referee`는 사용자 요청(2026-11-28)에 따른 영상 심판 공 위치 전용 모드다.
+심판의 유효한 XY를 World Model에 그대로 전달하며 로봇 공 관측/추가 위치 예측을 섞지 않는다.
+관측 소실/만료는 LOST로 출력한다. 자기 위치 추정 및 기존 메시지 형식은 유지한다.

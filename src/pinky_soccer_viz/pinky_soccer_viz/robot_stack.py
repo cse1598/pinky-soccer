@@ -104,6 +104,13 @@ def remaps(cfg):
 
 def controller_node(cfg):
     """NMPC (default) or the old proportional controller."""
+    if cfg.controller == 'attack':
+        return Node(package='pinky_soccer_viz', executable='attack_controller',
+            name='attack_controller', output='screen',
+            remappings=[('cmd_vel', cfg.command_topic)], parameters=[{
+                'use_sim_time': cfg.simulation, 'target': cfg.target,
+                'field_spec': cfg.field_spec, 'calibration_profile': cfg.calibration_profile,
+                'identification': cfg.identification}])
     if cfg.controller == 'mpc':
         return Node(package='pinky_soccer_mpc', executable='mpc_controller',
                     name='mpc_controller', output='screen',
@@ -177,6 +184,9 @@ def decision_stack(cfg):
              'localization': 'tf' if lidar else 'odom_only',
              'localization_pose_timeout': 2.0 if lidar else 0.0,
              'initial_pose': list(cfg.initial), 'playing_default': False}
+    if cfg.controller == 'attack':
+        world['ball_source'] = os.environ.get('PINKY_SOCCER_BALL_SOURCE', 'auto')
+        world['referee_ball_assist'] = os.environ.get('PINKY_SOCCER_REFEREE_BALL_ASSIST', 'false') == 'true'
     if not cfg.simulation:
         world.update({'align_first_odom': True, 'odom_timeout': 0.5,
                       'grid.camera_hfov_deg': real.get('approximate_hfov_deg', 66.0)})
@@ -193,13 +203,14 @@ def decision_stack(cfg):
                                      cfg.name), clock, {
                  'verify_mode': cfg.verify, 'groot2_enabled': cfg.groot2,
                  'kickoff_pose': [float(v) for v in cfg.initial]},
-                 *([{'tree_file': cfg.bt_tree_file}] if cfg.bt_tree_file else [])]),
+                 *([{'tree_file': cfg.bt_tree_file or share('pinky_soccer_bt', 'trees', 'attack_only.xml')}]
+                   if cfg.bt_tree_file or cfg.controller == 'attack' else [])]),
     ]
     if preparation:
         nodes.append(Node(package='pinky_soccer_viz', executable='match_preparation',
             name='match_preparation', output='screen',
             remappings=[('cmd_vel', cfg.command_topic)], parameters=[
-                *([cfg.preparation_config] if cfg.preparation_config else []), clock, team]))
+                *([cfg.preparation_config] if cfg.preparation_config else []), clock, team, {'require_referee': cfg.controller == 'attack'}]))
     if cfg.controller == 'nav2':
         from .nav2_stack import nav2_nodes
         nodes += nav2_nodes(cfg)
@@ -213,7 +224,11 @@ def decision_stack(cfg):
 
 def ui_nodes(cfg, clock, team):
     """Viewers of the robot shown on this PC."""
-    gui = IfCondition('false' if cfg.headless else 'true')
+    extras = os.environ.get('PINKY_SOCCER_EXTRA_VIEWS')
+    def gui_for(name):
+        enabled = extras is None or name in extras.split(',')
+        return IfCondition('true' if enabled and not cfg.headless else 'false')
+    gui = gui_for('rviz')
     out = [
         Node(package='pinky_soccer_viz', executable='world_model_viz', name='world_model_viz',
              output='screen', parameters=[team, clock]),
@@ -224,7 +239,7 @@ def ui_nodes(cfg, clock, team):
              arguments=['-d', share('pinky_soccer_viz', 'rviz', 'soccer.rviz')],
              parameters=[clock]),
         Node(package='pinky_soccer_viz', executable='game_camera_view',
-             name='game_camera_view', condition=gui, output='screen', parameters=[clock, {
+             name='game_camera_view', condition=gui_for('camera'), output='screen', parameters=[clock, {
                  # Absolute namespaces; this robot first, then the others (keys 1-9, Tab).
                  'robots': [cfg.name] + [r for r in cfg.camera_robots if r != cfg.name],
                  'raw_only_robots': list(cfg.camera_raw_only) or ['']}]),
@@ -243,8 +258,8 @@ def ui_nodes(cfg, clock, team):
                 'opponent_truth_topic': cfg.opponent_truth}]))
     if cfg.localization == 'rectangle':
         out.append(Node(package='pinky_soccer_viz', executable='localization_view',
-                        name='localization_view', condition=gui, parameters=[clock, {'preparation_enabled': cfg.preparation}]))
+                        name='localization_view', condition=gui_for('localization'), parameters=[clock, {'preparation_enabled': cfg.preparation}]))
         if cfg.preparation:
             out.append(Node(package='pinky_soccer_viz', executable='preparation_view',
-                name='preparation_view', condition=gui, parameters=[clock]))
+                name='preparation_view', condition=gui_for('preparation'), parameters=[clock]))
     return out

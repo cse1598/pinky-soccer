@@ -10,6 +10,8 @@ from launch_ros.actions import Node
 
 DEFAULTS = {
     "mode": "realsense",
+    "use_sim_time": "false",
+    "stop_on_reacquired_exit": "false",
     "video_path": "",
     "camera_namespace": "camera",
     "camera_name": "camera",
@@ -51,7 +53,7 @@ DEFAULTS = {
     "robot_position_sigma_m": "0.008",
 }
 
-BOOL_PARAMS = ("show_ui", "publish_image", "require_camera_info", "allow_approximate_rules", "debug_ui", "debug_log", "record_video")
+BOOL_PARAMS = ("stop_on_reacquired_exit", "use_sim_time", "show_ui", "publish_image", "require_camera_info", "allow_approximate_rules", "debug_ui", "debug_log", "record_video")
 INT_PARAMS = ("warmup_frames", "robot_reacquire_frames", "blue_led_min_light", "calibration_frames",
               "robot_black_max_channel", "robot_black_max_spread")
 FLOAT_PARAMS = (

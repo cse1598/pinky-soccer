@@ -44,6 +44,10 @@ def observation_status(node, observation, header, point=None):
             horizontal = u-(width-1)/2
         publisher.publish(String(data=json.dumps(dict(
             stamp=header.stamp.sec+header.stamp.nanosec/1e9,
+            image_width=observation.mask.shape[1], image_height=observation.mask.shape[0],
+            bearing_vertical_px=(observation.mask.shape[0]-1-observation.bearing_uv[1]
+                if getattr(node, 'rotated', False) else observation.bearing_uv[1])
+                if observation.bearing_uv is not None else None,
             image_frame=header.frame_id, bearing_valid=observation.bearing_valid,
             bearing_uv=observation.bearing_uv, circle_valid=observation.distance_valid,
             bearing_horizontal_px=horizontal, bearing_positive='image_right_after_rotation',

@@ -1,0 +1,7 @@
+{
+  "result": "FAIL: repeated OUT, ball reset under stopped robots prevented visible-centre restart; discarded before 3 goals",
+  "scores": [
+    0,
+    0
+  ]
+}

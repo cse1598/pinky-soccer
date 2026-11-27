@@ -101,3 +101,10 @@ ros2 run pinky_soccer_viz soccer_trial --ros-args -p use_sim_time:=true -p timeo
 - 히트맵은 경기장 선 위에도 반투명으로 덮입니다.
 
 상대 원의 반지름은 기존 Pinky 외곽 정의에서 계산하며 군집 크기로 바뀌지 않습니다. 화살표는 `pose.theta`가 아닌 `(velocity.x, velocity.y)`이며 정지 시 숨깁니다. 세 UI의 `opponents.velocity_arrow_{scale,min_speed,max_length}` 기본값은 `0.5,0.02,0.35`입니다. [공통 추적·검증](../../docs/OPPONENT_TRACKING.md).
+
+## 공격 전용 경기
+
+MPC/LQR 없이 경로와 기하 추종기를 사용하는 새 실행은
+`ros2 launch pinky_soccer_viz attack.launch.py mode:=mujoco`입니다.
+기존 영상 심판의 준비/시작/정지와 아웃·득점 후 복귀를 연결합니다.
+설정·보정 데이터·검증 한계는 [공격 전용 실행](../../docs/ATTACK_SOCCER.md)을 참고하세요.

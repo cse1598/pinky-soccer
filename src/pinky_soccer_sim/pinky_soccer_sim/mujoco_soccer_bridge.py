@@ -20,6 +20,7 @@ Own arguments (the rest is passed to pinky_mujoco.bridge unchanged):
         collision geometry (the physics) is left untouched.
 """
 import argparse
+import os
 import math
 from pathlib import Path
 import sys
@@ -169,6 +170,13 @@ def main(args=None):
         bridge.build_model = build_model_with_ball
     from pinky_soccer_sim.materials import install_mujoco as install_materials, load_materials
     material_cfg = load_materials(options.material_config)
+    # Attack launch override is MuJoCo-only; preserve the shared/Gazebo preset.
+    rolling = os.environ.get('PINKY_SOCCER_BALL_ROLLING_DECELERATION', '')
+    if rolling:
+        value = float(rolling)
+        if not math.isfinite(value) or value < 0:
+            raise ValueError('Invalid ball rolling deceleration')
+        material_cfg['contacts']['ball_floor']['rolling_deceleration_m_s2'] = value
     install_materials(bridge, material_cfg)
     install_drive_constants(bridge, options.wheel_radius, options.wheel_separation)
     install_real_driver(bridge, options.real_driver_max_rpm)
