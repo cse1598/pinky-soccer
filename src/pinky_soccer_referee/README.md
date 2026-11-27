@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.2.1 prototype)
+# Pinky Soccer Referee (v0.2.2 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -167,7 +167,7 @@ allow_approximate_rules:=true를 명시하여 시험용 색상 골대 검출에 
 매칭 실패 시 트랙을 무효화하고 미사용 후보가 2프레임 일관되면 재초기화한다.
 재획득 프레임은 reacquired=true, velocity_valid=false로 표시하여 순간 위치 점프를
 실제 속도로 발행하지 않는다. tracking_confidence와 heading_confidence는
-휴리스틱 품질 지표이며 실제 확률이 아니다. 골대 라인 구간은 양쪽 모두 노랑으로 강조한다.
+휴리스틱 품질 지표이며 실제 확률이 아니다. 노란 골대 입구는 노랑, 파란 골대 입구는 파랑으로 강조한다.
 
 **메시지 변경:** TrackedObject에 team, team_valid, angular_velocity_valid,
 heading_confidence, tracking_confidence, reacquired를 추가했다.
@@ -176,6 +176,16 @@ heading_confidence, tracking_confidence, reacquired를 추가했다.
 실제 카메라 영상에서 로봇의 바퀴 축 중심은 아직 실측하지 않았다.
 높이별 시차 및 실제 LED 발광 색/밝기/포화 검증도 필요하다.
 후방 LED 색/배치가 실제 기구와 일치하는지 확인한다.
+
+### v0.2.2 LED 판별
+
+LED의 기하학적 위치 검출과 색 판별을 분리한다. 밝기 기반 공통 후보를 몸체 근처로 제한하고,
+길게 이어지는 바닥 라인을 검사한다. 선택된 LED 회전 사각형의 중심부(가로·세로 70%)만 색 판별에 사용한다.
+노랑은 HLS H=18~38, S>=145, L>=100 및 RGB 채널 차이 조건을 만족하는 픽셀이 75% 이상이어야 한다.
+파랑은 H=90~135, S>=125, L>=blue_led_min_light 및 B 채널 우세 조건을 만족하는 픽셀이 70% 이상이어야 한다.
+그 외(흰색/off, 애매한 색)는 UNKNOWN. 팀 색은 5회 연속 확인 후 발표하고 UNKNOWN 관측 시 해제한다.
+색 변화만으로 위치 추적을 끊지 않으며, LED 검출 여부에 관계없이 동일한 몸체 중심을 사용한다.
+실물 LED 및 라인 겹침에서의 성능은 검증 필요. 메시지 타입 및 launch 인수는 v0.2.1과 동일하다.
 
 ## 검증 및 한계
 
