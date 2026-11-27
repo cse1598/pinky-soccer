@@ -15,6 +15,7 @@ from launch_ros.actions import Node
 from pinky_soccer_sim import multi_robot
 from pinky_soccer_sim.field_selection import field_files
 from pinky_soccer_viz.robot_stack import decision_stack, RobotConfig
+from pinky_soccer_viz.real_calibration_defaults import resolve_real_calibration
 
 
 def setup(context):
@@ -34,6 +35,8 @@ def setup(context):
             raise ValueError(f'{name} must be finite')
         return value
 
+    profile, camera = resolve_real_calibration(
+        arg('calibration_profile'), arg('camera_yaml'), required=arg('controller') == 'attack')
     _, field_spec = field_files(arg('field'))
     color = multi_robot.team_color(arg('team'), arg('our_goal_color'))
     name = multi_robot.check_name(arg('robot_name'))
@@ -54,6 +57,9 @@ def setup(context):
          if arg('localization') == 'rectangle' else
          'Place robot at its kickoff pose BEFORE launch. ')+
         'preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.')]
+    nodes.append(LogInfo(msg=f'REAL CALIBRATION: profile={profile or "none"}; '
+                             f'camera={camera or "CameraInfo"}; '
+                             f'identification={arg("identification") or "installed real motor response"}'))
     if arg('robot_host'):
         if arg('robot_host') == 'local':
             from launch.actions import IncludeLaunchDescription
@@ -62,7 +68,7 @@ def setup(context):
             nodes.append(IncludeLaunchDescription(PythonLaunchDescriptionSource(
                 share('pinky_soccer_bringup', 'launch', 'robot.launch.py')),
                 launch_arguments={'robot_name': name, 'imu_enabled': 'true',
-                                  'led_enabled': 'true', 'calibration_profile': arg('robot_profile')}.items()))
+                                  'led_enabled': 'true', 'calibration_profile': arg('robot_profile') or profile}.items()))
         else:
             nodes.append(Node(package='pinky_soccer_viz', executable='remote_robot',
                 name='remote_robot', output='screen', arguments=['--host', arg('robot_host'),
@@ -77,14 +83,14 @@ def setup(context):
         controller=arg('controller'), attack_strategy=arg('strategy'), mpc_backend=arg('mpc_backend'),
         mpc_damping_scale=float(arg('mpc_damping_scale')),
         mpc_observer_mode=arg('mpc_observer_mode'), max_lin=max_lin, max_ang=max_ang,
-        calibration_profile=arg('calibration_profile'),
+        calibration_profile=profile,
         ball_offset_source=arg('ball_offset_source'),
         identification=arg('identification'),
         wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
         headless=flag('headless'), groot2=False, heading_record=arg('heading_record'),
         command_topic=arg('command_topic'),
         real={'allow_uncalibrated': flag('allow_uncalibrated'), 'approximate_hfov_deg': hfov,
-              'camera_yaml': arg('camera_yaml'),
+              'camera_yaml': camera,
               'image_rotated_180': flag('image_rotated_180')}))
     if flag('verify'):
         nodes.append(LogInfo(msg='VERIFY MODE: the game tree is off; behaviours run only from '
@@ -145,9 +151,9 @@ def generate_launch_description():
         DeclareLaunchArgument('identification', default_value='',
                               description='empty/auto: pinky-pro measured tau; none: original tau; '
                               'or mpc_motor_response_schema YAML'),
-        DeclareLaunchArgument('calibration_profile', default_value='',
-                              description='robot profile.yaml for the NMPC model (empty: '
-                              'official defaults, marked unmeasured)'),
+        DeclareLaunchArgument('calibration_profile', default_value='auto',
+                              description='auto: reviewed real export; explicit profile.yaml; none: '
+                              'unmeasured non-attack test only'),
         DeclareLaunchArgument('verify', default_value='false',
                               description='behaviour verification window + bt_node verify_mode'),
         DeclareLaunchArgument('referee', default_value='true',

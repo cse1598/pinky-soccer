@@ -114,6 +114,12 @@ ros2 launch pinky_soccer_viz attack.launch.py mode:=real team:=Y \
   identification:="$PWD/src/pinky_soccer_mpc/config/real_motor_response.yaml"
 ```
 
+실물 실행에서 경로를 생략하면 위 CALROOT의 profile.yaml과 camera.yaml, 설치된 real_motor_response.yaml을 사용한다.
+`ros2 launch pinky_soccer_viz attack.launch.py mode:=real team:=Y`로 실행 가능하다.
+파일이 다른 위치에 있으면 PINKY_SOCCER_REAL_CALROOT 또는 명시적 경로로 지정한다.
+명시한 profile의 camera.yaml을 기본으로 사용하며, 파일이 없으면 실행을 중단한다.
+이 기본 export는 한 실측 로봇용으로 기록되어 있다. 다른 로봇에는 해당 로봇의 프로필과
+카메라 및 모터 식별 파일을 명시하고, 원격 bringup은 로봇 쪽 robot_profile 경로를 지정한다.
 실측 프로필·카메라 YAML 없이 실물 실행을 허용하지 않는다. 위 실행은 PC의 RealSense
 심판도 실행한다. 심판을 따로 실행 중이면 `referee_enabled:=false`를 추가하되 별도 심판에도
 골대 구간·`stop_on_reacquired_exit:=true`·로봇 namespace를 동일하게 지정한다.

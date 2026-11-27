@@ -115,3 +115,15 @@ ros2 launch pinky_soccer_viz real_game.launch.py field:=hardboard \
 이 실행에서 시작 명령을 보내면 제어 결과는 시험 토픽으로만 나갑니다.
 다른 주행 발행기가 꺼져 있어야 하며 실제 플레이 시에는 launch를 종료하고
 `command_topic` 옵션을 빼고 다시 실행합니다.
+
+## 실물 보정 기본값
+
+`mode:=real`에서 calibration_profile을 생략하면 2026-11-23 실측 프로젝트의
+`~/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml`
+및 같은 폴더 camera.yaml을 사용한다. 모터 tau는 기존 설치된 real_motor_response.yaml이 기본이다.
+PINKY_SOCCER_REAL_CALROOT 환경변수 또는 명시적 calibration_profile/camera_yaml/identification으로 변경한다.
+누락된 파일은 오류로 처리한다. 다른 실물 로봇의 보정은 별도 지정한다.
+명시적인 calibration_profile:=none은 비공격 시험에 한하여 기존 미보정 모드를 유지한다.
+local bringup은 robot_profile 생략 시 PC와 같은 profile을 사용한다. SSH bringup은 원격 경로를
+추정하지 않으며 robot_profile은 기존처럼 해당 로봇에서 유효한 경로를 명시한다.
+MuJoCo/Gazebo의 기본 프로필은 변경하지 않는다.

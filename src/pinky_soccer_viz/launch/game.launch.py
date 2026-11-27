@@ -50,8 +50,7 @@ def setup(context):
     if mode == 'real':
         filename = 'real_game.launch.py'
         common.update({k: arg(k) for k in ('robot_host','robot_workspace','robot_profile')})
-        profile = arg('calibration_profile')
-        common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
+        common['calibration_profile'] = arg('calibration_profile')
         common['wheel_feedback'] = arg('wheel_feedback')
         common['referee'] = arg('referee')
         common.update({name: arg(name) for name in (
@@ -147,7 +146,7 @@ def generate_launch_description():
                               'baseline; or fixed-ramp response YAML. Simulation empty is unchanged'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
                               description='auto: simulators use their own odometry profile, '
-                              'real none; or a profile.yaml path; none disables'),
+                              'real reviewed local export; or a profile.yaml path; none disables'),
         DeclareLaunchArgument('allow_uncalibrated', default_value='false'),
         DeclareLaunchArgument('approximate_hfov_deg', default_value='66.0'),
         DeclareLaunchArgument('camera_yaml', default_value=''),

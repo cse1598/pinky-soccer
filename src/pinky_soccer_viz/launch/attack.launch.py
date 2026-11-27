@@ -17,8 +17,6 @@ def setup(context):
     rolling = float(arg('ball_rolling_deceleration'))
     if not math.isfinite(rolling) or rolling < 0:
         raise ValueError('ball_rolling_deceleration must be finite and nonnegative')
-    if not sim and (arg('calibration_profile') in ('', 'auto', 'none') or not arg('camera_yaml')):
-        raise ValueError('Real attack mode requires the measured calibration_profile and camera_yaml paths')
     field = Field.from_file(os.path.join(share('pinky_soccer_sim'), 'config', arg('field')+'_field.yaml'))
     def include(package, name, args):
         return IncludeLaunchDescription(PythonLaunchDescriptionSource(
