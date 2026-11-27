@@ -105,8 +105,14 @@ def white_samples(image, green):
         if len(pts) < 35:
             raise ValueError("White boundary missing: " + side)
         raw = project(pts, np.linalg.inv(h))
-        _, good = robust_line(raw, threshold=7.)
-        samples.append(good)
+        # Keep curved sections for distortion validation, not just RANSAC inliers.
+        line, _ = robust_line(raw, threshold=7.)
+        near = raw[np.abs(raw @ line[:2] + line[2]) <= 14.]
+        coordinate = near[:,0] if horizontal else near[:,1]
+        full = raw[:,0] if horizontal else raw[:,1]
+        if len(near)<35 or np.ptp(coordinate)<.85*np.ptp(full):
+            raise ValueError("Incomplete white boundary: " + side)
+        samples.append(near)
     return samples
 
 
@@ -119,12 +125,12 @@ def fit_radial(samples, w, h):
         d = np.array([coef[0], coef[1], 0., 0., 0.])
         out = []
         for p in samples:
-            u = cv2.undistortPoints(p.reshape(-1, 1, 2), k, d, P=k).reshape(-1, 2)
+            u = cv2.undistortPoints(p.astype(np.float64).reshape(-1, 1, 2), k, d, P=k).reshape(-1, 2)
             v = u-u.mean(axis=0)
             _, _, axes = np.linalg.svd(v, full_matrices=False)
             out.extend((v @ axes[-1]) / math.sqrt(len(v)))
         return np.r_[out, np.asarray(coef)*2.]
-    result = least_squares(residual, [0., 0.], bounds=([-0.30,-0.30],[0.30,0.30]), loss="linear", max_nfev=60)
+    result = least_squares(residual, [0., 0.], bounds=([-0.30,-0.30],[0.30,0.30]), loss="soft_l1", f_scale=.2, max_nfev=100)
     coef = result.x if result.success and np.linalg.norm(residual(result.x)) < np.linalg.norm(residual([0.,0.])) else [0.,0.]
     return k, np.array([coef[0],coef[1],0.,0.,0.])
 
@@ -146,19 +152,104 @@ def corners_from_samples(samples, k, d):
     return order_quad(points)
 
 
+def boundary_errors(samples,k,d,h,length_px,width_px):
+    """All retained samples, including points excluded by line fitting."""
+    errors=[]
+    for i,p in enumerate(samples):
+        u=cv2.undistortPoints(p.astype(np.float64).reshape(-1,1,2),k,d,P=k)
+        uv=project(u,h)
+        axis=1 if i%2==0 else 0
+        target=(0.,length_px,width_px,0.)[i]
+        errors.append(float(np.percentile(np.abs(uv[:,axis]-target),90)))
+    return errors
+
+
+def select_geometry(samples,w,h,length_px,width_px,camera=None,mode="auto",max_error_px=5.):
+    f=float(max(w,h))
+    nominal=np.array([[f,0,(w-1)/2],[0,f,(h-1)/2],[0,0,1]],float)
+    options=[]
+    if mode in ("auto","none"):
+        options.append(("none",nominal,np.zeros(5)))
+    if mode in ("auto","plumb_line"):
+        k,d=fit_radial(samples,w,h)
+        options.append(("approximate_plumb_line",k,d))
+    if camera is not None and mode in ("auto","camera_info"):
+        options.append(("camera_info",*camera))
+    results=[]
+    for source,k,d in options:
+        try:
+            q=corners_from_samples(samples,k,d)
+            if abs(cv2.contourArea(q)) < .15*w*h:
+                continue
+            dst=np.float32([[0,0],[length_px,0],[length_px,width_px],[0,width_px]])
+            H=cv2.getPerspectiveTransform(q,dst)
+            errors=boundary_errors(samples,k,d,H,length_px,width_px)
+            if not np.isfinite(errors).all():
+                continue
+            # Worst-side error matters: don't improve top/bottom by bending a side.
+            score=max(errors)+.25*np.mean(errors)
+            results.append((score,source,k,d,H,errors))
+        except (ValueError,cv2.error,np.linalg.LinAlgError):
+            continue
+    if not results:
+        raise ValueError("No usable calibration model")
+    results.sort(key=lambda x:x[0])
+    best=results[0]
+    # Prefer factory calibration or no extra distortion if nearly equivalent.
+    for preferred in ("camera_info","none"):
+        candidates=[r for r in results if r[1]==preferred and r[0]<=best[0]+.25 and max(r[5])<=max_error_px]
+        if candidates:
+            best=candidates[0]
+            break
+    if max(best[5])>max_error_px:
+        raise ValueError("White boundary p90 error too high: "+str([(r[1],np.round(r[5],2).tolist()) for r in results]))
+    return best[1:]
+
+
+def verify_rectified_boundary(image,field,max_error_px=5.):
+    """Independent check against actual tape in the output raster."""
+    white=mask_hls(cv2.cvtColor(image,cv2.COLOR_BGR2HLS),(0,115,0),(180,255,75))
+    L,W=field.length/2,field.width/2
+    corners=np.array([field.pixel((-L,W)),field.pixel((L,W)),field.pixel((L,-W)),field.pixel((-L,-W))])
+    errors=[]
+    for i in range(4):
+        a,b=corners[i],corners[(i+1)%4]
+        direction=(b-a)/np.linalg.norm(b-a)
+        normal=np.array([-direction[1],direction[0]])
+        offsets=np.arange(-max(12,int(.045*field.ppm)),max(12,int(.045*field.ppm))+1)
+        values=[]
+        total=0
+        for t in np.linspace(.08,.92,100):
+            if i%2 and .28<t<.74:
+                continue
+            total+=1
+            p=a+t*(b-a)
+            xy=np.rint(p+offsets[:,None]*normal).astype(int)
+            if np.any(xy<0) or np.any(xy[:,0]>=white.shape[1]) or np.any(xy[:,1]>=white.shape[0]):
+                continue
+            hits=np.flatnonzero(white[xy[:,1],xy[:,0]])
+            runs=[r for r in np.split(hits,np.where(np.diff(hits)>1)[0]+1) if 2<=len(r)<=max(8,int(.035*field.ppm))]
+            if runs:
+                run=min(runs,key=lambda r:abs(np.mean(offsets[r])))
+                values.append(abs(float(np.mean(offsets[run]))))
+        if len(values)<.60*total:
+            raise ValueError("Rectified boundary missing on side "+str(i))
+        errors.append(float(np.percentile(values,90)))
+    if max(errors)>max_error_px:
+        raise ValueError("Rectified tape alignment p90: "+str(np.round(errors,2)))
+    return errors
+
+
 class Field:
-    def __init__(self, image, length, width, ppm=550., margin=.15, camera=None):
+    def __init__(self, image, length, width, ppm=550., margin=.15, camera=None, distortion_mode="auto", max_error_px=5.):
         if min(length,width,ppm,margin) <= 0:
             raise ValueError("Measured white-line dimensions and scale required")
         self.length, self.width, self.ppm = length, width, ppm
         h,w = image.shape[:2]
         green = green_quad(image)
         samples = white_samples(image, green)
-        self.k, self.d = camera if camera is not None else fit_radial(samples,w,h)
-        self.source = "camera_info" if camera is not None else "approximate_plumb_line"
-        q = corners_from_samples(samples, self.k, self.d)
-        # First construct a metric map centered on the white rectangle.
-        self.homography = cv2.getPerspectiveTransform(q, np.float32([[0,0],[length*ppm,0],[length*ppm,width*ppm],[0,width*ppm]]))
+        self.source,self.k,self.d,self.homography,self.sample_errors=select_geometry(
+            samples,w,h,length*ppm,width*ppm,camera,distortion_mode,max_error_px)
         # Preserve the physical mat and goals beyond the white lines. Keep a safety margin.
         g = cv2.undistortPoints(green.reshape(-1,1,2),self.k,self.d,P=self.k).reshape(-1,2)
         outer = project(g, self.homography)
@@ -183,6 +274,7 @@ class Field:
         distorted,_ = cv2.projectPoints(rays,np.zeros(3),np.zeros(3),self.k,self.d)
         maps = distorted.reshape(self.size[1],self.size[0],2).astype(np.float32)
         self.map1,self.map2 = cv2.convertMaps(maps[:,:,0],maps[:,:,1],cv2.CV_16SC2)
+        self.boundary_errors=verify_rectified_boundary(self.warp(image),self,max_error_px)
 
     def rotate_180(self):
         """Rotate the entire rectified canvas, not merely the display."""
@@ -236,22 +328,46 @@ def detect(image, field, ball_radius):
 
 
 def goal_intervals(image,field):
-    hls = cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
-    masks = {"yellow":mask_hls(hls,(12,100,105),(40,255,255)),
-             "blue":mask_hls(hls,(98,45,65),(125,210,255))}
-    output = {}
-    for color,mask in masks.items():
-        # The field x axis is image-right; goal colors are expected in their observed end zones.
-        for center,area,(x,y,w,h) in blobs(mask,.003*field.ppm**2,.3*field.ppm**2):
-            pos = field.metric(center)
-            if abs(pos[0]) < field.length*.40 or h < w*1.4:
+    """Measure dominant colored mouth in an exterior strip, not a full bbox."""
+    hls=cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
+    masks={"yellow":mask_hls(hls,(12,100,105),(40,255,255)),
+           "blue":mask_hls(hls,(98,45,65),(125,210,255))}
+    output={}
+    ppm=field.ppm
+    for side in (-1,1):
+        x0=int(field.pixel((side*field.length/2,0))[0])
+        xa,xb=sorted((x0+side*int(.006*ppm),x0+side*int(.125*ppm)))
+        xa,xb=max(0,xa),min(image.shape[1],xb)
+        if xb-xa<5:
+            continue
+        ya=max(0,int(field.pixel((0,field.width*.36))[1]))
+        yb=min(image.shape[0],int(field.pixel((0,-field.width*.36))[1]))
+        candidates=[]
+        for color,mask in masks.items():
+            strip=mask[ya:yb,xa:xb]
+            if strip.size==0:
                 continue
-            ys = [field.metric((x,y))[1],field.metric((x,y+h))[1]]
-            side = -1 if pos[0]<0 else 1
-            if side in output:
+            profile=np.count_nonzero(strip,axis=1).astype(np.float32)
+            profile=cv2.GaussianBlur(profile.reshape(-1,1),(1,5),0).ravel()
+            peak=float(profile.max())
+            if peak<max(4,.15*(xb-xa)):
                 continue
-            output[side] = (color,min(ys),max(ys))
-            break
+            rows=np.flatnonzero(profile>=max(4,.45*peak))
+            for run in np.split(rows,np.where(np.diff(rows)>1)[0]+1):
+                if not .18*ppm<=len(run)<=.55*ppm:
+                    continue
+                lo=field.metric((x0,ya+run[-1]))[1]
+                hi=field.metric((x0,ya+run[0]))[1]
+                score=float(np.sum(profile[run]))
+                candidates.append((score,color,lo,hi))
+        if candidates:
+            _,color,lo,hi=max(candidates)
+            output[side]=(color,float(lo),float(hi))
+    if len(output)==2:
+        a,b=output[-1],output[1]
+        # Both goals have the same nominal construction; reject, don't invent a length.
+        if max(a[2]-a[1],b[2]-b[1])>1.20*min(a[2]-a[1],b[2]-b[1]):
+            raise ValueError("Goal mouth lengths disagree: "+str(output))
     return output
 
 
