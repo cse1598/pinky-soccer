@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.2.3 prototype)
+# Pinky Soccer Referee (v0.2.4 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -217,6 +217,38 @@ LED의 기하학적 위치 검출과 색 판별을 분리한다. 밝기 기반 �
 비교 실험은 distortion_mode:=camera_info, distortion_mode:=plumb_line 또는 distortion_mode:=none으로
 강제할 수 있다. none도 Homography는 적용한다. 카메라 이동 후에는 recalibrate 서비스 호출.
 위 임계값은 초기 설계값이며 ROS 및 실제 LED/경기장 검증 필요. 메시지 정의는 v0.2.2와 동일하다.
+
+## v0.2.4 몸체 좌표계 LED 탐색 및 디버그 기록
+
+기존 보정, 골대 및 공 검출 알고리즘과 ROS 메시지·서비스를 유지한다.
+기존 LED contour 탐색에 실패하거나 방향 후보가 충돌하면, 몸체 장축 양 끝과
+이전 헤딩 주변을 몸체 좌표계에서 재탐색한다. 밝은 횡방향 띠의 실제 길이/두께,
+끝점, 몸체 안쪽의 어두운 픽셀, 라인 연장 여부를 확인한다.
+LED 색상 분류는 기존 v0.2.2의 엄격한 조건을 유지한다.
+현재 프레임 영상 증거가 없는 경우 측정으로 처리하지 않는다.
+헤딩 예측의 0.25초 제한과 위치 재획득 정책은 그대로 유지한다.
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=realsense allow_approximate_rules:=true debug_ui:=true debug_log:=true record_video:=true
+
+| 인수 | 기본값 | 기능 |
+|---|---|---|
+| debug_ui | false | 보정 오차, LED 후보 수, contour/body_end/missing 및 헤딩 상태 표시 |
+| debug_log | false | 프레임별 수치·검출 탈락 사유·캘리브레이션 기록 |
+| record_video | false | 원본, 보정, 오버레이 영상 기록 |
+| debug_dir | ~/pinky_referee_logs | 날짜별 세션 디렉터리의 상위 경로 |
+| record_fps | 30.0 | 실시간 녹화 MP4 명목 FPS (영상 모드는 원본 FPS) |
+
+각 세션에는 frames.jsonl(영상 파일/프레임 인덱스 및 시간), tracking.csv,
+detection.jsonl(후보별 필터 탈락 횟수 집계 및 선택된 LED의 위치), performance.csv,
+events.csv, calibration_*.yaml 및 raw.mp4, rectified.mp4, overlay.mp4가 옵션에 따라 생성된다.
+raw는 초기화 단계도 포함하며 보정 영상은 캘리브레이션 완료 이후만 기록한다.
+영상 해상도가 바뀌면 새 파일로 분할한다. 프레임별 시각은 MP4의 명목 FPS가 아니라
+frames.jsonl의 t와 stamp를 기준으로 해석한다.
+저장은 제한된 비동기 큐를 사용하며 과부하 시 기록 프레임을 누락할 수 있다.
+종료 시 Ctrl+C를 사용해 큐를 정리하고 터미널에서 dropped_frames 및 오류를 확인한다.
+MP4 세 영상 동시 인코딩은 추가 부하가 있으므로 성능 검증 시 record_video를 끈 상태도 측정한다.
+LED 후보의 탈락 사유는 집계이며 원본 영상과 함께 분석한다.
+ROS 및 실물 영상 검증 전의 초기값/프로토타입이다.
 
 ## 검증 및 한계
 
