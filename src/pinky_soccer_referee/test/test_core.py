@@ -53,3 +53,101 @@ def test_track_assignment_and_velocity_validity():
     assert a.velocity_valid and b.velocity_valid
     associate([a,b],[],.066)
     assert not a.visible and not a.velocity_valid
+
+
+from referee_core import RobotTrack, associate_robots, robot_observations, trapezoid_points, orient_goals
+import cv2
+import pytest
+
+
+def observation(x, y=0., team="yellow", heading=0.):
+    return {"p":np.array([x,y]),"bbox":np.array([x,-y,.16,.12]),
+            "heading":heading,"team":team,"quality":.9,"length":.16,"width":.12}
+
+
+def test_robot_reacquires_after_teleport_without_velocity_spike():
+    a,b=RobotTrack(1),RobotTrack(2)
+    for t in (0.,.033):
+        associate_robots([a,b],[observation(-.5),observation(.5,team="blue")],t)
+    assert a.visible and b.visible and a.team=="yellow"
+    associate_robots([a,b],[observation(-.49),observation(.49,team="blue")],.066)
+    assert a.velocity_valid and b.velocity_valid
+    associate_robots([a,b],[observation(.2,.25),observation(.48,team="blue")],.099)
+    assert not a.visible and b.visible
+    associate_robots([a,b],[observation(.21,.25),observation(.47,team="blue")],.132)
+    assert a.visible and a.reacquired and not a.velocity_valid
+    assert a.team=="yellow" and np.allclose(a.position,[.21,.25])
+    associate_robots([a,b],[observation(.22,.25),observation(.46,team="blue")],.165)
+    assert a.visible and a.velocity_valid and not a.reacquired
+
+
+def test_team_prevents_wrong_nearby_match():
+    a=RobotTrack(1)
+    for t in (0.,.033):
+        associate_robots([a],[observation(.0)],t)
+    assert a.visible
+    associate_robots([a],[observation(.01,team="blue")],.066)
+    assert not a.visible
+
+
+def test_wraparound_angular_velocity():
+    a=RobotTrack(1)
+    a.observe(observation(0.,heading=np.deg2rad(179.)),0.,False,.9)
+    a.observe(observation(.01,heading=np.deg2rad(-179.)),.1,True,.9)
+    assert abs(a.angular_velocity-np.deg2rad(20.))<1.e-8
+
+
+class FakeField:
+    ppm=550.
+    def metric(self,p):
+        return np.asarray(p)*np.array([1.,-1.])/self.ppm
+    def pixel(self,p):
+        return np.round(np.asarray(p)*np.array([1.,-1.])*self.ppm).astype(int)
+
+
+@pytest.mark.parametrize("led,team",[
+    ((220,220,220),"unknown"),((30,220,240),"yellow"),((255,170,30),"blue")])
+def test_synthetic_rear_led_vs_blue_wheels(led,team):
+    img=np.full((220,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(100,80),(190,140),(22,22,22),-1)
+    cv2.rectangle(img,(96,91),(107,129),led,-1)
+    # Blue wheels are bright on purpose; their long axis runs along the chassis.
+    cv2.rectangle(img,(135,71),(165,80),(255,170,30),-1)
+    cv2.rectangle(img,(135,140),(165,149),(255,170,30),-1)
+    result=robot_observations(img,FakeField(),[(None,5400,(100,80,91,61))])
+    assert len(result)==1
+    assert result[0]["team"]==team
+    assert result[0]["heading"] is not None
+    assert abs(result[0]["heading"])<.15
+
+
+def test_blue_wheels_alone_do_not_assign_team():
+    img=np.full((220,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(100,80),(190,140),(22,22,22),-1)
+    cv2.rectangle(img,(135,71),(165,80),(255,170,30),-1)
+    cv2.rectangle(img,(135,140),(165,149),(255,170,30),-1)
+    result=robot_observations(img,FakeField(),[(None,5400,(100,80,91,61))])
+    assert result[0]["team"]=="unknown"
+    assert result[0]["heading"] is None
+
+
+def test_trapezoid_front_edge_shorter():
+    a=RobotTrack(1)
+    a.observe(observation(0.),0.,False,.8)
+    p=trapezoid_points(a,FakeField())
+    assert np.linalg.norm(p[0]-p[1])<np.linalg.norm(p[2]-p[3])
+    assert np.mean(p[:2,0])>np.mean(p[2:,0])
+
+
+def test_goal_orientation_rotates_geometry(monkeypatch):
+    import referee_core as core
+    class F:
+        rotated=False
+        def warp(self,img):
+            return img
+        def rotate_180(self):
+            self.rotated=True
+    f=F()
+    monkeypatch.setattr(core,"goal_intervals",lambda img,field:{-1:("blue",-.25,.15),1:("yellow",-.1,.2)})
+    goals=orient_goals(f,None)
+    assert f.rotated and goals[-1]==("yellow",-.2,.1) and goals[1]==("blue",-.15,.25)
