@@ -413,7 +413,8 @@ class VerifierApp:
                      if v and v > 0}
         self.gains = core.load_gains(node.controller_config, overrides)
         self.session_dir = os.path.join(
-            node.log_dir, datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+            node.log_dir, datetime.datetime.now().strftime('%Y%m%d_%H%M%S') +
+            ('_lqr' if node.controller_kind == 'lqr' else ''))
         self.selected = None
         self.port_vars = {}
         self.input_labels = {}
@@ -460,7 +461,7 @@ class VerifierApp:
         top = ttk.Frame(r, padding=(8, 4))
         top.pack(fill='x')
         mode = self.node.mode_label.upper()
-        ctl = 'NMPC' if self.node.controller_kind == 'mpc' else '비례 제어'
+        ctl = {'mpc': 'NMPC', 'lqr': 'Path + TVLQR'}.get(self.node.controller_kind, '비례 제어')
         ttk.Label(top, text=f'모드: {mode} · 제어: {ctl}', style='State.TLabel').pack(side='left')
         self.conn_label = ttk.Label(top, text='', style='Muted.TLabel')
         self.conn_label.pack(side='left', padx=16)
@@ -1055,7 +1056,7 @@ class VerifierApp:
             start = pose_of(wm.self)
             if self.show_predict.get():
                 # NMPC: its own optimal trajectory; reactive: simulate the P controller law.
-                self.prediction = (s['mpc_path'] if self.node.controller_kind == 'mpc'
+                self.prediction = (s['mpc_path'] if self.node.controller_kind in ('mpc', 'lqr')
                                    else core.predict_path(start, waypoints, self.gains,
                                                           float(goal.max_speed)))
                 mp.polyline(self.prediction, fill=COLORS['predict'], width=2, dash=(4, 3))
