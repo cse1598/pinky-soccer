@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>pinky_soccer_referee</name>
-  <version>0.2.2</version>
+  <version>0.2.3</version>
   <description>Independent overhead-camera referee and ground-truth measurement prototype.</description>
   <maintainer email="102153140+cse1598@users.noreply.github.com">cse</maintainer>
   <license>Apache-2.0</license>
