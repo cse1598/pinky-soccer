@@ -29,6 +29,7 @@ setup(
             'world_model_topview = pinky_soccer_viz.world_model_topview:main',
             'mujoco_eval_bridge = pinky_soccer_viz.mujoco_eval_bridge:main',
             'soccer_trial = pinky_soccer_viz.soccer_trial:main',
+            'path_lqr_controller = pinky_soccer_viz.path_lqr_controller:main',
             'behavior_verifier = pinky_soccer_viz.behavior_verifier:main',
             'goto_bench = pinky_soccer_viz.goto_bench:main',
             'gazebo_truth_relay = pinky_soccer_viz.gazebo_truth_relay:main',
