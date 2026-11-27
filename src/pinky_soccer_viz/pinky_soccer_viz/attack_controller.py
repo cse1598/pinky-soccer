@@ -38,6 +38,13 @@ class AttackController(Node):
         self.body_radius = max(math.hypot(x, y) for a, b, c, d in FOOTPRINT_RECTS
                                for x, y in ((a,b), (c,d), (a,d), (c,b)))
         self.follower = Follower(self.params, self.position_tol, self.heading_tol)
+        self.path_mpc = None
+        if bool(p('path_mpc_approach', False).value):
+            if target != 'mujoco':
+                raise ValueError('path_mpc approach is experimental and MuJoCo only')
+            from .path_mpc_approach import PathMpcApproach
+            self.path_mpc = PathMpcApproach(self.params, self.field, self.margin,
+                float(p('path_mpc_max_lin', 0.).value), float(p('path_mpc_max_ang', 2.).value))
         self.tf = Buffer()
         self.listener = TransformListener(self.tf, self)
         self.goal = self.world = self.scan = self.wheels = None
@@ -121,6 +128,8 @@ class AttackController(Node):
             self.result.publish(msg)
 
     def stop(self, reason, failure=False):
+        if self.path_mpc is not None:
+            self.path_mpc.reset()
         self.send((0., 0.))
         if self.wheels is not None:
             _, self.profile = motor_step(self.params, self.wheels, self.profile, np.zeros(2), .02)
@@ -180,6 +189,8 @@ class AttackController(Node):
         return result
 
     def recover(self, pose, points, dt, reason):
+        if self.path_mpc is not None:
+            self.path_mpc.reset()
         now = self.now()
         self.block_reason = reason
         # Progress during an active escape is its intended effect. Do not apply
@@ -246,11 +257,17 @@ class AttackController(Node):
         required = min(self.margin, initial)
         point_required = min(self.margin, self.point_clearance(pose,points))
         x = np.array([*pose, *self.wheels, *self.profile, *self.follower.previous])
+        predicted = [x[:3].copy()] if self.path_mpc is not None else None
         for i in range(25):
             x = step(self.params, x, command if i < 5 else np.zeros(2), .02)
             if self.static_clearance(x[:3])+1e-9 < required:
                 return False
             if self.point_clearance(x[:3],points)+1e-9 < point_required:
+                return False
+            if predicted is not None:
+                predicted.append(x[:3].copy())
+        if predicted is not None and self.world is not None:
+            if not self.path_mpc.opponent_safe(self.world, np.asarray(predicted), .02):
                 return False
         return True
 
@@ -281,6 +298,8 @@ class AttackController(Node):
             return self.stop('stopped or no fresh goal')
         key = (g.action, g.goal_id)
         if key != self.key:
+            if self.path_mpc is not None:
+                self.path_mpc.reset()
             if self.progress_pose is None or g.goal_id:
                 self.progress_pose = None
                 self.recovery_until = 0.
@@ -320,7 +339,8 @@ class AttackController(Node):
         points = self.obstacles(self.scan_cache.copy(), pushing)
         if now < self.recovery_until and self.recovery_command is not None:
             return self.recover(pose,points,dt,self.block_reason)
-        if now-self.progress_at >= 1. and (self.follower.phase == 'TRAVEL' or not g.goal_id):
+        mpc_approach = self.path_mpc is not None and g.action == 'GoBehindBall'
+        if now-self.progress_at >= (3. if mpc_approach else 1.) and (self.follower.phase == 'TRAVEL' or not g.goal_id):
             return self.recover(pose,points,dt,self.block_reason or 'motion command without progress')
         if g.action == 'AlignToBall':
             command = self.follower.command(pose,target,target[:2],self.wheels,now,dt)
@@ -406,8 +426,18 @@ class AttackController(Node):
                 maximum = min(self.params.m('left_radius'),self.params.m('right_radius'))*self.params.wheel_cmd_max()
                 impact_limit = contact_speed_limit(pose,(b.pose.x,b.pose.y),(b.velocity.x,b.velocity.y),maximum)
                 speed_cap = min(speed_cap,impact_limit) if speed_cap>0 else impact_limit
-            command = self.follower.command(pose, target, waypoint, self.wheels, now,
-                dt, streaming=pushing, speed_cap=speed_cap, reverse=self.travel_reverse)
+            if mpc_approach:
+                route = [pose[:2].copy(), *self.path[1:]] if self.path else []
+                if len(route) < 2 or not grid.line(route[0], route[1]):
+                    self.path = []
+                    self.path_mpc.reset()
+                    command = np.zeros(2)
+                else:
+                    command = self.path_mpc.command(now, wall, pose, self.wheels, self.profile,
+                        self.follower.previous, target, route, self.world, speed_cap)
+            else:
+                command = self.follower.command(pose, target, waypoint, self.wheels, now,
+                    dt, streaming=pushing, speed_cap=speed_cap, reverse=self.travel_reverse)
         safe = False
         for scale in (1., .5, .0):
             candidate = command*scale
@@ -424,7 +454,7 @@ class AttackController(Node):
             self.finished = bool(g.goal_id)
             self.report('arrived', 'position/heading accepted; stopped', MotionResult.SUCCESS)
         else:
-            self.report('track', 'following collision-checked path')
+            self.report('track', self.path_mpc.status if mpc_approach else 'following collision-checked path')
 
 
 def main(args=None):
@@ -437,4 +467,6 @@ def main(args=None):
     finally:
         if rclpy.ok():
             node.send((0., 0.))
+        if node.path_mpc is not None:
+            node.path_mpc.close()
         node.destroy_node(); rclpy.try_shutdown()

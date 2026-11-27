@@ -140,7 +140,7 @@ def setup(context):
             'localization_config': lc('localization_config', context),
             'ball_offset_source': lc('ball_offset_source', context),
             'localization_debug': flag('localization_debug', context),
-            'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context),
+            'controller': lc('controller', context), 'attack_strategy': lc('strategy', context), 'mpc_backend': lc('mpc_backend', context),
              'mpc_damping_scale': float(lc('mpc_damping_scale', context)),
              'mpc_observer_mode': lc('mpc_observer_mode', context), 'max_lin': max_lin, 'max_ang': max_ang,
             'calibration_profile': '' if profile == 'none' else profile,
@@ -162,8 +162,9 @@ def setup(context):
         out += decision_stack(RobotConfig(
             name=opponent, color=other, initial=opp_pose, ui=False, groot2=False,
             verify=flag('opponent_verify', context),
-            **({**base, 'controller': 'mpc'} if base['controller'] == 'nav2' and
-               not flag('opponent_verify', context) else base)))
+            **{**base, 'attack_strategy': lc('opponent_strategy', context),
+               'controller': 'mpc' if base['controller'] == 'nav2' and
+               not flag('opponent_verify', context) else base['controller']}))
     elif two:
         out += multi_robot.group(opponent, [Node(
             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
@@ -241,6 +242,8 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
+        DeclareLaunchArgument('strategy', default_value='legacy', choices=['legacy','path_mpc']),
+        DeclareLaunchArgument('opponent_strategy', default_value='legacy', choices=['legacy','path_mpc']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive', 'attack']),
         DeclareLaunchArgument('identification', default_value='',
                               description='validated simulator wheel response YAML'),

@@ -336,7 +336,7 @@ NodeStatus StopRobot::update()
 PortsList AttackBall::providedPorts()
 {
   return {InputPort<TrackedObject>("ball"), InputPort<TrackedObject>("pose"),
-          InputPort<Point>("opp_goal"), InputPort<double>("blind_distance", 0.22, "Max unobserved push distance [m]"),
+          InputPort<Point>("opp_goal"), InputPort<bool>("planner_approach", false, "Let path planner choose the detour"), InputPort<double>("blind_distance", 0.22, "Max unobserved push distance [m]"),
           InputPort<double>("blind_seconds", 1.25, "Max unobserved push time [s]"), InputPort<double>("backup_distance", 0.16, "Camera reacquisition backup [m]")};
 }
 
@@ -446,7 +446,7 @@ NodeStatus AttackBall::update()
     if(approach_side_ == 0 || cross*approach_side_ < -.08)
       approach_side_ = cross >= 0. ? 1 : -1;
     auto approach = behindBallPose(ball,goal,offset);
-    if(approach_orbit_)
+    if(approach_orbit_ && !input<bool>("planner_approach"))
     { approach.x -= .20*approach_side_*uy; approach.y += .20*approach_side_*ux; }
     if(std::abs(ball.y)>.25 && (approach.y-ball.y)*ball.y>0.)
       approach.y = 2*ball.y-approach.y;

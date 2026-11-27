@@ -74,7 +74,7 @@ def setup(context):
         field_spec=str(field_spec), localization=arg('localization'),
         localization_config=arg('localization_config'),
         localization_debug=flag('localization_debug'),
-        controller=arg('controller'), mpc_backend=arg('mpc_backend'),
+        controller=arg('controller'), attack_strategy=arg('strategy'), mpc_backend=arg('mpc_backend'),
         mpc_damping_scale=float(arg('mpc_damping_scale')),
         mpc_observer_mode=arg('mpc_observer_mode'), max_lin=max_lin, max_ang=max_ang,
         calibration_profile=arg('calibration_profile'),
@@ -137,6 +137,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
+        DeclareLaunchArgument('strategy', default_value='legacy', choices=['legacy','path_mpc']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive', 'attack']),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='NMPC uses /joint_states wheel speeds (needs the '

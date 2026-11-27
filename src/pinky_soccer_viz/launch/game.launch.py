@@ -41,7 +41,7 @@ def setup(context):
                          '(0 = MPC internal limits only)')
     common = {name: arg(name) for name in
               ('preparation', 'preparation_config', 'field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
-               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
+               'controller', 'strategy', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
                   identification=arg('identification'), ball_offset_source=arg('ball_offset_source'))
@@ -65,7 +65,7 @@ def setup(context):
         common.update({name: arg(name) for name in
                        ('ball_x', 'ball_y', 'imu_enabled', 'adc_enabled', 'robots',
                         'opponent_name', 'opponent_mode', 'opponent_speed', 'opponent_travel',
-                        'opponent_x', 'opponent_y', 'opponent_yaw', 'opponent_verify')})
+                        'opponent_x', 'opponent_y', 'opponent_yaw', 'opponent_verify', 'opponent_strategy')})
         if mode == 'mujoco':
             common['use_gpu'] = arg('use_gpu')
         common.update(simulator=mode, publish_debug_image='true',
@@ -134,6 +134,8 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
+        DeclareLaunchArgument('strategy', default_value='legacy', choices=['legacy','path_mpc']),
+        DeclareLaunchArgument('opponent_strategy', default_value='legacy', choices=['legacy','path_mpc']),
         DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'nav2', 'reactive', 'attack'],
                               description='mpc: NMPC; nav2: native NavFn + MPPI (simulation verify); reactive: old P control'),
         DeclareLaunchArgument('wheel_feedback', default_value='false',

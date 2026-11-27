@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Experimental: direct behind-ball target, path-constrained minimum-time MPC approach. -->
+<root BTCPP_format="4" main_tree_to_execute="Main">
+  <BehaviorTree ID="Main">
+    <ReactiveSequence>
+      <ReadWorldModel topic_name="world_model" playing="{playing}" pose="{pose}" ball="{ball}"
+                      opponents="{opponents}" own_goal="{own_goal}" opp_goal="{opp_goal}"/>
+      <ReactiveFallback>
+        <ReactiveSequence>
+          <Inverter><IsPlaying playing="{playing}"/></Inverter>
+          <StopRobot/>
+        </ReactiveSequence>
+        <AttackBall planner_approach="true" ball="{ball}" pose="{pose}" opp_goal="{opp_goal}"/>
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="PublishGoal"><PublishBehaviorGoal topic_name="behavior_goal"/></BehaviorTree>
+</root>

@@ -26,7 +26,8 @@ def setup(context):
     common = {k: arg(k) for k in ('mode', 'field', 'team', 'robots', 'robot_name', 'headless',
         'calibration_profile', 'camera_yaml', 'identification', 'robot_host', 'robot_workspace', 'robot_profile',
         'opponent_mode', 'opponent_x', 'opponent_y', 'initial_x', 'initial_y', 'initial_yaw')}
-    common.update(controller='attack', referee='false', preparation='true', verify='false',
+    common.update(controller='attack', strategy=arg('strategy'), opponent_strategy=arg('opponent_strategy'),
+                  referee='false', preparation='true', verify='false',
                   wheel_feedback='true', localization='rectangle', imu_enabled='true')
     referee = dict(mode='topic' if sim else 'realsense', use_sim_time='true' if sim else 'false',
                    show_ui='false' if arg('headless') == 'true' else 'true',
@@ -65,6 +66,7 @@ def setup(context):
 
 def generate_launch_description():
     defaults = dict(mode='mujoco', field='hardboard', team='Y', robots='1', robot_name='',
+        strategy='legacy', opponent_strategy='legacy',
         headless='false', show_rviz='true', show_camera='false',
         show_localization='false', show_preparation='false', auto_reset_ball='true',
         ball_rolling_deceleration='0.10', referee_ball_assist='false', ball_source='auto', opponent_mode='game', opponent_x='auto', opponent_y='auto',
@@ -72,5 +74,6 @@ def generate_launch_description():
         robot_host='', robot_workspace='pinky_soccer_ws', robot_profile='', referee_enabled='true')
     return LaunchDescription([*(DeclareLaunchArgument(k, default_value=v,
         **({'choices': ['real', 'mujoco']} if k == 'mode' else
-           {'choices': ['auto','robot','assist','referee']} if k == 'ball_source' else {})) for k,v in defaults.items()),
+           {'choices': ['auto','robot','assist','referee']} if k == 'ball_source' else
+           {'choices': ['legacy','path_mpc']} if k in ('strategy','opponent_strategy') else {})) for k,v in defaults.items()),
         OpaqueFunction(function=setup)])

@@ -70,6 +70,7 @@ class RobotConfig:
     localization_config: str = 'auto'
     localization_debug: bool = False
     controller: str = 'mpc'
+    attack_strategy: str = 'legacy'
     mpc_backend: str = 'acados'
     mpc_damping_scale: float = 0.0
     mpc_observer_mode: str = 'off'
@@ -110,7 +111,8 @@ def controller_node(cfg):
             remappings=[('cmd_vel', cfg.command_topic)], parameters=[{
                 'use_sim_time': cfg.simulation, 'target': cfg.target,
                 'field_spec': cfg.field_spec, 'calibration_profile': cfg.calibration_profile,
-                'identification': cfg.identification}])
+                'identification': cfg.identification, 'path_mpc_approach': cfg.attack_strategy == 'path_mpc',
+                'path_mpc_max_ang': cfg.max_ang, 'path_mpc_max_lin': cfg.max_lin}])
     if cfg.controller == 'mpc':
         return Node(package='pinky_soccer_mpc', executable='mpc_controller',
                     name='mpc_controller', output='screen',
@@ -139,6 +141,10 @@ def controller_node(cfg):
 
 def decision_stack(cfg):
     """Return the launch actions of one robot's decision stack."""
+    if cfg.attack_strategy not in ('legacy', 'path_mpc'):
+        raise ValueError('Unknown attack strategy')
+    if cfg.attack_strategy == 'path_mpc' and (cfg.controller != 'attack' or cfg.target != 'mujoco' or cfg.verify or cfg.bt_tree_file):
+        raise ValueError('path_mpc strategy is experimental: attack controller, MuJoCo, game BT only')
     clock = {'use_sim_time': cfg.simulation}
     team = {'our_goal_color': cfg.color, 'field_spec': cfg.field_spec}
     wm = share('pinky_soccer_world_model', 'config')
@@ -203,7 +209,8 @@ def decision_stack(cfg):
                                      cfg.name), clock, {
                  'verify_mode': cfg.verify, 'groot2_enabled': cfg.groot2,
                  'kickoff_pose': [float(v) for v in cfg.initial]},
-                 *([{'tree_file': cfg.bt_tree_file or share('pinky_soccer_bt', 'trees', 'attack_only.xml')}]
+                 *([{'tree_file': cfg.bt_tree_file or share('pinky_soccer_bt', 'trees',
+                     'attack_path_mpc.xml' if cfg.attack_strategy == 'path_mpc' else 'attack_only.xml')}]
                    if cfg.bt_tree_file or cfg.controller == 'attack' else [])]),
     ]
     if preparation:
