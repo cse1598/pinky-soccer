@@ -219,7 +219,8 @@ ROS_DOMAIN_ID=193 ros2 launch pinky_soccer_viz attack.launch.py \
   로봇 카메라 입력으로 자동 전환하지 않는다.
 - `ball_source:=robot`: 로봇 카메라와 기존 필터를 사용한다.
 - `ball_source:=assist`: 로봇 카메라 우선, 단절 시 심판 보조.
-- 기본 `ball_source:=auto`: 기존 `referee_ball_assist:=true/false` 설정과 호환한다.
+- 기본 `ball_source:=hybrid`: 심판 위치·속도 우선. 동일 시각 기준 자체 카메라 위치가 6cm 이내이고 검출 점수가 0.65 이상이면 즉시 자체 위치를 선택한다. 불일치/미검출 시 즉시 심판 위치로 복귀한다. 전환 대기시간 없음.
+- `ball_source:=auto`: 기존 `referee_ball_assist:=true/false` 설정과 호환한다.
   명시적인 `ball_source`가 이전 보조 bool 옵션보다 우선한다.
 
 `world_model/ball_contact` JSON의 `input_mode`와 `metric_source`로 실제 선택을 확인할 수 있다.

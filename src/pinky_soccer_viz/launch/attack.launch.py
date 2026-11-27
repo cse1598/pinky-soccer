@@ -33,7 +33,9 @@ def setup(context):
                    yellow_goal_y_min=str(-field.spec['goal_width']/2),
                    yellow_goal_y_max=str(field.spec['goal_width']/2),
                    blue_goal_y_min=str(-field.spec['goal_width']/2),
-                   blue_goal_y_max=str(field.spec['goal_width']/2))
+                   blue_goal_y_max=str(field.spec['goal_width']/2),
+                   field_length_m=str(field.spec['playing_length']),
+                   field_width_m=str(field.spec['playing_width']))
     if sim:
         referee.update(image_topic='/referee_camera/image_raw',
             camera_info_topic='/referee_camera/camera_info', warmup_frames='3', calibration_frames='3',
@@ -67,11 +69,11 @@ def generate_launch_description():
         strategy='legacy', opponent_strategy='legacy',
         headless='false', show_rviz='true', show_camera='false',
         show_localization='false', show_preparation='false', auto_reset_ball='true',
-        ball_rolling_deceleration='0.10', referee_ball_assist='false', ball_source='auto', opponent_mode='game', opponent_x='auto', opponent_y='auto',
+        ball_rolling_deceleration='0.10', referee_ball_assist='false', ball_source='hybrid', opponent_mode='game', opponent_x='auto', opponent_y='auto',
         initial_x='auto', initial_y='auto', initial_yaw='auto', calibration_profile='auto', camera_yaml='', identification='',
         robot_host='', robot_workspace='pinky_soccer_ws', robot_profile='', referee_enabled='true')
     return LaunchDescription([*(DeclareLaunchArgument(k, default_value=v,
         **({'choices': ['real', 'mujoco']} if k == 'mode' else
-           {'choices': ['auto','robot','assist','referee']} if k == 'ball_source' else
+           {'choices': ['auto','robot','assist','referee','hybrid']} if k == 'ball_source' else
            {'choices': ['legacy','path_mpc']} if k in ('strategy','opponent_strategy') else {})) for k,v in defaults.items()),
         OpaqueFunction(function=setup)])

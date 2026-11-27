@@ -22,6 +22,7 @@ from pinky_soccer_field.field_geometry import Field
 from pinky_soccer_msgs.msg import TrackedObject, WorldModel
 from pinky_soccer_world_model.ball_detector import transform_matrix
 from pinky_soccer_world_model.ball_filter import BallFilter, BallFilterParams, LOST, OBSERVED
+from pinky_soccer_world_model.hybrid_ball import HybridBallFilter, HybridParams
 from pinky_soccer_world_model.geometry import compose2d, inverse2d, quat_from_yaw, yaw_from_quat
 from pinky_soccer_world_model.geometry import wrap
 from pinky_soccer_world_model.msgs import tracked, world_model
@@ -114,19 +115,25 @@ class WorldModelNode(Node):
         self.referee_ball_assist = bool(p('referee_ball_assist', False).value)
         source = p('ball_source', 'auto').value
         self.ball_input = ('assist' if self.referee_ball_assist else 'robot') if source == 'auto' else source
-        if self.ball_input not in ('robot','assist','referee'):
-            raise ValueError('ball_source must be auto, robot, assist or referee')
+        if self.ball_input not in ('robot','assist','referee','hybrid'):
+            raise ValueError('ball_source must be auto, robot, assist, referee or hybrid')
+        hp = HybridParams(**{k: p('ball.hybrid.'+k, val).value
+                             for k, val in vars(HybridParams()).items()})
+        self.hybrid_pending = None
+        if self.ball_input == 'hybrid':
+            self.ball = HybridBallFilter(bp, self.field.inner_walls, self.ball_radius, hp)
         self.referee_observation = None
         self.referee_observation_valid = False
         self.last_referee_state_stamp = -math.inf
         self.ball_source = 'none'
         self.last_local_ball = -math.inf
         self.last_referee_ball = -math.inf
-        if self.ball_input in ('assist','referee'):
+        if self.ball_input in ('assist','referee','hybrid'):
             from pinky_soccer_referee.msg import RefereeState
             self.create_subscription(RefereeState, '/referee/state', self.on_referee_ball,
                 QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.contact_pub = self.create_publisher(String, 'world_model/ball_contact', 10)
+        self.ball_fusion_pub = self.create_publisher(String, 'world_model/ball_fusion', 10)
         self.create_subscription(String, 'ball_detection/status', self.on_ball_evidence, qos_profile_sensor_data)
         self.pub = self.create_publisher(WorldModel, 'world_model', 10)
         # Existing unconfirmed clusters remain available for collision avoidance.
@@ -151,6 +158,13 @@ class WorldModelNode(Node):
     def on_referee_ball(self, msg):
         stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
         now = self.now()
+        if self.ball_input == 'hybrid':
+            valid = (msg.header.frame_id == 'referee_field' and msg.metric_valid and
+                     msg.calibrated and msg.ball.visible)
+            xy = (msg.ball.position.x,msg.ball.position.y) if valid else None
+            vel = (msg.ball.velocity.x,msg.ball.velocity.y) if valid and msg.ball.velocity_valid else None
+            self.ball.receive_referee(stamp, xy, vel)
+            return
         if self.ball_input == 'referee':
             if stamp < self.last_referee_state_stamp:
                 return
@@ -205,8 +219,54 @@ class WorldModelNode(Node):
                 math.isfinite(u) and math.isfinite(v) and abs(u)<.17*w and v>.70*h and
                 d.get('confidence',0.)>=.25)
             self.ball_contact = dict(stamp=float(d['stamp']),present=present)
+            if self.ball_input == 'hybrid':
+                stamp = float(d['stamp'])
+                if self.hybrid_pending is None or stamp > self.hybrid_pending[0]:
+                    self.hybrid_pending = (stamp, d)
+                    if not (d.get('range_valid') and d.get('metric_calibrated')):
+                        self.ball.receive_local(stamp, None)
         except (ValueError,TypeError,KeyError):
             self.ball_contact = dict(stamp=-1.,present=False)
+            if self.ball_input == 'hybrid':
+                self.hybrid_pending = None
+                self.ball.invalidate_local()
+
+    def process_hybrid_ball(self, now):
+        # Atomic pixel confidence + metric point from one capture. Never pair a
+        # previous frame's confidence with another frame's PointStamped.
+        pending = self.hybrid_pending
+        if pending is not None:
+            stamp, d = pending
+            if now-stamp > self.ball.p.observed_timeout:
+                self.hybrid_pending = None
+            elif d.get('range_valid') and d.get('metric_calibrated'):
+                try:
+                    local = np.asarray(d.get('metric_point'),float)
+                    frame = d.get('metric_frame')
+                    confidence = float(d.get('confidence',0.))
+                    if local.shape != (3,) or not np.isfinite(local).all() or not frame:
+                        self.ball.receive_local(stamp,None)
+                    elif self.ball.local is None or stamp > self.ball.local.stamp:
+                        rt = self.scan_transform(self.map_frame,frame,Time(seconds=stamp).to_msg())
+                        if rt is not None:
+                            R,t = rt
+                            self.ball.receive_local(stamp,(R@local+t)[:2],confidence,
+                                                    float(np.linalg.norm(local[:2])))
+                        else:
+                            # Do not use an old local frame when the new one cannot be transformed.
+                            self.ball.invalidate_local()
+                except (ValueError,TypeError,OverflowError):
+                    self.ball.receive_local(stamp,None)
+        if self.ball.step(now):
+            self.grid.observe(np.zeros_like(self.grid.p,bool),0.,self.ball.x[:2])
+        self.ball_source = self.ball.source
+        self.ball_fusion_pub.publish(String(data=json.dumps(dict(
+            source=self.ball.source, reason=self.ball.reason,
+            difference_m=self.ball.difference,
+            referee_stamp=self.ball.referee.stamp if self.ball.referee else None,
+            local_stamp=self.ball.local.stamp if self.ball.local else None,
+            local_confidence=self.ball.local.confidence if self.ball.local else None,
+            estimate=self.ball.x.tolist() if self.ball.initialized else None))))
 
     def now(self):
         """Return node clock seconds (sim time when use_sim_time)."""
@@ -274,7 +334,7 @@ class WorldModelNode(Node):
 
     def on_ball(self, msg):
         """Fuse a detection (any frame) after moving it into map."""
-        if self.ball_input == 'referee':
+        if self.ball_input in ('referee','hybrid'):
             return
         rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
         if rt is None:
@@ -386,7 +446,11 @@ class WorldModelNode(Node):
         if self.pose is not None and (math.hypot(pose[0]-self.pose[0], pose[1]-self.pose[1]) > .25
                                      or abs(wrap(pose[2]-self.pose[2])) > .7):
             # A localization reseed changes the interpretation of earlier map fixes.
-            self.ball = BallFilter(self.ball.p, self.field.inner_walls, self.ball_radius)
+            if self.ball_input == 'hybrid':
+                self.ball.invalidate_local()
+                self.hybrid_pending = None
+            else:
+                self.ball = BallFilter(self.ball.p, self.field.inner_walls, self.ball_radius)
             self.grid.p.fill(self.grid.prior)
             self.opponents, self.opp_time = [], None
             self.opponent_tracker.reset()
@@ -397,6 +461,10 @@ class WorldModelNode(Node):
         """Predict, update the search grid and publish."""
         now = self.now()
         if self.last_tick is not None and now < self.last_tick:
+            if self.ball_input == 'hybrid':
+                self.ball = HybridBallFilter(self.ball.p,self.field.inner_walls,self.ball_radius,self.ball.h)
+                self.hybrid_pending = None
+                self.ball_contact = dict(stamp=-1.,present=False)
             self.opponent_tracker.reset()
             self.opponents, self.opp_time = [], None
             self.opp_map_alignment = None
@@ -409,8 +477,21 @@ class WorldModelNode(Node):
         if self.pose is None:
             self.get_logger().warn('Waiting for self pose', throttle_duration_sec=5.0)
             return
+        if self.ball_input == 'hybrid':
+            self.process_hybrid_ball(now)
         referee_ball = self.referee_ball_object(now) if self.ball_input == 'referee' else None
         contact = dict(self.ball_contact)
+        if self.ball_input == 'hybrid' and self.ball.source != 'robot_camera':
+            # Referee-first position also supplies contact geometry when local
+            # camera is blind; do not accept contradictory local bearing evidence.
+            ref = self.ball.referee
+            contact = dict(stamp=-1.,present=False)
+            if self.ball.source == 'referee_camera' and ref is not None and ref.xy is not None:
+                xy = ref.xy if ref.velocity is None else ref.xy+ref.velocity*max(0.,now-ref.stamp)
+                dx,dy = xy-self.pose[:2]
+                forward = math.cos(self.pose[2])*dx+math.sin(self.pose[2])*dy
+                lateral = -math.sin(self.pose[2])*dx+math.cos(self.pose[2])*dy
+                contact = dict(stamp=ref.stamp,present=.03<forward<.16 and abs(lateral)<.07)
         if referee_ball is not None:
             dx,dy = referee_ball.pose.x-self.pose[0],referee_ball.pose.y-self.pose[1]
             forward = math.cos(self.pose[2])*dx+math.sin(self.pose[2])*dy
@@ -421,13 +502,13 @@ class WorldModelNode(Node):
         contact['metric_source'] = self.ball_source
         contact['present'] = contact['present'] and 0 <= now-contact['stamp'] < .35
         self.contact_pub.publish(String(data=json.dumps(contact)))
-        if referee_ball is None:
+        if referee_ball is None and self.ball_input != 'hybrid':
             self.ball.predict(now)
         state = referee_ball.state if referee_ball is not None else self.ball.state(now)
 
         self.grid.relax(dt)
         camera_alive = self.camera_seen is not None and now - self.camera_seen < 0.5
-        if self.ball_input != 'referee' and camera_alive and state != OBSERVED:
+        if self.ball_input not in ('referee','hybrid') and camera_alive and state != OBSERVED:
             mask = self.grid.fov_mask(self.pose[0], self.pose[1], self.pose[2],
                                       self.hfov or self.hfov_fallback,
                                       self.fov_min, self.fov_max)

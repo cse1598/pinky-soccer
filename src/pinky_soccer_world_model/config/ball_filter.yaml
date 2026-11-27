@@ -11,3 +11,11 @@ world_model_node:
     ball.lost_timeout: 5.0          # [s]
     ball.lost_sigma: 0.5            # [m] worst-axis std above which the ball is LOST
     ball.max_speed: 3.0             # [m/s]
+    # Referee-first hybrid; initial tuning values, not measured noise statistics.
+    ball.hybrid.agreement_m: 0.06
+    ball.hybrid.confidence_min: 0.65
+    ball.hybrid.referee_sigma: 0.03
+    ball.hybrid.local_sigma: 0.012
+    ball.hybrid.referee_velocity_sigma: 0.12
+    ball.hybrid.max_position_correction: 0.025
+    ball.hybrid.max_velocity_correction: 0.18
