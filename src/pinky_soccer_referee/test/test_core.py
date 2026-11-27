@@ -69,25 +69,29 @@ def test_robot_reacquires_after_teleport_without_velocity_spike():
     a,b=RobotTrack(1),RobotTrack(2)
     for t in (0.,.033):
         associate_robots([a,b],[observation(-.5),observation(.5,team="blue")],t)
-    assert a.visible and b.visible and a.team=="yellow"
+    assert a.visible and b.visible and a.team=="unknown"
     associate_robots([a,b],[observation(-.49),observation(.49,team="blue")],.066)
     assert a.velocity_valid and b.velocity_valid
     associate_robots([a,b],[observation(.2,.25),observation(.48,team="blue")],.099)
     assert not a.visible and b.visible
     associate_robots([a,b],[observation(.21,.25),observation(.47,team="blue")],.132)
     assert a.visible and a.reacquired and not a.velocity_valid
-    assert a.team=="yellow" and np.allclose(a.position,[.21,.25])
+    assert a.team=="unknown" and np.allclose(a.position,[.21,.25])
     associate_robots([a,b],[observation(.22,.25),observation(.46,team="blue")],.165)
     assert a.visible and a.velocity_valid and not a.reacquired
 
 
-def test_team_prevents_wrong_nearby_match():
+def test_color_change_does_not_break_track():
     a=RobotTrack(1)
-    for t in (0.,.033):
-        associate_robots([a],[observation(.0)],t)
-    assert a.visible
-    associate_robots([a],[observation(.01,team="blue")],.066)
-    assert not a.visible
+    for i in range(7):
+        associate_robots([a],[observation(.0)],i*.033)
+    assert a.visible and a.team=="yellow"
+    for i in range(7,12):
+        associate_robots([a],[observation(.01,team="blue")],i*.033)
+        assert a.visible and a.velocity_valid
+    assert a.team=="blue"
+    associate_robots([a],[observation(.01,team="unknown")],12*.033)
+    assert a.visible and a.team=="unknown" and a.identity_team=="unknown"
 
 
 def test_wraparound_angular_velocity():
@@ -151,3 +155,28 @@ def test_goal_orientation_rotates_geometry(monkeypatch):
     monkeypatch.setattr(core,"goal_intervals",lambda img,field:{-1:("blue",-.25,.15),1:("yellow",-.1,.2)})
     goals=orient_goals(f,None)
     assert f.rotated and goals[-1]==("yellow",-.2,.1) and goals[1]==("blue",-.15,.25)
+
+
+@pytest.mark.parametrize("bgr,team",[
+    ((220,220,220),"unknown"),((150,195,205),"unknown"),
+    ((185,220,245),"unknown"),((30,220,240),"yellow"),
+    ((255,170,30),"blue"),((170,135,50),"unknown")])
+def test_led_interior_color_evidence(bgr,team):
+    from referee_core import classify_led_pixels
+    pixels=np.tile(np.array(bgr,np.uint8),(100,1))
+    assert classify_led_pixels(pixels)==team
+
+
+def test_small_yellow_reflection_does_not_define_team():
+    from referee_core import classify_led_pixels
+    pixels=np.tile(np.array([220,220,220],np.uint8),(100,1))
+    pixels[:24]=[30,220,240]
+    assert classify_led_pixels(pixels)=="unknown"
+
+
+def test_floor_tape_without_led_is_not_heading():
+    img=np.full((220,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(96,0),(105,219),(220,220,220),-1)
+    cv2.rectangle(img,(100,80),(190,140),(22,22,22),-1)
+    result=robot_observations(img,FakeField(),[(None,5400,(100,80,91,61))])
+    assert result[0]["heading"] is None and result[0]["team"]=="unknown"
