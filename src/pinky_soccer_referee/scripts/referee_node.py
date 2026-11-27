@@ -244,11 +244,10 @@ class Referee(Node):
         cv2.drawMarker(top,tuple(origin),(255,255,255),cv2.MARKER_CROSS,16,2,cv2.LINE_AA)
         cv2.putText(top,"(0, 0)",tuple(origin+np.array([9,17])),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
         for side,(goal_color,lo,hi) in self.goals.items():
-            # Both goal-line segments are highlighted yellow; the goal label
-            # and actual RGB goal retain their respective team colors.
-            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),(0,230,255),4,cv2.LINE_AA)
-            label_pos=f.pixel((side*l,(lo+hi)/2))
+            # Match each goal-line segment to its goal color.
             label_color=(0,230,255) if goal_color=="yellow" else (255,140,0)
+            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),label_color,4,cv2.LINE_AA)
+            label_pos=f.pixel((side*l,(lo+hi)/2))
             offset=np.array([8,-12]) if side<0 else np.array([-90,-12])
             cv2.putText(top,goal_color.upper()+" GOAL",tuple(label_pos+offset),cv2.FONT_HERSHEY_SIMPLEX,.45,label_color,1,cv2.LINE_AA)
         for tr in [self.ball]+self.robots:
