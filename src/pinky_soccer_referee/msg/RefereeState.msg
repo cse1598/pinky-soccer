@@ -1,0 +1,10 @@
+std_msgs/Header header
+bool calibrated
+bool metric_valid
+bool armed
+string status
+string last_event
+uint32 yellow_goal_entries
+uint32 blue_goal_entries
+TrackedObject ball
+TrackedObject[] robots
