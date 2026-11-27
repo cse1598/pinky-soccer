@@ -1,0 +1,10 @@
+2026-11-27
+RGB mask comparison completed before follow-up scope changes.
+61 tests passed before body-only path/circle display changes.
+588 paired video samples, ball outputs unchanged.
+16 uniform frames visually reviewed: 31 visible robots, both versions 31 TP/0 FP/0 FN.
+Count-difference frames 300/315/330/345 in 201621 clip show only one physical robot; old detector reports two, RGB detector one. Visually reviewed; floor-shadow ghost eliminated in these four sampled frames.
+Frame360 partially occluded robot: old observation count1 vs new2; frame375 old raw blobs3 vs new2, both observation count2.
+Timings in video_summary refer to pre-follow-up LED observation pipeline, not current body-only pipeline.
+User then explicitly requested no more checks, circle/center/speed display only, and no robot LED recognition. Runtime now calls robot_body_observations without LED/heading logic. Position/velocity filter and ROS message layouts unchanged.
+No tests/build/replay checks performed after follow-up changes, as requested. Restart referee node to load Python changes.

@@ -1,0 +1,531 @@
+{
+  "real": {
+    "parameters": {
+      "target": "real",
+      "inputs": [
+        "/home/cse/pinky-soccer/src/pinky_soccer_dynamics/config/dynamics.yaml",
+        "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml"
+      ],
+      "model": {
+        "left_radius": {
+          "value": 0.027,
+          "source": "official_default",
+          "ref": "pinky_bringup bringup.py wheel_radius"
+        },
+        "right_radius": {
+          "value": 0.027,
+          "source": "official_default",
+          "ref": "pinky_bringup bringup.py wheel_radius"
+        },
+        "track": {
+          "value": 0.0961,
+          "source": "official_default",
+          "ref": "pinky_bringup bringup.py wheel_separation"
+        },
+        "tau_left": {
+          "value": 0.09031918634164283,
+          "source": "measured",
+          "ref": "fixed-ramp effective tau fit",
+          "meta": {
+            "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+            "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+            "robot_id": "pinky-pro",
+            "model": "fixed_ramp_first_order_no_delay",
+            "fixed_profile_accel": 74.9,
+            "validation": {
+              "held_out": true,
+              "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+              "rmse_rad_s": 0.13673772694495787,
+              "baseline_rmse_rad_s": 0.2517027001397467,
+              "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+              "horizon_wheel_angle_error_rad": {
+                "0.1s": 0.006039970818655074,
+                "0.25s": 0.01353924291080568,
+                "0.5s": 0.025260526044419987,
+                "1s": 0.050791633435875824,
+                "2s": 0.10842667597723218
+              },
+              "baseline_horizon_wheel_angle_error_rad": {
+                "0.1s": 0.00451993498306686,
+                "0.25s": 0.010070927021842346,
+                "0.5s": 0.018200915595838738,
+                "1s": 0.03616965200808703,
+                "2s": 0.07592224755230896
+              }
+            }
+          }
+        },
+        "tau_right": {
+          "value": 0.08894523651011192,
+          "source": "measured",
+          "ref": "fixed-ramp effective tau fit",
+          "meta": {
+            "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+            "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+            "robot_id": "pinky-pro",
+            "model": "fixed_ramp_first_order_no_delay",
+            "fixed_profile_accel": 74.9,
+            "validation": {
+              "held_out": true,
+              "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+              "rmse_rad_s": 0.13673772694495787,
+              "baseline_rmse_rad_s": 0.2517027001397467,
+              "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+              "horizon_wheel_angle_error_rad": {
+                "0.1s": 0.006039970818655074,
+                "0.25s": 0.01353924291080568,
+                "0.5s": 0.025260526044419987,
+                "1s": 0.050791633435875824,
+                "2s": 0.10842667597723218
+              },
+              "baseline_horizon_wheel_angle_error_rad": {
+                "0.1s": 0.00451993498306686,
+                "0.25s": 0.010070927021842346,
+                "0.5s": 0.018200915595838738,
+                "1s": 0.03616965200808703,
+                "2s": 0.07592224755230896
+              }
+            }
+          }
+        },
+        "delay": {
+          "value": 0.0,
+          "source": "assumption",
+          "ref": "not identified; command-to-motion dead time"
+        },
+        "wheel_speed_max": {
+          "value": 10.47,
+          "source": "official_default",
+          "ref": "bringup.py MAX_RPM 100 -> 10.47 rad/s"
+        },
+        "wheel_accel_max": {
+          "value": 74.9,
+          "source": "official_default",
+          "ref": "dynamixel_driver Profile Acceleration 200 x 214.577 rpm/min"
+        }
+      },
+      "driver": {
+        "wheel_radius": {
+          "value": 0.027,
+          "source": "official_default",
+          "ref": "bringup.py; overridden by launch wheel_radius"
+        },
+        "wheel_separation": {
+          "value": 0.0961,
+          "source": "official_default",
+          "ref": "bringup.py; overridden by launch wheel_separation"
+        },
+        "max_rpm": {
+          "value": 100.0,
+          "source": "official_default",
+          "ref": "bringup.py twist_callback MAX_RPM (ratio-preserving scale)"
+        },
+        "rpm_resolution": {
+          "value": 0.229,
+          "source": "official_default",
+          "ref": "dynamixel_driver RPM_TO_VALUE_SCALE (int truncation)"
+        }
+      },
+      "joint_sign": {
+        "left": {
+          "value": 1,
+          "source": "assumption",
+          "ref": "code analysis, not verified on hardware"
+        },
+        "right": {
+          "value": -1,
+          "source": "assumption",
+          "ref": "code analysis, not verified on hardware"
+        }
+      },
+      "limits": {
+        "motor_rated_rpm": {
+          "value": 103.0,
+          "source": "manual",
+          "ref": "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Model listed on PinkLAB official Pinky Pro product page https://pinklab.art/pinky-pro/; actual supply voltage and hardware registers not read from the robot"
+        },
+        "motor_accel": {
+          "value": 74.9,
+          "source": "official_default",
+          "ref": "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"
+        },
+        "usage_ratio": {
+          "value": 0.9,
+          "source": "user_decision",
+          "ref": "2026-11-24 user: use up to 90 % of the manual maximum (speed and acceleration)"
+        }
+      },
+      "unmeasured": [
+        "left_radius",
+        "right_radius",
+        "track",
+        "delay",
+        "wheel_speed_max",
+        "wheel_accel_max"
+      ]
+    },
+    "response": {
+      "applied": true,
+      "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+      "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+      "robot_id": "pinky-pro",
+      "model": "fixed_ramp_first_order_no_delay",
+      "fixed_profile_accel": 74.9,
+      "validation": {
+        "held_out": true,
+        "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+        "rmse_rad_s": 0.13673772694495787,
+        "baseline_rmse_rad_s": 0.2517027001397467,
+        "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+        "horizon_wheel_angle_error_rad": {
+          "0.1s": 0.006039970818655074,
+          "0.25s": 0.01353924291080568,
+          "0.5s": 0.025260526044419987,
+          "1s": 0.050791633435875824,
+          "2s": 0.10842667597723218
+        },
+        "baseline_horizon_wheel_angle_error_rad": {
+          "0.1s": 0.00451993498306686,
+          "0.25s": 0.010070927021842346,
+          "0.5s": 0.018200915595838738,
+          "1s": 0.03616965200808703,
+          "2s": 0.07592224755230896
+        }
+      },
+      "parameters": {
+        "tau_left": 0.09031918634164283,
+        "tau_right": 0.08894523651011192
+      }
+    }
+  },
+  "mujoco": {
+    "parameters": {
+      "target": "mujoco",
+      "inputs": [
+        "/home/cse/pinky-soccer/src/pinky_soccer_dynamics/config/dynamics.yaml",
+        "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml"
+      ],
+      "model": {
+        "left_radius": {
+          "value": 0.027501162062191536,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.left_radius_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+            "robot_id": "mujoco-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:35:24.915005+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00016694771984553566,
+              "sample_std": 0.00015679897712327678,
+              "max": 0.0003221847149880164
+            },
+            "condition_number": null
+          }
+        },
+        "right_radius": {
+          "value": 0.027501162062191536,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.right_radius_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+            "robot_id": "mujoco-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:35:24.915005+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00016694771984553566,
+              "sample_std": 0.00015679897712327678,
+              "max": 0.0003221847149880164
+            },
+            "condition_number": null
+          }
+        },
+        "track": {
+          "value": 0.09824633959087777,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.separation_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+            "robot_id": "mujoco-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:35:24.915005+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00016694771984553566,
+              "sample_std": 0.00015679897712327678,
+              "max": 0.0003221847149880164
+            },
+            "condition_number": null
+          }
+        },
+        "tau_left": {
+          "value": 0.05,
+          "source": "assumption",
+          "ref": "identify with identify_sim (velocity actuator + 74.9 rad/s^2 ramp)"
+        },
+        "tau_right": {
+          "value": 0.05,
+          "source": "assumption",
+          "ref": "identify with identify_sim"
+        },
+        "delay": {
+          "value": 0.0,
+          "source": "assumption",
+          "ref": "bridge period 10 ms"
+        },
+        "wheel_speed_max": {
+          "value": 10.47,
+          "source": "simulation_model",
+          "ref": "pinky_soccer_sim emulates the real driver: 100 rpm ratio-preserving scaling (motor max_speed 103 RPM no-load)"
+        },
+        "wheel_accel_max": {
+          "value": 74.9,
+          "source": "simulation_model",
+          "ref": "mujoco.yaml motors.wheel_accel"
+        }
+      },
+      "driver": {
+        "wheel_radius": {
+          "value": 0.027501162062191536,
+          "source": "simulation_identified",
+          "ref": "profile launch.wheel_radius",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+            "robot_id": "mujoco-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:35:24.915005+00:00",
+            "project_revision": 1
+          }
+        },
+        "wheel_separation": {
+          "value": 0.09824633959087777,
+          "source": "simulation_identified",
+          "ref": "profile launch.wheel_separation",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+            "robot_id": "mujoco-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:35:24.915005+00:00",
+            "project_revision": 1
+          }
+        },
+        "max_rpm": {
+          "value": 100.0,
+          "source": "simulation_model",
+          "ref": "pinky_soccer_sim real_driver_limits (same scaling as bringup.py); the bridge's own 0.25 m/s / 1.5 rad/s clamps are lifted"
+        }
+      },
+      "joint_sign": {
+        "left": {
+          "value": 1,
+          "source": "simulation_model",
+          "ref": "URDF axis 0 1 0, qvel"
+        },
+        "right": {
+          "value": 1,
+          "source": "simulation_model",
+          "ref": "URDF axis 0 1 0, qvel"
+        }
+      },
+      "limits": {
+        "motor_rated_rpm": {
+          "value": 103.0,
+          "source": "manual",
+          "ref": "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Model listed on PinkLAB official Pinky Pro product page https://pinklab.art/pinky-pro/; actual supply voltage and hardware registers not read from the robot"
+        },
+        "motor_accel": {
+          "value": 74.9,
+          "source": "official_default",
+          "ref": "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"
+        },
+        "usage_ratio": {
+          "value": 0.9,
+          "source": "user_decision",
+          "ref": "2026-11-24 user: use up to 90 % of the manual maximum (speed and acceleration)"
+        }
+      },
+      "unmeasured": [
+        "tau_left",
+        "tau_right",
+        "delay"
+      ]
+    },
+    "response": {
+      "applied": false
+    }
+  },
+  "gazebo": {
+    "parameters": {
+      "target": "gazebo",
+      "inputs": [
+        "/home/cse/pinky-soccer/src/pinky_soccer_dynamics/config/dynamics.yaml",
+        "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml"
+      ],
+      "model": {
+        "left_radius": {
+          "value": 0.027974266731720963,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.left_radius_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml",
+            "robot_id": "gazebo-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:46:18.580769+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00013014033016514603,
+              "sample_std": 0.00010377489319503515,
+              "max": 0.00023618158465188444
+            },
+            "condition_number": null
+          }
+        },
+        "right_radius": {
+          "value": 0.027974266731720963,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.right_radius_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml",
+            "robot_id": "gazebo-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:46:18.580769+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00013014033016514603,
+              "sample_std": 0.00010377489319503515,
+              "max": 0.00023618158465188444
+            },
+            "condition_number": null
+          }
+        },
+        "track": {
+          "value": 0.09806505559195278,
+          "source": "simulation_identified",
+          "ref": "profile results.wheels.separation_m",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml",
+            "robot_id": "gazebo-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:46:18.580769+00:00",
+            "project_revision": 1,
+            "trials": 12,
+            "equation_residual": {
+              "count": 12,
+              "mean": 0.00013014033016514603,
+              "sample_std": 0.00010377489319503515,
+              "max": 0.00023618158465188444
+            },
+            "condition_number": null
+          }
+        },
+        "tau_left": {
+          "value": 0.05,
+          "source": "assumption",
+          "ref": "not identified"
+        },
+        "tau_right": {
+          "value": 0.05,
+          "source": "assumption",
+          "ref": "not identified"
+        },
+        "delay": {
+          "value": 0.0,
+          "source": "assumption",
+          "ref": "not identified"
+        },
+        "wheel_speed_max": {
+          "value": 10.4719755,
+          "source": "official_default",
+          "ref": "100 RPM real driver limit; gazebo motor adapter"
+        },
+        "wheel_accel_max": {
+          "value": 74.9,
+          "source": "official_default",
+          "ref": "Dynamixel Profile Acceleration 200; gazebo motor adapter"
+        }
+      },
+      "driver": {
+        "wheel_radius": {
+          "value": 0.027974266731720963,
+          "source": "simulation_identified",
+          "ref": "profile launch.wheel_radius",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml",
+            "robot_id": "gazebo-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:46:18.580769+00:00",
+            "project_revision": 1
+          }
+        },
+        "wheel_separation": {
+          "value": 0.09806505559195278,
+          "source": "simulation_identified",
+          "ref": "profile launch.wheel_separation",
+          "meta": {
+            "file": "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml",
+            "robot_id": "gazebo-sim",
+            "environment": "rehearsal",
+            "exported_utc": "2026-11-23T19:46:18.580769+00:00",
+            "project_revision": 1
+          }
+        },
+        "max_rpm": {
+          "value": 100.0,
+          "source": "official_default",
+          "ref": "real driver; gazebo motor adapter"
+        }
+      },
+      "joint_sign": {
+        "left": {
+          "value": 1,
+          "source": "simulation_model",
+          "ref": "URDF axis 0 1 0"
+        },
+        "right": {
+          "value": 1,
+          "source": "simulation_model",
+          "ref": "URDF axis 0 1 0"
+        }
+      },
+      "limits": {
+        "motor_rated_rpm": {
+          "value": 103.0,
+          "source": "manual",
+          "ref": "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Model listed on PinkLAB official Pinky Pro product page https://pinklab.art/pinky-pro/; actual supply voltage and hardware registers not read from the robot"
+        },
+        "motor_accel": {
+          "value": 74.9,
+          "source": "official_default",
+          "ref": "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"
+        },
+        "usage_ratio": {
+          "value": 0.9,
+          "source": "user_decision",
+          "ref": "2026-11-24 user: use up to 90 % of the manual maximum (speed and acceleration)"
+        }
+      },
+      "unmeasured": [
+        "tau_left",
+        "tau_right",
+        "delay",
+        "wheel_speed_max",
+        "wheel_accel_max"
+      ]
+    },
+    "response": {
+      "applied": false
+    }
+  }
+}

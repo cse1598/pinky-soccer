@@ -1,0 +1,18 @@
+{
+  "bag": "/tmp/pinky_prepare_20261127_190846",
+  "prepare_state_sequence": [
+    "CALIBRATING",
+    "MOVING_TO_START",
+    "ERROR"
+  ],
+  "failure": "no optimized first command within 1 s (4 slots missed while initializing)",
+  "backend": "discrete_time_optimal_acados",
+  "solver_completed_result_diagnostics_present": false,
+  "monitor_observed_states": [
+    "STOP: waiting for measurement-time scan TF",
+    "CLEAR: conservative reachable disc clear"
+  ],
+  "ui_error": "AttributeError: property 'clients' of 'PreparationView' object has no setter",
+  "ui_fix": "action_clients attribute; isolated native ROS constructor PASS",
+  "limits": "No motion commanded by agent. Canceled worker duration unavailable because timing_trace false; solver root cause not confirmed."
+}

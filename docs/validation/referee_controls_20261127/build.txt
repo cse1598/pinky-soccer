@@ -1,0 +1,6 @@
+Starting >>> pinky_soccer_referee
+Starting >>> pinky_soccer_viz
+Finished <<< pinky_soccer_referee [1.92s]
+Finished <<< pinky_soccer_viz [1.95s]
+
+Summary: 2 packages finished [2.21s]

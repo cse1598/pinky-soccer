@@ -1,0 +1,181 @@
+[
+  {
+    "case": "long",
+    "goal": [
+      0.5,
+      0.0,
+      0.0
+    ],
+    "start_wall": 5.854945261002285,
+    "start_estimate": {
+      "stamp_ns": 3940000000,
+      "frame": "map",
+      "x": -0.4000184016420361,
+      "y": -0.00010941891028515281,
+      "yaw": 0.000472534873971781,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 3920000000,
+      "v": 8.283485210044642e-16,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 3940000000,
+      "wall": 5.853827409002406
+    },
+    "request_id": 15000,
+    "end_wall": 11.449509772006422,
+    "result": "success",
+    "samples": {
+      "cmd": 279,
+      "mpc_command": 223,
+      "drive": 112,
+      "plant_command": 0,
+      "joints": 280,
+      "odom": 280,
+      "world": 168,
+      "status": 223,
+      "result": 223,
+      "truth": 280
+    },
+    "cmd_receipt_period_ms": {
+      "n": 278,
+      "mean": 20.047356356110168,
+      "median": 19.413388497923734,
+      "p95": 29.437406799115706,
+      "p99": 34.73306412830426,
+      "maximum": 40.9415930043906
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 222,
+      "mean": 20.087374022500832,
+      "median": 18.259525000758003,
+      "p95": 30.052456296107266,
+      "p99": 34.53043091023573,
+      "maximum": 38.49858399917139
+    },
+    "drive_receipt_period_ms": {
+      "n": 111,
+      "mean": 50.000026414374325,
+      "median": 50.040490001265425,
+      "p95": 51.414011999440845,
+      "p99": 52.83280259827735,
+      "maximum": 53.034230004413985
+    },
+    "joints_receipt_period_ms": {
+      "n": 279,
+      "mean": 19.994034379925978,
+      "median": 18.143358000088483,
+      "p95": 29.6070293028606,
+      "p99": 34.72737446107202,
+      "maximum": 39.467066002544016
+    },
+    "world_receipt_period_ms": {
+      "n": 167,
+      "mean": 33.38002825147489,
+      "median": 32.83673099940643,
+      "p95": 48.32788290150347,
+      "p99": 52.49559480245808,
+      "maximum": 57.361022001714446
+    },
+    "zero_command_samples": 92,
+    "zero_run_starts": 3,
+    "nonzero_command_samples": 187,
+    "command_delta_v": {
+      "n": 278,
+      "mean": 0.004355429264748103,
+      "median": 0.0,
+      "p95": 0.00023060438477072651,
+      "p99": 0.13065461066341671,
+      "maximum": 0.2667139116526578
+    },
+    "command_delta_w": {
+      "n": 278,
+      "mean": 0.00026507979921087845,
+      "median": 0.0,
+      "p95": 0.0013869528203159925,
+      "p99": 0.00770008346358565,
+      "maximum": 0.018189075118116554
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 0,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 39,
+        "mean": 28.950996103492052,
+        "median": 17.990993001149036,
+        "p95": 76.1265507033386,
+        "p99": 82.19656532179215,
+        "maximum": 82.25407300051302
+      },
+      "acados_ms": {
+        "n": 39,
+        "mean": 12.902897435897435,
+        "median": 5.484,
+        "p95": 45.778200000000005,
+        "p99": 55.82515999999996,
+        "maximum": 61.684
+      },
+      "worker_wait_ms": {
+        "n": 39,
+        "mean": 1.722216871619308,
+        "median": 1.6784439940238371,
+        "p95": 2.537404900795082,
+        "p99": 2.828307218151167,
+        "maximum": 2.832783997291699
+      },
+      "result_pickup_ms": {
+        "n": 39,
+        "mean": 10.665844717900304,
+        "median": 9.818276004807558,
+        "p95": 21.623595600249246,
+        "p99": 24.483307361369942,
+        "maximum": 25.833799998508766
+      }
+    },
+    "solver_status_counts": {
+      "7": 4,
+      "0": 34,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.9100123160179889,
+    "truth_yaw_change_rad": -0.001079648615089928,
+    "truth_path_length_m": 0.9119396824690084,
+    "truth_final_position_error_m": 0.009946970071026984,
+    "truth_final_heading_error_rad": 0.0010796486189651577,
+    "truth_first_legacy_pose_region_wall_s": 4.962978880001174,
+    "success_after_first_truth_region_wall_s": 0.631585631002963,
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 280,
+      "mean": 0.16257903188562525,
+      "median": 0.2620748574408073,
+      "p95": 0.2641618245815028,
+      "p99": 0.26416973278825984,
+      "maximum": 0.26425319771043343
+    },
+    "odom_w_abs": {
+      "n": 280,
+      "mean": 0.0008635650467933612,
+      "median": 5.514462159900136e-06,
+      "p95": 0.006282463163406225,
+      "p99": 0.007880037662547324,
+      "maximum": 0.011768526866060619
+    },
+    "elapsed_wall_s": 5.594564511004137
+  }
+]

@@ -1,0 +1,14 @@
+Starting >>> pinky_soccer_bt
+--- stderr: pinky_soccer_bt
+/home/cse/pinky-soccer/src/pinky_soccer_bt/test/test_soccer_tree.cpp: In member function ‘virtual void TreeTest_HandoffSuccessDoesNotInsertStopButExplicitHaltStillStops_Test::TestBody()’:
+/home/cse/pinky-soccer/src/pinky_soccer_bt/test/test_soccer_tree.cpp:284:50: warning: converting to ‘pinky_soccer_msgs::msg::MotionResult’ {aka ‘pinky_soccer_msgs::msg::MotionResult_<std::allocator<void> >’} from initializer list would use explicit constructor ‘pinky_soccer_msgs::msg::MotionResult_<ContainerAllocator>::MotionResult_(rosidl_runtime_cpp::MessageInitialization) [with ContainerAllocator = std::allocator<void>]’
+  284 |   bb_->set("motion_result", ReceivedMotionResult{});
+      |                                                  ^
+/home/cse/pinky-soccer/src/pinky_soccer_bt/test/test_soccer_tree.cpp:284:50: note: in C++11 and above a default constructor can be explicit
+---
+Finished <<< pinky_soccer_bt [11.4s]
+Starting >>> pinky_soccer_viz
+Finished <<< pinky_soccer_viz [1.65s]
+
+Summary: 2 packages finished [13.3s]
+  1 package had stderr output: pinky_soccer_bt

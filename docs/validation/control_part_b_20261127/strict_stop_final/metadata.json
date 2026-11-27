@@ -1,0 +1,4828 @@
+{
+  "arguments": {
+    "sim": "mujoco",
+    "mode": "gotopose",
+    "case": "basic",
+    "domain": 226,
+    "output": "/tmp/pinky-partb-strict-residual-fixed",
+    "initial_yaw": 0.0,
+    "timeout": 18.0,
+    "bag": true,
+    "trace": false,
+    "completion_mode": "STRICT_STOP"
+  },
+  "launch": [
+    "ros2",
+    "launch",
+    "pinky_soccer_viz",
+    "game.launch.py",
+    "mode:=mujoco",
+    "headless:=true",
+    "verify:=true",
+    "preparation:=false",
+    "field:=hardboard",
+    "initial_x:=-0.4",
+    "initial_y:=0",
+    "initial_yaw:=0.0",
+    "ball_x:=0.7",
+    "ball_y:=0.45",
+    "heading_record:=/tmp/pinky-partb-strict-residual-fixed/records/heading.yaml"
+  ],
+  "avoidance": false,
+  "completion": "STRICT_STOP",
+  "truth_use": "evaluation only",
+  "source_sha256_at_start": {
+    "scripts/run_control_baseline.py": "1d46af3f371a42396cb3dcbd3111e7b111cb0a7fc5d2749a83523c2891e31793",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": "af12e998e71e7b2dba5e066e3e869d7a49c8d86ad84bcd2d8d28c89246329956",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/timing_trace.py": "8f96b460ab5c03a39f1ebcc3c5ddd44df59ec3facfb809f55712e6782041f27d"
+  },
+  "recorder_note": "Normalized gzip plus optional full CDR recording add overhead; recorder CPU is included. Live file limited to 2 Hz.",
+  "note": "Sequential basic course records actual initial states; it does not assert identical starts between legs.",
+  "startup_barrier": "MPC parameter response and first status, plus sensor localization READY, before measured goal.",
+  "cpu": [
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 1.11,
+      "rss": 172642304
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.53,
+      "rss": 48484352
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 0.53,
+      "rss": 130482176
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.02,
+      "rss": 19079168
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 0.52,
+      "rss": 40804352
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.03,
+      "rss": 21270528
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 0.53,
+      "rss": 101097472
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 0.52,
+      "rss": 72249344
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 0.54,
+      "rss": 104452096
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.05,
+      "rss": 27123712
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 0.52,
+      "rss": 53010432
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 0.52,
+      "rss": 51609600
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 0.52,
+      "rss": 122179584
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 0.51,
+      "rss": 53252096
+    },
+    {
+      "wall": 1.0006181790000142,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 0.51,
+      "rss": 51384320
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 1.9300000000000002,
+      "rss": 173891584
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.87,
+      "rss": 60448768
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 1.39,
+      "rss": 180150272
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.09,
+      "rss": 20332544
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 2.33,
+      "rss": 362586112
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.09,
+      "rss": 22511616
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 1.3599999999999999,
+      "rss": 165584896
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 1.54,
+      "rss": 164110336
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 1.21,
+      "rss": 166842368
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.12000000000000001,
+      "rss": 28344320
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.54,
+      "rss": 133898240
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.1,
+      "rss": 67444736
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 1.3399999999999999,
+      "rss": 164798464
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 1.07,
+      "rss": 92282880
+    },
+    {
+      "wall": 2.002205226000001,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 0.87,
+      "rss": 63778816
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 2.44,
+      "rss": 174534656
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.89,
+      "rss": 60682240
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 1.6,
+      "rss": 193835008
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.11000000000000001,
+      "rss": 20590592
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 3.2699999999999996,
+      "rss": 576864256
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.11000000000000001,
+      "rss": 22765568
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 1.51,
+      "rss": 174661632
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 1.82,
+      "rss": 175124480
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 1.3099999999999998,
+      "rss": 167432192
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.16,
+      "rss": 28594176
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.8599999999999999,
+      "rss": 153739264
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.1900000000000002,
+      "rss": 67805184
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 1.42,
+      "rss": 165457920
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 1.21,
+      "rss": 92594176
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 0.92,
+      "rss": 64106496
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12634,
+      "name": "-c",
+      "cpu_s": 0.0,
+      "rss": 1970176
+    },
+    {
+      "wall": 3.003989751000006,
+      "pid": 12635,
+      "name": "*",
+      "cpu_s": 0.07,
+      "rss": 11988992
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 3.07,
+      "rss": 174985216
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.91,
+      "rss": 60686336
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 2.04,
+      "rss": 194080768
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.11000000000000001,
+      "rss": 20590592
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 4.2,
+      "rss": 576958464
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.13,
+      "rss": 22765568
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 1.77,
+      "rss": 175071232
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 2.17,
+      "rss": 175591424
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 1.51,
+      "rss": 167436288
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.19,
+      "rss": 28598272
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.8599999999999999,
+      "rss": 153747456
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.33,
+      "rss": 67809280
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 1.58,
+      "rss": 165466112
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 1.3900000000000001,
+      "rss": 92602368
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.03,
+      "rss": 64110592
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12662,
+      "name": "ocp_shared_lib",
+      "cpu_s": 0.0,
+      "rss": 2891776
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12687,
+      "name": "-fPIC",
+      "cpu_s": 0.0,
+      "rss": 3170304
+    },
+    {
+      "wall": 4.006508046000022,
+      "pid": 12688,
+      "name": "-quiet",
+      "cpu_s": 0.02,
+      "rss": 28160000
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 3.6700000000000004,
+      "rss": 175452160
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.92,
+      "rss": 60690432
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 2.4699999999999998,
+      "rss": 194109440
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.12,
+      "rss": 20590592
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 5.109999999999999,
+      "rss": 577024000
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.15,
+      "rss": 22765568
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 2.04,
+      "rss": 175149056
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 2.52,
+      "rss": 175804416
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 1.71,
+      "rss": 167452672
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.21000000000000002,
+      "rss": 28598272
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.8699999999999999,
+      "rss": 153755648
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.4700000000000002,
+      "rss": 67813376
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 1.73,
+      "rss": 165470208
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 1.58,
+      "rss": 92614656
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.13,
+      "rss": 64114688
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12662,
+      "name": "ocp_shared_lib",
+      "cpu_s": 0.0,
+      "rss": 2924544
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12705,
+      "name": "-fPIC",
+      "cpu_s": 0.0,
+      "rss": 3166208
+    },
+    {
+      "wall": 5.008111190000022,
+      "pid": 12706,
+      "name": "-quiet",
+      "cpu_s": 0.43,
+      "rss": 54206464
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 4.300000000000001,
+      "rss": 175955968
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 0.96,
+      "rss": 60690432
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 2.89,
+      "rss": 197132288
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.14,
+      "rss": 20590592
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 6.03,
+      "rss": 577093632
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.16,
+      "rss": 22765568
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 2.29,
+      "rss": 175149056
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 2.94,
+      "rss": 177852416
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 1.91,
+      "rss": 168251392
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.24,
+      "rss": 28991488
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.97,
+      "rss": 156413952
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.63,
+      "rss": 67825664
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 1.88,
+      "rss": 167407616
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 1.77,
+      "rss": 93388800
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.2400000000000002,
+      "rss": 64114688
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12751,
+      "name": "-c",
+      "cpu_s": 0.0,
+      "rss": 1966080
+    },
+    {
+      "wall": 6.009519362999981,
+      "pid": 12752,
+      "name": "*",
+      "cpu_s": 0.03,
+      "rss": 10469376
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 5.01,
+      "rss": 176525312
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.02,
+      "rss": 60690432
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 3.33,
+      "rss": 194109440
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.15000000000000002,
+      "rss": 20590592
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 6.960000000000001,
+      "rss": 577150976
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.18,
+      "rss": 22765568
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 2.5900000000000003,
+      "rss": 175149056
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 3.33,
+      "rss": 178126848
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 2.1799999999999997,
+      "rss": 168460288
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.27,
+      "rss": 28991488
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.98,
+      "rss": 156413952
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 1.9300000000000002,
+      "rss": 67825664
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 2.0700000000000003,
+      "rss": 167407616
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 2.0,
+      "rss": 93409280
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.33,
+      "rss": 64114688
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12768,
+      "name": "ocp_shared_lib",
+      "cpu_s": 0.0,
+      "rss": 2871296
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12775,
+      "name": "-fPIC",
+      "cpu_s": 0.0,
+      "rss": 3166208
+    },
+    {
+      "wall": 7.011214235000011,
+      "pid": 12776,
+      "name": "-quiet",
+      "cpu_s": 0.09,
+      "rss": 32432128
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 5.71,
+      "rss": 177119232
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.0699999999999998,
+      "rss": 60690432
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 3.7600000000000002,
+      "rss": 195059712
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.16,
+      "rss": 20590592
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 7.88,
+      "rss": 577200128
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.2,
+      "rss": 22765568
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 2.89,
+      "rss": 175149056
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 3.69,
+      "rss": 177405952
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 2.44,
+      "rss": 168464384
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.29,
+      "rss": 28991488
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.99,
+      "rss": 156413952
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 2.2199999999999998,
+      "rss": 67825664
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 2.25,
+      "rss": 167407616
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 2.22,
+      "rss": 93433856
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.4300000000000002,
+      "rss": 64114688
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12768,
+      "name": "ocp_shared_lib",
+      "cpu_s": 0.0,
+      "rss": 2920448
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12835,
+      "name": "-fPIC",
+      "cpu_s": 0.0,
+      "rss": 3166208
+    },
+    {
+      "wall": 8.011268778999977,
+      "pid": 12836,
+      "name": "-quiet",
+      "cpu_s": 0.22,
+      "rss": 36655104
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 6.41,
+      "rss": 177672192
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.1099999999999999,
+      "rss": 60690432
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 4.22,
+      "rss": 195067904
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.16999999999999998,
+      "rss": 20594688
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 8.799999999999999,
+      "rss": 577253376
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.21000000000000002,
+      "rss": 22769664
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 3.2,
+      "rss": 175153152
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 4.08,
+      "rss": 177614848
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 2.71,
+      "rss": 168476672
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.32,
+      "rss": 28999680
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 1.99,
+      "rss": 156418048
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 2.51,
+      "rss": 67829760
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 2.4499999999999997,
+      "rss": 167411712
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 2.4499999999999997,
+      "rss": 93458432
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.5499999999999998,
+      "rss": 64118784
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12768,
+      "name": "ocp_shared_lib",
+      "cpu_s": 0.0,
+      "rss": 2932736
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12851,
+      "name": "-fPIC",
+      "cpu_s": 0.0,
+      "rss": 3166208
+    },
+    {
+      "wall": 9.012955310999985,
+      "pid": 12852,
+      "name": "-quiet",
+      "cpu_s": 0.72,
+      "rss": 60604416
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 7.16,
+      "rss": 179056640
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.1600000000000001,
+      "rss": 60751872
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 4.6899999999999995,
+      "rss": 195121152
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.18,
+      "rss": 20652032
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 9.729999999999999,
+      "rss": 577347584
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.22999999999999998,
+      "rss": 22835200
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 3.51,
+      "rss": 175210496
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 4.49,
+      "rss": 177848320
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 2.99,
+      "rss": 168546304
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.36,
+      "rss": 29147136
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 2.6900000000000004,
+      "rss": 167038976
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 2.83,
+      "rss": 67887104
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 2.65,
+      "rss": 167538688
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 2.75,
+      "rss": 93622272
+    },
+    {
+      "wall": 10.013302092000004,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.65,
+      "rss": 64184320
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 7.92,
+      "rss": 180531200
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.2000000000000002,
+      "rss": 60751872
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 5.130000000000001,
+      "rss": 195121152
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.19,
+      "rss": 20652032
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 10.65,
+      "rss": 577400832
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.24,
+      "rss": 22835200
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 4.01,
+      "rss": 175398912
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 4.8999999999999995,
+      "rss": 177893376
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 3.25,
+      "rss": 168550400
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.4,
+      "rss": 29155328
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 3.49,
+      "rss": 167178240
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 3.1,
+      "rss": 67887104
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 2.83,
+      "rss": 167538688
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 3.0500000000000003,
+      "rss": 93650944
+    },
+    {
+      "wall": 11.014525463999973,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.75,
+      "rss": 64184320
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 8.63,
+      "rss": 181424128
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.2400000000000002,
+      "rss": 60751872
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 5.550000000000001,
+      "rss": 195125248
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.2,
+      "rss": 20652032
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 11.55,
+      "rss": 577458176
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.26,
+      "rss": 22835200
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 4.61,
+      "rss": 178651136
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 5.300000000000001,
+      "rss": 177930240
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 3.5,
+      "rss": 168554496
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.43,
+      "rss": 29155328
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 3.97,
+      "rss": 167182336
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 3.39,
+      "rss": 67887104
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.0100000000000002,
+      "rss": 167542784
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 3.31,
+      "rss": 93655040
+    },
+    {
+      "wall": 12.016222993999975,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.8399999999999999,
+      "rss": 64184320
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 9.32,
+      "rss": 182157312
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.2799999999999998,
+      "rss": 60751872
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 5.99,
+      "rss": 195129344
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.21000000000000002,
+      "rss": 20652032
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 12.49,
+      "rss": 577515520
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.27,
+      "rss": 22835200
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 5.2299999999999995,
+      "rss": 175398912
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 5.72,
+      "rss": 177950720
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 3.77,
+      "rss": 168554496
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.46,
+      "rss": 29171712
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 4.41,
+      "rss": 167190528
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 3.6799999999999997,
+      "rss": 67887104
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.23,
+      "rss": 167542784
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 3.5900000000000003,
+      "rss": 93675520
+    },
+    {
+      "wall": 13.016477560999988,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 1.94,
+      "rss": 64184320
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 10.049999999999999,
+      "rss": 183189504
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.31,
+      "rss": 60751872
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 6.43,
+      "rss": 195133440
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.21000000000000002,
+      "rss": 20652032
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 13.379999999999999,
+      "rss": 577568768
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.28,
+      "rss": 22835200
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 5.8100000000000005,
+      "rss": 179326976
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 6.12,
+      "rss": 177975296
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 4.03,
+      "rss": 168558592
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.5,
+      "rss": 29175808
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 5.26,
+      "rss": 167505920
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 3.98,
+      "rss": 67887104
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.4299999999999997,
+      "rss": 167542784
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 3.89,
+      "rss": 93696000
+    },
+    {
+      "wall": 14.016489332999981,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.04,
+      "rss": 64184320
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 10.8,
+      "rss": 184135680
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.35,
+      "rss": 60751872
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 6.87,
+      "rss": 195137536
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.22999999999999998,
+      "rss": 20652032
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 14.290000000000001,
+      "rss": 577609728
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.31,
+      "rss": 22835200
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 6.33,
+      "rss": 175767552
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 6.54,
+      "rss": 178024448
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 4.3100000000000005,
+      "rss": 168562688
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.54,
+      "rss": 29175808
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 5.93,
+      "rss": 167514112
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 4.28,
+      "rss": 67887104
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.64,
+      "rss": 167542784
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 4.2,
+      "rss": 93782016
+    },
+    {
+      "wall": 15.01842369100001,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.15,
+      "rss": 64184320
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 11.49,
+      "rss": 184893440
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.4100000000000001,
+      "rss": 60755968
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 7.289999999999999,
+      "rss": 195141632
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.24,
+      "rss": 20652032
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 15.23,
+      "rss": 577658880
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.32,
+      "rss": 22835200
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 6.640000000000001,
+      "rss": 175767552
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 6.92,
+      "rss": 178208768
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 4.58,
+      "rss": 168566784
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.57,
+      "rss": 29175808
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 6.33,
+      "rss": 167514112
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 4.57,
+      "rss": 67887104
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.81,
+      "rss": 167546880
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 4.48,
+      "rss": 93782016
+    },
+    {
+      "wall": 16.019214233000014,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.25,
+      "rss": 64184320
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 12.22,
+      "rss": 185671680
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.4500000000000002,
+      "rss": 60760064
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 7.73,
+      "rss": 198664192
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.24,
+      "rss": 20656128
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 16.150000000000002,
+      "rss": 577720320
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.33999999999999997,
+      "rss": 22839296
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 7.0,
+      "rss": 175771648
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 7.340000000000001,
+      "rss": 178364416
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 4.83,
+      "rss": 168574976
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.61,
+      "rss": 29192192
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 7.11,
+      "rss": 167559168
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 4.86,
+      "rss": 68644864
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 3.9899999999999998,
+      "rss": 167550976
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 4.779999999999999,
+      "rss": 93798400
+    },
+    {
+      "wall": 17.021097555999972,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.35,
+      "rss": 64188416
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 13.02,
+      "rss": 186544128
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.48,
+      "rss": 60768256
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 8.17,
+      "rss": 195137536
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.25,
+      "rss": 20668416
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 17.07,
+      "rss": 577769472
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.35,
+      "rss": 22851584
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 7.47,
+      "rss": 175783936
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 7.79,
+      "rss": 178384896
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 5.1,
+      "rss": 168599552
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.6499999999999999,
+      "rss": 29208576
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 7.75,
+      "rss": 167583744
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 5.14,
+      "rss": 68657152
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 4.19,
+      "rss": 167563264
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 5.1,
+      "rss": 93818880
+    },
+    {
+      "wall": 18.02313564100001,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.4499999999999997,
+      "rss": 64200704
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 13.76,
+      "rss": 187260928
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.5299999999999998,
+      "rss": 60772352
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 8.620000000000001,
+      "rss": 195141632
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.27,
+      "rss": 20668416
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 17.99,
+      "rss": 577818624
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.37,
+      "rss": 22851584
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 7.79,
+      "rss": 175783936
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 8.200000000000001,
+      "rss": 178393088
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 5.38,
+      "rss": 168603648
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.69,
+      "rss": 29212672
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 8.21,
+      "rss": 167583744
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 5.4399999999999995,
+      "rss": 68657152
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 4.38,
+      "rss": 167563264
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 5.390000000000001,
+      "rss": 93818880
+    },
+    {
+      "wall": 19.023756273000004,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.55,
+      "rss": 64200704
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 14.5,
+      "rss": 187998208
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.5699999999999998,
+      "rss": 60772352
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 9.08,
+      "rss": 195141632
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.28,
+      "rss": 20668416
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 18.919999999999998,
+      "rss": 577863680
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.38,
+      "rss": 22851584
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 8.06,
+      "rss": 175783936
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 8.620000000000001,
+      "rss": 178397184
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 5.63,
+      "rss": 168603648
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.73,
+      "rss": 29220864
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 8.84,
+      "rss": 167583744
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 5.7299999999999995,
+      "rss": 68657152
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 4.58,
+      "rss": 167563264
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 5.67,
+      "rss": 93822976
+    },
+    {
+      "wall": 20.024018583999975,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.64,
+      "rss": 64200704
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 15.239999999999998,
+      "rss": 188985344
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.6099999999999999,
+      "rss": 60772352
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 9.53,
+      "rss": 195170304
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.29000000000000004,
+      "rss": 20668416
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 19.84,
+      "rss": 577916928
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.39999999999999997,
+      "rss": 22851584
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 8.35,
+      "rss": 175783936
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 9.040000000000001,
+      "rss": 178479104
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 5.9,
+      "rss": 168628224
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.77,
+      "rss": 29224960
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 9.48,
+      "rss": 167583744
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 6.029999999999999,
+      "rss": 68661248
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 4.7700000000000005,
+      "rss": 167563264
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 6.0,
+      "rss": 93831168
+    },
+    {
+      "wall": 21.025453733999996,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.74,
+      "rss": 64200704
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 16.009999999999998,
+      "rss": 189669376
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.65,
+      "rss": 60772352
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 9.96,
+      "rss": 195170304
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.29000000000000004,
+      "rss": 20668416
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 20.75,
+      "rss": 577957888
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.42,
+      "rss": 22851584
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 8.63,
+      "rss": 175783936
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 9.46,
+      "rss": 178606080
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 6.15,
+      "rss": 168628224
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.8099999999999999,
+      "rss": 29224960
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 9.95,
+      "rss": 167587840
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 6.31,
+      "rss": 68661248
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 4.9399999999999995,
+      "rss": 167563264
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 6.28,
+      "rss": 93835264
+    },
+    {
+      "wall": 22.025783434999994,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.83,
+      "rss": 64200704
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 16.71,
+      "rss": 190365696
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.69,
+      "rss": 60772352
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 10.41,
+      "rss": 195170304
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.3,
+      "rss": 20668416
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 21.66,
+      "rss": 578007040
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.43,
+      "rss": 22851584
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 8.91,
+      "rss": 175783936
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 9.870000000000001,
+      "rss": 177852416
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 6.42,
+      "rss": 168632320
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.84,
+      "rss": 29241344
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 10.52,
+      "rss": 168169472
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 6.61,
+      "rss": 68661248
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 5.13,
+      "rss": 167563264
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 6.550000000000001,
+      "rss": 93839360
+    },
+    {
+      "wall": 23.02602531299999,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 2.93,
+      "rss": 64200704
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 17.5,
+      "rss": 191307776
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.74,
+      "rss": 60772352
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 10.84,
+      "rss": 195149824
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.32,
+      "rss": 20668416
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 22.57,
+      "rss": 578039808
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.44,
+      "rss": 22851584
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 9.18,
+      "rss": 176451584
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 10.29,
+      "rss": 177930240
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 6.67,
+      "rss": 168632320
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.88,
+      "rss": 29241344
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 11.62,
+      "rss": 168185856
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 6.880000000000001,
+      "rss": 68665344
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 5.31,
+      "rss": 167567360
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 6.859999999999999,
+      "rss": 93859840
+    },
+    {
+      "wall": 24.028203892000022,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.0100000000000002,
+      "rss": 64200704
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 18.270000000000003,
+      "rss": 192253952
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.7899999999999998,
+      "rss": 60776448
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 11.28,
+      "rss": 195149824
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.32,
+      "rss": 20672512
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 23.49,
+      "rss": 578097152
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.46,
+      "rss": 22855680
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 9.47,
+      "rss": 175788032
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 10.73,
+      "rss": 177938432
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 6.94,
+      "rss": 168640512
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.92,
+      "rss": 29245440
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 12.790000000000001,
+      "rss": 168189952
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 7.17,
+      "rss": 68669440
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 5.5,
+      "rss": 167571456
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 7.17,
+      "rss": 93880320
+    },
+    {
+      "wall": 25.029045972999995,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.12,
+      "rss": 64204800
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 19.05,
+      "rss": 193216512
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.8299999999999998,
+      "rss": 60784640
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 11.72,
+      "rss": 195170304
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.33,
+      "rss": 20684800
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 24.419999999999998,
+      "rss": 578150400
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.48000000000000004,
+      "rss": 22867968
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 9.75,
+      "rss": 176627712
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 11.17,
+      "rss": 177967104
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 7.21,
+      "rss": 168656896
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.96,
+      "rss": 29257728
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 13.8,
+      "rss": 168202240
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 7.47,
+      "rss": 68677632
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 5.6899999999999995,
+      "rss": 167579648
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 7.48,
+      "rss": 93900800
+    },
+    {
+      "wall": 26.030154418999985,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.21,
+      "rss": 64217088
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 19.84,
+      "rss": 194097152
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.8699999999999999,
+      "rss": 60788736
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 12.16,
+      "rss": 195166208
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.35,
+      "rss": 20684800
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 25.37,
+      "rss": 578195456
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.49,
+      "rss": 22867968
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 10.0,
+      "rss": 175800320
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 11.61,
+      "rss": 177967104
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 7.489999999999999,
+      "rss": 168660992
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 0.99,
+      "rss": 29257728
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 14.7,
+      "rss": 168202240
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 7.77,
+      "rss": 68681728
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 5.88,
+      "rss": 167587840
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 7.8,
+      "rss": 93908992
+    },
+    {
+      "wall": 27.03101330999999,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.31,
+      "rss": 64217088
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 20.619999999999997,
+      "rss": 194908160
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.9,
+      "rss": 60788736
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 12.55,
+      "rss": 195166208
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.35,
+      "rss": 20684800
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 26.29,
+      "rss": 578215936
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.51,
+      "rss": 22867968
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 10.25,
+      "rss": 175800320
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 12.01,
+      "rss": 177967104
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 7.74,
+      "rss": 168665088
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.03,
+      "rss": 29257728
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 15.33,
+      "rss": 168206336
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 8.01,
+      "rss": 68681728
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 6.04,
+      "rss": 167587840
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 8.07,
+      "rss": 93921280
+    },
+    {
+      "wall": 28.031628592999994,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.4000000000000004,
+      "rss": 64217088
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 21.31,
+      "rss": 195756032
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 1.95,
+      "rss": 60788736
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 12.99,
+      "rss": 198692864
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.36,
+      "rss": 20684800
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 27.200000000000003,
+      "rss": 578215936
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.52,
+      "rss": 22867968
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 10.52,
+      "rss": 175800320
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 12.440000000000001,
+      "rss": 177971200
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 8.0,
+      "rss": 168669184
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.07,
+      "rss": 29257728
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 15.83,
+      "rss": 168214528
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 8.31,
+      "rss": 68681728
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 6.24,
+      "rss": 167587840
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 8.36,
+      "rss": 93925376
+    },
+    {
+      "wall": 29.032840523000004,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.5100000000000002,
+      "rss": 64217088
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 22.03,
+      "rss": 196435968
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.0,
+      "rss": 60788736
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 13.43,
+      "rss": 195162112
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.37,
+      "rss": 20684800
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 28.139999999999997,
+      "rss": 578215936
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.54,
+      "rss": 22867968
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 10.81,
+      "rss": 175800320
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 12.84,
+      "rss": 177975296
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 8.27,
+      "rss": 168669184
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.1,
+      "rss": 29270016
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 16.41,
+      "rss": 168259584
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 8.610000000000001,
+      "rss": 68681728
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 6.44,
+      "rss": 167587840
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 8.64,
+      "rss": 93933568
+    },
+    {
+      "wall": 30.03294260399997,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.6100000000000003,
+      "rss": 64217088
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 22.81,
+      "rss": 197406720
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.04,
+      "rss": 60788736
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 13.870000000000001,
+      "rss": 195166208
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.38,
+      "rss": 20684800
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 29.060000000000002,
+      "rss": 578215936
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.55,
+      "rss": 22867968
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 11.219999999999999,
+      "rss": 175800320
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 13.280000000000001,
+      "rss": 177979392
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 8.53,
+      "rss": 168669184
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.15,
+      "rss": 29270016
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 17.509999999999998,
+      "rss": 168259584
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 8.89,
+      "rss": 68681728
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 6.63,
+      "rss": 167587840
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 8.96,
+      "rss": 93954048
+    },
+    {
+      "wall": 31.034366213,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.71,
+      "rss": 64217088
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 23.61,
+      "rss": 198328320
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.08,
+      "rss": 60788736
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 14.33,
+      "rss": 195170304
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.39,
+      "rss": 20684800
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 30.0,
+      "rss": 578215936
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.57,
+      "rss": 22867968
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 11.73,
+      "rss": 175804416
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 13.73,
+      "rss": 177983488
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 8.799999999999999,
+      "rss": 168669184
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.1800000000000002,
+      "rss": 29270016
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 18.59,
+      "rss": 168267776
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 9.190000000000001,
+      "rss": 68681728
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 6.82,
+      "rss": 168484864
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 9.26,
+      "rss": 93962240
+    },
+    {
+      "wall": 32.03471657699998,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.8,
+      "rss": 64217088
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 24.37,
+      "rss": 199294976
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.12,
+      "rss": 60792832
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 14.77,
+      "rss": 195174400
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.41000000000000003,
+      "rss": 20688896
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 30.900000000000002,
+      "rss": 578220032
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.58,
+      "rss": 22872064
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.05,
+      "rss": 175804416
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 14.16,
+      "rss": 177991680
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 9.07,
+      "rss": 168673280
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.23,
+      "rss": 29274112
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 19.69,
+      "rss": 168493056
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 9.49,
+      "rss": 68685824
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.01,
+      "rss": 167591936
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 9.57,
+      "rss": 93970432
+    },
+    {
+      "wall": 33.03478595399997,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.9000000000000004,
+      "rss": 64221184
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 24.93,
+      "rss": 199901184
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.16,
+      "rss": 60805120
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 15.07,
+      "rss": 195186688
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.41000000000000003,
+      "rss": 20701184
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 31.57,
+      "rss": 578232320
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.59,
+      "rss": 22884352
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.25,
+      "rss": 175816704
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 14.459999999999999,
+      "rss": 178003968
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 9.28,
+      "rss": 168689664
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.25,
+      "rss": 29286400
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 20.28,
+      "rss": 168509440
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 9.68,
+      "rss": 68698112
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.13,
+      "rss": 168361984
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 9.799999999999999,
+      "rss": 93982720
+    },
+    {
+      "wall": 34.038282772,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.9600000000000004,
+      "rss": 64233472
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 25.24,
+      "rss": 200228864
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.18,
+      "rss": 60805120
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 15.21,
+      "rss": 195186688
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.41000000000000003,
+      "rss": 20701184
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 31.88,
+      "rss": 578232320
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.59,
+      "rss": 22884352
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.379999999999999,
+      "rss": 175816704
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 14.68,
+      "rss": 178003968
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 9.42,
+      "rss": 168689664
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.29,
+      "rss": 29286400
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 20.57,
+      "rss": 168513536
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 9.77,
+      "rss": 68698112
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.1899999999999995,
+      "rss": 167604224
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 9.95,
+      "rss": 93986816
+    },
+    {
+      "wall": 35.04409840599999,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 3.98,
+      "rss": 64233472
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 25.950000000000003,
+      "rss": 200753152
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.21,
+      "rss": 60805120
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 15.48,
+      "rss": 195186688
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.42,
+      "rss": 20701184
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 32.61,
+      "rss": 578232320
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.61,
+      "rss": 22884352
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.55,
+      "rss": 175816704
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 14.959999999999999,
+      "rss": 178003968
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 9.6,
+      "rss": 168689664
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.32,
+      "rss": 29286400
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 21.0,
+      "rss": 168513536
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 9.93,
+      "rss": 68698112
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.29,
+      "rss": 167604224
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 10.15,
+      "rss": 93986816
+    },
+    {
+      "wall": 36.044962569000006,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 4.03,
+      "rss": 64233472
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 26.65,
+      "rss": 200032256
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.24,
+      "rss": 60801024
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 15.79,
+      "rss": 193908736
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.42,
+      "rss": 20701184
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 33.43,
+      "rss": 575954944
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.62,
+      "rss": 22884352
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.76,
+      "rss": 174587904
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 15.29,
+      "rss": 176730112
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 9.819999999999999,
+      "rss": 167419904
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.34,
+      "rss": 29286400
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 21.64,
+      "rss": 168505344
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 10.13,
+      "rss": 68694016
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.41,
+      "rss": 166342656
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 10.41,
+      "rss": 93982720
+    },
+    {
+      "wall": 37.045091850000006,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 4.09,
+      "rss": 64229376
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 27.450000000000003,
+      "rss": 200568832
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.2800000000000002,
+      "rss": 60801024
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 16.099999999999998,
+      "rss": 193908736
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.42,
+      "rss": 20701184
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 34.349999999999994,
+      "rss": 575954944
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.62,
+      "rss": 22884352
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 12.959999999999999,
+      "rss": 174587904
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 15.65,
+      "rss": 176734208
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 10.040000000000001,
+      "rss": 167419904
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.3800000000000001,
+      "rss": 29286400
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 22.330000000000002,
+      "rss": 168505344
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 10.34,
+      "rss": 68694016
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.54,
+      "rss": 166342656
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 10.670000000000002,
+      "rss": 93986816
+    },
+    {
+      "wall": 38.045267207999984,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 4.15,
+      "rss": 64229376
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12361,
+      "name": "run_control_baseline.py",
+      "cpu_s": 28.26,
+      "rss": 201207808
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12377,
+      "name": "command_watchdog",
+      "cpu_s": 2.31,
+      "rss": 60801024
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12378,
+      "name": "sensor_adapter",
+      "cpu_s": 16.45,
+      "rss": 193908736
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12379,
+      "name": "--x",
+      "cpu_s": 0.43,
+      "rss": 20701184
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12380,
+      "name": "mujoco_eval_bridge",
+      "cpu_s": 35.26,
+      "rss": 563900416
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12381,
+      "name": "--ros-args",
+      "cpu_s": 0.63,
+      "rss": 22884352
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12382,
+      "name": "ball_detector",
+      "cpu_s": 13.450000000000001,
+      "rss": 174587904
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12383,
+      "name": "rectangle_localization",
+      "cpu_s": 16.02,
+      "rss": 176734208
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12384,
+      "name": "world_model_node",
+      "cpu_s": 10.270000000000001,
+      "rss": 167407616
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12391,
+      "name": "--ros-args",
+      "cpu_s": 1.4100000000000001,
+      "rss": 29286400
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12392,
+      "name": "mpc_controller",
+      "cpu_s": 22.82,
+      "rss": 168505344
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12393,
+      "name": "world_model_viz",
+      "cpu_s": 10.57,
+      "rss": 68689920
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12394,
+      "name": "world_model_topview",
+      "cpu_s": 7.680000000000001,
+      "rss": 166326272
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12395,
+      "name": "behavior_verifier",
+      "cpu_s": 10.930000000000001,
+      "rss": 93179904
+    },
+    {
+      "wall": 39.04552805999998,
+      "pid": 12396,
+      "name": "game_referee",
+      "cpu_s": 4.21,
+      "rss": 64229376
+    }
+  ],
+  "topology": [
+    {
+      "wall": 1.0006181790000142,
+      "publishers": {
+        "/cmd_vel": [],
+        "/drive/cmd_vel": [],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 2.002205226000001,
+      "publishers": {
+        "/cmd_vel": [],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 3.003989751000006,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 4.006508046000022,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 5.008111190000022,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 6.009519362999981,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 7.011214235000011,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 8.011268778999977,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 9.012955310999985,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": []
+      }
+    },
+    {
+      "wall": 10.013302092000004,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 11.014525463999973,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 12.016222993999975,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 13.016477560999988,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 14.016489332999981,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 15.01842369100001,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 16.019214233000014,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 17.021097555999972,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 18.02313564100001,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 19.023756273000004,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 20.024018583999975,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 21.025453733999996,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 22.025783434999994,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 23.02602531299999,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 24.028203892000022,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 25.029045972999995,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 26.030154418999985,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 27.03101330999999,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 28.031628592999994,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 29.032840523000004,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 30.03294260399997,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 31.034366213,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 32.03471657699998,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 33.03478595399997,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 34.038282772,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 35.04409840599999,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 36.044962569000006,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 37.045091850000006,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 38.045267207999984,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    },
+    {
+      "wall": 39.04552805999998,
+      "publishers": {
+        "/cmd_vel": [
+          "rectangle_localization"
+        ],
+        "/drive/cmd_vel": [
+          "soccer_command_watchdog"
+        ],
+        "/localization/controller_cmd_vel": [
+          "mpc_controller"
+        ]
+      }
+    }
+  ],
+  "runtime_parameters": {
+    "target": "mujoco",
+    "calibration_profile": "/home/cse/pinky-soccer/install/pinky_soccer_sim/share/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+    "identification": "",
+    "mpc_backend": "acados",
+    "rate_hz": 10.0,
+    "command_rate_hz": 50.0,
+    "horizon": 2.0,
+    "steps": 20,
+    "time_optimal_max_steps": 80,
+    "time_optimal_budget_sec": 0.075,
+    "max_lin": 0.0,
+    "max_ang": 2.0,
+    "wheel_feedback": true,
+    "mpc_observer_mode": "off",
+    "mpc_damping_scale": 0.0,
+    "pos_tol": 0.02,
+    "ang_tol": 0.05235987755982989,
+    "settle_sec": 0.3,
+    "goal_timeout": 0.5,
+    "pose_timeout": 0.5,
+    "init_timeout_sec": 1.0,
+    "avoid_margin": 0.02,
+    "avoid_solver_margin": 0.005,
+    "timing_trace": false,
+    "motion_management": true,
+    "motion_completion": "STRICT_STOP",
+    "motion_collision_monitor": true,
+    "motion_pose_tau": 0.12,
+    "motion_latency": 0.15,
+    "motion_deceleration": 0.3
+  }
+}

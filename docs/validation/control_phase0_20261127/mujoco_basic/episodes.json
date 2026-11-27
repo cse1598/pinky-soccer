@@ -1,0 +1,1072 @@
+[
+  {
+    "case": "straight",
+    "goal": [
+      -0.1,
+      0.0,
+      0.0
+    ],
+    "start_wall": 5.86849028999859,
+    "start_estimate": {
+      "stamp_ns": 4170000000,
+      "frame": "map",
+      "x": -0.3999441816548341,
+      "y": -1.4659874222500147e-05,
+      "yaw": -0.0002510359773187948,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 4160000000,
+      "v": 0.0,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 4170000000,
+      "wall": 5.868437836998055
+    },
+    "request_id": 15000,
+    "end_wall": 8.703464030997566,
+    "result": "success",
+    "samples": {
+      "cmd": 143,
+      "mpc_command": 95,
+      "drive": 56,
+      "plant_command": 0,
+      "joints": 142,
+      "odom": 142,
+      "world": 85,
+      "status": 95,
+      "result": 93,
+      "truth": 142
+    },
+    "cmd_receipt_period_ms": {
+      "n": 142,
+      "mean": 19.838265077466954,
+      "median": 19.795899499513325,
+      "p95": 28.057726750012076,
+      "p99": 37.153478839536575,
+      "maximum": 43.496742997376714
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 94,
+      "mean": 19.85780478722479,
+      "median": 19.795767000687192,
+      "p95": 29.598034498849287,
+      "p99": 34.65185270975776,
+      "maximum": 40.81212900200626
+    },
+    "drive_receipt_period_ms": {
+      "n": 55,
+      "mean": 49.99821110911646,
+      "median": 49.923923001188086,
+      "p95": 52.1316542999557,
+      "p99": 56.51812233976671,
+      "maximum": 61.449066997738555
+    },
+    "joints_receipt_period_ms": {
+      "n": 141,
+      "mean": 20.03727934043256,
+      "median": 19.59041800000705,
+      "p95": 27.41400800005067,
+      "p99": 36.068478198285405,
+      "maximum": 40.44043899921235
+    },
+    "world_receipt_period_ms": {
+      "n": 84,
+      "mean": 33.450456940478205,
+      "median": 33.94154200213961,
+      "p95": 44.9543133017869,
+      "p99": 48.52377930012153,
+      "maximum": 49.55023200091091
+    },
+    "zero_command_samples": 77,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 66,
+    "command_delta_v": {
+      "n": 142,
+      "mean": 0.004209843798899753,
+      "median": 0.0,
+      "p95": 3.977213582143907e-05,
+      "p99": 0.15452263578999825,
+      "maximum": 0.18528625882142652
+    },
+    "command_delta_w": {
+      "n": 142,
+      "mean": 0.0002781436151505741,
+      "median": 0.0,
+      "p95": 0.00021839137881720367,
+      "p99": 0.010730760347554748,
+      "maximum": 0.01750999091680823
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 0,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 16,
+        "mean": 13.145153437108092,
+        "median": 9.670299999925192,
+        "p95": 33.493288251520426,
+        "p99": 51.293500849897086,
+        "maximum": 55.74355399949127
+      },
+      "acados_ms": {
+        "n": 16,
+        "mean": 5.711125,
+        "median": 1.095,
+        "p95": 22.2345,
+        "p99": 38.36849999999999,
+        "maximum": 42.402
+      },
+      "worker_wait_ms": {
+        "n": 16,
+        "mean": 1.5015453122941835,
+        "median": 1.2653510002564872,
+        "p95": 2.686082998479833,
+        "p99": 5.3673702004743955,
+        "maximum": 6.037692000973038
+      },
+      "result_pickup_ms": {
+        "n": 16,
+        "mean": 11.743764375523824,
+        "median": 10.698620500988909,
+        "p95": 19.967086000178824,
+        "p99": 21.6315484020015,
+        "maximum": 22.047664002457168
+      }
+    },
+    "solver_status_counts": {
+      "0": 16
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.2979126968637199,
+    "truth_yaw_change_rad": 0.00027235676137213376,
+    "truth_path_length_m": 0.2989058951028865,
+    "truth_final_position_error_m": 0.0021536206539813333,
+    "truth_final_heading_error_rad": 0.0002723567557597737,
+    "truth_first_legacy_pose_region_wall_s": 2.264277573001891,
+    "success_after_first_truth_region_wall_s": 0.5706961679970846,
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 142,
+      "mean": 0.1051288137446044,
+      "median": 4.7615175619813164e-05,
+      "p95": 0.2641618421839636,
+      "p99": 0.2641651640969181,
+      "maximum": 0.2642456244498799
+    },
+    "odom_w_abs": {
+      "n": 142,
+      "mean": 0.00020588467391130072,
+      "median": 4.1248307611718647e-08,
+      "p95": 0.0008271480480596384,
+      "p99": 0.002418289105274887,
+      "maximum": 0.013444436681844862
+    },
+    "elapsed_wall_s": 2.8349737409989757
+  },
+  {
+    "case": "short",
+    "goal": [
+      -0.35,
+      0.0,
+      0.0
+    ],
+    "start_wall": 9.704941495998355,
+    "start_estimate": {
+      "stamp_ns": 7970000000,
+      "frame": "map",
+      "x": -0.10221257394868138,
+      "y": -2.0861331777899048e-05,
+      "yaw": -0.000645691373392514,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 7950000000,
+      "v": 1.9872943694031576e-10,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 7970000000,
+      "wall": 9.673216823997791
+    },
+    "request_id": 15001,
+    "end_wall": 11.500170482999238,
+    "result": "success",
+    "samples": {
+      "cmd": 91,
+      "mpc_command": 91,
+      "drive": 36,
+      "plant_command": 0,
+      "joints": 91,
+      "odom": 91,
+      "world": 55,
+      "status": 91,
+      "result": 89,
+      "truth": 91
+    },
+    "cmd_receipt_period_ms": {
+      "n": 90,
+      "mean": 19.64246760002829,
+      "median": 18.837073001122917,
+      "p95": 30.738396200467832,
+      "p99": 32.84958157797518,
+      "maximum": 39.36186999999336
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 90,
+      "mean": 19.600986233328715,
+      "median": 17.576956999619142,
+      "p95": 31.376369250028798,
+      "p99": 35.426229481599876,
+      "maximum": 40.779194998322055
+    },
+    "drive_receipt_period_ms": {
+      "n": 35,
+      "mean": 49.5820509713667,
+      "median": 49.88282999693183,
+      "p95": 53.21373320075509,
+      "p99": 53.56292452212074,
+      "maximum": 53.67979000220657
+    },
+    "joints_receipt_period_ms": {
+      "n": 90,
+      "mean": 19.71585799999755,
+      "median": 17.750521998095792,
+      "p95": 30.342044599638026,
+      "p99": 35.39788361013052,
+      "maximum": 40.134063998266356
+    },
+    "world_receipt_period_ms": {
+      "n": 54,
+      "mean": 32.58762720374593,
+      "median": 30.968304999987595,
+      "p95": 49.173769049957606,
+      "p99": 64.54434081999352,
+      "maximum": 67.11420799911139
+    },
+    "zero_command_samples": 26,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 65,
+    "command_delta_v": {
+      "n": 90,
+      "mean": 0.007459731639535873,
+      "median": 0.0,
+      "p95": 0.03529108523527244,
+      "p99": 0.1760865560062233,
+      "maximum": 0.18526353479410304
+    },
+    "command_delta_w": {
+      "n": 90,
+      "mean": 0.0059893007394235965,
+      "median": 0.0,
+      "p95": 0.015425025187339497,
+      "p99": 0.13920877640040785,
+      "maximum": 0.20279187278145958
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 1,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 14,
+        "mean": 18.81708121410546,
+        "median": 14.43413199922361,
+        "p95": 40.62429449950287,
+        "p99": 40.86213729977317,
+        "maximum": 40.92159799984074
+      },
+      "acados_ms": {
+        "n": 14,
+        "mean": 9.763142857142856,
+        "median": 7.279999999999999,
+        "p95": 25.400199999999995,
+        "p99": 29.66003999999999,
+        "maximum": 30.724999999999998
+      },
+      "worker_wait_ms": {
+        "n": 14,
+        "mean": 1.5717362860284214,
+        "median": 1.437339500625967,
+        "p95": 2.3012589996142196,
+        "p99": 2.370304600590316,
+        "maximum": 2.3875660008343402
+      },
+      "result_pickup_ms": {
+        "n": 14,
+        "mean": 10.644623214570206,
+        "median": 8.50130549952155,
+        "p95": 21.806242448474222,
+        "p99": 24.5299540886117,
+        "maximum": 25.210881998646073
+      }
+    },
+    "solver_status_counts": {
+      "0": 12,
+      "2": 2
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.26414845864388464,
+    "truth_yaw_change_rad": 0.008353680811205041,
+    "truth_path_length_m": 0.26470847217457516,
+    "truth_final_position_error_m": 0.016671051286049534,
+    "truth_final_heading_error_rad": 0.008635216681749252,
+    "truth_first_legacy_pose_region_wall_s": 1.197833342001104,
+    "success_after_first_truth_region_wall_s": 0.5973956449997786,
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 91,
+      "mean": 0.14487973290702696,
+      "median": 0.20726856760414708,
+      "p95": 0.26440603488996717,
+      "p99": 0.2650973952121779,
+      "maximum": 0.26525781585515446
+    },
+    "odom_w_abs": {
+      "n": 91,
+      "mean": 0.025473206371525073,
+      "median": 0.0034373997148335056,
+      "p95": 0.10757077980511684,
+      "p99": 0.11824988217271629,
+      "maximum": 0.11865177148592285
+    },
+    "elapsed_wall_s": 1.7952289870008826
+  },
+  {
+    "case": "rotate",
+    "goal": [
+      -0.4,
+      0.0,
+      1.5707963267948966
+    ],
+    "start_wall": 12.501794133997464,
+    "start_estimate": {
+      "stamp_ns": 10770000000,
+      "frame": "map",
+      "x": -0.36692166819192007,
+      "y": 0.003662322221617203,
+      "yaw": 0.008176718726680033,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 10750000000,
+      "v": 1.949083743857183e-07,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 10770000000,
+      "wall": 12.46185784699992
+    },
+    "request_id": 15002,
+    "end_wall": 14.100308542998391,
+    "result": "success",
+    "samples": {
+      "cmd": 81,
+      "mpc_command": 81,
+      "drive": 32,
+      "plant_command": 0,
+      "joints": 81,
+      "odom": 81,
+      "world": 49,
+      "status": 81,
+      "result": 78,
+      "truth": 81
+    },
+    "cmd_receipt_period_ms": {
+      "n": 80,
+      "mean": 19.77378349997707,
+      "median": 18.616333001773455,
+      "p95": 27.226403001623112,
+      "p99": 29.503641030350952,
+      "maximum": 34.59822699733195
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 80,
+      "mean": 19.767450312474466,
+      "median": 19.23383999928774,
+      "p95": 28.1502318002822,
+      "p99": 29.536036707613654,
+      "maximum": 32.13383399997838
+    },
+    "drive_receipt_period_ms": {
+      "n": 31,
+      "mean": 49.882687935502375,
+      "median": 49.83053099931567,
+      "p95": 51.42409000109183,
+      "p99": 52.53930059952836,
+      "maximum": 52.98747299821116
+    },
+    "joints_receipt_period_ms": {
+      "n": 80,
+      "mean": 19.809106125012477,
+      "median": 19.294145498861326,
+      "p95": 26.90880690133781,
+      "p99": 30.532265440306187,
+      "maximum": 34.46651600097539
+    },
+    "world_receipt_period_ms": {
+      "n": 48,
+      "mean": 32.92812660417136,
+      "median": 31.32416749940603,
+      "p95": 45.46479399959935,
+      "p99": 48.33573989115394,
+      "maximum": 50.62234300203272
+    },
+    "zero_command_samples": 28,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 53,
+    "command_delta_v": {
+      "n": 80,
+      "mean": 0.005468949902954272,
+      "median": 0.0,
+      "p95": 0.05772600602676445,
+      "p99": 0.0731299732150862,
+      "maximum": 0.09229479116621297
+    },
+    "command_delta_w": {
+      "n": 80,
+      "mean": 0.053753247017763725,
+      "median": 0.0,
+      "p95": 0.06839750467687199,
+      "p99": 1.91683543659744,
+      "maximum": 1.9992561295885773
+    },
+    "command_v_sign_changes": 2,
+    "command_w_sign_changes": 1,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 12,
+        "mean": 24.682765250872762,
+        "median": 16.958275500655873,
+        "p95": 70.95720060278833,
+        "p99": 90.33454012263977,
+        "maximum": 95.17887500260258
+      },
+      "acados_ms": {
+        "n": 12,
+        "mean": 17.37825,
+        "median": 12.995000000000001,
+        "p95": 55.86984999999998,
+        "p99": 69.31317000000003,
+        "maximum": 72.674
+      },
+      "worker_wait_ms": {
+        "n": 12,
+        "mean": 1.295719083827862,
+        "median": 1.2787390005541965,
+        "p95": 1.6843048511873346,
+        "p99": 1.7585737719127792,
+        "maximum": 1.7771410020941403
+      },
+      "result_pickup_ms": {
+        "n": 12,
+        "mean": 13.409561749540444,
+        "median": 13.276953501190292,
+        "p95": 20.763618798810057,
+        "p99": 21.230742157786153,
+        "maximum": 21.347522997530177
+      }
+    },
+    "solver_status_counts": {
+      "7": 2,
+      "0": 9,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.03595708897192954,
+    "truth_yaw_change_rad": 1.572198955671046,
+    "truth_path_length_m": 0.055835471806569136,
+    "truth_final_position_error_m": 0.004314311184110565,
+    "truth_final_heading_error_rad": 0.009462632290817341,
+    "truth_first_legacy_pose_region_wall_s": 1.0298728110028605,
+    "success_after_first_truth_region_wall_s": 0.5686415979980666,
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 81,
+      "mean": 0.03391381261917918,
+      "median": 0.0029565675034109824,
+      "p95": 0.12183390802639348,
+      "p99": 0.12457804181304034,
+      "maximum": 0.12474985807370458
+    },
+    "odom_w_abs": {
+      "n": 81,
+      "mean": 0.9666575175629349,
+      "median": 0.6773653907986497,
+      "p95": 1.973320765213088,
+      "p99": 1.9741375361168478,
+      "maximum": 1.9752110057781858
+    },
+    "elapsed_wall_s": 1.5985144090009271
+  },
+  {
+    "case": "half_turn",
+    "goal": [
+      -0.4,
+      0.0,
+      3.141592653589793
+    ],
+    "start_wall": 15.10316206599964,
+    "start_estimate": {
+      "stamp_ns": 13400000000,
+      "frame": "map",
+      "x": -0.4010095883301694,
+      "y": -0.00490963208972689,
+      "yaw": 1.5805676338356818,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 13380000000,
+      "v": 5.854649541846218e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 13400000000,
+      "wall": 15.097549800997513
+    },
+    "request_id": 15003,
+    "end_wall": 17.035209736997786,
+    "result": "success",
+    "samples": {
+      "cmd": 97,
+      "mpc_command": 97,
+      "drive": 39,
+      "plant_command": 0,
+      "joints": 97,
+      "odom": 97,
+      "world": 58,
+      "status": 97,
+      "result": 93,
+      "truth": 97
+    },
+    "cmd_receipt_period_ms": {
+      "n": 96,
+      "mean": 19.93828142709238,
+      "median": 19.080650999967474,
+      "p95": 28.648234500906256,
+      "p99": 29.72763669877167,
+      "maximum": 32.24218600007589
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 96,
+      "mean": 19.970769937496396,
+      "median": 19.41006900051434,
+      "p95": 28.85291474922269,
+      "p99": 29.672778001258845,
+      "maximum": 30.756633001146838
+    },
+    "drive_receipt_period_ms": {
+      "n": 38,
+      "mean": 50.04511468417293,
+      "median": 49.955973499891115,
+      "p95": 53.97498545171402,
+      "p99": 54.54243037849665,
+      "maximum": 54.619806996925035
+    },
+    "joints_receipt_period_ms": {
+      "n": 96,
+      "mean": 19.94431543751792,
+      "median": 19.123520998618915,
+      "p95": 28.437367001970415,
+      "p99": 30.929761049083023,
+      "maximum": 32.054466999397846
+    },
+    "world_receipt_period_ms": {
+      "n": 57,
+      "mean": 33.27461117544117,
+      "median": 32.05948899994837,
+      "p95": 45.835412799351616,
+      "p99": 48.676524320035234,
+      "maximum": 50.13171400059946
+    },
+    "zero_command_samples": 27,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 70,
+    "command_delta_v": {
+      "n": 96,
+      "mean": 0.00250826306035978,
+      "median": 0.0,
+      "p95": 0.010145986168615145,
+      "p99": 0.06400907590814184,
+      "maximum": 0.08885098737741973
+    },
+    "command_delta_w": {
+      "n": 96,
+      "mean": 0.04988892213408705,
+      "median": 0.0,
+      "p95": 0.10253361043510018,
+      "p99": 1.8683816132621969,
+      "maximum": 1.9649891127623516
+    },
+    "command_v_sign_changes": 2,
+    "command_w_sign_changes": 1,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 15,
+        "mean": 13.964425399899483,
+        "median": 5.639204999170033,
+        "p95": 58.69141819857755,
+        "p99": 78.9358628404443,
+        "maximum": 83.996974000911
+      },
+      "acados_ms": {
+        "n": 15,
+        "mean": 9.721133333333334,
+        "median": 1.303,
+        "p95": 48.48649999999997,
+        "p99": 65.84369999999998,
+        "maximum": 70.183
+      },
+      "worker_wait_ms": {
+        "n": 15,
+        "mean": 1.043376400290678,
+        "median": 0.8862370013957843,
+        "p95": 1.5305132001230959,
+        "p99": 1.5397330404084641,
+        "maximum": 1.5420380004798062
+      },
+      "result_pickup_ms": {
+        "n": 15,
+        "mean": 14.384104333779154,
+        "median": 12.787790998117998,
+        "p95": 26.55137960209686,
+        "p99": 26.955532721694908,
+        "maximum": 27.05657100159442
+      }
+    },
+    "solver_status_counts": {
+      "7": 1,
+      "2": 1,
+      "0": 13
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.004956851146650949,
+    "truth_yaw_change_rad": 1.555941700996895,
+    "truth_path_length_m": 0.016324566431772075,
+    "truth_final_position_error_m": 0.0005219729251511412,
+    "truth_final_heading_error_rad": 0.004910340777696476,
+    "truth_first_legacy_pose_region_wall_s": 1.0501820569988922,
+    "success_after_first_truth_region_wall_s": 0.8818656139992527,
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 97,
+      "mean": 0.00791063266283656,
+      "median": 0.00024235593005471706,
+      "p95": 0.0393322619775602,
+      "p99": 0.05483049775012598,
+      "maximum": 0.05753936946724764
+    },
+    "odom_w_abs": {
+      "n": 97,
+      "mean": 0.86607099417596,
+      "median": 0.21766046420172963,
+      "p95": 1.9693433108910405,
+      "p99": 1.9694231971306069,
+      "maximum": 1.9694816383708265
+    },
+    "elapsed_wall_s": 1.932047670998145
+  },
+  {
+    "case": "curve",
+    "goal": [
+      -0.1,
+      0.2,
+      1.5707963267948966
+    ],
+    "start_wall": 18.03560503299741,
+    "start_estimate": {
+      "stamp_ns": 16300000000,
+      "frame": "map",
+      "x": -0.3989978210955668,
+      "y": 0.0003764739407139386,
+      "yaw": 3.1329031526071316,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 16280000000,
+      "v": 3.630433110652232e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 16300000000,
+      "wall": 17.994676995996997
+    },
+    "request_id": 15004,
+    "end_wall": 21.50137416399957,
+    "result": "success",
+    "samples": {
+      "cmd": 173,
+      "mpc_command": 173,
+      "drive": 69,
+      "plant_command": 0,
+      "joints": 172,
+      "odom": 172,
+      "world": 104,
+      "status": 173,
+      "result": 168,
+      "truth": 172
+    },
+    "cmd_receipt_period_ms": {
+      "n": 172,
+      "mean": 20.140935081377222,
+      "median": 18.78149050025968,
+      "p95": 29.585882850369664,
+      "p99": 35.371507170493715,
+      "maximum": 41.96254899943597
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 172,
+      "mean": 20.122827552324114,
+      "median": 18.93623199975991,
+      "p95": 29.95082600118621,
+      "p99": 36.067082309382386,
+      "maximum": 45.70029299793532
+    },
+    "drive_receipt_period_ms": {
+      "n": 68,
+      "mean": 49.99850108823225,
+      "median": 49.985598498096806,
+      "p95": 54.318658449665236,
+      "p99": 56.62427504965307,
+      "maximum": 58.82226700123283
+    },
+    "joints_receipt_period_ms": {
+      "n": 171,
+      "mean": 20.160871421052306,
+      "median": 18.700207001529634,
+      "p95": 29.989163000209373,
+      "p99": 34.106531801808174,
+      "maximum": 35.078116998192854
+    },
+    "world_receipt_period_ms": {
+      "n": 103,
+      "mean": 33.5390646698957,
+      "median": 33.337567998387385,
+      "p95": 50.11489889984658,
+      "p99": 52.59455170154979,
+      "maximum": 63.63015799797722
+    },
+    "zero_command_samples": 26,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 147,
+    "command_delta_v": {
+      "n": 172,
+      "mean": 0.00574802125871574,
+      "median": 0.0,
+      "p95": 0.05069706414230232,
+      "p99": 0.0902720501550419,
+      "maximum": 0.1299386983476784
+    },
+    "command_delta_w": {
+      "n": 172,
+      "mean": 0.06174457370576731,
+      "median": 0.0,
+      "p95": 0.4603290895524207,
+      "p99": 1.2206252006231755,
+      "maximum": 2.389634927318522
+    },
+    "command_v_sign_changes": 2,
+    "command_w_sign_changes": 4,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 31,
+        "mean": 41.69159096824343,
+        "median": 39.28439400260686,
+        "p95": 83.64136700038216,
+        "p99": 92.17288549843941,
+        "maximum": 95.47833199758315
+      },
+      "acados_ms": {
+        "n": 31,
+        "mean": 28.29019354838709,
+        "median": 30.196,
+        "p95": 62.211,
+        "p99": 62.6648,
+        "maximum": 62.714
+      },
+      "worker_wait_ms": {
+        "n": 31,
+        "mean": 1.6468650969580911,
+        "median": 1.6222319973167032,
+        "p95": 2.507824001440895,
+        "p99": 4.549454399966633,
+        "maximum": 5.296802999509964
+      },
+      "result_pickup_ms": {
+        "n": 31,
+        "mean": 11.023663129068858,
+        "median": 10.230682000837987,
+        "p95": 23.854519500673632,
+        "p99": 27.53749850162421,
+        "maximum": 28.72787900196272
+      }
+    },
+    "solver_status_counts": {
+      "7": 10,
+      "0": 20,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.36363468791546166,
+    "truth_yaw_change_rad": -1.559448908058742,
+    "truth_path_length_m": 0.42655593057103547,
+    "truth_final_position_error_m": 0.003262273394258283,
+    "truth_final_heading_error_rad": 0.0024938193182502118,
+    "truth_first_legacy_pose_region_wall_s": 2.6929000330019335,
+    "success_after_first_truth_region_wall_s": 0.7728690980002284,
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 172,
+      "mean": 0.12354179510526934,
+      "median": 0.1496188026559629,
+      "p95": 0.26390128846920696,
+      "p99": 0.2639093202883533,
+      "maximum": 0.26394623584828636
+    },
+    "odom_w_abs": {
+      "n": 172,
+      "mean": 0.8821970444993699,
+      "median": 0.4450916682229882,
+      "p95": 1.9768465744561476,
+      "p99": 1.9900219393969183,
+      "maximum": 1.991624147001359
+    },
+    "elapsed_wall_s": 3.465769131002162
+  },
+  {
+    "case": "reverse",
+    "goal": [
+      -0.6,
+      0.0,
+      0.0
+    ],
+    "start_wall": 22.50191225299932,
+    "start_estimate": {
+      "stamp_ns": 20740000000,
+      "frame": "map",
+      "x": -0.09709879105448338,
+      "y": 0.20048445100079987,
+      "yaw": 1.571654678762393,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 20720000000,
+      "v": 4.820207431870767e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 20740000000,
+      "wall": 22.483805939999
+    },
+    "request_id": 15005,
+    "end_wall": 26.233427219998703,
+    "result": "success",
+    "samples": {
+      "cmd": 187,
+      "mpc_command": 187,
+      "drive": 75,
+      "plant_command": 0,
+      "joints": 186,
+      "odom": 186,
+      "world": 112,
+      "status": 187,
+      "result": 183,
+      "truth": 187
+    },
+    "cmd_receipt_period_ms": {
+      "n": 186,
+      "mean": 20.01011687633597,
+      "median": 18.513291999624926,
+      "p95": 30.665187248814618,
+      "p99": 35.863033249370346,
+      "maximum": 56.1282630005735
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 186,
+      "mean": 19.99075941933771,
+      "median": 18.5351800009812,
+      "p95": 29.83556774779572,
+      "p99": 38.69430375107187,
+      "maximum": 44.11625800275942
+    },
+    "drive_receipt_period_ms": {
+      "n": 74,
+      "mean": 49.99165889190359,
+      "median": 50.00041899984353,
+      "p95": 51.26984909929888,
+      "p99": 54.51915061199542,
+      "maximum": 56.44922899955418
+    },
+    "joints_receipt_period_ms": {
+      "n": 185,
+      "mean": 20.031765000001887,
+      "median": 18.56001399937668,
+      "p95": 29.826014801074045,
+      "p99": 34.799155797809355,
+      "maximum": 49.44359199726023
+    },
+    "world_receipt_period_ms": {
+      "n": 111,
+      "mean": 33.3609470450225,
+      "median": 32.29442100200686,
+      "p95": 47.6384864996362,
+      "p99": 57.62307099867035,
+      "maximum": 69.6310640014417
+    },
+    "zero_command_samples": 38,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 149,
+    "command_delta_v": {
+      "n": 186,
+      "mean": 0.0033477033561868648,
+      "median": 0.0,
+      "p95": 0.021827354441874676,
+      "p99": 0.07708769411174608,
+      "maximum": 0.11867137546667486
+    },
+    "command_delta_w": {
+      "n": 186,
+      "mean": 0.041512585061839434,
+      "median": 0.0,
+      "p95": 0.17090562595922515,
+      "p99": 0.8413059733577726,
+      "maximum": 1.9990314247169423
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 3,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 31,
+        "mean": 41.44021741928056,
+        "median": 37.51368500161334,
+        "p95": 85.43023399943195,
+        "p99": 88.24853300102404,
+        "maximum": 89.2714520014124
+      },
+      "acados_ms": {
+        "n": 31,
+        "mean": 28.43822580645161,
+        "median": 23.223,
+        "p95": 63.194,
+        "p99": 63.459999999999994,
+        "maximum": 63.498999999999995
+      },
+      "worker_wait_ms": {
+        "n": 31,
+        "mean": 1.3956049353451347,
+        "median": 1.3106299993523862,
+        "p95": 2.176421501644654,
+        "p99": 2.75920570056769,
+        "maximum": 2.980720000778092
+      },
+      "result_pickup_ms": {
+        "n": 31,
+        "mean": 10.589758161527683,
+        "median": 9.531739000522066,
+        "p95": 22.666950500934036,
+        "p99": 36.14405890002671,
+        "maximum": 41.31152199988719
+      }
+    },
+    "solver_status_counts": {
+      "7": 9,
+      "0": 22
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "truth_displacement_m": 0.5499995931172553,
+    "truth_yaw_change_rad": -1.568598557952001,
+    "truth_path_length_m": 0.5715950058255608,
+    "truth_final_position_error_m": 0.008357413871917357,
+    "truth_final_heading_error_rad": 0.0027919245840704004,
+    "truth_first_legacy_pose_region_wall_s": 3.017239814998902,
+    "success_after_first_truth_region_wall_s": 0.7142751520004822,
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 186,
+      "mean": 0.15320215169696788,
+      "median": 0.19432097452189914,
+      "p95": 0.2634575962087391,
+      "p99": 0.26360511995784813,
+      "maximum": 0.26364798007161194
+    },
+    "odom_w_abs": {
+      "n": 186,
+      "mean": 0.4683982422164635,
+      "median": 0.04232864059429427,
+      "p95": 1.9545511162845484,
+      "p99": 1.9549210390601979,
+      "maximum": 1.9550343760886684
+    },
+    "elapsed_wall_s": 3.7315149669993843
+  }
+]

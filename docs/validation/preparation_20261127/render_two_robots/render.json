@@ -1,0 +1,75 @@
+{
+  "scene": "/tmp/pinky-led-render-scene.xml",
+  "front_camera_changes": {
+    "OFF": {
+      "hls_pixels": {
+        "yellow_common": 0,
+        "blue_common": 7,
+        "yellow_sim": 4,
+        "blue_sim": 2506,
+        "orange_strong": 2510,
+        "orange_weak": 15
+      },
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "GREEN": {
+      "hls_pixels": {
+        "yellow_common": 0,
+        "blue_common": 7,
+        "yellow_sim": 4,
+        "blue_sim": 2506,
+        "orange_strong": 2510,
+        "orange_weak": 15
+      },
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "YELLOW": {
+      "hls_pixels": {
+        "yellow_common": 0,
+        "blue_common": 7,
+        "yellow_sim": 4,
+        "blue_sim": 2506,
+        "orange_strong": 2510,
+        "orange_weak": 15
+      },
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "BLUE": {
+      "hls_pixels": {
+        "yellow_common": 0,
+        "blue_common": 7,
+        "yellow_sim": 4,
+        "blue_sim": 2506,
+        "orange_strong": 2510,
+        "orange_weak": 15
+      },
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "RED": {
+      "hls_pixels": {
+        "yellow_common": 0,
+        "blue_common": 7,
+        "yellow_sim": 4,
+        "blue_sim": 2506,
+        "orange_strong": 2510,
+        "orange_weak": 15
+      },
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    }
+  },
+  "physical_arrays_equal": {
+    "body_mass": true,
+    "body_inertia": true,
+    "geom_size": true,
+    "geom_friction": true,
+    "geom_contype": true,
+    "geom_conaffinity": true,
+    "dof_damping": true,
+    "jnt_range": true
+  }
+}

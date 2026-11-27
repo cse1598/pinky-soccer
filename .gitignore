@@ -24,3 +24,13 @@ __pycache__/
 
 # Read-only reference code (cloned locally, never committed)
 refs/
+
+# Raw experimental data
+docs/validation/**/*.mcap
+docs/validation/**/*.db3
+docs/validation/**/*.mp4
+docs/validation/**/*.bag
+
+# Compressed raw rosbag data
+docs/validation/**/bag.tar.gz
+/docs/validation/real_mpc_referee_20261127_run3/topics.jsonl

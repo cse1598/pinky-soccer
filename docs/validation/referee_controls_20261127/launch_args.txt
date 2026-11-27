@@ -1,0 +1,149 @@
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'mode':
+        One of: ['realsense', 'video', 'topic']
+        (default: 'realsense')
+
+    'video_path':
+        no description given
+        (default: '')
+
+    'camera_namespace':
+        no description given
+        (default: 'camera')
+
+    'camera_name':
+        no description given
+        (default: 'camera')
+
+    'color_profile':
+        no description given
+        (default: '1280x720x30')
+
+    'serial_no':
+        no description given
+        (default: '')
+
+    'image_topic':
+        no description given
+        (default: '/camera/camera/color/image_raw')
+
+    'camera_info_topic':
+        no description given
+        (default: '/camera/camera/color/camera_info')
+
+    'show_ui':
+        no description given
+        (default: 'true')
+
+    'publish_image':
+        no description given
+        (default: 'true')
+
+    'field_length_m':
+        no description given
+        (default: '1.670')
+
+    'field_width_m':
+        no description given
+        (default: '1.070')
+
+    'pixels_per_meter':
+        no description given
+        (default: '550.0')
+
+    'margin_m':
+        no description given
+        (default: '0.15')
+
+    'ball_radius_m':
+        no description given
+        (default: '0.02135')
+
+    'warmup_frames':
+        no description given
+        (default: '30')
+
+    'require_camera_info':
+        no description given
+        (default: 'false')
+
+    'allow_approximate_rules':
+        no description given
+        (default: 'false')
+
+    'yellow_goal_y_min':
+        no description given
+        (default: '0.0')
+
+    'yellow_goal_y_max':
+        no description given
+        (default: '0.0')
+
+    'blue_goal_y_min':
+        no description given
+        (default: '0.0')
+
+    'blue_goal_y_max':
+        no description given
+        (default: '0.0')
+
+    'frame_timeout_s':
+        no description given
+        (default: '0.5')
+
+    'robot_match_gate_m':
+        no description given
+        (default: '0.12')
+
+    'robot_reacquire_frames':
+        no description given
+        (default: '2')
+
+    'blue_led_min_light':
+        no description given
+        (default: '125')
+
+    'velocity_arrow_min_mps':
+        no description given
+        (default: '0.035')
+
+    'distortion_mode':
+        no description given
+        (default: 'auto')
+
+    'calibration_frames':
+        no description given
+        (default: '9')
+
+    'calibration_max_error_px':
+        no description given
+        (default: '5.0')
+
+    'debug_ui':
+        no description given
+        (default: 'false')
+
+    'debug_log':
+        no description given
+        (default: 'false')
+
+    'record_video':
+        no description given
+        (default: 'false')
+
+    'debug_dir':
+        no description given
+        (default: '~/pinky_referee_logs')
+
+    'record_fps':
+        no description given
+        (default: '30.0')
+
+    'match_controls':
+        no description given
+        (default: 'auto')
+
+    'robot_namespaces':
+        no description given
+        (default: '')

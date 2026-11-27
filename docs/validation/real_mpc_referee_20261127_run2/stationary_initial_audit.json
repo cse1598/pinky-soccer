@@ -1,0 +1,7785 @@
+{
+  "referee": [
+    {
+      "t": 1795780617.4536684,
+      "stamp": 1795780617.425016,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776395962941252,
+            0.14481561280608835
+          ],
+          "v": [
+            -0.006508149133142342,
+            0.007730751261869327
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9721737997022619
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43952138405329877,
+          0.18095228884590586
+        ]
+      }
+    },
+    {
+      "t": 1795780617.5161943,
+      "stamp": 1795780617.4583886,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5782126287886724,
+            0.14442244541987742
+          ],
+          "v": [
+            -0.01338231247934662,
+            -0.004848557111987247
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9579019947472074
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439640741694566,
+          0.18094557472744452
+        ]
+      }
+    },
+    {
+      "t": 1795780617.5635824,
+      "stamp": 1795780617.4917612,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5782812531776523,
+            0.14361001742908316
+          ],
+          "v": [
+            -0.006078563448699935,
+            -0.017420579023779324
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9669390677843817
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395437327823689,
+          0.18093577823691465
+        ]
+      }
+    },
+    {
+      "t": 1795780617.5836139,
+      "stamp": 1795780617.5251338,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5774257856747104,
+            0.14403457319299715
+          ],
+          "v": [
+            0.014370914227354847,
+            0.002016424762759896
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9556622571849349
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394826101928373,
+          0.18053460743801647
+        ]
+      }
+    },
+    {
+      "t": 1795780617.60145,
+      "stamp": 1795780617.5585065,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787720525900342,
+            0.14393486881271195
+          ],
+          "v": [
+            -0.02090882756802912,
+            -0.001210346133306311
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9777475266426278
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43955485746035805,
+          0.18054771979313594
+        ]
+      }
+    },
+    {
+      "t": 1795780617.6189876,
+      "stamp": 1795780617.5918791,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5788338060530797,
+            0.14490710021573114
+          ],
+          "v": [
+            -0.008619278351426096,
+            0.018355875341987297
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9798721220199458
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.44006134304417543,
+          0.18084731434516843
+        ]
+      }
+    },
+    {
+      "t": 1795780617.667686,
+      "stamp": 1795780617.6252518,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5774324694995088,
+            0.14512403444650615
+          ],
+          "v": [
+            0.024015846303003706,
+            0.01071099788220738
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9659108706190374
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43995740008783474,
+          0.1810307422046553
+        ]
+      }
+    },
+    {
+      "t": 1795780617.6864796,
+      "stamp": 1795780617.6586256,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787528280134742,
+            0.14427960196555692
+          ],
+          "v": [
+            -0.01698331921389152,
+            -0.012512444258435465
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9379351843122301
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395230716253441,
+          0.18050361570247933
+        ]
+      }
+    },
+    {
+      "t": 1795780617.720063,
+      "stamp": 1795780617.691998,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5785960896342466,
+            0.14409423523495843
+          ],
+          "v": [
+            -0.003003370818144682,
+            -0.008025729717025545
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9724488668161176
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43942407265936667,
+          0.18067099567099562
+        ]
+      }
+    },
+    {
+      "t": 1795780617.76191,
+      "stamp": 1795780617.7253706,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5777471340647095,
+            0.14429752890058142
+          ],
+          "v": [
+            0.015337116746146486,
+            0.0010776678142652135
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9701270844478467
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395043656908063,
+          0.18068310220852596
+        ]
+      }
+    },
+    {
+      "t": 1795780617.7897267,
+      "stamp": 1795780617.7587435,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579814142730777,
+            0.14496684172012392
+          ],
+          "v": [
+            -0.0344923026833175,
+            0.013315421377632244
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.949347564711787
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395750184774573,
+          0.18086670144776318
+        ]
+      }
+    },
+    {
+      "t": 1795780617.8283923,
+      "stamp": 1795780617.792116,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579691345058709,
+            0.14437463270900192
+          ],
+          "v": [
+            -0.009877790548223547,
+            -0.006713666030017667
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9579015506414681
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43953778289221335,
+          0.18065486084473428
+        ]
+      }
+    },
+    {
+      "t": 1795780617.8571723,
+      "stamp": 1795780617.8254886,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578626961645877,
+            0.14403723693585505
+          ],
+          "v": [
+            0.01705815186337716,
+            -0.008903717739583593
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9720408350998375
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4392149553084805,
+          0.1806237192064531
+        ]
+      }
+    },
+    {
+      "t": 1795780617.893512,
+      "stamp": 1795780617.8588614,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5790171664672148,
+            0.14450248785742487
+          ],
+          "v": [
+            -0.0014813176278148793,
+            0.005827498643338654
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9495746957795276
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395584601378594,
+          0.18052390861403741
+        ]
+      }
+    },
+    {
+      "t": 1795780617.9216454,
+      "stamp": 1795780617.8922338,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787709600058343,
+            0.14409071451168184
+          ],
+          "v": [
+            0.004231170227112152,
+            -0.005886689941368236
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9793076287718661
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43952907452907436,
+          0.1804485107116687
+        ]
+      }
+    },
+    {
+      "t": 1795780617.9550655,
+      "stamp": 1795780617.9256065,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780050172002453,
+            0.1450000911452366
+          ],
+          "v": [
+            0.016302557779372093,
+            0.015480548627596893
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9700639502417558
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396585513252179,
+          0.18074894241560918
+        ]
+      }
+    },
+    {
+      "t": 1795780617.9934237,
+      "stamp": 1795780617.9589791,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776448623014342,
+            0.14489245126723385
+          ],
+          "v": [
+            0.012749093461238054,
+            0.003418259347821478
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9660940177539618
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43951391552657365,
+          0.18080062225631846
+        ]
+      }
+    },
+    {
+      "t": 1795780618.0194886,
+      "stamp": 1795780617.9923518,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578996745643603,
+            0.1446277014943202
+          ],
+          "v": [
+            -0.021593539243863733,
+            -0.0039015453750313603
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9513618925968348
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43937743774377436,
+          0.18068256825682572
+        ]
+      }
+    },
+    {
+      "t": 1795780618.0547507,
+      "stamp": 1795780618.0257244,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780209371955403,
+            0.14454453885527183
+          ],
+          "v": [
+            0.01118567717474046,
+            -0.0029925796467190464
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.972315761815548
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396942071486249,
+          0.18085065238641682
+        ]
+      }
+    },
+    {
+      "t": 1795780618.086227,
+      "stamp": 1795780618.0590968,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5779850747318683,
+            0.14377399641383912
+          ],
+          "v": [
+            0.004665729695002018,
+            -0.015951551898995983
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9683086711392224
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396888604353392,
+          0.18047247119078105
+        ]
+      }
+    },
+    {
+      "t": 1795780618.123056,
+      "stamp": 1795780618.0924697,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578600303656229,
+            0.14385205031781562
+          ],
+          "v": [
+            -0.010230581069988564,
+            -0.004157143826557205
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9752968228408135
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394583866837388,
+          0.18066111822449857
+        ]
+      }
+    },
+    {
+      "t": 1795780618.15434,
+      "stamp": 1795780618.1258423,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5785033750101185,
+            0.14363461435400168
+          ],
+          "v": [
+            -0.0017606339652652195,
+            -0.005677832540697057
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.965979209106248
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43945281385281365,
+          0.1804709956709957
+        ]
+      }
+    },
+    {
+      "t": 1795780618.203321,
+      "stamp": 1795780618.159215,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.577844756046873,
+            0.14431175165364968
+          ],
+          "v": [
+            0.012100743651019557,
+            0.011067318251235771
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.969598239982127
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394329004329004,
+          0.1804917748917749
+        ]
+      }
+    },
+    {
+      "t": 1795780618.222795,
+      "stamp": 1795780618.1925876,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5788777241456055,
+            0.14502142705795207
+          ],
+          "v": [
+            -0.0156616216224172,
+            0.017643283660726018
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9795017725243103
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939738292011,
+          0.18060950413223137
+        ]
+      }
+    },
+    {
+      "t": 1795780618.2661169,
+      "stamp": 1795780618.2259603,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5794376981654423,
+            0.14346894430524676
+          ],
+          "v": [
+            -0.016382428729982478,
+            -0.02373135392858164
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9522280730100371
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394864726246955,
+          0.18060670171389492
+        ]
+      }
+    },
+    {
+      "t": 1795780618.2848172,
+      "stamp": 1795780618.259333,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5793037853305314,
+            0.14364203706662498
+          ],
+          "v": [
+            -0.0032309190165159193,
+            -0.00508393546892048
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9636942365967953
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43938354978354976,
+          0.18086753246753243
+        ]
+      }
+    },
+    {
+      "t": 1795780618.3273358,
+      "stamp": 1795780618.2927055,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579435466023429,
+            0.144068551148181
+          ],
+          "v": [
+            -0.0036918802222364504,
+            0.0064356232896459024
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9747439140363061
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395830132309005,
+          0.18072257789159205
+        ]
+      }
+    },
+    {
+      "t": 1795780618.3523512,
+      "stamp": 1795780618.3260782,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778036811900856,
+            0.1442332446100317
+          ],
+          "v": [
+            0.030218673321430887,
+            0.005467955371300104
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9814970633193716
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394252725555839,
+          0.18058846252897245
+        ]
+      }
+    },
+    {
+      "t": 1795780618.4040573,
+      "stamp": 1795780618.3594518,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787551105847872,
+            0.14495060604833618
+          ],
+          "v": [
+            -0.007651764926881837,
+            0.015802987618277736
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9695972680557907
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43955748979153236,
+          0.1809832366215345
+        ]
+      }
+    },
+    {
+      "t": 1795780618.4190094,
+      "stamp": 1795780618.3928244,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5789167535145601,
+            0.14454328342412245
+          ],
+          "v": [
+            -0.005840941153465147,
+            -0.0022577817177815845
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.971193875345632
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43953516780249463,
+          0.1806988555998457
+        ]
+      }
+    },
+    {
+      "t": 1795780618.4673653,
+      "stamp": 1795780618.426197,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776467119741768,
+            0.14485469078249336
+          ],
+          "v": [
+            0.022465678075837284,
+            0.005215236000239985
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9616504585176181
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43979361863762984,
+          0.18071959145775301
+        ]
+      }
+    },
+    {
+      "t": 1795780618.4862645,
+      "stamp": 1795780618.4595697,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792171590378484,
+            0.14551038410259778
+          ],
+          "v": [
+            -0.022365730053584866,
+            0.014521782184595497
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9506729969468812
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439581055308328,
+          0.18048336511972882
+        ]
+      }
+    },
+    {
+      "t": 1795780618.5323365,
+      "stamp": 1795780618.492942,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792846381650895,
+            0.14441378896275742
+          ],
+          "v": [
+            -0.009247423156900794,
+            -0.016031131708829145
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9729842140873719
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396226051176547,
+          0.18077172002914577
+        ]
+      }
+    },
+    {
+      "t": 1795780618.5523243,
+      "stamp": 1795780618.5263147,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5773736120792125,
+            0.1440420740401934
+          ],
+          "v": [
+            0.03364115050453388,
+            -0.012876059341603135
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9491832090501059
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43949763053780255,
+          0.18046671883831147
+        ]
+      }
+    },
+    {
+      "t": 1795780618.6095119,
+      "stamp": 1795780618.5596871,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786045082580054,
+            0.1445980327370966
+          ],
+          "v": [
+            -0.011835576965188319,
+            0.006169275485558566
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9391712790439567
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394330949948928,
+          0.1806716036772216
+        ]
+      }
+    },
+    {
+      "t": 1795780618.7315562,
+      "stamp": 1795780618.6598048,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5789240731966457,
+            0.14532880428273467
+          ],
+          "v": [
+            0.0013340394188005675,
+            0.007890728131330503
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9778658218338646
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396338925738068,
+          0.18050570078467082
+        ]
+      }
+    },
+    {
+      "t": 1795780618.7649014,
+      "stamp": 1795780618.72655,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5795105755893049,
+            0.14368538383891422
+          ],
+          "v": [
+            -0.010060208325477714,
+            -0.02871171889613952
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9650899775776308
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394467143343546,
+          0.1806179775280899
+        ]
+      }
+    },
+    {
+      "t": 1795780618.7889385,
+      "stamp": 1795780618.7599225,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5779873400611575,
+            0.1438429657486454
+          ],
+          "v": [
+            0.026261620172142758,
+            -0.006911204274741265
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9598542404117546
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4399111958952769,
+          0.18087291145901851
+        ]
+      }
+    },
+    {
+      "t": 1795780618.8261936,
+      "stamp": 1795780618.793295,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5770723099094122,
+            0.14449521653619316
+          ],
+          "v": [
+            0.027012550805004167,
+            0.010257290720393625
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9732265410718826
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43958849862258936,
+          0.1809331955922865
+        ]
+      }
+    },
+    {
+      "t": 1795780618.854825,
+      "stamp": 1795780618.8266675,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776153446595265,
+            0.14443255648035103
+          ],
+          "v": [
+            -0.0008496790889301747,
+            0.0024460532242585476
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9837431822248919
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43953850829208974,
+          0.18090431535990278
+        ]
+      }
+    },
+    {
+      "t": 1795780618.89119,
+      "stamp": 1795780618.86004,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5777291449449299,
+            0.14460296284236
+          ],
+          "v": [
+            -0.002498876128084167,
+            0.004159547778988295
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9688009076396639
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43952921314698457,
+          0.18073235884942515
+        ]
+      }
+    },
+    {
+      "t": 1795780618.9229233,
+      "stamp": 1795780618.8934126,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.576828018492094,
+            0.1444606083100888
+          ],
+          "v": [
+            0.016522263403733327,
+            -0.0012727072296394599
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9602626150538343
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43976102129163336,
+          0.18057204700061852
+        ]
+      }
+    },
+    {
+      "t": 1795780618.953289,
+      "stamp": 1795780618.9267852,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5770353754794373,
+            0.14496343681983678
+          ],
+          "v": [
+            0.0018610292971613773,
+            0.009264119425962813
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9841413164750825
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43971484508001346,
+          0.18080098740211104
+        ]
+      }
+    },
+    {
+      "t": 1795780618.9899871,
+      "stamp": 1795780618.9601574,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778758745820386,
+            0.14411216796253162
+          ],
+          "v": [
+            -0.015579462942936337,
+            -0.013158202647746886
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9484438853033522
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393854273067754,
+          0.18075331971399392
+        ]
+      }
+    },
+    {
+      "t": 1795780619.0230978,
+      "stamp": 1795780618.99353,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778536951253571,
+            0.14491462828431428
+          ],
+          "v": [
+            -0.005104727254745919,
+            0.010832007196927734
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9597070013729576
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43953177757832196,
+          0.18061183057656968
+        ]
+      }
+    },
+    {
+      "t": 1795780619.069928,
+      "stamp": 1795780619.0269027,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5785832806486996,
+            0.1441102456046223
+          ],
+          "v": [
+            -0.015910292452066863,
+            -0.011695402236027613
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9571105274848872
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4397690158064796,
+          0.18069731901144007
+        ]
+      }
+    },
+    {
+      "t": 1795780619.1054072,
+      "stamp": 1795780619.0602758,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5788792205456004,
+            0.14376393931162748
+          ],
+          "v": [
+            -0.011368850009321266,
+            -0.010845109535310248
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9711843596405016
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395728471152198,
+          0.1806694059236433
+        ]
+      }
+    },
+    {
+      "t": 1795780619.139839,
+      "stamp": 1795780619.0936484,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5788131800711476,
+            0.14455385501562765
+          ],
+          "v": [
+            -0.0027617374065532357,
+            0.011411231234568815
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9667564162624679
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394298073996782,
+          0.18065888439633063
+        ]
+      }
+    },
+    {
+      "t": 1795780619.1697845,
+      "stamp": 1795780619.1270208,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778685057408188,
+            0.14434388134814935
+          ],
+          "v": [
+            0.01727244333809303,
+            -4.2904179144501176e-06
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9584100507907807
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395782145782145,
+          0.1808855985171775
+        ]
+      }
+    },
+    {
+      "t": 1795780619.20492,
+      "stamp": 1795780619.160393,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776993456554818,
+            0.14328962889762234
+          ],
+          "v": [
+            0.00940324475954426,
+            -0.020372166441032142
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9675109860093011
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395835497835496,
+          0.18088917748917754
+        ]
+      }
+    },
+    {
+      "t": 1795780619.2360055,
+      "stamp": 1795780619.1937654,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578044917317282,
+            0.14437087821055986
+          ],
+          "v": [
+            -0.003337537033142617,
+            0.013656762425267022
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9473341648283254
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43956949094342834,
+          0.1808236758520045
+        ]
+      }
+    },
+    {
+      "t": 1795780619.2642555,
+      "stamp": 1795780619.2271378,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784868384992563,
+            0.14377677632161928
+          ],
+          "v": [
+            -0.009724337621931829,
+            -0.0066290153718792134
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9684553778302651
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394987037273152,
+          0.18069169960474307
+        ]
+      }
+    },
+    {
+      "t": 1795780619.2862167,
+      "stamp": 1795780619.26051,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780649059239872,
+            0.14504314231318174
+          ],
+          "v": [
+            0.004698929305891596,
+            0.022114743866036173
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9452013619172233
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394760190304745,
+          0.18055055505550555
+        ]
+      }
+    },
+    {
+      "t": 1795780619.3260195,
+      "stamp": 1795780619.2938824,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5782100165107752,
+            0.14442754507439817
+          ],
+          "v": [
+            -0.0011349743603204527,
+            -0.004040364768081037
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.975269369419433
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43958825543571284,
+          0.1806694059236433
+        ]
+      }
+    },
+    {
+      "t": 1795780619.3581188,
+      "stamp": 1795780619.3272545,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792328731122421,
+            0.14412482633392804
+          ],
+          "v": [
+            -0.020167113110308672,
+            -0.007284260962147073
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.958122037482599
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395651708027944,
+          0.18056084179846554
+        ]
+      }
+    },
+    {
+      "t": 1795780619.394753,
+      "stamp": 1795780619.3606267,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781166300492028,
+            0.14494155164498806
+          ],
+          "v": [
+            0.014405679102657512,
+            0.01319390390011852
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.951871133436646
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43965995179063344,
+          0.18067062672176318
+        ]
+      }
+    },
+    {
+      "t": 1795780619.507286,
+      "stamp": 1795780619.4607434,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5814338799314969,
+            0.14491893158558528
+          ],
+          "v": [
+            -0.058025773905852174,
+            -0.007252641537528149
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9241024081913898
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396339113680152,
+          0.18070327552986515
+        ]
+      }
+    },
+    {
+      "t": 1795780619.540519,
+      "stamp": 1795780619.4941158,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578535771174959,
+            0.14480121277173755
+          ],
+          "v": [
+            0.036060875837247194,
+            -0.004833235748295386
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9067689685484246
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395819029455391,
+          0.18062152998516642
+        ]
+      }
+    },
+    {
+      "t": 1795780619.5597415,
+      "stamp": 1795780619.5274878,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5761878784466677,
+            0.14474031168242318
+          ],
+          "v": [
+            0.0584435909363578,
+            -0.0028698196632272878
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9777153893206136
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43959339154254395,
+          0.18060777264167097
+        ]
+      }
+    },
+    {
+      "t": 1795780619.5869684,
+      "stamp": 1795780619.56086,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781630004468996,
+            0.1435903898311506
+          ],
+          "v": [
+            -0.017314218365086592,
+            -0.023213686908689406
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9173431787109917
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43948085341493465,
+          0.18060244804284076
+        ]
+      }
+    },
+    {
+      "t": 1795780619.6277716,
+      "stamp": 1795780619.594232,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5796090160456816,
+            0.14352295073004875
+          ],
+          "v": [
+            -0.03406453506330408,
+            -0.009568609461543665
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9638805342476013
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396002396849853,
+          0.1806360212292416
+        ]
+      }
+    },
+    {
+      "t": 1795780619.684976,
+      "stamp": 1795780619.6276042,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784891819491443,
+            0.14449689338694338
+          ],
+          "v": [
+            0.009529817591874018,
+            0.015415057252520537
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9479132692040859
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43958205652025856,
+          0.18064266258086492
+        ]
+      }
+    },
+    {
+      "t": 1795780619.7376404,
+      "stamp": 1795780619.6609764,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5803576008409472,
+            0.14461203615963905
+          ],
+          "v": [
+            -0.03271939292810717,
+            0.007699474926541956
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9380190967552151
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43946022727272727,
+          0.18058367768595046
+        ]
+      }
+    },
+    {
+      "t": 1795780619.7793856,
+      "stamp": 1795780619.6943483,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792788191882877,
+            0.14443601742580464
+          ],
+          "v": [
+            0.009223842144712086,
+            -0.0006665044070602267
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9595985575224708
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43936262061960385,
+          0.18075672930421535
+        ]
+      }
+    },
+    {
+      "t": 1795780619.8013918,
+      "stamp": 1795780619.7277207,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792131477057395,
+            0.14389884408668863
+          ],
+          "v": [
+            0.004544952074316878,
+            -0.010616123567683832
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9767189768033795
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395325596389427,
+          0.18058435418009883
+        ]
+      }
+    },
+    {
+      "t": 1795780619.932819,
+      "stamp": 1795780619.8612099,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5763646747427469,
+            0.1437791884590915
+          ],
+          "v": [
+            0.033225952125641625,
+            0.005983726500349212
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9583382109164341
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43957712720424563,
+          0.18074644752610858
+        ]
+      }
+    },
+    {
+      "t": 1795780619.9560664,
+      "stamp": 1795780619.8945818,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776747601661407,
+            0.14384801432767683
+          ],
+          "v": [
+            -0.013785866431893216,
+            0.003440384258753324
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9589601881811421
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43949523323118805,
+          0.18078396322778345
+        ]
+      }
+    },
+    {
+      "t": 1795780619.9745457,
+      "stamp": 1795780619.927954,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780917573901588,
+            0.14274500382808833
+          ],
+          "v": [
+            -0.012936166832050348,
+            -0.02058694429802759
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9639525055877296
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394527427246974,
+          0.1809429993990901
+        ]
+      }
+    },
+    {
+      "t": 1795780620.0104618,
+      "stamp": 1795780619.961326,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787376900810494,
+            0.1440867395767089
+          ],
+          "v": [
+            -0.01707344115955601,
+            0.018593498052128045
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9553478869582499
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43949683077190227,
+          0.18067769384388302
+        ]
+      }
+    },
+    {
+      "t": 1795780620.0325212,
+      "stamp": 1795780619.994698,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776950893258278,
+            0.14409884890700506
+          ],
+          "v": [
+            0.014015823749160248,
+            0.006862640119429456
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9565523692359216
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43951065274594675,
+          0.1807974705033529
+        ]
+      }
+    },
+    {
+      "t": 1795780620.057574,
+      "stamp": 1795780620.0280697,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784785451741269,
+            0.14444725382350546
+          ],
+          "v": [
+            -0.010152047672058812,
+            0.00916871377709844
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9683473644527019
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43963863006799286,
+          0.18056450935952326
+        ]
+      }
+    },
+    {
+      "t": 1795780620.1050732,
+      "stamp": 1795780620.061442,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781398799908175,
+            0.1446641068183237
+          ],
+          "v": [
+            0.0029390095537411755,
+            0.00744645320065162
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9812590054523449
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395247639984483,
+          0.18078990473727324
+        ]
+      }
+    },
+    {
+      "t": 1795780620.1357841,
+      "stamp": 1795780620.094814,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578502945191981,
+            0.14477703026692837
+          ],
+          "v": [
+            -0.005971585038418376,
+            0.004826665115141297
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.988383399737045
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43988789630408104,
+          0.180837274478893
+        ]
+      }
+    },
+    {
+      "t": 1795780620.1579492,
+      "stamp": 1795780620.128187,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784650294138455,
+            0.1444116564903187
+          ],
+          "v": [
+            -0.0013882644563904282,
+            -0.005345580468700303
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9917472080087824
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394464361929148,
+          0.18064916773367476
+        ]
+      }
+    },
+    {
+      "t": 1795780620.1894867,
+      "stamp": 1795780620.1615603,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5807277043947653,
+            0.1444447633334538
+          ],
+          "v": [
+            -0.04421301807746509,
+            -0.0012587929665164683
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9464066992346296
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43936159346271697,
+          0.18070224719101124
+        ]
+      }
+    },
+    {
+      "t": 1795780620.2456217,
+      "stamp": 1795780620.1949337,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5797832713032951,
+            0.14417978396617692
+          ],
+          "v": [
+            0.0025463490151868065,
+            -0.005567069603136607
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9447485518106884
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395800865800863,
+          0.18087099567099565
+        ]
+      }
+    },
+    {
+      "t": 1795780620.270803,
+      "stamp": 1795780620.2283065,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778761043195146,
+            0.14424173266973853
+          ],
+          "v": [
+            0.037755239487258535,
+            -0.0007802009153374916
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9666492405257168
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396776547343118,
+          0.1807052107477037
+        ]
+      }
+    },
+    {
+      "t": 1795780620.2970355,
+      "stamp": 1795780620.26168,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579420577162043,
+            0.14449457777005048
+          ],
+          "v": [
+            -0.01643398456008687,
+            0.004608459575723789
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9518347756281476
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394448742746615,
+          0.1806307758435418
+        ]
+      }
+    },
+    {
+      "t": 1795780620.3479588,
+      "stamp": 1795780620.295053,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5768879761398661,
+            0.14456323088811204
+          ],
+          "v": [
+            0.04309907972543514,
+            0.0029632515865295646
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9229563494793366
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43942903612395123,
+          0.1806086286594761
+        ]
+      }
+    },
+    {
+      "t": 1795780620.3754654,
+      "stamp": 1795780620.3284264,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5772673115675034,
+            0.14442871443269037
+          ],
+          "v": [
+            0.007977016372704433,
+            -0.0015467670902651427
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9507771585559059
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395497650760808,
+          0.18092784171731544
+        ]
+      }
+    },
+    {
+      "t": 1795780620.4023263,
+      "stamp": 1795780620.3617992,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5774876186041206,
+            0.1440767737082856
+          ],
+          "v": [
+            -0.001423734012964058,
+            -0.00734965672125773
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9609013223321297
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395523710716291,
+          0.18047443046729789
+        ]
+      }
+    },
+    {
+      "t": 1795780620.4302921,
+      "stamp": 1795780620.3951726,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5794015983837437,
+            0.14421473033452956
+          ],
+          "v": [
+            -0.037488124396936155,
+            5.540740923521033e-05
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9402131502610289
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43947676187991813,
+          0.180627581409504
+        ]
+      }
+    },
+    {
+      "t": 1795780620.4554229,
+      "stamp": 1795780620.4285457,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776324978903862,
+            0.14430954477788704
+          ],
+          "v": [
+            0.020869019148791065,
+            0.0018517115925535583
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9389370407531583
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43946852160533395,
+          0.18078877633884685
+        ]
+      }
+    },
+    {
+      "t": 1795780620.5095131,
+      "stamp": 1795780620.4619198,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787447958508718,
+            0.14451569292463012
+          ],
+          "v": [
+            -0.014080742844696043,
+            0.004640860686503972
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9478016512093183
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43947045131255663,
+          0.18044592439329285
+        ]
+      }
+    },
+    {
+      "t": 1795780620.5400054,
+      "stamp": 1795780620.495293,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786800504961425,
+            0.1443243506895159
+          ],
+          "v": [
+            -0.0037498148336205708,
+            -0.00204894689864403
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9724432752676622
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394804265834308,
+          0.18066350197251485
+        ]
+      }
+    },
+    {
+      "t": 1795780620.5692434,
+      "stamp": 1795780620.528666,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579003529153682,
+            0.14421264237122228
+          ],
+          "v": [
+            -0.007582116149942884,
+            -0.002886154679267004
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9702879469101354
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395437473324796,
+          0.1806022193768673
+        ]
+      }
+    },
+    {
+      "t": 1795780620.5938916,
+      "stamp": 1795780620.5620391,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5800828279706518,
+            0.14461887092084252
+          ],
+          "v": [
+            -0.023547362734247998,
+            0.00682424099390206
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9573828022647018
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394781144781144,
+          0.180647189191493
+        ]
+      }
+    },
+    {
+      "t": 1795780620.62446,
+      "stamp": 1795780620.595412,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5800993306861856,
+            0.14484600506454892
+          ],
+          "v": [
+            -0.008681921384486181,
+            0.006812446160834384
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9840758953394273
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396213186719516,
+          0.18061224054894948
+        ]
+      }
+    },
+    {
+      "t": 1795780620.6596007,
+      "stamp": 1795780620.6287851,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792932163300828,
+            0.14454228487890164
+          ],
+          "v": [
+            0.01249256771084336,
+            -0.003449105088510745
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9702247667969449
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394673627026567,
+          0.18068118156353452
+        ]
+      }
+    },
+    {
+      "t": 1795780620.7049205,
+      "stamp": 1795780620.6621583,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780260313830563,
+            0.14530374987589137
+          ],
+          "v": [
+            0.02892172580308102,
+            0.013488294739080899
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.973625468370329
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43940728968001685,
+          0.18057236702691254
+        ]
+      }
+    },
+    {
+      "t": 1795780620.7328308,
+      "stamp": 1795780620.6955314,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5761332045349322,
+            0.14502922336845692
+          ],
+          "v": [
+            0.04684545755916671,
+            -0.0005140573645210627
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9670291987432529
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43952762923351163,
+          0.18054536966301674
+        ]
+      }
+    },
+    {
+      "t": 1795780620.7569144,
+      "stamp": 1795780620.7289042,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5773649797614637,
+            0.14419473149341341
+          ],
+          "v": [
+            -0.007163178644725231,
+            -0.016306887532604522
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9443424923207895
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43942887145857434,
+          0.18048197676910552
+        ]
+      }
+    },
+    {
+      "t": 1795780620.7913086,
+      "stamp": 1795780620.7622774,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5776368543312628,
+            0.14475035073353135
+          ],
+          "v": [
+            -0.007797278200866462,
+            0.004944384136344408
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9621292997290632
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43930390865173463,
+          0.1807022397891963
+        ]
+      }
+    },
+    {
+      "t": 1795780620.8306808,
+      "stamp": 1795780620.7956505,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778706164971028,
+            0.14482818917556942
+          ],
+          "v": [
+            -0.007286061859281391,
+            0.003260038042238794
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.97172912320717
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394639024808994,
+          0.18068031590694483
+        ]
+      }
+    },
+    {
+      "t": 1795780620.856024,
+      "stamp": 1795780620.8290234,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5774822784720697,
+            0.14436232544966024
+          ],
+          "v": [
+            0.004915881883492859,
+            -0.007843735300755796
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9758292939037937
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439609250398724,
+          0.18075973102288892
+        ]
+      }
+    },
+    {
+      "t": 1795780620.8912222,
+      "stamp": 1795780620.8623965,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5790637496839772,
+            0.1438198482418161
+          ],
+          "v": [
+            -0.02881177713469739,
+            -0.013267648388053953
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.967129180088727
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43967304625199344,
+          0.1807528341738868
+        ]
+      }
+    },
+    {
+      "t": 1795780620.9270897,
+      "stamp": 1795780620.8957694,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5773681760714526,
+            0.1444408300671204
+          ],
+          "v": [
+            0.02252965771652584,
+            0.0072866870852272975
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9541023237171304
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43959747691507345,
+          0.18084211210820658
+        ]
+      }
+    },
+    {
+      "t": 1795780620.9673433,
+      "stamp": 1795780620.9291422,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5772723529702334,
+            0.1439006509615529
+          ],
+          "v": [
+            0.00985312603666616,
+            -0.00784958334779357
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9794902004404701
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396117424242423,
+          0.18075671487603306
+        ]
+      }
+    },
+    {
+      "t": 1795780620.9965012,
+      "stamp": 1795780620.9625154,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5777774714439827,
+            0.14412304754056768
+          ],
+          "v": [
+            -0.006260674851205902,
+            0.0015094019405826314
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.967069271857567
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393621084797556,
+          0.18052584670231733
+        ]
+      }
+    },
+    {
+      "t": 1795780621.024389,
+      "stamp": 1795780620.9958882,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786128924075111,
+            0.14474326542577595
+          ],
+          "v": [
+            -0.018365801368157908,
+            0.012520123600687065
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9753125491121654
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939925198690966,
+          0.18060074801309023
+        ]
+      }
+    },
+    {
+      "t": 1795780621.059435,
+      "stamp": 1795780621.029261,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786982591136475,
+            0.14408940351702731
+          ],
+          "v": [
+            -0.008172254850215405,
+            -0.008187498817362587
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9633669982043802
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43974007682458394,
+          0.1808028169014084
+        ]
+      }
+    },
+    {
+      "t": 1795780621.1286464,
+      "stamp": 1795780621.0626342,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5787323327839661,
+            0.1439600150475315
+          ],
+          "v": [
+            -0.0035607935864172087,
+            -0.005407909530119137
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9729842475019451
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395515499825842,
+          0.18065743643329854
+        ]
+      }
+    },
+    {
+      "t": 1795780621.1830394,
+      "stamp": 1795780621.096007,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.576889432643858,
+            0.14475479082293377
+          ],
+          "v": [
+            0.03434445356235795,
+            0.01343624337105274
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.936437254578388
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43954460453057914,
+          0.1805896978197118
+        ]
+      }
+    },
+    {
+      "t": 1795780621.2031481,
+      "stamp": 1795780621.1293805,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786877703689024,
+            0.14453288705980818
+          ],
+          "v": [
+            -0.0225505812764017,
+            0.00048419239293273804
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9390387524409294
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395437179821132,
+          0.18053095424155602
+        ]
+      }
+    },
+    {
+      "t": 1795780621.2230005,
+      "stamp": 1795780621.1961281,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781876299484591,
+            0.14438878150993925
+          ],
+          "v": [
+            0.01293259692739944,
+            -0.0026375208365866363
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9751154767299083
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395377612514426,
+          0.18049643116638892
+        ]
+      }
+    },
+    {
+      "t": 1795780621.2573888,
+      "stamp": 1795780621.2295017,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5770956740121002,
+            0.14466503050262322
+          ],
+          "v": [
+            0.025735302399277078,
+            0.004424920757794411
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9629348262860468
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394777334876343,
+          0.18096116754532596
+        ]
+      }
+    },
+    {
+      "t": 1795780621.3286164,
+      "stamp": 1795780621.262875,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786483786081238,
+            0.14486025361421093
+          ],
+          "v": [
+            -0.020998848058571336,
+            0.00534636972769372
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.955946424616554
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394280142299941,
+          0.18048197676910552
+        ]
+      }
+    },
+    {
+      "t": 1795780621.3630986,
+      "stamp": 1795780621.329622,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780604986657316,
+            0.1436026531138336
+          ],
+          "v": [
+            0.014020214687355523,
+            -0.023071318848837764
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9625014920559
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43954459731687434,
+          0.1807099995713857
+        ]
+      }
+    },
+    {
+      "t": 1795780621.3916898,
+      "stamp": 1795780621.3629954,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5805817682352904,
+            0.1441519157325208
+          ],
+          "v": [
+            -0.04396866975353118,
+            0.002521284783069049
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9364309388539913
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395360383495974,
+          0.18065399760315018
+        ]
+      }
+    },
+    {
+      "t": 1795780621.459484,
+      "stamp": 1795780621.396369,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578863614735066,
+            0.14428779360884803
+          ],
+          "v": [
+            0.017786677396017282,
+            0.003524196915490425
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9392146585308452
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394943820224719,
+          0.18076523663602323
+        ]
+      }
+    },
+    {
+      "t": 1795780621.4753218,
+      "stamp": 1795780621.429742,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5782331465838603,
+            0.14431476697771142
+          ],
+          "v": [
+            0.018498126042176165,
+            0.0017752541454798413
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9726215610524558
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43945899674713207,
+          0.18066512583461738
+        ]
+      }
+    },
+    {
+      "t": 1795780621.5019414,
+      "stamp": 1795780621.4631157,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5805346757920778,
+            0.14431939593237733
+          ],
+          "v": [
+            -0.03785743482784154,
+            0.0007207364439946731
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9582056622556789
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395031909048643,
+          0.1807115083893327
+        ]
+      }
+    },
+    {
+      "t": 1795780621.5258613,
+      "stamp": 1795780621.4964893,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5779939949510404,
+            0.1443450022764817
+          ],
+          "v": [
+            0.035640171672702614,
+            0.0007507369469173614
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9366642002001722
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43946070878274274,
+          0.180588084232152
+        ]
+      }
+    },
+    {
+      "t": 1795780621.5819423,
+      "stamp": 1795780621.5298629,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5766101722160819,
+            0.14436416697744345
+          ],
+          "v": [
+            0.039396133545676136,
+            0.0006369252826651588
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9879184665465202
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395737031330251,
+          0.1808902585173772
+        ]
+      }
+    },
+    {
+      "t": 1795780621.670365,
+      "stamp": 1795780621.5966096,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5775893352056773,
+            0.14341002580489426
+          ],
+          "v": [
+            -0.024456562864083035,
+            -0.016997842896123983
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9458138113921548
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939609772943083,
+          0.1804165587498921
+        ]
+      }
+    },
+    {
+      "t": 1795780621.6942506,
+      "stamp": 1795780621.6299832,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5777205231646293,
+            0.1442141137985221
+          ],
+          "v": [
+            -0.011175593749369203,
+            0.009590001573635806
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.963586935711134
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394414098062167,
+          0.180853383621624
+        ]
+      }
+    },
+    {
+      "t": 1795780621.7295306,
+      "stamp": 1795780621.6633568,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5789003420726769,
+            0.14450898386926153
+          ],
+          "v": [
+            -0.02681159508273423,
+            0.009101982822227211
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9649997821309286
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43955234159779616,
+          0.1804700413223141
+        ]
+      }
+    },
+    {
+      "t": 1795780621.7534668,
+      "stamp": 1795780621.6967301,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5799612311501909,
+            0.14403537443840173
+          ],
+          "v": [
+            -0.030016575229655455,
+            -0.005898154968701328
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9755274947230943
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395826839826838,
+          0.18085800865800872
+        ]
+      }
+    },
+    {
+      "t": 1795780621.7722673,
+      "stamp": 1795780621.7301037,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5792125503795478,
+            0.14415525051349085
+          ],
+          "v": [
+            0.00378077957154117,
+            0.00021701814829520188
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9593732108525244
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394270090347122,
+          0.18046405567803575
+        ]
+      }
+    },
+    {
+      "t": 1795780621.7939847,
+      "stamp": 1795780621.763477,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5793208624883777,
+            0.1448569290556769
+          ],
+          "v": [
+            -0.0007496959544472503,
+            0.013633935013989455
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9824626950575941
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43949238144153385,
+          0.18065742167437085
+        ]
+      }
+    },
+    {
+      "t": 1795780621.829064,
+      "stamp": 1795780621.7968507,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5769138497881794,
+            0.14415071741019553
+          ],
+          "v": [
+            0.04624335965642124,
+            -0.008803885324199203
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9516066927578564
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395793126798712,
+          0.18055781276451677
+        ]
+      }
+    },
+    {
+      "t": 1795780621.856998,
+      "stamp": 1795780621.830224,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5774071274872385,
+            0.14438452745450384
+          ],
+          "v": [
+            0.00689211156872508,
+            0.0013910370655695996
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9439186364597956
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43954803719008273,
+          0.18046057162534443
+        ]
+      }
+    },
+    {
+      "t": 1795780621.9224696,
+      "stamp": 1795780621.8635986,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5775863794032144,
+            0.14485348266120884
+          ],
+          "v": [
+            -0.0010159350460046002,
+            0.009555236828838605
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9810859503162455
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439472455648926,
+          0.18057083439436383
+        ]
+      }
+    },
+    {
+      "t": 1795780621.964968,
+      "stamp": 1795780621.8969722,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.576983293950551,
+            0.14455272806992447
+          ],
+          "v": [
+            0.011292162152842228,
+            -0.0024177416601229053
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9669053208125047
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43944615648005453,
+          0.18052388289676422
+        ]
+      }
+    },
+    {
+      "t": 1795780621.9924185,
+      "stamp": 1795780621.930346,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5764682860973535,
+            0.14472428179682512
+          ],
+          "v": [
+            0.013961438558864418,
+            0.002456164580698148
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9908860872767742
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393943686153315,
+          0.18050433513606323
+        ]
+      }
+    },
+    {
+      "t": 1795780622.0112305,
+      "stamp": 1795780621.9637194,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786733386323611,
+            0.14516142676932406
+          ],
+          "v": [
+            -0.03764823873073485,
+            0.00931894746576151
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9495115709687563
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393905345590737,
+          0.1805490296220633
+        ]
+      }
+    },
+    {
+      "t": 1795780622.0289857,
+      "stamp": 1795780621.997093,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784826365757956,
+            0.14422782117512103
+          ],
+          "v": [
+            -0.009685827910188662,
+            -0.014729798976282824
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9540175426227806
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393892179586229,
+          0.18092239677225516
+        ]
+      }
+    },
+    {
+      "t": 1795780622.149559,
+      "stamp": 1795780622.0972135,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784005411498693,
+            0.14504828489186947
+          ],
+          "v": [
+            0.006321091313883084,
+            0.020198694206103023
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.97003076165099
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43961088154269956,
+          0.1808978994490359
+        ]
+      }
+    },
+    {
+      "t": 1795780622.1691248,
+      "stamp": 1795780622.130591,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5798641081358589,
+            0.1433042976380401
+          ],
+          "v": [
+            -0.026267079571267584,
+            -0.026860942358586066
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.943993157431714
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939627039627027,
+          0.18076139012502648
+        ]
+      }
+    },
+    {
+      "t": 1795780622.2083116,
+      "stamp": 1795780622.163968,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5797018489359915,
+            0.14400772934782247
+          ],
+          "v": [
+            -0.005948029460989254,
+            0.0044293147363392675
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9569569644901408
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395437229437227,
+          0.18055411255411255
+        ]
+      }
+    },
+    {
+      "t": 1795780622.2279985,
+      "stamp": 1795780622.1973455,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5795484937305936,
+            0.1433239364566973
+          ],
+          "v": [
+            0.0008428174571077727,
+            -0.01161991987799529
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9629703739897281
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396044976990534,
+          0.18042676044108713
+        ]
+      }
+    },
+    {
+      "t": 1795780622.2597785,
+      "stamp": 1795780622.2307227,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780678752523646,
+            0.14399853806465843
+          ],
+          "v": [
+            0.028865390704499644,
+            0.0088775692464515
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9461444545669807
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43948085341493465,
+          0.18060244804284076
+        ]
+      }
+    },
+    {
+      "t": 1795780622.3038785,
+      "stamp": 1795780622.2640998,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5802807523206899,
+            0.1439785198944719
+          ],
+          "v": [
+            -0.03249465420359793,
+            0.002766792083640622
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9356824641112406
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43981461934292115,
+          0.1806586181114483
+        ]
+      }
+    },
+    {
+      "t": 1795780622.334879,
+      "stamp": 1795780622.2974772,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5782766884620101,
+            0.1446128440449327
+          ],
+          "v": [
+            0.027187018770773702,
+            0.013239331747307924
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9467754694033544
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43964245858013556,
+          0.18058760408618768
+        ]
+      }
+    },
+    {
+      "t": 1795780622.3589132,
+      "stamp": 1795780622.3308547,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5786250097963314,
+            0.14397420732526225
+          ],
+          "v": [
+            0.0029230937680886984,
+            -0.007638913086816659
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9670433423755507
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43956027904948747,
+          0.180615870939612
+        ]
+      }
+    },
+    {
+      "t": 1795780622.4146554,
+      "stamp": 1795780622.3642318,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780197318852782,
+            0.14450383865175642
+          ],
+          "v": [
+            0.012733110012307905,
+            0.007521031554353271
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9660156695886245
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395778004766767,
+          0.18071416411304053
+        ]
+      }
+    },
+    {
+      "t": 1795780622.4299533,
+      "stamp": 1795780622.3976095,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5768387594030159,
+            0.1449929422729216
+          ],
+          "v": [
+            0.027339989820607525,
+            0.01212100740890189
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.972822826892878
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43959610266975685,
+          0.18076272641428454
+        ]
+      }
+    },
+    {
+      "t": 1795780622.4579997,
+      "stamp": 1795780622.430987,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5768654809070896,
+            0.14504123641307132
+          ],
+          "v": [
+            0.009191575319922585,
+            0.005237071427678013
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.974714733674228
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393941543090477,
+          0.180698689017838
+        ]
+      }
+    },
+    {
+      "t": 1795780622.499484,
+      "stamp": 1795780622.4643643,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578921477363213,
+            0.1446955791314642
+          ],
+          "v": [
+            -0.0364623160765801,
+            -0.00481922659177035
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9563551273768227
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395247639984483,
+          0.180501961291435
+        ]
+      }
+    },
+    {
+      "t": 1795780622.5308104,
+      "stamp": 1795780622.4977417,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579606376683833,
+            0.1440954750970018
+          ],
+          "v": [
+            -0.026180701156563645,
+            -0.013306449837685377
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.960808830413434
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394908310573547,
+          0.18040512420340746
+        ]
+      }
+    },
+    {
+      "t": 1795780622.5843701,
+      "stamp": 1795780622.5311193,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5793637720148463,
+            0.14336157977278036
+          ],
+          "v": [
+            -0.004608519618797054,
+            -0.01890515150040224
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9482376848264895
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396408373427872,
+          0.18057271883177184
+        ]
+      }
+    },
+    {
+      "t": 1795780622.6200151,
+      "stamp": 1795780622.5644977,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578858797371485,
+            0.14411549710971855
+          ],
+          "v": [
+            0.008120805144595004,
+            0.007854668188556065
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9631169602233783
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396878063333758,
+          0.18061650257852793
+        ]
+      }
+    },
+    {
+      "t": 1795780622.6382358,
+      "stamp": 1795780622.5978756,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.578358805929772,
+            0.14450721929317642
+          ],
+          "v": [
+            0.012544312325855754,
+            0.010357834423959702
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9882201004881654
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394514849778007,
+          0.18052610026294247
+        ]
+      }
+    },
+    {
+      "t": 1795780622.7270708,
+      "stamp": 1795780622.6980083,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780988380857804,
+            0.1443787324461261
+          ],
+          "v": [
+            -0.00261356011798247,
+            -0.007379538903979523
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9687256515581151
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394026471612677,
+          0.18042145593869732
+        ]
+      }
+    },
+    {
+      "t": 1795780622.7649806,
+      "stamp": 1795780622.7313857,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.577062310105715,
+            0.1449997650988944
+          ],
+          "v": [
+            0.019255965624959633,
+            0.009499811564570684
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9721408964426195
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43946677906021686,
+          0.1804095880344098
+        ]
+      }
+    },
+    {
+      "t": 1795780622.7943819,
+      "stamp": 1795780622.7647634,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780882204973948,
+            0.14467169676675523
+          ],
+          "v": [
+            -0.013377051855825599,
+            -0.003117240156999849
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9680030516252756
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43956709956709944,
+          0.18053246753246754
+        ]
+      }
+    },
+    {
+      "t": 1795780622.8287582,
+      "stamp": 1795780622.7981412,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5795278807647553,
+            0.14401302006033873
+          ],
+          "v": [
+            -0.03254354629639053,
+            -0.013820734045447747
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9798485807986554
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43952980305204126,
+          0.1806380157384462
+        ]
+      }
+    },
+    {
+      "t": 1795780622.8654594,
+      "stamp": 1795780622.8315191,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780328863815506,
+            0.1439119201865431
+          ],
+          "v": [
+            0.017255510859049666,
+            -0.006871343521559855
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9678409566400623
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43949382089046884,
+          0.18069493820890475
+        ]
+      }
+    },
+    {
+      "t": 1795780622.945626,
+      "stamp": 1795780622.8648968,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5778824966366013,
+            0.14428531343487186
+          ],
+          "v": [
+            0.009034602429906271,
+            0.004772390149101953
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.975657041076539
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394072452571035,
+          0.18065284573783152
+        ]
+      }
+    },
+    {
+      "t": 1795780622.9997444,
+      "stamp": 1795780622.8982744,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5789997804677826,
+            0.14391998582050866
+          ],
+          "v": [
+            -0.0183814168255964,
+            -0.005364751864134033
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9634048934468613
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43943763314638484,
+          0.18043889396113214
+        ]
+      }
+    },
+    {
+      "t": 1795780623.0164373,
+      "stamp": 1795780622.9316523,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5784573977765953,
+            0.14318285442887188
+          ],
+          "v": [
+            0.0039533868701294335,
+            -0.016147827021877323
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9471713267529583
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43944971577552655,
+          0.1804331751934009
+        ]
+      }
+    },
+    {
+      "t": 1795780623.0425265,
+      "stamp": 1795780622.96503,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.579059991728604,
+            0.14343019394866532
+          ],
+          "v": [
+            -0.010239513137175601,
+            -0.0009546829386921606
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9578668423083062
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43942270809359424,
+          0.1803514043387462
+        ]
+      }
+    },
+    {
+      "t": 1795780623.0689862,
+      "stamp": 1795780622.9984078,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5775468914064357,
+            0.14430834387743322
+          ],
+          "v": [
+            0.02560033099266517,
+            0.01662861949866862
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9412136439767784
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4393906972722948,
+          0.18052976267669568
+        ]
+      }
+    },
+    {
+      "t": 1795780623.0870938,
+      "stamp": 1795780623.031786,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781820451549002,
+            0.1436527033330581
+          ],
+          "v": [
+            -0.0031825975921229224,
+            -0.00676400778820618
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9675357230091858
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4396024855294515,
+          0.18064266258086492
+        ]
+      }
+    },
+    {
+      "t": 1795780623.1171472,
+      "stamp": 1795780623.0651639,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5790091222864476,
+            0.1446516319606983
+          ],
+          "v": [
+            -0.01711084943578993,
+            0.01689960666238964
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9481771787926425
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939824380165293,
+          0.180625
+        ]
+      }
+    },
+    {
+      "t": 1795780623.1345315,
+      "stamp": 1795780623.0985415,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5788168274231829,
+            0.14529096440107458
+          ],
+          "v": [
+            -0.0023601280151274735,
+            0.018353846793918372
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9697457412703194
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43933256073482674,
+          0.18039359601682545
+        ]
+      }
+    },
+    {
+      "t": 1795780623.1593251,
+      "stamp": 1795780623.131913,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5790699256436198,
+            0.1450297818569537
+          ],
+          "v": [
+            -0.005728727327550474,
+            0.001472392116745342
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9821925018772921
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439589421957843,
+          0.18071403939824998
+        ]
+      }
+    },
+    {
+      "t": 1795780623.1972353,
+      "stamp": 1795780623.1652842,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5781331948954274,
+            0.1448158058388287
+          ],
+          "v": [
+            0.016065099243837637,
+            -0.003611551439760965
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9641717957562554
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394489970123771,
+          0.18069184805804525
+        ]
+      }
+    },
+    {
+      "t": 1795780623.2299612,
+      "stamp": 1795780623.1986554,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5762410368093479,
+            0.14449630569820293
+          ],
+          "v": [
+            0.04226718451833686,
+            -0.007456292149016823
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9663062417198413
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4395761411584197,
+          0.1805755870945744
+        ]
+      }
+    },
+    {
+      "t": 1795780623.269595,
+      "stamp": 1795780623.2320266,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5779553085745002,
+            0.1430328196668258
+          ],
+          "v": [
+            -0.01811109868654235,
+            -0.030926470788599097
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9467643541788566
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43974776170798885,
+          0.18045454545454545
+        ]
+      }
+    },
+    {
+      "t": 1795780623.2952595,
+      "stamp": 1795780623.265399,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5770912259417026,
+            0.14359854618596057
+          ],
+          "v": [
+            0.010263671080440726,
+            -5.286227423726905e-05
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9642196235913005
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394940208306546,
+          0.1805917020273456
+        ]
+      }
+    },
+    {
+      "t": 1795780623.3317008,
+      "stamp": 1795780623.29877,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5768692867038131,
+            0.144793937951439
+          ],
+          "v": [
+            0.007933978152334986,
+            0.023079081398916197
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9661871752432398
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.439420354169308,
+          0.18067093529436626
+        ]
+      }
+    },
+    {
+      "t": 1795780623.3696737,
+      "stamp": 1795780623.3321414,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5769381765706771,
+            0.1450016217182447
+          ],
+          "v": [
+            0.0014868979005099557,
+            0.012210253455782439
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9811274877473283
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.4394872453347028,
+          0.1806471494607088
+        ]
+      }
+    },
+    {
+      "t": 1795780623.4122672,
+      "stamp": 1795780623.3655124,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.57790767876608,
+            0.1445657491445511
+          ],
+          "v": [
+            -0.018205002005657434,
+            -0.004085134145422659
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9718643314194467
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43939842714877964,
+          0.1806075565243408
+        ]
+      }
+    },
+    {
+      "t": 1795780623.435908,
+      "stamp": 1795780623.3988836,
+      "valid": true,
+      "calibrated": true,
+      "status": "RULES_DISABLED",
+      "robots": [
+        {
+          "id": 1,
+          "visible": true,
+          "p": [
+            -0.5780080948396952,
+            0.14444451337280054
+          ],
+          "v": [
+            -0.008406468997007751,
+            -0.0037935569017997876
+          ],
+          "velocity_valid": true,
+          "reacquired": false,
+          "confidence": 0.9679284018416118
+        },
+        {
+          "id": 2,
+          "visible": false,
+          "p": [
+            NaN,
+            NaN
+          ],
+          "v": [
+            NaN,
+            NaN
+          ],
+          "velocity_valid": false,
+          "reacquired": false,
+          "confidence": 0.0
+        }
+      ],
+      "ball": {
+        "visible": true,
+        "p": [
+          0.43963908750425595,
+          0.18050476676881172
+        ]
+      }
+    }
+  ],
+  "latest": {
+    "localization/status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "WAITING_FOR_CALIBRATION",
+      "ready": false,
+      "stamp": 1795780623.302872,
+      "calibration_requested": false,
+      "team": "yellow",
+      "learned_colors": [],
+      "initialization_complete": false,
+      "valid": false,
+      "confidence": 0.0,
+      "hypotheses": [
+        [
+          -0.5396024986100171,
+          0.15116570332897766,
+          0.6348112588285308
+        ],
+        [
+          0.5396024986100171,
+          -0.15116570332897766,
+          -2.506781394761262
+        ]
+      ],
+      "pose": null,
+      "selected_goal_sign": null,
+      "provisional_goal_sign": null,
+      "selected_goal_color": null,
+      "debug_enabled": false,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": null,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 0
+      },
+      "goal_streak": 0,
+      "imu_map_offset_rad": null,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 249,
+      "fit_successes": 249,
+      "fit_source_hz": 7.367555948720141,
+      "imu_outliers": 0,
+      "processing_ms": {
+        "mean": 7.998833518066964,
+        "p95": 21.004933600488584,
+        "maximum": 145.31519100091828
+      },
+      "startup_inputs_ready": true,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "records": "/home/cse/.ros/pinky_soccer/localization/0715c43331484ae29cae3ba248b7089e/rectangle_2a0d5a84c14c44f887a40bc92bf479ff",
+      "rotation_rad": 0.0,
+      "imu_yaw_deg": 0.3925629145889997,
+      "goal_axis_imu_deg": {},
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": true
+      },
+      "fit_residual_m": 0.006418079958651455
+    },
+    "preparation/status": {
+      "state": "IDLE",
+      "ready": false,
+      "stamp_ros": 1795780623.3874958,
+      "reason": "",
+      "team": "yellow",
+      "start_pose": [
+        -0.4,
+        0.0,
+        0.0
+      ],
+      "own_goal": [
+        -0.83,
+        0.0
+      ],
+      "localization": {
+        "source": "rectangle_lidar_goal_imu",
+        "state": "WAITING_FOR_CALIBRATION",
+        "ready": false,
+        "stamp": 1795780623.302872,
+        "calibration_requested": false,
+        "team": "yellow",
+        "learned_colors": [],
+        "initialization_complete": false,
+        "valid": false,
+        "confidence": 0.0,
+        "hypotheses": [
+          [
+            -0.5396024986100171,
+            0.15116570332897766,
+            0.6348112588285308
+          ],
+          [
+            0.5396024986100171,
+            -0.15116570332897766,
+            -2.506781394761262
+          ]
+        ],
+        "pose": null,
+        "selected_goal_sign": null,
+        "provisional_goal_sign": null,
+        "selected_goal_color": null,
+        "debug_enabled": false,
+        "goal_centers": [
+          [
+            -0.9099999999999999,
+            0.0
+          ],
+          [
+            0.9099999999999999,
+            0.0
+          ]
+        ],
+        "target_error_rad": null,
+        "goal_pixel_counts": {
+          "yellow": 0,
+          "blue": 0
+        },
+        "goal_streak": 0,
+        "imu_map_offset_rad": null,
+        "fit_accepted": true,
+        "rejected_fits": 0,
+        "fit_attempts": 249,
+        "fit_successes": 249,
+        "fit_source_hz": 7.367555948720141,
+        "imu_outliers": 0,
+        "processing_ms": {
+          "mean": 7.998833518066964,
+          "p95": 21.004933600488584,
+          "maximum": 145.31519100091828
+        },
+        "startup_inputs_ready": true,
+        "missing_inputs": [],
+        "led": "service_unavailable",
+        "records": "/home/cse/.ros/pinky_soccer/localization/0715c43331484ae29cae3ba248b7089e/rectangle_2a0d5a84c14c44f887a40bc92bf479ff",
+        "rotation_rad": 0.0,
+        "imu_yaw_deg": 0.3925629145889997,
+        "goal_axis_imu_deg": {},
+        "sensors": {
+          "imu": true,
+          "lidar_outer_walls": true,
+          "odom": true,
+          "camera_intrinsics_tf": true
+        },
+        "fit_residual_m": 0.006418079958651455
+      },
+      "localization_valid": false,
+      "arrived": false,
+      "odom_fresh": true,
+      "sensors": {
+        "lidar": true,
+        "imu": true,
+        "odom": true,
+        "camera": true
+      },
+      "led": {
+        "color": [
+          0,
+          0,
+          0
+        ],
+        "blink": false,
+        "service": "ok"
+      },
+      "led_callback_ms": {
+        "mean": 0.017063928359372465,
+        "p95": 0.016252000932581723,
+        "maximum": 1.2299090012675151
+      },
+      "goal_id": 0
+    }
+  },
+  "counts": {
+    "localization/status": 29,
+    "preparation/status": 28,
+    "scan": 60,
+    "imu_raw": 598,
+    "odom": 180
+  }
+}

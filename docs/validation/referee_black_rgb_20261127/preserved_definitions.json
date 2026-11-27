@@ -1,0 +1,38 @@
+{
+  "changed": [
+    "detect",
+    "robot_observations"
+  ],
+  "unchanged": [
+    "order_quad",
+    "mask_hls",
+    "contours",
+    "green_quad",
+    "project",
+    "robust_line",
+    "white_samples",
+    "fit_radial",
+    "corners_from_samples",
+    "boundary_errors",
+    "select_geometry",
+    "verify_rectified_boundary",
+    "Field",
+    "blobs",
+    "goal_intervals",
+    "orient_goals",
+    "Track",
+    "associate",
+    "Rules",
+    "wrap_angle",
+    "iou_box",
+    "classify_led_pixels",
+    "led_body_support",
+    "body_end_led_candidates",
+    "ConstantVelocityFilter",
+    "RobotTrack",
+    "associate_robots",
+    "trapezoid_points"
+  ],
+  "baseline_sha256": "0265cb877d88f2d39b0da09823153967c03330a29908767970999692f4222d5e",
+  "new_sha256": "32a11a82ea41f0adc79b0d08aa19163dedec1bb85d60cf71020e17486a01743d"
+}

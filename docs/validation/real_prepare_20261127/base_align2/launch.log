@@ -1,0 +1,358 @@
+[INFO] [launch]: All log files can be found below /home/cse/.ros/log/2026-11-27-19-51-21-230370-cse-pc-115694
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: REAL ROBOT (no namespace) team yellow: starts paused. Receive sensors until preparation/prepare (Trigger) or R; calibrate, GoToPose to team start, then wait READY. preparation/stop stops motion. preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.
+[INFO] [launch.user]: VERIFY MODE: the game tree is off; behaviours run only from the verifier window. Keep a hand on the robot power switch.
+[INFO] [ball_detector-1]: process started with pid [115697]
+[INFO] [rectangle_localization-2]: process started with pid [115698]
+[INFO] [world_model_node-3]: process started with pid [115699]
+[INFO] [bt_node-4]: process started with pid [115700]
+[INFO] [match_preparation-5]: process started with pid [115701]
+[INFO] [mpc_controller-6]: process started with pid [115702]
+[INFO] [world_model_viz-7]: process started with pid [115703]
+[INFO] [world_model_topview-8]: process started with pid [115704]
+[INFO] [behavior_verifier-9]: process started with pid [115707]
+[INFO] [game_referee-10]: process started with pid [115708]
+[bt_node-4] [INFO] [1795776681.362170514] [bt_node]: Node [ReadWorldModel] created Subscriber to topic [world_model]
+[bt_node-4] [INFO] [1795776681.362452349] [bt_node]: Node [ReadGameState] created Subscriber to topic [/game/kickoff]
+[bt_node-4] [WARN] [1795776681.363621843] [bt_node]: VERIFY MODE: the game tree is not ticked; behaviours run only on behavior_test/request
+[bt_node-4] [INFO] [1795776681.363642155] [bt_node]: Loaded /home/cse/pinky-soccer/install/pinky_soccer_bt/share/pinky_soccer_bt/trees/soccer_1v1.xml, ticking at 15.0 Hz (Groot2 off)
+[bt_node-4] [INFO] [1795776681.430721440] [bt_node]: goal: STOP/VerifyIdle
+[game_referee-10] [INFO] [1795776681.968173684] [game_referee]: referee: goals from world_model, whole ball past the line; ball reset off
+[ball_detector-1] [INFO] [1795776682.378717741] [ball_detector]: Ball XY correction [0.013, 0.0] m in base_link; source: /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml
+[ball_detector-1] [INFO] [1795776682.381768064] [ball_detector]: Using intrinsics from /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/camera.yaml
+[world_model_node-3] [INFO] [1795776682.557256385] [world_model_node]: World model: tf, our goal yellow, attack +X
+[world_model_node-3] [WARN] [1795776682.565449556] [world_model_node]: Waiting for self pose
+[rectangle_localization-2] [INFO] [1795776682.650672547] [rectangle_localization]: Passive sensor reception. Start calibration: localization/calibrate (Trigger) or R in the localization window. No motion/LED requests before that signal. Records: /home/cse/.ros/pinky_soccer/localization/61186d4282434ac3bf16ac3b95b8a4f7/rectangle_6fd7e89619444ad68da79972997559ba
+[rectangle_localization-2] [INFO] [1795776682.655487053] [rectangle_localization]: Localization state: WAITING_FOR_CALIBRATION
+[world_model_node-3] [WARN] [1795776687.598096687] [world_model_node]: Waiting for self pose
+[mpc_controller-6] [INFO] [1795776688.157650607] [mpc_controller]: Fixed-step time-optimal NMPC real/acados: 10 Hz solve, 50 Hz command; up to 80 stages; 92.7 RPM
+[mpc_controller-6] [INFO] [1795776688.158253184] [mpc_controller]: Real motor response: {"applied": true, "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml", "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4", "robot_id": "pinky-pro", "model": "fixed_ramp_first_order_no_delay", "fixed_profile_accel": 74.9, "validation": {"held_out": true, "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged", "rmse_rad_s": 0.13673772694495787, "baseline_rmse_rad_s": 0.2517027001397467, "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance", "horizon_wheel_angle_error_rad": {"0.1s": 0.006039970818655074, "0.25s": 0.01353924291080568, "0.5s": 0.025260526044419987, "1s": 0.050791633435875824, "2s": 0.10842667597723218}, "baseline_horizon_wheel_angle_error_rad": {"0.1s": 0.00451993498306686, "0.25s": 0.010070927021842346, "0.5s": 0.018200915595838738, "1s": 0.03616965200808703, "2s": 0.07592224755230896}}, "parameters": {"tau_left": 0.09031918634164283, "tau_right": 0.08894523651011192}}
+[world_model_node-3] [WARN] [1795776692.598435515] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776697.632790644] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776702.664865349] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776707.665910152] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776712.665932144] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776717.668422512] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776722.701250367] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776727.731234035] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776732.731799113] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776737.765437597] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776742.765602307] [world_model_node]: Waiting for self pose
+[rectangle_localization-2] [INFO] [1795776747.396556225] [rectangle_localization]: Localization state: WAITING_FOR_ROBOT
+[rectangle_localization-2] [INFO] [1795776747.615391577] [rectangle_localization]: Localization state: AIMING_GOAL
+[world_model_node-3] [WARN] [1795776747.767002174] [world_model_node]: Waiting for self pose
+[rectangle_localization-2] [INFO] [1795776748.455798040] [rectangle_localization]: Localization state: SETTLING_GOAL
+[rectangle_localization-2] [INFO] [1795776749.115612981] [rectangle_localization]: Localization state: READING_GOAL
+[rectangle_localization-2] [INFO] [1795776749.316067521] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776749.955460388] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776750.162949661] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776750.375398989] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776750.575405986] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776750.801895000] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776751.006546169] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776754.575394502] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776754.775911389] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776755.671873286] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776755.889647433] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776756.082074945] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776756.347231302] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776756.789341411] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776757.009564414] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776757.206007367] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776757.410400808] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776758.273133893] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776758.441367871] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776758.680865841] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776758.878863061] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776759.088152572] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776759.286225652] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776759.788594008] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776759.955989625] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776761.436632748] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776761.638509114] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776762.531104016] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776762.718757821] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776764.646941741] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776764.868932249] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776765.063528404] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776765.291173563] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776766.359554254] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776766.603527810] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776766.798292476] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776767.008753652] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776770.479326231] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776770.676869875] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776771.125456558] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776771.335657841] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776771.540213850] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776771.757977117] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776772.157495025] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776772.408846647] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776774.535823533] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776774.994786365] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776776.255834424] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776776.465347819] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776776.729846540] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776776.931353748] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776777.333122610] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776777.550544406] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776778.619940038] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776778.843294021] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776779.040683766] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776779.255891755] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776779.463997714] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776779.685127159] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776779.876781966] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776780.100178409] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776780.328823817] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776780.756386080] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776781.836345934] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776782.035901744] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776783.335443172] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776783.535823818] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776783.755618494] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776783.981199828] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776784.820659866] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776785.016398421] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776785.241326722] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776786.465090622] [rectangle_localization]: Localization state: LOCALIZATION_LOST
+[rectangle_localization-2] [INFO] [1795776786.680664243] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776787.295563086] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776787.944417945] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776788.155542868] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776788.375396254] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776788.602187785] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776789.021673215] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776789.216150548] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776789.440933602] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776789.635445624] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776789.860581213] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776790.055376169] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776792.601705078] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776792.801983161] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776794.076404721] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776794.282001988] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776795.116065373] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776795.324914856] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776795.524144559] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776795.727331556] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776795.925437045] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776796.138212858] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776796.351312913] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776796.557856889] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776799.535711620] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776799.754143946] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776801.017426536] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776801.220018618] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776801.637968616] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776801.855355524] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776806.357802675] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776806.556760062] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776806.971752907] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776807.181126627] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776808.463687414] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776808.639138663] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776808.841273204] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776809.056491536] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776809.897165995] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776810.117095995] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776810.317835314] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776810.524984883] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776810.736887584] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776810.937023504] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776812.666373079] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776812.875672212] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776814.123088166] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776814.363153681] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776815.646252132] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776815.864225562] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776817.135659558] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776817.336147729] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776818.400662107] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776818.595907619] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776820.720924111] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776821.147517588] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776822.221501517] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776822.436951379] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776827.077319207] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776827.300273877] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776827.499530481] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776827.715621876] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776827.916691750] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776828.136449716] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776829.005368966] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776829.216453279] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776829.676598747] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776829.895633724] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776830.099229718] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776830.333358412] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776830.786204609] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776830.996175659] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776831.218438761] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776831.448238989] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776832.278835372] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776832.496964631] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776834.850019795] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776835.035799254] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776835.475790394] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776835.898170422] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776836.937212297] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776837.140704190] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776838.198493176] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776838.378545735] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776840.676341121] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776840.896563796] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776841.935310117] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776842.186163369] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776843.018816488] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776843.460761658] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776843.876635752] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776844.100993872] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776845.851977386] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776846.035936424] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776846.463440255] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776846.680779334] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776848.337684768] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776848.561525753] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776849.419269033] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776849.635174955] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776852.402151744] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776852.627945898] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776853.455394014] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776853.655679124] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776853.872743535] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776854.075734954] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776854.275840657] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776854.482939272] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776854.689502905] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776854.919753378] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776855.298854018] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776855.529139646] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776856.620196778] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776856.816571475] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776858.103464428] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776858.313226057] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776859.175397773] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776859.378349992] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776859.595867535] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776859.821383182] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776860.862889474] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776861.076304452] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776861.914379324] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776862.139256156] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776863.182907571] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776863.415528038] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776866.555639211] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776866.762882823] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776867.796181725] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776867.995845709] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776868.862625462] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776869.057362654] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776869.256168485] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776869.479621367] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776869.890039572] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776870.096286498] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776870.303382755] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776870.516642421] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776870.961816111] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776871.157604782] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776872.875396862] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776873.075487591] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776876.663497562] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776876.859081614] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776877.082722641] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776877.284445997] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776880.035721273] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776880.238221396] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776880.681049208] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776880.875942691] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776881.740328322] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776881.955814900] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776885.801266389] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776886.021656508] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776886.444337423] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776886.655439046] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776886.875483348] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776887.076038658] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776888.154369002] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776888.357392899] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776889.221451022] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776889.436292901] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776891.160132737] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776891.377823948] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776892.475443211] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776892.648016976] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776894.953082556] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776895.158446456] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776895.357358599] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776895.589716777] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776895.788953846] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776896.005763515] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776897.271269245] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776897.483334153] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776897.697372111] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776897.909132913] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776898.335596760] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776898.540720506] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776898.758196928] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776899.438146106] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776900.075259548] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776900.275715941] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776901.117993447] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776901.334050633] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776903.655630439] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776903.856985969] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776904.725054438] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776904.928467265] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776905.136450701] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776905.348947596] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776905.556660361] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776905.757535576] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776905.979836256] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776906.205226495] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776907.020031846] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776907.235822500] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776907.455603452] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776907.669940635] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776907.862924613] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776908.087253579] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776908.716287306] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776908.923655760] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776910.871058097] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776911.075352796] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776912.343843588] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776912.555467118] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776912.755478136] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776912.959910581] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776913.836054692] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776914.041982433] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776914.264927806] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776914.486914116] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776915.335488630] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776915.536010903] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776915.956360426] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776916.175968223] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795776916.401726669] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795776918.295634045] [rectangle_localization]: Localization state: READY
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [game_referee-10]: sending signal 'SIGINT' to process[game_referee-10]
+[INFO] [behavior_verifier-9]: sending signal 'SIGINT' to process[behavior_verifier-9]
+[INFO] [world_model_topview-8]: sending signal 'SIGINT' to process[world_model_topview-8]
+[INFO] [world_model_viz-7]: sending signal 'SIGINT' to process[world_model_viz-7]
+[INFO] [mpc_controller-6]: sending signal 'SIGINT' to process[mpc_controller-6]
+[INFO] [match_preparation-5]: sending signal 'SIGINT' to process[match_preparation-5]
+[INFO] [bt_node-4]: sending signal 'SIGINT' to process[bt_node-4]
+[INFO] [world_model_node-3]: sending signal 'SIGINT' to process[world_model_node-3]
+[INFO] [rectangle_localization-2]: sending signal 'SIGINT' to process[rectangle_localization-2]
+[INFO] [ball_detector-1]: sending signal 'SIGINT' to process[ball_detector-1]
+[bt_node-4] [INFO] [1795776918.424493029] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [bt_node-4]: process has finished cleanly [pid 115700]
+[INFO] [game_referee-10]: process has finished cleanly [pid 115708]
+[INFO] [world_model_viz-7]: process has finished cleanly [pid 115703]
+[INFO] [world_model_topview-8]: process has finished cleanly [pid 115704]
+[INFO] [ball_detector-1]: process has finished cleanly [pid 115697]
+[INFO] [behavior_verifier-9]: process has finished cleanly [pid 115707]
+[INFO] [rectangle_localization-2]: process has finished cleanly [pid 115698]
+[INFO] [world_model_node-3]: process has finished cleanly [pid 115699]
+[INFO] [match_preparation-5]: process has finished cleanly [pid 115701]
+[INFO] [mpc_controller-6]: process has finished cleanly [pid 115702]

@@ -1,0 +1,1 @@
+wall,seq,solve_id,goal_id,canceled,status,ok,submitted_sim_s,submitted_wall_s,pickup_tick_wall_s,scheduled_due_sim_s,worker_run_ms,worker_wait_ms,result_pickup_ms,end_to_pickup_ms,acados_ms

@@ -1,0 +1,11 @@
+{
+  "parent_commit": "bcffef185e57f7c68d0f94f873c4db52841b52a8",
+  "motion_checkpoint": "8602725",
+  "uncommitted_fix": true,
+  "sha256": {
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py": "3fefaaf191c68bda71d883bef8613d68172c2f04fe0d10598d3a9120e7e43a91",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py": "ab9b43619381d50c00b27acd63f283a13034cd054e94d49653e3aa4ad4d8339f",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py": "bd02fbf7158d576b453ee9d8345b79dfd6388362cc9d1507a6a0d6d7891c219e",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": "bb06f5b71a38ab02d56898127d4bd922c49f98197637aa795637f9b7825bf042"
+  }
+}

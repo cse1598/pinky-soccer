@@ -1,0 +1,5 @@
+<root BTCPP_format="4"><BehaviorTree ID="Main"><Sequence>
+    <ReadWorldModel topic_name="world_model" pose="{@pose}" ball="{@ball}" playing="{@playing}" opponents="{@opponents}" own_goal="{@own_goal}" opp_goal="{@opp_goal}"/>
+    <GoToPose x="-0.2" y="0" theta="0" completion_mode="HANDOFF" next_ready="true" next_x="0.1" next_y="0" next_theta="0"/>
+    <GoToPose x="0.1" y="0" theta="0" completion_mode="STRICT_STOP"/><StopRobot/>
+    </Sequence></BehaviorTree><BehaviorTree ID="PublishGoal"><PublishBehaviorGoal topic_name="behavior_goal"/></BehaviorTree></root>

@@ -1,0 +1,315 @@
+[
+  {
+    "case": "long",
+    "goal": [
+      0.5,
+      0.0,
+      0.0
+    ],
+    "start_wall": 6.042139031997067,
+    "start_estimate": {
+      "stamp_ns": 3900000000,
+      "frame": "map",
+      "x": -0.40009946009281866,
+      "y": 8.197554696492978e-05,
+      "yaw": 0.000143676624994922,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 3880000000,
+      "v": 9.429569215483889e-17,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 3900000000,
+      "wall": 6.004273872997146
+    },
+    "request_id": 15000,
+    "end_wall": 11.31696304900106,
+    "result": "success",
+    "goal_ids": [
+      "45234255996232"
+    ],
+    "samples": {
+      "cmd": 266,
+      "mpc_command": 216,
+      "drive": 106,
+      "plant_command": 0,
+      "joints": 264,
+      "odom": 264,
+      "world": 159,
+      "status": 216,
+      "result": 214,
+      "truth": 265
+    },
+    "cmd_receipt_period_ms": {
+      "n": 265,
+      "mean": 19.82315174717992,
+      "median": 19.31786299974192,
+      "p95": 30.50632919912459,
+      "p99": 35.32952487876177,
+      "maximum": 54.87762699340237
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 215,
+      "mean": 19.865015902296577,
+      "median": 17.821301000367384,
+      "p95": 31.393536302493885,
+      "p99": 35.00558012136024,
+      "maximum": 55.21771000348963
+    },
+    "drive_receipt_period_ms": {
+      "n": 105,
+      "mean": 50.00317160004107,
+      "median": 49.993558997812215,
+      "p95": 51.2919952016091,
+      "p99": 52.70930383558152,
+      "maximum": 54.072784005256835
+    },
+    "joints_receipt_period_ms": {
+      "n": 263,
+      "mean": 19.975966467673025,
+      "median": 17.591969997738488,
+      "p95": 29.642737700487487,
+      "p99": 36.59787933866028,
+      "maximum": 50.24985300406115
+    },
+    "world_receipt_period_ms": {
+      "n": 158,
+      "mean": 33.24822056964865,
+      "median": 31.86081600142643,
+      "p95": 48.603728803209385,
+      "p99": 60.66437764995503,
+      "maximum": 68.990230000054
+    },
+    "zero_command_samples": 76,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 190,
+    "zero_intervals": [
+      {
+        "start_wall": 6.059530740996706,
+        "last_sample_wall": 7.147194382996531,
+        "between_nonzero_commands": false,
+        "nearby_reason": null,
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 10.95868815099675,
+        "last_sample_wall": 11.312665953999385,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 0,
+    "command_delta_v": {
+      "n": 265,
+      "mean": 0.0024434306586610054,
+      "median": 0.0,
+      "p95": 5.029853019149484e-05,
+      "p99": 0.08714105671772773,
+      "maximum": 0.16546347855283713
+    },
+    "command_delta_w": {
+      "n": 265,
+      "mean": 0.0008377235002672378,
+      "median": 0.0,
+      "p95": 0.0002582395631327183,
+      "p99": 0.02634457988054623,
+      "maximum": 0.06825958059068285
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 0,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 39,
+        "mean": 24.873821128261252,
+        "median": 15.738904003228527,
+        "p95": 66.91524630441563,
+        "p99": 80.63610594064806,
+        "maximum": 88.84545000182698
+      },
+      "acados_ms": {
+        "n": 39,
+        "mean": 9.986205128205128,
+        "median": 3.523,
+        "p95": 41.474700000000006,
+        "p99": 43.34263999999999,
+        "maximum": 44.434
+      },
+      "worker_wait_ms": {
+        "n": 39,
+        "mean": 1.529007179226774,
+        "median": 1.4159879938233644,
+        "p95": 2.290241998707643,
+        "p99": 2.413169081119122,
+        "maximum": 2.445767000608612
+      },
+      "result_pickup_ms": {
+        "n": 39,
+        "mean": 10.334974768995426,
+        "median": 10.724622996349353,
+        "p95": 20.154027397802565,
+        "p99": 24.30727292361551,
+        "maximum": 26.851341004658025
+      }
+    },
+    "solver_status_counts": {
+      "7": 8,
+      "0": 30,
+      "2": 1
+    },
+    "missed_slot_count": 0,
+    "miss_note": "Exact per-goal counter through the latest received trace; capture may end before the goal.",
+    "observed_slot_totals": {
+      "slots": 38,
+      "missed": 0,
+      "init_missed": 0,
+      "track_missed": 0
+    },
+    "observed_canceled_jobs": 0,
+    "all_observed_jobs_metrics": {
+      "worker_run_ms": {
+        "n": 39,
+        "mean": 24.960381282047212,
+        "median": 15.839718005736358,
+        "p95": 66.99623400054406,
+        "p99": 80.7205913800862,
+        "maximum": 88.92682399891783
+      },
+      "worker_wait_ms": {
+        "n": 39,
+        "mean": 1.529007179226774,
+        "median": 1.4159879938233644,
+        "p95": 2.290241998707643,
+        "p99": 2.413169081119122,
+        "maximum": 2.445767000608612
+      },
+      "result_pickup_ms": {
+        "n": 39,
+        "mean": 10.334974768995426,
+        "median": 10.724622996349353,
+        "p95": 20.154027397802565,
+        "p99": 24.30727292361551,
+        "maximum": 26.851341004658025
+      },
+      "end_to_pickup_ms": {
+        "n": 39,
+        "mean": 36.82436323026941,
+        "median": 29.725808002694976,
+        "p95": 75.33985039626714,
+        "p99": 102.31721102492874,
+        "maximum": 116.56351400597487
+      }
+    },
+    "canceled_jobs": [],
+    "activation_jitter_sim_ms": {
+      "n": 209,
+      "mean": 3.1872431328951865e-13,
+      "median": 0.0,
+      "p95": 8.881784197001252e-13,
+      "p99": 1.7763568394002505e-12,
+      "maximum": 1.7763568394002505e-12
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 5,
+      "scheduled optimized input": 190,
+      "waiting for rest": 16,
+      "settled": 3
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 264,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "odom": {
+        "n": 264,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "localization": {
+        "n": 87,
+        "mean": 5.172413850574713,
+        "median": 0.0,
+        "p95": 20.0,
+        "p99": 20.00000014,
+        "maximum": 20.000001
+      },
+      "world": {
+        "n": 159,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 265,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 262,
+      "mean": 0.00022781466616528698,
+      "median": 8.427943302658381e-05,
+      "p95": 0.0008034543043358149,
+      "p99": 0.0024284941794827037,
+      "maximum": 0.00537253084454641
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 262,
+      "mean": 0.0003631366635340975,
+      "median": 0.00026671402675707744,
+      "p95": 0.0010184191800008916,
+      "p99": 0.001629150380437968,
+      "maximum": 0.0017909288771084141
+    },
+    "truth_displacement_m": 0.9106055429601573,
+    "truth_yaw_change_rad": -0.00010230218816163869,
+    "truth_path_length_m": 0.9136934230270465,
+    "truth_final_position_error_m": 0.010539398778417293,
+    "truth_final_heading_error_rad": 0.00010230219190943677,
+    "truth_first_legacy_pose_region_wall_s": 4.631727227002557,
+    "success_after_first_truth_region_wall_s": 0.6430967900014366,
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 264,
+      "mean": 0.17273513818600697,
+      "median": 0.26411027134291953,
+      "p95": 0.26416186742595704,
+      "p99": 0.26416187018934845,
+      "maximum": 0.2641618713031595
+    },
+    "odom_w_abs": {
+      "n": 264,
+      "mean": 0.0014999983279163811,
+      "median": 3.562855649602862e-06,
+      "p95": 0.012714575369388978,
+      "p99": 0.026754352249403403,
+      "maximum": 0.045454287704211574
+    },
+    "elapsed_wall_s": 5.2748240170039935
+  }
+]

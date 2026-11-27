@@ -1,0 +1,83 @@
+{
+  "duration": 3.489285707473755,
+  "states": {
+    "initializing": 6,
+    "waiting": 11,
+    "track": 113,
+    "settle": 41,
+    "arrived": 1
+  },
+  "ready_pose": [
+    -0.3002470948615314,
+    0.002972768963361294,
+    0.04781407266051329
+  ],
+  "target": [
+    -0.3,
+    0.0,
+    0.0
+  ],
+  "position_error_m": 0.002983020479332887,
+  "yaw_error_deg": 2.739544564779267,
+  "slots": 24,
+  "missed_slots": 0,
+  "jobs": 26,
+  "canceled_jobs": 1,
+  "rates": {
+    "/cmd_vel": {
+      "count": 170,
+      "rate": 48.72059012040046,
+      "gap_p95_ms": 44.02675628662108,
+      "gap_max_ms": 84.18917655944824,
+      "peak_v": 0.26862489784545923,
+      "peak_w": 1.258396963685369
+    },
+    "/drive/cmd_vel": {
+      "count": 69,
+      "rate": 19.999731572331896,
+      "gap_p95_ms": 64.05590772628784,
+      "gap_max_ms": 65.81473350524902,
+      "peak_v": 0.26862489784545923,
+      "peak_w": 1.258396963685369
+    }
+  },
+  "monitor": {
+    "STOP": 9,
+    "CLEAR": 147,
+    "REPLAN": 16
+  },
+  "wheel_stamp_valid_fraction": 1.0,
+  "observer": "align",
+  "damping_scale": 2.0,
+  "external_caps": [
+    0.0,
+    0.0
+  ],
+  "avoidance": false,
+  "limits": [
+    0.26862489786386384,
+    5.47584169400401
+  ],
+  "worker_run_ms": {
+    "mean": 31.862253230848673,
+    "p95": 73.83811650015559,
+    "max": 79.47191600032966
+  },
+  "worker_wait_ms": {
+    "mean": 9.034502576958822,
+    "p95": 24.79336600026727,
+    "max": 34.8779679989093
+  },
+  "result_pickup_ms": {
+    "mean": 10.860711038381291,
+    "p95": 17.574059000708075,
+    "max": 32.9062349992455
+  },
+  "acados_ms": {
+    "mean": 15.070653846153844,
+    "p95": 31.485,
+    "max": 56.693
+  },
+  "peak_wheel_feedback_v_mps": 0.2717414682808281,
+  "pose_error_reference": "Localization estimate; no independent real-world ground truth"
+}

@@ -1,0 +1,1960 @@
+{
+  "created_unix": 1795735875.8918405,
+  "repository": "/home/cse/pinky-soccer",
+  "files": {
+    ".gitmodules": {
+      "sha256": "154d525ca01604957bedd3228705e1558ed1e6a9b5d0440fefe66a6cb63dce78",
+      "bytes": 323,
+      "mode": 436
+    },
+    "README.md": {
+      "sha256": "dd83545e7f94de232275a5d634cf191e4f123ff66309e39a33d7a45988a5d3e1",
+      "bytes": 11271,
+      "mode": 436
+    },
+    "docs/ARCHITECTURE.md": {
+      "sha256": "83b915c6ee7c5dd17a481161296f89d16e3577ec2eb0862930529f2f211e921d",
+      "bytes": 14436,
+      "mode": 436
+    },
+    "docs/BALL_HLS_DISTANCE.md": {
+      "sha256": "f31700abe07b0f0e5b99b31add83f3484e4b0a899432359d000bdbf6b1a3c20c",
+      "bytes": 15653,
+      "mode": 436
+    },
+    "docs/GOTOPOSE_DIAGNOSTICS.md": {
+      "sha256": "7e946fed4aa5ff17e8827f9c7733d3f5c82f8d4d45f0f1b8f604fe708f583654",
+      "bytes": 13656,
+      "mode": 436
+    },
+    "docs/GOTOPOSE_MOTOR_RESPONSE.md": {
+      "sha256": "378731e503dcac50f8a7246300a158c4e535494a58020bd2d2059b1f8f74208e",
+      "bytes": 6281,
+      "mode": 436
+    },
+    "docs/LIGHTWEIGHT_LOCALIZATION.md": {
+      "sha256": "be1e86dcf280aadea581d758f4c5a654337b49e2b57195ea409ebbdc05f354da",
+      "bytes": 20529,
+      "mode": 436
+    },
+    "docs/MATCH_PREPARATION.md": {
+      "sha256": "57a422543b5954c269cd271edf041f57521a3e8139b856ca3fe61dffed32ee3a",
+      "bytes": 17842,
+      "mode": 436
+    },
+    "docs/OPPONENT_TRACKING.md": {
+      "sha256": "c4c574c7e7a0dc9ef7490589826ddf217c8b09c6e90fcd925e3e2eef5d058673",
+      "bytes": 17764,
+      "mode": 436
+    },
+    "docs/OVERNIGHT_REPORT.md": {
+      "sha256": "6da743267c7afaaa840a1eb12840417a872ab2f4c0d642837ea60e735f04326f",
+      "bytes": 16472,
+      "mode": 436
+    },
+    "docs/SIMULATION_COLORS.md": {
+      "sha256": "8207e75a08e66211af31430ac61873269b88bfba90c04c4e54acbe97e8e550d5",
+      "bytes": 7527,
+      "mode": 436
+    },
+    "docs/overnight/progress_notes.md": {
+      "sha256": "985bf80023854cfaf456ef63bfe888483bb68029c8a9efb4dae240ab80cd9a4f",
+      "bytes": 7371,
+      "mode": 436
+    },
+    "identification_mujoco.yaml": {
+      "sha256": "6d83d5bec9cbd38375b2c72c8cf9b2075c92523dd86189c98f399ec80fa3844b",
+      "bytes": 1136,
+      "mode": 436
+    },
+    "identification_mujoco_zero_delay.yaml": {
+      "sha256": "77b9a9f30edc94580f0e0cded7452acf8b20df4fb6d0b6497aa1361ee48e839b",
+      "bytes": 1135,
+      "mode": 436
+    },
+    "scripts/analyze_gotopose_bag.py": {
+      "sha256": "7dc3e387baf69bb2322b70e318793075400989cb659103f4525fb7f098eeafcf",
+      "bytes": 30026,
+      "mode": 436
+    },
+    "scripts/benchmark_localization.py": {
+      "sha256": "45b87373e39fa27dff768d7d9eeda59664e80d3c6708888dcf17841e174de1a9",
+      "bytes": 12208,
+      "mode": 436
+    },
+    "scripts/capture_control_baseline.py": {
+      "sha256": "dd8028e0bceb3b4cd1b57b0ad4dcf3b5ef8b002ff4b01252fc35d86cbc89ef6f",
+      "bytes": 5789,
+      "mode": 436
+    },
+    "scripts/check_gazebo_led.py": {
+      "sha256": "08a091e3a4a38c319f65207cb1442db74a6bbf688949e262bcf88be3a04ef802",
+      "bytes": 6718,
+      "mode": 436
+    },
+    "scripts/check_led_render.py": {
+      "sha256": "c5b207c57b103b6b9cdba6a7be4dd9dd50d89cc24502cece5a4a91fcfbd380b0",
+      "bytes": 3777,
+      "mode": 436
+    },
+    "scripts/compare_ball_detection.py": {
+      "sha256": "4295e23438925d44e8d43ab85cc3302161bc37741f3eeb5dab47a70b678491b0",
+      "bytes": 6350,
+      "mode": 436
+    },
+    "scripts/evaluate_opponents.py": {
+      "sha256": "b0b4a390ac230cd236a2fc74b3024d72c8d4c95a9f0a67cd01ad68360fbd01b7",
+      "bytes": 10355,
+      "mode": 436
+    },
+    "scripts/evaluate_opponents_native.py": {
+      "sha256": "1af9b45424183db4cfcabe8a227e0513512edbb1a7057067519820ff52c20a26",
+      "bytes": 11668,
+      "mode": 436
+    },
+    "scripts/evaluate_preparation.py": {
+      "sha256": "fbe72de6613507025bf7cb1d88599667f64c19bdf0181502a0fade1e0dc8e89b",
+      "bytes": 6885,
+      "mode": 436
+    },
+    "scripts/generate_hardboard_drawings.py": {
+      "sha256": "121f30830c895fddb8133923f99325dfe2004b2882aa59679305a7661e71d7d9",
+      "bytes": 19869,
+      "mode": 436
+    },
+    "scripts/setup_time_sync.py": {
+      "sha256": "a96215de5eaaf414f6484df707868aefb562ae8a1f84d8dbed5a8a3b9313190a",
+      "bytes": 2280,
+      "mode": 436
+    },
+    "scripts/test_analyze_gotopose_bag.py": {
+      "sha256": "986fc6f352f4ff41bf7a264654387412dc093c79023c0b31cda2d19276976863",
+      "bytes": 7242,
+      "mode": 436
+    },
+    "src/pinky_soccer/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer/README.md": {
+      "sha256": "088afbe323a5c7b9e26a3d5298dbc66cb63e05c97f02fb9473b7ac5bfffb2bc9",
+      "bytes": 1287,
+      "mode": 436
+    },
+    "src/pinky_soccer/config/reactive_controller.yaml": {
+      "sha256": "15b92720a0fe37082c790e6cf2d933591baac677a27b309af2eecded26d5cb91",
+      "bytes": 602,
+      "mode": 436
+    },
+    "src/pinky_soccer/package.xml": {
+      "sha256": "f6963aad1051cf4ca4d7d5a7a3467633e9fe4772e41c86db915672e9be0f1296",
+      "bytes": 792,
+      "mode": 436
+    },
+    "src/pinky_soccer/pinky_soccer/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 436
+    },
+    "src/pinky_soccer/pinky_soccer/hello_node.py": {
+      "sha256": "3c3519a208e6d2bd27e428ba9800c36b197ef9a3ed302310110fc121bee9d947",
+      "bytes": 557,
+      "mode": 436
+    },
+    "src/pinky_soccer/pinky_soccer/reactive_controller.py": {
+      "sha256": "94c8213c24bf220c443d2d8776d556c27b9e80339054e4f649c8ff153cc56b54",
+      "bytes": 4893,
+      "mode": 436
+    },
+    "src/pinky_soccer/setup.cfg": {
+      "sha256": "a80a078e0811f084e15d4cc933666bd4289b8549130974a5e766779b58a4dda4",
+      "bytes": 93,
+      "mode": 436
+    },
+    "src/pinky_soccer/setup.py": {
+      "sha256": "28a0a9ed86f1ac7532333757ec2cb7b49ebca2404d7bdf6c0f41bba9edd75d82",
+      "bytes": 940,
+      "mode": 436
+    },
+    "src/pinky_soccer/test/test_copyright.py": {
+      "sha256": "ea71bbbc6247b5c14d176ed09f39ee274d563cc9b2ec355828ea451ceff31757",
+      "bytes": 962,
+      "mode": 436
+    },
+    "src/pinky_soccer/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer/test/test_pep257.py": {
+      "sha256": "e8b88d49ee296987b1b40069f81019b5fa09b1aa1bfee9a1faae45bb5cf53eda",
+      "bytes": 803,
+      "mode": 436
+    },
+    "src/pinky_soccer/test/test_reactive_controller.py": {
+      "sha256": "0bf9d2418ed24e24c8f53fd80dc77271363ced71c65bcde63b6fc094d4fa2672",
+      "bytes": 1191,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/CAMERA_CAPTURE.md": {
+      "sha256": "44ad80119ab718ede12de3c46a750353e073003a181962a0ae0952b8b958c5ec",
+      "bytes": 5416,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/CMakeLists.txt": {
+      "sha256": "488f38a57f90a71317cbf7808eff7a20d0b1656d06010a048d4d4b03d96682e8",
+      "bytes": 2897,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/README.md": {
+      "sha256": "67e5c8ce967780bef416ab13d0a0950b9144de3eec41970ac686601e7e8e81e0",
+      "bytes": 19852,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/launch/robot.launch.py": {
+      "sha256": "3c0ffd94e492bf1cce184106540db93e11cbb9be410783c64d552a6915d2cda9",
+      "bytes": 10849,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/launch/sensors.launch.py": {
+      "sha256": "bc431745b8e9d89ca31c0054368fb9e479732fb838bfe3feee72de41d2b73376",
+      "bytes": 307,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/package.xml": {
+      "sha256": "fa6ffe0a22dd858ef55acf25fb87382583e553cc57c5fa3dccd7e9d2a8157dd3",
+      "bytes": 1747,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/battery_state_relay.py": {
+      "sha256": "9da86bdf1b446f69f4cdf8be08a716a5fd9b612dabee91f8fb5dd731cbe584a7",
+      "bytes": 2999,
+      "mode": 509
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/bno055_magnetic.py": {
+      "sha256": "6d0fe77ab1c3df9545f2536f745aa8bd0f3fce2b6a0e658c90c961c7f8dc4dfb",
+      "bytes": 6513,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/calibration_profile.py": {
+      "sha256": "348d86a7df49e4637be1f8d59472f64391d43b0066331f71ed38eeacb3ea2f85",
+      "bytes": 5831,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/camera_mount.py": {
+      "sha256": "d928396812ec18e09ac99fe5a55f98e7b8517ec414a495593b82b7f6af0e2069",
+      "bytes": 2510,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/camera_publisher.py": {
+      "sha256": "648fb8e098a701c9257842e6d8992d61d07eda0d2e1d4995a32f2edc91611e6a",
+      "bytes": 5261,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/camera_support.py": {
+      "sha256": "4de1432103aa30a602e9520e5a76de619932e08e47fd457476119c5358ebe5f5",
+      "bytes": 4285,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/capture_image.py": {
+      "sha256": "b5074c17b2ddce976d112dada1ab797d26693fe0c5d8e6bec9be888ebe2eeb98",
+      "bytes": 4967,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/command_watchdog.py": {
+      "sha256": "1b454776d5144386da66d48e8689321e6d0a2545248bd49472d9467afcc8124e",
+      "bytes": 1597,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/drive_diagnostics.py": {
+      "sha256": "2c6916a1bcdca7fb0db1a46948c1fc301010149b4a0ebf67ca52da3a52a84285",
+      "bytes": 6152,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/ensure_led.py": {
+      "sha256": "30639efcd183c2c05ded9c8bfe45cc5483687004c4aa56b11428e4fb07fb0faf",
+      "bytes": 2024,
+      "mode": 509
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/frame_capture.py": {
+      "sha256": "9f118ef6866e5785116c3f2a83c6cbe20219f6c6dd99831814184bf7e4320fbd",
+      "bytes": 4874,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/imu_units_relay.py": {
+      "sha256": "1c758afbe0628764c429fc89a6a2875d106e44bff469765f4a000a4ae9dc570c",
+      "bytes": 2072,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/latency_echo.py": {
+      "sha256": "a4c95c91281159e4e29a420061a3a8a9ae03b4e87dfab8f3bb59df67c4e65807",
+      "bytes": 1842,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/sensor_launch.py": {
+      "sha256": "e15ccf9ffa693a0e958d3864cfa9e07ccbe1d83629316233251943832282cb1e",
+      "bytes": 5617,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/time_sync.py": {
+      "sha256": "cd868beaec5c530581b169558804a11c193e8834e14ef6dc190b25a6503716e9",
+      "bytes": 12403,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/pinky_soccer_bringup/wheel_joint_state_relay.py": {
+      "sha256": "7e17a44ac41a9e867ccdeb96e64f6bbb4c1d85c6175001f8722af58a65e1bfd4",
+      "bytes": 1819,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_battery_state_relay.py": {
+      "sha256": "a3b59a683a36c9d1cfe205cc190b31c511c910a5e849e37f4e0bd76ae9b4b951",
+      "bytes": 4754,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_bno055_magnetic.py": {
+      "sha256": "d1b33d43306223ec84a90c0ec56d429030611587549cc17242c20118920474d6",
+      "bytes": 2082,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_calibration_profile.py": {
+      "sha256": "6c4394cbcf4eec0e349653d74061a41de897f50e8d4efd12ec8fec8785680c62",
+      "bytes": 2093,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_drive_diagnostics.py": {
+      "sha256": "2c0debf6a2808f28d64745119f459386b8754bbd803c45688f55b38872f2ea8f",
+      "bytes": 2623,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_frame_capture.py": {
+      "sha256": "fe2f1419c17f8f7298ed6d8c0d0639e30e69d91b9cec54dcfc0d805f71b1e37d",
+      "bytes": 8043,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_sensor_runtime.py": {
+      "sha256": "b88782a1665db4b4c9aeee8cc5d8f35de4f2466655e6ff54aa90a8b29ab8cb4c",
+      "bytes": 6572,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_sensor_support.py": {
+      "sha256": "429331d6b4c753766710bd9b7d68431eacff3a59e382a703e22b9412334776bb",
+      "bytes": 7623,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_time_sync.py": {
+      "sha256": "3f7cefa441dfbdc1329b6431bbc2104bc88af4fa7b495832e3cc5fdf3afd8d95",
+      "bytes": 5886,
+      "mode": 436
+    },
+    "src/pinky_soccer_bringup/test/test_wheel_joint_state_relay.py": {
+      "sha256": "c05ed55bc531b629638169c9dec84d1df3a161950a0eccda886279f96e486ab3",
+      "bytes": 633,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/CMakeLists.txt": {
+      "sha256": "798b02bb85c9c0a9b65d00f1fe9cad63e5706da2db8f816b454cef4311669249",
+      "bytes": 2337,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/README.md": {
+      "sha256": "c8abe3fddd77111bff38ed4349e81425cb16fd748c0cb3c19e5438ce728ed39e",
+      "bytes": 6322,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/config/bt_node.yaml": {
+      "sha256": "2a3b355a24be778213f8d363d5a62d4a87a6f742ca776747350088f0c7f72065",
+      "bytes": 572,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/config/verify_catalog.yaml": {
+      "sha256": "78cf576336ba334c991ea290908b54ec1335294a26b6f9091245457744188195",
+      "bytes": 10914,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/include/pinky_soccer_bt/bt_nodes.hpp": {
+      "sha256": "ec14141d379ae7960a65f1031a95e6749b00ab90879f8d55df021657fe32dee8",
+      "bytes": 8041,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/include/pinky_soccer_bt/soccer_logic.hpp": {
+      "sha256": "2b7fa6e1c55b68ed1da5e13116c32170f3dea7260ce3b059ac7ba7f1bc9ef874",
+      "bytes": 2828,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/include/pinky_soccer_bt/verify_mode.hpp": {
+      "sha256": "d2cd640b84bd654c155307c73c4718d6f9c184e99f77eca3cda5178a8048a6f4",
+      "bytes": 4506,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/launch/bt.launch.py": {
+      "sha256": "7eaf2083a2b69beaa32929d0a08cb4cdfef2c8440addae7eadab4d5067fbcefd",
+      "bytes": 901,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/package.xml": {
+      "sha256": "eef2420d493e8ae97b2e400a4496558da3036fe22ea08b74ba69239f8218eb91",
+      "bytes": 965,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/src/bt_node_main.cpp": {
+      "sha256": "4323a5402ed0e9335669731fbf4f8d471acd5fdf2a3ebef7f268205fa852d3c0",
+      "bytes": 6333,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/src/bt_nodes.cpp": {
+      "sha256": "05f28cb218b61ac72d10f9484972a94720fc319093158055c26e270498fe4edb",
+      "bytes": 17385,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/src/soccer_logic.cpp": {
+      "sha256": "26ff6ba7fd307d76dae9fef8ec67841a8ebcccd254345a3b456ea18852b85640",
+      "bytes": 4450,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/src/verify_mode.cpp": {
+      "sha256": "2e11f206db93531d7eb66b44e2b62eca77cfb2238dfa02d0e87830df91119cb2",
+      "bytes": 16246,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/test/test_soccer_logic.cpp": {
+      "sha256": "4f5a4053d4746064995adb4530804f8de1edd8b3740a50639f899ae55fb45ec7",
+      "bytes": 5156,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/test/test_soccer_tree.cpp": {
+      "sha256": "dc9c9035f576b1e02b41385c461555af56afb1f9084ad5e56337b0157697389d",
+      "bytes": 9862,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/test/test_verify_catalog.py": {
+      "sha256": "d20942f4ba2eb1e0f5208d52ee2b92fbaf483de8ddea0c101ba983d045623b3b",
+      "bytes": 3934,
+      "mode": 436
+    },
+    "src/pinky_soccer_bt/trees/soccer_1v1.xml": {
+      "sha256": "4f5f0e4bd9d63b4a4e1ec348d6c1b94f068a526416e10496775274980a9c60b8",
+      "bytes": 3820,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/README.md": {
+      "sha256": "20cc496fd8d13ad7a37375a31dbdc5035b119a61acad1f9f782b32266efb7949",
+      "bytes": 30523,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/ROS_UI.md": {
+      "sha256": "7e68e53c9ff1a758157bb6410f5fb761616a79ae3de4ae282cbfab04159cf860",
+      "bytes": 45229,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/WORKBENCH.md": {
+      "sha256": "a9b104daf03b2eaeefd38b196b18c7cf6838d4583ec5d2d4b53ec39a5fa48c01",
+      "bytes": 11210,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/launch/calibration_ui.launch.py": {
+      "sha256": "0d8cadcaa8b58aec01f0cec4f6fec96c8251ff80b46182c81e73aefb92bd32b7",
+      "bytes": 2604,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/package.xml": {
+      "sha256": "4ac03384ad58ae2f864fb130bb88decbcfa3a763a96babed8e21c621d4c99929",
+      "bytes": 1482,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/__init__.py": {
+      "sha256": "5e92e351674e52f4839926ae4610493bbf531415957996c43c407ee37ced6e7f",
+      "bytes": 50,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py": {
+      "sha256": "ea64b85bed1b15bc3cb02344f4fe72fec1b844b298b677b62c62f93a05bf270d",
+      "bytes": 14167,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review_view.py": {
+      "sha256": "678ccf13608bfeb3691a97e5027f09f9275282cb1e2ef303b143bf07f7f53c58",
+      "bytes": 19326,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/board_geometry.py": {
+      "sha256": "dae5884d9490d47f5885fc3de4fec429a8e2804fafd640661f76d7a1a301c52e",
+      "bytes": 5058,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/board_preview.py": {
+      "sha256": "5a9848867ec2590022efe7ef22f31cb3ad1c27bb7432c870129ad3e63d5c4c35",
+      "bytes": 1474,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/braking_analysis.py": {
+      "sha256": "c511d4651afe3afc2986f10be42d6aa3d2fd919b8e3a327de03addd97f169387",
+      "bytes": 3703,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/camera_capture.py": {
+      "sha256": "aaaca7ad5eb89cc2fa42fa12c71b828b3e14987d8ae3e00bbcfa00682d2be9ca",
+      "bytes": 2012,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/camera_view.py": {
+      "sha256": "3f1faf29ef6ffe50440c7b6622b35ad8215d7b6dce48b888f300d42086a69254",
+      "bytes": 7465,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/cli.py": {
+      "sha256": "93c2b007942def015bf5f71e0f786934b53139c91816e0c2b52505c664ffa06d",
+      "bytes": 4073,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/comm_view.py": {
+      "sha256": "115483d5a8052031ac7b454aa174254115f867ea7502490632530e01b1786bf7",
+      "bytes": 2228,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/connection_settings.py": {
+      "sha256": "194b9b69984ab831cd9f25fcda0f5370e90c8db4a2f296b3925b8b63b0375e83",
+      "bytes": 6947,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/connection_view.py": {
+      "sha256": "928f8304e41aae3d3c03fa8c1805df0931ce23a3037109e67d52717539ea1146",
+      "bytes": 8947,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/core.py": {
+      "sha256": "10359738193e809cfa99a888f10b8f81e131ffa793731f20fc8431b4c8689a22",
+      "bytes": 16512,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/footprint_view.py": {
+      "sha256": "6deda93f799f3985774f5b53e5b7c230e8c973a8fd14decd8b60eb3be0d449f1",
+      "bytes": 8143,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/jupyter_camera.py": {
+      "sha256": "9f031dd590b653373dbf3d2c0b1a4d15116fe92089b7fbe6351aeb84a741c846",
+      "bytes": 6969,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/latency_analysis.py": {
+      "sha256": "e037ec751acc2f40bf8723c38f7d696b93b4ea047cf365d06b7bff5e01cf67a8",
+      "bytes": 4893,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/lidar_field.py": {
+      "sha256": "d2842753de925ca0c8425993b56c533ac44a0da679a69f716208c38a92913cd8",
+      "bytes": 9770,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/measurement_geometry.py": {
+      "sha256": "44c8b6faf573cd59578b6ac36ece5cf0836f01e6fe782af913c75d5bf8737efb",
+      "bytes": 8772,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/monitor_view.py": {
+      "sha256": "1447e4571049d0dfe8943f35f4724662c44c363593fa8dc6dd64512e327edf4c",
+      "bytes": 7228,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/motor_experiment.py": {
+      "sha256": "74eaee19c639f199386c57fcd8f36f957131da4e1fb6ba6e5ef347d4bf04822e",
+      "bytes": 8948,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/motor_view.py": {
+      "sha256": "fee74d957dffe884c76a0c357b10904f296e16407ef323642eb8e220310e6e99",
+      "bytes": 5310,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/project_store.py": {
+      "sha256": "c54b0135413eb537621698ebca7f2a1610c20fb0894f971460001a57f2e52178",
+      "bytes": 20490,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/project_view.py": {
+      "sha256": "fb1f0e4dc0d56a4dbf64eba7db87fa88c1f974f1c5a8dae44706843f603a3650",
+      "bytes": 8834,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/record.py": {
+      "sha256": "247f6309a741e1fd0a51a67ff2cb6e4fb6935a26033fd26efb733a1ccc8ae7be",
+      "bytes": 5805,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/robot_service.py": {
+      "sha256": "6887f7e158327cdaa11e936af8dfe8121674508ab947d6913d9be61c8651c404",
+      "bytes": 5046,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/sensor_monitor.py": {
+      "sha256": "1828f8156a548caefb20342ccfd6d06a5b6e554c2ad0b526ac9e578554358817",
+      "bytes": 7905,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/suite_model.py": {
+      "sha256": "6ba9365c059a5564d65610cb8b3c0b0026ecdb71b77b2c9079192654a94bc391",
+      "bytes": 21244,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/suite_ros.py": {
+      "sha256": "c5eb63636e8d7089880e893fa3bc0b4e2e841c39c69804795b5b8278b88e8078",
+      "bytes": 28964,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/suite_ui.py": {
+      "sha256": "bbe5fed022830f4e0cff3e3bd757739f82d01218285666af6a7bbfd0ed8f912f",
+      "bytes": 55617,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/ui_options.py": {
+      "sha256": "0af3f050ac79c9e6455da35ee064ab1bbe05fa8f99805aca6c1cba41324a974d",
+      "bytes": 2202,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/webcam_acquisition.py": {
+      "sha256": "8ee85f6149e961191d6c51e558bee7a839548da4f78269a4414bb015d3b92e9b",
+      "bytes": 9326,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/webcam_source.py": {
+      "sha256": "b9494f8b39734c048b19f0f33722900adbad5c16ea906292448a56fecd6f9b00",
+      "bytes": 2765,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/wheel_measurement.py": {
+      "sha256": "92a438df86ba9c7ed37f3d2e6fe155b0e68d62460f076ddd10338bb4fcd017a0",
+      "bytes": 6125,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/workbench.py": {
+      "sha256": "959f32554e714f2c5289316fa2f294d46517c309a2861bc77e0b5035d1c38521",
+      "bytes": 22637,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/pinky_soccer_calibration/workbench_model.py": {
+      "sha256": "9a75526171c72981df1fa3a489a1dff218600ebba1a5c79d52a879465d880f0c",
+      "bytes": 10732,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/setup.cfg": {
+      "sha256": "a77c97439c639c180489eb1ae17d9c7eba166ea583dcd066330efb3244ae816e",
+      "bytes": 117,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/setup.py": {
+      "sha256": "03de26c8653e70b9c3530711623d3c65b4f5c9ad61bdcfb16f9034ae6c9abf93",
+      "bytes": 981,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_ball_comparison.py": {
+      "sha256": "a06e4516619384ee1f7b84ecc6b1c5145b4de9b7326adb376187cb1be407af49",
+      "bytes": 2787,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_ball_review.py": {
+      "sha256": "45435247d9369ff48a8ebf4b05fba11a1a413b277ff96ad5092b736644c4863b",
+      "bytes": 8991,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_board_floor.py": {
+      "sha256": "0a473d9c0627baf611ed6318686667c4ffb7c5683987fa9dfa013cdbfc3c38d5",
+      "bytes": 5374,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_board_preview.py": {
+      "sha256": "697b2afab66187ed2ffad938b7cb022016f895468f9a7424bb95a635ee81d72d",
+      "bytes": 1560,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_compressed_capture.py": {
+      "sha256": "01d88181df69ed815744dd3c25da0d0767bc85dcf8ca19f1bb2f8be48717edbf",
+      "bytes": 7928,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_control_calibration.py": {
+      "sha256": "907a4293e128ec721ef1d9b461336ae20259d28e053110fb30ea5427c26d3270",
+      "bytes": 14714,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_intrinsics.py": {
+      "sha256": "4eeed723b8403916bf353a2c8d388071566ed42b9a025a05535307453d86bff6",
+      "bytes": 7971,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_lidar_field.py": {
+      "sha256": "58cdbd25fa59b2c69fb763725d813cae1b73f7b63db0459da569daf725038e5b",
+      "bytes": 4831,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_measurement_geometry.py": {
+      "sha256": "b0dc0add31fdf22d79bd26bbae83d9a8a0c32e1711ab3bf34744663405d71bab",
+      "bytes": 8732,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_mount_application.py": {
+      "sha256": "f094d8e8e0af0edf187d11a325c0553f6e04df90e024474cc49434e095b866e2",
+      "bytes": 4361,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_mount_board.py": {
+      "sha256": "87e614c8b5fb4c890ab916b83bfe6549c6396a656f497c99e4ef46aeb9b6d120",
+      "bytes": 4602,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_project_store.py": {
+      "sha256": "4f8da6884c1446884ea7b154f26eec33b8668fcd0e84738b4c90502f9a462edc",
+      "bytes": 7041,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_record_ros.py": {
+      "sha256": "6d19dde304fa0bdc73ee17a24bc7a4ca3af1256e2d0db957f2cf5b9e7d1d3807",
+      "bytes": 4553,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_sensor_monitor.py": {
+      "sha256": "f6b23be5015c1d899d76e664fcfc719e7bcb5f989629649c3c5ea202bbc5a02e",
+      "bytes": 3777,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_suite.py": {
+      "sha256": "7b81cc5471c754b9375fe819d44ee28149bc807953209ca9ca03c9924455f1dc",
+      "bytes": 2887,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_webcam.py": {
+      "sha256": "a2bebf51ba87d6e2877130592f4a56d70df8e124808d6e6eafacccc25e4797ee",
+      "bytes": 11991,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_wheel_measurement.py": {
+      "sha256": "94de40d4359582fd2395f1f9fad5e8b9bc514463391c7941a14be28ed7fb0014",
+      "bytes": 7895,
+      "mode": 436
+    },
+    "src/pinky_soccer_calibration/test/test_workbench.py": {
+      "sha256": "381addd096a898128552ce77bc86ba72097db9948fbedd670a0c3f693bd1b4e2",
+      "bytes": 9305,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/CMakeLists.txt": {
+      "sha256": "1f17dd1becf9b3ceaae5664f8de5866838faa0a6dbaab782f0cb840026d275e9",
+      "bytes": 518,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/README.md": {
+      "sha256": "69989a33b1330071b9a82fd1d68f7ccc19a5a4de4077f4769a26de7bc42ced5c",
+      "bytes": 6771,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/cad/bumper/README.md": {
+      "sha256": "f5159f9a510d96e8f824ebd9fe2dbed213ef22a8d610bcba93d9b86f17f21a35",
+      "bytes": 6701,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/cad/bumper/blender_csg.py": {
+      "sha256": "d9d1a5a4af17d813d27c0fe30a0c2beec9de119ab8269bc2056ee93c40334c88",
+      "bytes": 6365,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/cad/bumper/bumper_v1.yaml": {
+      "sha256": "7ce5f66deb862d4e1c0945eaeda6dd6a481255de78e47bf2415bf32c7691e2b3",
+      "bytes": 4333,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/cad/bumper/generate_bumper.py": {
+      "sha256": "5d8e0d4f4a57140142522b401307f2f238db5258b396c0ad4120183522efbe7e",
+      "bytes": 27230,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/cad/bumper/print/bumper_v1_report.txt": {
+      "sha256": "068ad4b187394f89040dc9b045b7418869f36549ec7d41fc9f8118ca949f5c0c",
+      "bytes": 1499,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/config/bumper_v1_params.yaml": {
+      "sha256": "008e2d86a9c5df5a9e937508e1b190018b43bcfa2ad4c5aa30bf0a048fa770f8",
+      "bytes": 820,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/launch/view_robot.launch.py": {
+      "sha256": "067277d1a05efaeb38aea9d559f598b985cb54475497bb7d73549373eaf6b850",
+      "bytes": 2878,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/package.xml": {
+      "sha256": "9a76514f4955ab5ac74c5c6bb276085b256d41d1f8379d3a1bf7acffcc43a3ce",
+      "bytes": 1240,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/test/test_xacro.py": {
+      "sha256": "1d6150208085e2761fb5e1aaae758a4efd3c27d813a307767aa89217e9a0e1cf",
+      "bytes": 8395,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/urdf/bumper.urdf.xacro": {
+      "sha256": "ce2640cc8ad4a09b2f0c58ee7aa5bc84ec536ad3793c8da1add7b7618181f78a",
+      "bytes": 4866,
+      "mode": 436
+    },
+    "src/pinky_soccer_description/urdf/soccer_robot.urdf.xacro": {
+      "sha256": "59f9ab2e01449e31214dea22c8b98f7e020b3b0e14b61474e296833a72a6d719",
+      "bytes": 2376,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/CALIBRATION.md": {
+      "sha256": "ce0d273894a02a3511f253df875b5672aa988eca020f0f5d5f4e74850089d23c",
+      "bytes": 5457,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/README.md": {
+      "sha256": "f76347157d4a1ec57f0ec7b3273c4ea0b996330490fcf853549041b0fe8d9625",
+      "bytes": 7430,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/config/dynamics.yaml": {
+      "sha256": "f83df7d3c3e61c99bb8485450f8628e4bfc8f4bd69cb082d5f8243887c5e42f8",
+      "bytes": 6847,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/package.xml": {
+      "sha256": "e81b2fcc8c249168a829b49d1cda5e1cc6c8bd955b91b24b69ec0f9f593b877e",
+      "bytes": 956,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/__init__.py": {
+      "sha256": "42d85ae7c849661c58dff597fd2943c54272dc542cbea5372073218c3d0d9dcf",
+      "bytes": 91,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/command_adapter.py": {
+      "sha256": "72b69634b883cfc2866db18ced74faa022b23e65d7c1d1aad7ca57cfebd90dfb",
+      "bytes": 3641,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/identification.py": {
+      "sha256": "83636b1986c865e1d42055fc9d7ea6e048d8e99230d97cac6eeed74fac307090",
+      "bytes": 6237,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/model.py": {
+      "sha256": "5a2530d10ac8548ac607b124ca4f828bbbe0a4c224ca4fb43590f32ca7a34237",
+      "bytes": 4578,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/params.py": {
+      "sha256": "1e5ee6bcd281e93b771e411921e73969ab366ca44dd1be4b05e0ac42b32046d6",
+      "bytes": 11450,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/profile_model.py": {
+      "sha256": "c6914d15bee9aca9ab32a3e789c19bdd01a6c870c2e68d0485d0d51cbd15c000",
+      "bytes": 3351,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/pinky_soccer_dynamics/tools.py": {
+      "sha256": "2d5b876a67121ce421390d04e05556da8c09cb2d108a50853106692a190e718e",
+      "bytes": 9869,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/setup.cfg": {
+      "sha256": "65d43a59bf517f579cc7c69eaa6d09d182c6c610ef2a684ef77135e5f35b30fe",
+      "bytes": 111,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/setup.py": {
+      "sha256": "f37ac152923864b91002ce56f0f8d8a2fa0f53fe2e5469b5d894b648bebc0191",
+      "bytes": 1050,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/test/test_copyright.py": {
+      "sha256": "ea71bbbc6247b5c14d176ed09f39ee274d563cc9b2ec355828ea451ceff31757",
+      "bytes": 962,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/test/test_dynamics.py": {
+      "sha256": "3e8b42bb055c7fbdef600713f8bffb74341cb6431b2ee22e2d24bf7310ff232e",
+      "bytes": 11787,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/test/test_pep257.py": {
+      "sha256": "e8b88d49ee296987b1b40069f81019b5fa09b1aa1bfee9a1faae45bb5cf53eda",
+      "bytes": 803,
+      "mode": 436
+    },
+    "src/pinky_soccer_dynamics/test/test_profile_model.py": {
+      "sha256": "d7085060d4c6b882485f076290c3ffd627a109dbfb65e8b1b83611ee9343a13f",
+      "bytes": 1505,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/README.md": {
+      "sha256": "e90712ed34722493b2379d5902cbe47bd3b7123b6bfb689f3ded338e5abed23a",
+      "bytes": 5066,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/package.xml": {
+      "sha256": "2732ecaf7c6243fea771edd7cad3454c61f6b39f5243bb3b3c97ae732af30b2f",
+      "bytes": 857,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/pinky_soccer_field/__init__.py": {
+      "sha256": "bf9a630afa83548b86f0b36a78155c50320661043d9333f0a4cc8d94fa152cb9",
+      "bytes": 78,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/pinky_soccer_field/field_geometry.py": {
+      "sha256": "b947db484b27235eaf16d75583e49ebbdc983aacefc1633b34ab4b73f142efc8",
+      "bytes": 11912,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/pinky_soccer_field/generate_field_map.py": {
+      "sha256": "dcce29ed0e0b4f0a4e3d79f84c60fca7a60085dc8c1340f24197e0d5c59daab5",
+      "bytes": 6572,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/setup.cfg": {
+      "sha256": "03be5440a5d7183749d513ed79de15e8dc11c6d83afeceac94b9229b4972d31e",
+      "bytes": 105,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/setup.py": {
+      "sha256": "e4f9017eaa3eec551981bb252a4f7e31ff125afc587d4679dda2e8fb85c43e06",
+      "bytes": 782,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/test/test_field_geometry.py": {
+      "sha256": "ddbeccaf30c4bf54dac3b890a1677facfd06ba62cfd45769dc088efb8f411414",
+      "bytes": 6085,
+      "mode": 436
+    },
+    "src/pinky_soccer_field/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/README.md": {
+      "sha256": "e6334d854f04b8aa03748169c7ba2328a75540760ae05c81f0327253c54808e1",
+      "bytes": 15624,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/config/real_motor_response.yaml": {
+      "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+      "bytes": 4542,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/package.xml": {
+      "sha256": "0d00e59caf2e9452b79261e07d60e81df919c76b9e161ec9b16faedc6994dfb9",
+      "bytes": 1073,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/__init__.py": {
+      "sha256": "aeea8676ec46e1a4a255ff64ea85b25ce1ab0b1fa0e58957c5e9000ee99c5ec6",
+      "bytes": 89,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/acados_setup.py": {
+      "sha256": "762ca11a3fbc160ab6f37eec3f4aa197595cbf0691f5a324cb88c08a1e0ea6e5",
+      "bytes": 3570,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/acados_time_optimal.py": {
+      "sha256": "c722c25af2cf7391682968071129c1e92a818f5ef53118d7ec0a9378fc8d7b67",
+      "bytes": 16528,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/arrival.py": {
+      "sha256": "db4a84c3d0a92e188b775c102033b8b68fa31aa3bc6503dbbaafaeec6d24a6e0",
+      "bytes": 971,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/avoidance_mpc.py": {
+      "sha256": "cdbf16e83d89184b13a66766bf65af48c12173aaaa4e0076fab1436862412b48",
+      "bytes": 13047,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/collision_geometry.py": {
+      "sha256": "4fffb4701a2657b487b5144d94917d6a9edd79a8d168564c6400009f7e1b622b",
+      "bytes": 6273,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/damping.py": {
+      "sha256": "267344bc8d732c5fd4b40e27471746e637e0a5eac77bcad1a2891a3f7c1a5871",
+      "bytes": 1388,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/delay_observer.py": {
+      "sha256": "d738443bbe892261801c052d005edba0670ec6967ccf86e7c34c9c49ca68466d",
+      "bytes": 5203,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/experimental_acados_pose.py": {
+      "sha256": "52d8bbf2c698068bf749458d5d5744c508e2a2e37a82b4de136f637023515693",
+      "bytes": 9668,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": {
+      "sha256": "da39aed8b731f62069afab7e4fb501652b766509577cd4acd416b76734bc5262",
+      "bytes": 35198,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/obstacle_snapshot.py": {
+      "sha256": "097cfc644988aed666d624720ff870ae95fae659ddbed336ff21a40ae4fe5417",
+      "bytes": 8351,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/pose_mpc.py": {
+      "sha256": "1bcac0bb1f751f252c60769b3fe8074f8d8745faf6c449788b0a2193c331b955",
+      "bytes": 7425,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/ramp_predictor.py": {
+      "sha256": "df9e6b53427f7b1a714cf5de69a81477319e42d088c96c062a4ba6b689c37bb4",
+      "bytes": 1455,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/response_calibration.py": {
+      "sha256": "1db70297f25dc187070bb3e85993b34f510d11e61cd2b1aadee6fa66080c0560",
+      "bytes": 4252,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/scheduled_input.py": {
+      "sha256": "b91234bc3f46a2c914e1268d1b888e85b72626f9d83dffbf2154e9d7f2204b14",
+      "bytes": 1165,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/time_optimal.py": {
+      "sha256": "344da8d9c2870c07c01da5a126db2df788e9ed195dc467a9b83a5f9e269998fc",
+      "bytes": 11105,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/verify.py": {
+      "sha256": "c8d7ca337927c3379bd811e865f75faa8d362dccb722b9e8f8d47047ad702d18",
+      "bytes": 5567,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/setup.cfg": {
+      "sha256": "ffe1e0dcf9b162872344d73fe3cf73295c4e910b71ef575c29602502f17f2536",
+      "bytes": 101,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/setup.py": {
+      "sha256": "0f7c0d1e64627b7b9e3ce0065c7f789845c86f9e8c1ce6c706dc89e15caaa7b2",
+      "bytes": 886,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_acados_time_optimal.py": {
+      "sha256": "296fa8673d1caabfd1675401fd7316273273f0fa3184ffb2a9d9b9ece83cec0a",
+      "bytes": 6567,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_acados_verify.py": {
+      "sha256": "3266d831aa566eb6a7c5cf679769534398177ef3d6c4fbd14c27e3b4f28b3ccf",
+      "bytes": 996,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_avoidance.py": {
+      "sha256": "bb662feec1cba283ba579ab7e58196020545078833d674787e0df18691842a72",
+      "bytes": 6167,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_copyright.py": {
+      "sha256": "ea71bbbc6247b5c14d176ed09f39ee274d563cc9b2ec355828ea451ceff31757",
+      "bytes": 962,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_damping.py": {
+      "sha256": "e3830d88cc7a25a539da71e32a8989b0b90d14fe3220ebc37e8dfdfbd33f2607",
+      "bytes": 1695,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_delay_observer.py": {
+      "sha256": "2259c845496db57735c353669c4752cfab1a46bccd481b7f1587c2a91c155681",
+      "bytes": 3471,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_pep257.py": {
+      "sha256": "e8b88d49ee296987b1b40069f81019b5fa09b1aa1bfee9a1faae45bb5cf53eda",
+      "bytes": 803,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_pose_mpc.py": {
+      "sha256": "55aa77596c17a6ef9ce51cb7e1361297959251607e44d97a048d6899e75783ac",
+      "bytes": 3034,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_response_calibration.py": {
+      "sha256": "cc5611e6ecf40d462b1ad6d3bf93b4fdef5528203efa089f1cf72950680a0949",
+      "bytes": 4034,
+      "mode": 436
+    },
+    "src/pinky_soccer_mpc/test/test_scheduled_input.py": {
+      "sha256": "d7d719d087ec2489bb33eb0e8ced2503830ff45fb427627e6e9020a21aa6ce46",
+      "bytes": 1416,
+      "mode": 436
+    },
+    "src/pinky_soccer_msgs/CMakeLists.txt": {
+      "sha256": "7a4ecc8fcf06bf64932b045fd4b060a595de5f657cac832c0d77e27c8319b497",
+      "bytes": 641,
+      "mode": 436
+    },
+    "src/pinky_soccer_msgs/README.md": {
+      "sha256": "74eec6dba87ed541a0633a860a3cf25a97fb578ace7d228159be11b3e8c077bb",
+      "bytes": 1918,
+      "mode": 436
+    },
+    "src/pinky_soccer_msgs/package.xml": {
+      "sha256": "eec77855943a011fda39e5cc93a1ddb57e77c5c690cdd02c8521a58ac152a61f",
+      "bytes": 892,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/CMakeLists.txt": {
+      "sha256": "28649d8b0ad133e16144bf38146c3fd590b0de1260dcd5bc22b60df703719514",
+      "bytes": 3056,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/FIELD.md": {
+      "sha256": "caf30dad370135d683acee4fd28c940b27ee0ad5823c28564994398af2f520d1",
+      "bytes": 6318,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/HARDBOARD_FIELD.md": {
+      "sha256": "dea2feba1e54bd1cf1ac82fbcc0680ea2b3be9c271f9a7ce93a871544d635c06",
+      "bytes": 8448,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/MATERIALS.md": {
+      "sha256": "10d34e36ef2032abd4f1f681ef6444b9023d8927ea0f5ee9b1ec7104639ef81e",
+      "bytes": 7723,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/README.md": {
+      "sha256": "2755b5c831d99051b7c47f6000a9a8952a06de4437429508093acf05d420f11e",
+      "bytes": 26003,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/SENSOR_NOISE.md": {
+      "sha256": "704cbf0c4c2a0cb151ac3712d28426f78db9d56d87d4fb7703c2e9a9a1d1b1b5",
+      "bytes": 6514,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml": {
+      "sha256": "db293f93103b1bac70fc9f79739576d819a6654fa0ca96609a93f3a1e6ffa0a7",
+      "bytes": 3842,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml": {
+      "sha256": "4ebdeca80039a3ae589b0c2cffcf2fcebd7b63344523dd45168cac1b8ccfebde",
+      "bytes": 3847,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/gazebo_bridge.yaml": {
+      "sha256": "207a1e7e411104021bbca2a273d6436ac6ad9f30f879d4174ac2b11d35ee3acb",
+      "bytes": 2153,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/hardboard_field.yaml": {
+      "sha256": "c14acf8c032c8ae92d5707d22700b7f4ed8b48d51b86a240082d0080cd00c924",
+      "bytes": 1085,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/interface.yaml": {
+      "sha256": "188adc6fdb7c7afb283cf98a1ca908b68816b13d3ad5ab01aad0cbf8fdc23f06",
+      "bytes": 1495,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/materials.yaml": {
+      "sha256": "a1135071ea66b9c1c406146e8dd1d9f63e8aa057b591b6366e3dcdcdef1a7da8",
+      "bytes": 1637,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/measured_sensor_noise.yaml": {
+      "sha256": "db86cafa89bb3ef7303c75ee20bafaa0a585aee8af2322b6902b3624de7a4d95",
+      "bytes": 5241,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/rcj_field.yaml": {
+      "sha256": "dca1b9b0dfeaa7b6ce4d6689b735bfa1d738fb2380e5117e0bd35834be98ffb2",
+      "bytes": 731,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/config/sensors.yaml": {
+      "sha256": "cd0a2bb183a30e9448322c6d0572136f28ac076cb0b003931d2528cdacf7ae50",
+      "bytes": 816,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/launch/gazebo_soccer.launch.py": {
+      "sha256": "dbce82a24cd4aaff0bf227e6fb74b20552e51d4d6753c68d75da3d48d8037a33",
+      "bytes": 16543,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/launch/mujoco_soccer.launch.py": {
+      "sha256": "aff3a822c147afd66bfec699334428a5b00ad35b384d57de39b07a9fcb2f8ac4",
+      "bytes": 12721,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/package.xml": {
+      "sha256": "2fcccf0827b1e2da5b2f86fe3c0cc090ead10e566fd00c4a6bea5c7011e3991c",
+      "bytes": 2267,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/calibrate_odometry.py": {
+      "sha256": "bcd91da7e541d4dd489b31568f6887677997e5f845b2c9bd8a1aac467641bb8e",
+      "bytes": 13001,
+      "mode": 509
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/check_interface.py": {
+      "sha256": "0db0612f736405757c719e93f30bbea7836d81be8d7302c119db7f05227c24c4",
+      "bytes": 5205,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/check_material_physics.py": {
+      "sha256": "1dd4e16164d6b693f1d7199642208c5557e1db8dea71c1c90862ed7e159f1b89",
+      "bytes": 9109,
+      "mode": 509
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/field_selection.py": {
+      "sha256": "fa95eed0355e810634d757903513c79f01c34a32cfc6783c0a0089a6621cfd9a",
+      "bytes": 1251,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/fit_sensor_noise.py": {
+      "sha256": "ccb1a302b8e4d70959de000017d0d848da7555ab204cb57160602e45b5063b7e",
+      "bytes": 9475,
+      "mode": 509
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/gazebo_motor.py": {
+      "sha256": "de8619aabdc91fa9c9831648216f54674d0bc998a7a1fb7987c93ceb9eadc146",
+      "bytes": 2206,
+      "mode": 509
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/led_visual.py": {
+      "sha256": "9071d4c8cc17acbc0dcea102de927d610c35a387f8cf034d5666419a2b553702",
+      "bytes": 5551,
+      "mode": 509
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/materials.py": {
+      "sha256": "86d9020135fcc19ae90ed7cfb8998b9fc5578ec38bdd8d4ea5eec63cb5d55624",
+      "bytes": 15554,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/motor_limits.py": {
+      "sha256": "464d9f35fc6db14b0018e8ba1483dd59462f13e918deb064b150bde321068402",
+      "bytes": 1472,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/mujoco_multi.py": {
+      "sha256": "f0b351835bc3d416317e99b7af2c54a512861bf8a1b4af8229307d795503552b",
+      "bytes": 21651,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/mujoco_sensors.py": {
+      "sha256": "a531ff14708e401079a707151d14fd59bfb19ed6658eb46eb004045e7c8a6976",
+      "bytes": 2894,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py": {
+      "sha256": "c18bfc62c53e1e9d326eb5d976af00cb4cfa87d0cae5599f22aa0b521ed8b430",
+      "bytes": 14641,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/multi_robot.py": {
+      "sha256": "b77a9f1bceb3e3c16d1d29b18a456e021dced5c0bc9e82ab5aafee3eb804ba16",
+      "bytes": 4770,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py": {
+      "sha256": "dc6e4a242203ee336aca7ce13bb8352b237faaffc2402dbab55b34b9d747ede6",
+      "bytes": 15863,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/render_backend.py": {
+      "sha256": "ee5ede8f21fd9cec0fa30dd932064860d7dbbee6d0d0c63bc586fecac71b45d8",
+      "bytes": 1708,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/sensor_adapter.py": {
+      "sha256": "c563d1f44a396120cbb8e01125c20f53a85d477fdffb97e0b89b4501f974b2f9",
+      "bytes": 14248,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/sensor_launch.py": {
+      "sha256": "fb947ba5b4314eb31e1a740313179eadec192d070501a21acea3ecbbeebc373a",
+      "bytes": 3010,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/sensor_model.py": {
+      "sha256": "ef51871b4a4f4913afb4fc287a437c0aa48384127048a31c6d42fb7e1b6ba6b1",
+      "bytes": 6758,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/pinky_soccer_sim/sensor_noise.py": {
+      "sha256": "a163606b563fae425efd6a362dc580870643d4c57db89fa187e66d258129a577",
+      "bytes": 6850,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/src/contact_kernel.cc": {
+      "sha256": "9a0300a69c134e33a83d23773fc041f37a395c74286f48fad33240ae1bbc5a50",
+      "bytes": 4944,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/src/foam_contact_system.cc": {
+      "sha256": "714fec9c3e07277c4e630b28ab73f1d9981e6073bbce8c5243c4b5a9fc4823cc",
+      "bytes": 6323,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_led_visual.py": {
+      "sha256": "e2044d68029cb4ebafac380abb5985a6c38e688e3889daa9a6146f44b8006615",
+      "bytes": 2390,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_materials.py": {
+      "sha256": "c144dd26c20d2bc132f6e4c6324f9a2b42ce7549acfefc4a036e19e75c264edb",
+      "bytes": 5523,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_mujoco_ball.py": {
+      "sha256": "b11e5c51803c1fd4bbcf103d4831679c94c11ca82ca15789783e0a8296a2d4b6",
+      "bytes": 6528,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_multi_robot.py": {
+      "sha256": "38dbad0311ae7e737bb9f85b2b6f431db9a2d8bc4a0f1b51a220c249b1194c85",
+      "bytes": 5467,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_odometry_calibration.py": {
+      "sha256": "9546dbdbdbb763e0a013b2f2d93c8bf5dc28df36471cd8c79906e457f36ab645",
+      "bytes": 3273,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_rcj_field.py": {
+      "sha256": "6c3a018908058c40fe1f5bf462fc696f21d9be103231a0723ea3262685743548",
+      "bytes": 9957,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_render_backend.py": {
+      "sha256": "39f94c3751ce509df76eaf2de60276deb2f06e28bc6f28f2f8661a92c329a87c",
+      "bytes": 813,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_sensor_noise.py": {
+      "sha256": "c1385bcaf773f8baf5de7413c2e89f2f42d851f31c0f9bc20cbc99bb8f3d0995",
+      "bytes": 9567,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/test/test_sensors.py": {
+      "sha256": "367039b1dece7d3eb34eb608a3954735ee15b79b51fd7b035f2350c634988649",
+      "bytes": 8326,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/hardboard_field_manifest.yaml": {
+      "sha256": "ba195cb0c68ed8cce71fecb8dbed478b18a7052a94141c3b89ed22ae6e76e341",
+      "bytes": 776,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf": {
+      "sha256": "90deaa475982b020562cb3d91043e5eca530b9a79c4b548ff2ff936ab3966758",
+      "bytes": 71422,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/hardboard_soccer.world": {
+      "sha256": "87a226f4582efc90955bb2d9750803764669cd96b72160435eb999ea93b652ca",
+      "bytes": 135566,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/rcj_field_manifest.yaml": {
+      "sha256": "ec91eb3eca78bd429e0a8c92285a06d70cf0d9de2d741c282d79540807b87234",
+      "bytes": 762,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/rcj_soccer.mjcf": {
+      "sha256": "4bd5ddca48280931390c953a8c817383f9a70720e36d61ceb321341e3d14fbbe",
+      "bytes": 70889,
+      "mode": 436
+    },
+    "src/pinky_soccer_sim/worlds/rcj_soccer.world": {
+      "sha256": "14d0ac17a625e37366c2a5164400863f638e3e6c9f51ef3507b4c83bf94ae7d6",
+      "bytes": 140117,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/GAMEPLAY.md": {
+      "sha256": "14ddecc6ed52b6818e8e4a1140a1ca8f4fbbbc60a991ba61da08a3577d559185",
+      "bytes": 13644,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/README.md": {
+      "sha256": "6e5b7fc20ff8839fbf20908e9bec61c570c70cdf8737c3b5fefe68d833112710",
+      "bytes": 8476,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/REAL_GAME.md": {
+      "sha256": "1755286304b2d7e7b319576ac34cd4462acef3fabe186ee4fc6c518670ec1763",
+      "bytes": 6232,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/VERIFY.md": {
+      "sha256": "a0f21c5ce612dc78f1dcbd5b832be35bd0648db0eb39718d370f3e5c479a90a6",
+      "bytes": 9512,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/config/preparation.yaml": {
+      "sha256": "732390353db61dd6211ebf4d73fab886bcdaaa6514157624a7e395c6f8f766a8",
+      "bytes": 464,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/launch/game.launch.py": {
+      "sha256": "e14112b7d5882f3b567e547562e066490820540c83bddd5044b6aaaf4f2f483d",
+      "bytes": 10847,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/launch/real_game.launch.py": {
+      "sha256": "63b1987f66be3f790af5a0a5d6ea66e8c8b3dd25b501a516ea3ccc5ed1dd597b",
+      "bytes": 9812,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/launch/sim_field.launch.py": {
+      "sha256": "138c7b194bb9e09b9def46cae2389ca23f8dc94c93724c02e277fabe7e18acad",
+      "bytes": 15770,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/launch/sim_viz.launch.py": {
+      "sha256": "a7822aab655d6eb04de6177dc2642e785809ec97a2eed113cd00d1baa474ee40",
+      "bytes": 3232,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/package.xml": {
+      "sha256": "ff8d3ee6cbbfb19496bac5f5db017e0c3ac825932dddcc9f3d10149570479fec",
+      "bytes": 2380,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/__init__.py": {
+      "sha256": "58021257cbc0c41c487d230d7d329d1b7a288fb760647a14b1b330dd3571d3b0",
+      "bytes": 63,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py": {
+      "sha256": "47106b2c5e2b50f8d3491e02405e34a4419a612472249b074a12e3ff54dc33ed",
+      "bytes": 58157,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/clock_monitor.py": {
+      "sha256": "2f8d1814da99ba47619578e128de2f60c25a9fb860e525b9877f4c2e81ccc569",
+      "bytes": 1615,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/game_camera_view.py": {
+      "sha256": "97ebdf1e3097fc083e25b56047ca995799804b2bb0c3da149da8d975ccbb2868",
+      "bytes": 7099,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py": {
+      "sha256": "5e43ab7e87cb1c5c6c2860647288b2edd10e3b89797886d95361e0cd46249f25",
+      "bytes": 7604,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/gazebo_truth_relay.py": {
+      "sha256": "660d9bb8e2d499af8bcac6470e45820a6e8a16efa63a6236765f154beeaf6707",
+      "bytes": 4318,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/goto_bench.py": {
+      "sha256": "1fad74287ae7df37672f1e1913e1e06fc67557ca7040d6aff5e9e85ae1f6efd2",
+      "bytes": 14133,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/localization_view.py": {
+      "sha256": "b758c0c7431b36495a7797c8d062e440b295aabeb160731544590dd1d0a076b0",
+      "bytes": 3915,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/match_preparation.py": {
+      "sha256": "1c2c9f9bb716742aaa6c4eb906c36b9f6d111b7427932c9c21702184eb51d307",
+      "bytes": 17757,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/mujoco_eval_bridge.py": {
+      "sha256": "053a5cc294f452931f8c48c41019ea191d207576d35f23cd3edb77a1c119ffd1",
+      "bytes": 3565,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/nav2_stack.py": {
+      "sha256": "7455181e3603d8afccc0334ca7d52f219abcc0605579bbb8379d33a86194e29a",
+      "bytes": 9461,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/nav2_verifier.py": {
+      "sha256": "4f0a2c15be2287aad551f05bea7ffc0c6ea277a6e158d880f1aec37fba2e603d",
+      "bytes": 11065,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py": {
+      "sha256": "39c7170170eb8f70a1e9d2f85518368dffe1613e87969fd7fda4007724f62e90",
+      "bytes": 6114,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/preparation_core.py": {
+      "sha256": "8cf54a304c8ca166f53ffe6a474e911b73894894e69ce5063e7beaf3188fe559",
+      "bytes": 3196,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/preparation_view.py": {
+      "sha256": "ce60ec654f09ee805f78d86fc8cd1ad6a72642fc81647dfe4d9c0572051defde",
+      "bytes": 4386,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/remote_robot.py": {
+      "sha256": "55aa79f0b4a1a88214ef679d400271136101e08c007c967d292fb1abd7ea45c6",
+      "bytes": 2999,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py": {
+      "sha256": "7b94d79f575ae536b48e2dbbbd268005ef9215fa39843b8abc348bd6cae8bcd4",
+      "bytes": 13098,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/soccer_trial.py": {
+      "sha256": "bb165892f8ff70ecd1044cc0327d88987bb21b5062a99718007f6d7b34d81589",
+      "bytes": 6748,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/style.py": {
+      "sha256": "8aefada1fc3cf92623ad3afd1ec4314c917ab42b00b511e00ceff2be6775e09f",
+      "bytes": 3961,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/topview.py": {
+      "sha256": "2cee8356ca56ac288903a8f8becf4ba50dd17ba4643062427940622afef36414",
+      "bytes": 10770,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/verify_core.py": {
+      "sha256": "f2da5174eea56fcf68c00dd78f2f8797d09f82218924d8d1f3cd326d9b706bf5",
+      "bytes": 20980,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py": {
+      "sha256": "5161f29f10b7db8b6e1b75c539859f7705d0a219a49668b940b89d5716cf0bbe",
+      "bytes": 4577,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py": {
+      "sha256": "e5d92556c7af6b00e9ab242d3a1049c8e771b2a3a4f706fb8ff8893e414197cb",
+      "bytes": 13404,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/setup.cfg": {
+      "sha256": "0b3bc274765af8fbb6bf3e180492b7ff60a344c687991c109da8bae68067c90d",
+      "bytes": 101,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/setup.py": {
+      "sha256": "459f8ea5855215b845b196ce96eaa674409b10cb4adbe33c509dd36b0768030b",
+      "bytes": 2089,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_clock_monitor.py": {
+      "sha256": "9c13fccabf82ade79b627875c5a7a078fbe1daada8c73fb81157dc10bfa04340",
+      "bytes": 951,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_game_camera_launch.py": {
+      "sha256": "06056ea60a8b9ae2a2803a7c99d3e62ec080d0078c42277bc93271015f4467fe",
+      "bytes": 1791,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_game_camera_view.py": {
+      "sha256": "faadd07c6d66977ee4fab99b46a9d6f3bce6a913fa49651c3b54f439b41a89b2",
+      "bytes": 2000,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_game_tools.py": {
+      "sha256": "1fbe914fcbdfdbdef37ba3522b38c7159218b21b9514efe7366fa377fc3cd196",
+      "bytes": 2201,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_nav2_comparison.py": {
+      "sha256": "dfffc0c54e948845f262309ba60082209d30d657fda3abf4e828f00e359b6f42",
+      "bytes": 1555,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_opponent_display.py": {
+      "sha256": "3bfcde178aa79e41ac22e1d683270ba496d99433c55d6461590a86b12c323770",
+      "bytes": 3286,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_preparation.py": {
+      "sha256": "615775ad472fc01a56b1c7b97fa34ac14abf80ed02ef0b546d8073782dfc16b4",
+      "bytes": 2591,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_preparation_node.py": {
+      "sha256": "4a01aad323aa94b35f18e816cd82b81578c5f59bda90587f8076b4e5f7622015",
+      "bytes": 3878,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_rectangle_launch.py": {
+      "sha256": "03e919d56bff9c20f2d40beee2dceec9c46c46981ea7f461e6e8911b58e01bf9",
+      "bytes": 2559,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_remote_robot.py": {
+      "sha256": "02df4a54cd00e5f550da7d39a73085927ce77ca660deddb5f1c0fc33b2ae63cd",
+      "bytes": 696,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_topview.py": {
+      "sha256": "f6885323a3245f2dfd9e732f38e56bd3c339c440b4674027fe216f6e92862898",
+      "bytes": 5179,
+      "mode": 436
+    },
+    "src/pinky_soccer_viz/test/test_verify_core.py": {
+      "sha256": "dccd6590abf849c9e6f6a13be84ecdf64547cef40c2a592e95616f6e03dc1ca9",
+      "bytes": 6645,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/.pytest_cache/README.md": {
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "bytes": 302,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/LOCALIZATION.md": {
+      "sha256": "e5306620775c58588b593b5908dd2e0c12b9df53a061b482285334754051d5ce",
+      "bytes": 8188,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/README.md": {
+      "sha256": "03261cef00f600b061333c68f9242ad72b4288d13958a1f3187f94487b159544",
+      "bytes": 11552,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/STARTUP_LOCALIZATION.md": {
+      "sha256": "18dc173e46532f809ab969736fd4b502c31a0f1602990301b773b3195bfb0f5d",
+      "bytes": 9727,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/amcl.yaml": {
+      "sha256": "31825ab9015b660989ee00dfd371dd2b0716c0b67afe24cdbcd3c9e6a06d8860",
+      "bytes": 937,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/ball_detector.yaml": {
+      "sha256": "fdbfa84fbd395b836dd89333d0bdafc0d43074cbc202bec73fba5a6182d70a8a",
+      "bytes": 2652,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/ball_filter.yaml": {
+      "sha256": "d361be8f749d4414b61fb52a5d44fecde88da613ebd2a9a6c47fb85ec6300223",
+      "bytes": 787,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/fake_world_model.yaml": {
+      "sha256": "f8c2d03b4f28039ee56a21e14ff29957e4f3235bc0aff000269d59728f9554a5",
+      "bytes": 251,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/goal_heading.yaml": {
+      "sha256": "61fb450ed794ef8fec3947156e56ba4b05eb7d125c24bdb75a31c0b4010a5749",
+      "bytes": 276,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/rectangle_localization.yaml": {
+      "sha256": "535e066a63a61e64e354e0896424834526831d53021eaf753b6d3b05444d831b",
+      "bytes": 924,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/rectangle_sim_hls.yaml": {
+      "sha256": "16c305e1ac0a3a093a1b5bb1a6b415e178eca488d9400b10475fc4f07c574b74",
+      "bytes": 487,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/config/world_model.yaml": {
+      "sha256": "c2009cedb4d388a13a14aa8b42b688cef2e3ca401a258f704a4bb6ce2fc514e1",
+      "bytes": 2305,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/launch/world_model.launch.py": {
+      "sha256": "f1bbc3d3df921a17f8155b56619745e3e517b6578b178fd247f4cd6f00bc0a05",
+      "bytes": 1632,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/package.xml": {
+      "sha256": "c2b6f8861606037c5c5ee8c24809c17f0d525fdd84fbbb1562006539f414fce6",
+      "bytes": 1371,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/__init__.py": {
+      "sha256": "26db201f94dd455688081269e50983709bb1c0bcdcee901d1fb7a02e5b1d7c03",
+      "bytes": 81,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py": {
+      "sha256": "d0c1411252403bf4fb893b5613503e0698edebede71e2d75d01fcc69bf14ee7b",
+      "bytes": 13375,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_filter.py": {
+      "sha256": "3451ecd84fb02972e21e477218ded9217a5dcfca36ef3c6ab325ed99f1462086",
+      "bytes": 5925,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_offset.py": {
+      "sha256": "72234cd89e6716084ae8f0a8e7a1c695a6b60077bdb7e8c01fc7481ff42c3950",
+      "bytes": 2635,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py": {
+      "sha256": "cf23429cc476aaf8e5bc5496c43c83b2cdefcb380bda596cfc25e4ea9dbab976",
+      "bytes": 2975,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/fake_world_model.py": {
+      "sha256": "db9af4d91fda7ae737ff8a48ee67a755c5bdd19978659f57715f67ce234982e9",
+      "bytes": 6337,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/geometry.py": {
+      "sha256": "6d9bdcd62879d8d3a6dd4c1c016bac65e5a7767ed1659c8abb0792b69faba945",
+      "bytes": 5824,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/goal_heading_node.py": {
+      "sha256": "3fee3167bd13db68622d5b29588f65e6b2336f39d8530654ee7e54cba84ceb2a",
+      "bytes": 14848,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/goal_hls.py": {
+      "sha256": "8e97bba87381432d515079e9879246eee758f11a98009d7c1e89742a6c356301",
+      "bytes": 2261,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/heading_reference.py": {
+      "sha256": "3b5c72ebbe36bb6546461ed0799fdb85e934d85c33cda6a781e4566ffe07b339",
+      "bytes": 6397,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/hls_ball.py": {
+      "sha256": "c6ae0fa39b9c997cbf8767bf859626a43c1c17e9ce819fd20c51f294516321e1",
+      "bytes": 7122,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/localization_launch.py": {
+      "sha256": "345c607fc363ca765bcf94565adc2604a4b135fbfaa224c4eae0a5c07a54150f",
+      "bytes": 2598,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/msgs.py": {
+      "sha256": "c6a2105a9ae3881edf907199bb1ba7716b7f3f195a5c1009e7d229b426646ab3",
+      "bytes": 1880,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py": {
+      "sha256": "fdbe27c6696768666cb349c3ddb4972a31123a0b3de15432797e1cb6632e2e1f",
+      "bytes": 10150,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization.py": {
+      "sha256": "58d887b13104252182612da3f11947f66c24b881b93e768a5ff0708404bd91fd",
+      "bytes": 9906,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization_node.py": {
+      "sha256": "fcb5a9a9261e618f1284811b787866cc86ffcd11c406e82a023a08063fa5d7b2",
+      "bytes": 36819,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_tracking.py": {
+      "sha256": "4f4f4f0e0cc0612c2d0430d91825e4bebcde7c1315553a1499f170d3daa64447",
+      "bytes": 6028,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py": {
+      "sha256": "ad0be980ce08a853e0ffba60da52de56253a1a34089ffd317514f587c86b843b",
+      "bytes": 5424,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/search_grid.py": {
+      "sha256": "655503232106fbd4a44ba6e8d80be3da135bdccc12027e5a42769235908799ba",
+      "bytes": 2965,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py": {
+      "sha256": "db97ec8cb680e2a81e42d1f2d88fecc56b8c2db19627f9b98d98180a0c138175",
+      "bytes": 20551,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/setup.cfg": {
+      "sha256": "5de44a7d6b8e5099300025b718c09a722fa1119479b80af5741b4622073c251a",
+      "bytes": 117,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/setup.py": {
+      "sha256": "62645c63d0250dce983985567dcadaaa72c31c2131213e68fa9e930aecd62ed7",
+      "bytes": 1367,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_ball_preview.py": {
+      "sha256": "cd29d697e294cebbf75c58760c20209e989a7afd76296f6b6a59f832a8751980",
+      "bytes": 1831,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_flake8.py": {
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2",
+      "bytes": 884,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_goal_heading_node.py": {
+      "sha256": "e3a97deb0a857262b498e530f432ce9b3fc1613ae4cba5df3317983acf5aad6c",
+      "bytes": 3522,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_heading_reference.py": {
+      "sha256": "1c2440b12f6c1fce4f69a87f71d8d61f9c29af8bac4a9f44854d9ad2fba3044c",
+      "bytes": 4397,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_hls_ball_projection.py": {
+      "sha256": "fac63e42b56c2686c286641d1233d3e8924e3c44ed685c92a56ad293591f281e",
+      "bytes": 6669,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_lightweight_localization.py": {
+      "sha256": "c3268350cfc2adcc29656d734ddf5335121b40ca18c95ab1345056682106b161",
+      "bytes": 7354,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_localization_world_model.py": {
+      "sha256": "cc27f3d4c7a3303efbfa72166a2c01162924131efb5b27e0bd7574e084390722",
+      "bytes": 1555,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_opponent_node.py": {
+      "sha256": "12061847b98ed77c870b19287ce816372fe69352648bbd8b50cc83cb1813679d",
+      "bytes": 3355,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_opponent_tracking.py": {
+      "sha256": "79ccd008948194deefd456becab3b4e6b76bed3d110ca6812051e12e736811cc",
+      "bytes": 4849,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_orange_ball.py": {
+      "sha256": "14190105db05dc3a5e7444527c40692e27a37c77386aacd1e34dc2e971be2240",
+      "bytes": 3376,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_real_game_geometry.py": {
+      "sha256": "6617a5c7552bbdb2a3ee1b1c73cfa175aafcc11a1e9f4a2f660a678496f8942a",
+      "bytes": 3530,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_rectangle_localization.py": {
+      "sha256": "70ec32cef921e31fa5c314fa78a3b12dcfaac3e9527aa16be411240b759b21cf",
+      "bytes": 4549,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_rectangle_localization_node.py": {
+      "sha256": "a1ad8365672c4ee3c38ad5faa65bc262a98344d69d65f7c0fc50606f1a7f9373",
+      "bytes": 10647,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_robust_ball.py": {
+      "sha256": "825b579ec27f66828437c59c69374c537b816f0d5036d38fdcdfc711eb1b609b",
+      "bytes": 4509,
+      "mode": 436
+    },
+    "src/pinky_soccer_world_model/test/test_world_model_logic.py": {
+      "sha256": "0eba002ff1cf65ba5391936f5cb92166a3db82d3ac3c7f63d8b2bc67f07f22f6",
+      "bytes": 6089,
+      "mode": 436
+    }
+  },
+  "archive_sha256": "e62aefa9ff60e91fac8cf85d5e3724165a7ace49318b896123982e092c59b0b4",
+  "git": {
+    "head": {
+      "returncode": 0,
+      "stdout": "9cb1d0ce4a8b94cb429889d3adc951d8d79acb0b",
+      "stderr": ""
+    },
+    "branch": {
+      "returncode": 0,
+      "stdout": "feat/nav2-skill-comparison",
+      "stderr": ""
+    },
+    "status": {
+      "returncode": 0,
+      "stdout": "M README.md\n M docs/ARCHITECTURE.md\n M src/pinky_soccer_bringup/CMakeLists.txt\n M src/pinky_soccer_bringup/README.md\n M src/pinky_soccer_bringup/launch/robot.launch.py\n M src/pinky_soccer_bringup/package.xml\n M src/pinky_soccer_bt/src/bt_node_main.cpp\n M src/pinky_soccer_calibration/README.md\n M src/pinky_soccer_calibration/ROS_UI.md\n M src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py\n M src/pinky_soccer_mpc/README.md\n M src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py\n M src/pinky_soccer_mpc/setup.py\n M src/pinky_soccer_mpc/test/test_avoidance.py\n M src/pinky_soccer_sim/CMakeLists.txt\n M src/pinky_soccer_sim/README.md\n M src/pinky_soccer_sim/launch/gazebo_soccer.launch.py\n M src/pinky_soccer_sim/package.xml\n M src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py\n M src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py\n M src/pinky_soccer_sim/test/test_mujoco_ball.py\n M src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf\n M src/pinky_soccer_sim/worlds/hardboard_soccer.world\n M src/pinky_soccer_sim/worlds/rcj_soccer.mjcf\n M src/pinky_soccer_sim/worlds/rcj_soccer.world\n M src/pinky_soccer_viz/GAMEPLAY.md\n M src/pinky_soccer_viz/README.md\n M src/pinky_soccer_viz/REAL_GAME.md\n M src/pinky_soccer_viz/launch/game.launch.py\n M src/pinky_soccer_viz/launch/real_game.launch.py\n M src/pinky_soccer_viz/launch/sim_field.launch.py\n M src/pinky_soccer_viz/package.xml\n M src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py\n M src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py\n M src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py\n M src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py\n M src/pinky_soccer_viz/pinky_soccer_viz/style.py\n M src/pinky_soccer_viz/pinky_soccer_viz/topview.py\n M src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py\n M src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py\n M src/pinky_soccer_viz/setup.py\n M src/pinky_soccer_world_model/LOCALIZATION.md\n M src/pinky_soccer_world_model/README.md\n M src/pinky_soccer_world_model/config/ball_detector.yaml\n M src/pinky_soccer_world_model/config/world_model.yaml\n M src/pinky_soccer_world_model/package.xml\n M src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py\n M src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py\n M src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py\n M src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py\n M src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py\n M src/pinky_soccer_world_model/setup.py\n?? docs/BALL_HLS_DISTANCE.md\n?? docs/GOTOPOSE_DIAGNOSTICS.md\n?? docs/GOTOPOSE_MOTOR_RESPONSE.md\n?? docs/LIGHTWEIGHT_LOCALIZATION.md\n?? docs/MATCH_PREPARATION.md\n?? docs/OPPONENT_TRACKING.md\n?? docs/SIMULATION_COLORS.md\n?? docs/validation/\n?? identification_mujoco.yaml\n?? identification_mujoco_zero_delay.yaml\n?? scripts/analyze_gotopose_bag.py\n?? scripts/benchmark_localization.py\n?? scripts/capture_control_baseline.py\n?? scripts/check_gazebo_led.py\n?? scripts/check_led_render.py\n?? scripts/compare_ball_detection.py\n?? scripts/evaluate_opponents.py\n?? scripts/evaluate_opponents_native.py\n?? scripts/evaluate_preparation.py\n?? scripts/test_analyze_gotopose_bag.py\n?? src/pinky_soccer_bringup/pinky_soccer_bringup/ensure_led.py\n?? src/pinky_soccer_mpc/config/\n?? src/pinky_soccer_mpc/pinky_soccer_mpc/response_calibration.py\n?? src/pinky_soccer_mpc/test/test_response_calibration.py\n?? src/pinky_soccer_sim/pinky_soccer_sim/led_visual.py\n?? src/pinky_soccer_sim/test/test_led_visual.py\n?? src/pinky_soccer_viz/config/\n?? src/pinky_soccer_viz/pinky_soccer_viz/localization_view.py\n?? src/pinky_soccer_viz/pinky_soccer_viz/match_preparation.py\n?? src/pinky_soccer_viz/pinky_soccer_viz/preparation_core.py\n?? src/pinky_soccer_viz/pinky_soccer_viz/preparation_view.py\n?? src/pinky_soccer_viz/pinky_soccer_viz/remote_robot.py\n?? src/pinky_soccer_viz/test/test_opponent_display.py\n?? src/pinky_soccer_viz/test/test_preparation.py\n?? src/pinky_soccer_viz/test/test_preparation_node.py\n?? src/pinky_soccer_viz/test/test_rectangle_launch.py\n?? src/pinky_soccer_viz/test/test_remote_robot.py\n?? src/pinky_soccer_world_model/STARTUP_LOCALIZATION.md\n?? src/pinky_soccer_world_model/config/rectangle_localization.yaml\n?? src/pinky_soccer_world_model/config/rectangle_sim_hls.yaml\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/ball_offset.py\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/goal_hls.py\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/hls_ball.py\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization.py\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization_node.py\n?? src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_tracking.py\n?? src/pinky_soccer_world_model/test/test_hls_ball_projection.py\n?? src/pinky_soccer_world_model/test/test_lightweight_localization.py\n?? src/pinky_soccer_world_model/test/test_opponent_node.py\n?? src/pinky_soccer_world_model/test/test_opponent_tracking.py\n?? src/pinky_soccer_world_model/test/test_rectangle_localization.py\n?? src/pinky_soccer_world_model/test/test_rectangle_localization_node.py",
+      "stderr": ""
+    },
+    "submodules": {
+      "returncode": 0,
+      "stdout": "c15f50a9a95f40728dd8b36d7245fbaa21904206 external/acados (v0.6.1-3-gc15f50a9a)\n c95aa6fd2d1ae4ee202dbafe935d8987aa62b73c external/acados/examples/acados_python/tests/test_data (heads/master)\n c73eb64352f17fc18bc10fe3c082fcbf9a3c0487 external/acados/external/Clarabel.cpp (remotes/origin/migrate_july25)\n 25540f559592068d0c8a80e46ded1b21760212a1 external/acados/external/Clarabel.cpp/Clarabel.rs (v0.11.1)\n 0a3df8683c6bf9d98168d616e0c5d05938c9d51c external/acados/external/blasfeo (0.1.2-1027-g0a3df868)\n f3da715b4a4d075ea2f03b5908b360c64bff8cb0 external/acados/external/catch (v1.9.3-105-gf3da715b)\n ce436f77d5ebcc6cb415cc00c372c3ac87a1c529 external/acados/external/daqp (v0.7.2-160-gce436f7)\n bad1123a96136fce3cdd8bbcbe24b853d012b840 external/acados/external/hpipm (0.1.4-14-gbad1123)\n da0f9791034cb09bb0904d73504e948d8ea4d0a5 external/acados/external/hpmpc (v0.2-311-gda0f979)\n 288dc922ab94bec42405541e7f50036d9716c5d7 external/acados/external/jsonlab (v2.9.8-5-g288dc92)\n 236713ce9a56c182ac3230d52108f952afce1523 external/acados/external/osqp (v0.6.2.dev0-1145-g236713ce)\n 4f5bdb4ff19a4a2896abe5bfd8fbde5710f34950 external/acados/external/qpdunes (heads/master)\n 125e94fa638f00350608871fc165789b1d1762f1 external/acados/external/qpoases (heads/master)\n a480a64b0a2cc15d4b1e6146e986388709ac0716 external/acados/interfaces/acados_template/tera_renderer (v0.2.1)\n 72a3bf51dad332c67b99fc3373ccd5242f94f680 src/BehaviorTree.ROS2 (0.3.0)\n 014a09f289e6988894fbffde2624fdb1e257815b src/pinky_pro (heads/main)",
+      "stderr": ""
+    }
+  },
+  "versions": {
+    "returncode": 0,
+    "stdout": "{\"python\": \"3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]\", \"numpy\": \"1.26.4\", \"scipy\": \"1.11.4\", \"casadi\": \"3.8.1\", \"mujoco\": \"3.6.0\", \"psutil\": \"5.9.8\"}",
+    "stderr": ""
+  },
+  "parameter_sources": [
+    "src/pinky_soccer_dynamics/config/dynamics.yaml",
+    "src/pinky_soccer_sim/config/calibration/mujoco_profile.yaml",
+    "src/pinky_soccer_sim/config/calibration/gazebo_profile.yaml"
+  ],
+  "request_sha256": "8648cea3931cd10e2d4dad30ff8ef16a5de323bdb7aff2e7563755d6a55912b1"
+}

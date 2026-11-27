@@ -1,0 +1,180 @@
+{
+  "mode": "PASS_THROUGH",
+  "first_success": true,
+  "second_success": true,
+  "first_reason": "handoff_ready",
+  "transition_command_samples": 7,
+  "transition_zero_samples": 0,
+  "goals": [
+    {
+      "stamp_ns": 6070000000,
+      "frame": "map",
+      "goal_id": "52913393387595",
+      "action": "GoToPose",
+      "mode": 0,
+      "x": -0.2,
+      "y": 0.0,
+      "yaw": 0.0,
+      "role": "goal",
+      "wall": 7.698498899997503
+    },
+    {
+      "stamp_ns": 7730000000,
+      "frame": "map",
+      "goal_id": "52913393387596",
+      "action": "GoToPose",
+      "mode": 0,
+      "x": 0.1,
+      "y": 0.0,
+      "yaw": 0.0,
+      "role": "goal",
+      "wall": 9.365260418002435
+    }
+  ],
+  "final_status": {
+    "data": {
+      "status": 0,
+      "ms": 4.39403900236357,
+      "direction": 1,
+      "residuals": [
+        1.5038716902338045e-07,
+        3.8281999807211964e-10,
+        0.0,
+        1.2352574904095892e-08
+      ],
+      "iterations": 1,
+      "v_bound": 0.2669681164822684,
+      "w_bound": 2.0,
+      "message": "acados converged",
+      "backend": "discrete_time_optimal_acados",
+      "horizon_steps": 2,
+      "planned_time": 0.2,
+      "terminal_feasible": true,
+      "attempts": 1,
+      "lower_steps": 2,
+      "attempt_statuses": [
+        {
+          "n": 2,
+          "status": 0,
+          "terminal": true,
+          "ms": 4.093,
+          "acados_ms": 0.133,
+          "iterations": 1,
+          "residuals": [
+            1.5038716902338045e-07,
+            3.8281999807211964e-10,
+            0.0,
+            1.2352574904095892e-08
+          ],
+          "slack_max": 4.117524964649538e-10,
+          "terminal_errors": {
+            "position_m": 0.001280684326550716,
+            "heading_rad": 0.0005567252542156905,
+            "wheel_rad_s": 0.00411689494334309,
+            "profile_rad_s": 0.0016216787812458344,
+            "command_rad_s": 0.0016216787812458344
+          },
+          "accepted": true,
+          "damping_cost": 0.0,
+          "violation": 0.0
+        }
+      ],
+      "replay_violation": 0.0,
+      "damping_cost": 0.0,
+      "damping_scale": 0.0,
+      "forecast_disturbance": [
+        0.0,
+        0.0
+      ],
+      "activation_jitter_sim_s": 0.0,
+      "activation_position_error_m": 0.0005868323688473431,
+      "activation_heading_error_rad": 0.0006834504061530296,
+      "activation_wheel_error_rad_s": 0.054623262957404606,
+      "activation_aligned_position_error_m": null,
+      "activation_aligned_heading_error_rad": null,
+      "activation_aligned_wheel_error_rad_s": null,
+      "activation_missed": false,
+      "prediction_lead_sim_s": 0.1,
+      "solve_id": 23,
+      "solve_input_age_sim_s": 0.020000000000000462,
+      "solve_input_age_wall_s": 0.017507149001176003,
+      "worker_wait_ms": 9.879031000309624,
+      "result_pickup_ms": 3.1616409978596494,
+      "acados_ms": 0.133,
+      "collision_monitor": {
+        "state": "CLEAR",
+        "reason": "safe braking envelope",
+        "clearance": 0.5263528649461409,
+        "d_stop": 0.05000000030654442,
+        "replan": false
+      },
+      "motion_state": {
+        "goal_id": "52913393387596",
+        "stamp": 7.74,
+        "pose": [
+          0.10507767033324882,
+          9.791540913925903e-06,
+          0.0017375870967184382
+        ],
+        "raw_pose": [
+          0.10515536805968534,
+          5.973367422249521e-05,
+          0.001271512237595939
+        ],
+        "v": -1.6133916463158294e-09,
+        "omega": -6.3332037200627835e-06,
+        "confidence": 1.0,
+        "position_error": 0.005155714105985692,
+        "heading_error": 0.001271512237595939,
+        "reason": "settled",
+        "mode": "STRICT_STOP",
+        "handoff_ready": false,
+        "next_target": [
+          0.1,
+          0.0,
+          0.0
+        ],
+        "oscillating": false,
+        "replan_reason": "retain safe trajectory"
+      },
+      "state": "arrived",
+      "reason": "settled",
+      "goal_id": "52913393387596",
+      "wheel_l": 1.1253838995731888e-05,
+      "wheel_r": -1.137117161190769e-05,
+      "profile_l": 0.0,
+      "profile_r": 0.0,
+      "wheel_cmd_l": 0.0,
+      "wheel_cmd_r": 0.0,
+      "feedback_age": 0.010090636002132669,
+      "feedback_enabled": true,
+      "position_error": 0.005155714105985692,
+      "heading_error": 0.001271512237595939,
+      "command_state_age_sim_s": null,
+      "command_state_age_wall_s": null,
+      "active_solve_id": null,
+      "compensated_state_age_sim_s": null,
+      "pose_receipt_age_sim_s": 0.040000000000000036,
+      "observer_mode": "off",
+      "observer_d_l": 0.0,
+      "observer_d_r": 0.0,
+      "observer_innovation_l": 0.0,
+      "observer_innovation_r": 0.0,
+      "observer_accepted": 0,
+      "observer_rejected": 0,
+      "wheel_stamp_valid": false,
+      "wheel_source_age_s": null,
+      "pose_source_age_s": 0.0600000000000005,
+      "observer_valid": false,
+      "pose_aligned": false
+    },
+    "role": "status",
+    "wall": 9.37643823200051
+  },
+  "final_truth": {
+    "x": 0.1054597343251388,
+    "y": 2.0457142968104553e-05,
+    "role": "truth",
+    "wall": 9.368658783998399
+  }
+}

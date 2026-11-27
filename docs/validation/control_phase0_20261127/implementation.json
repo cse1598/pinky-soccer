@@ -1,0 +1,15 @@
+{
+  "scripts/capture_control_baseline.py": "dd8028e0bceb3b4cd1b57b0ad4dcf3b5ef8b002ff4b01252fc35d86cbc89ef6f",
+  "scripts/run_control_baseline.py": "a24816cdd7b239aa2b5729d9beec62eb473a3ebf59c45824a87550de751f28a4",
+  "scripts/control_baseline_metrics.py": "c4776bff1a79ebc74b6fb9f47efc523b07cd1f6e96c1f1503eaa3ff938f5d41b",
+  "scripts/analyze_control_baseline.py": "a3396a9fd2c51a7e57c39c746be7f001d3af19d5cc7d54b5d83b9ace411db858",
+  "scripts/verify_control_preservation.py": "ea62467096d27863aeb14ec2ce17bf96bc7e58bf159d502e96ada047a8860ac2",
+  "scripts/test_control_baseline.py": "464db0a36241c26165c1cf8f5690c3d01e5264bc06c771a1d6e62804e4eb0a79",
+  "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": "fe4f6e06a22a368dfef160d78fbe052dfb37e9b3d2ff46e93cd38e3d16986f95",
+  "src/pinky_soccer_mpc/pinky_soccer_mpc/timing_trace.py": "8f96b460ab5c03a39f1ebcc3c5ddd44df59ec3facfb809f55712e6782041f27d",
+  "src/pinky_soccer_mpc/test/test_timing_trace.py": "c51368f63caac416fd140363f915e90d9e283a5b91bf69e660f102aab381db15",
+  "src/pinky_soccer_mpc/README.md": "01d55d7ba1bf84b0a31d197538605cd840fb9a5c9dba098722c2f6d835786d96",
+  "README.md": "a3cf4ab6eab6df2147929e2ae71aab0f45b7f1014bee7161ea49b8ae9d1de460",
+  "docs/CONTROL_PHASE0_PHASE1.md": "90885623060c2138ade13edd0554f10cc143fc435a11db9806feb2d3b5c9ca5d",
+  "implementation.tar.gz": "33590b90728a3dd22717ca21545c27c32b80cdd8ca6e77bbc3ec08523a5a700b"
+}

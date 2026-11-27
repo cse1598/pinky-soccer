@@ -1,0 +1,60 @@
+[INFO] [launch]: All log files can be found below /home/cse/.ros/log/2026-11-27-19-55-22-192953-cse-pc-118618
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: REAL ROBOT (no namespace) team yellow: starts paused. Receive sensors until preparation/prepare (Trigger) or R; calibrate, GoToPose to team start, then wait READY. preparation/stop stops motion. preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.
+[INFO] [launch.user]: VERIFY MODE: the game tree is off; behaviours run only from the verifier window. Keep a hand on the robot power switch.
+[INFO] [ball_detector-1]: process started with pid [118621]
+[INFO] [rectangle_localization-2]: process started with pid [118622]
+[INFO] [world_model_node-3]: process started with pid [118623]
+[INFO] [bt_node-4]: process started with pid [118624]
+[INFO] [match_preparation-5]: process started with pid [118625]
+[INFO] [mpc_controller-6]: process started with pid [118626]
+[INFO] [world_model_viz-7]: process started with pid [118627]
+[INFO] [world_model_topview-8]: process started with pid [118628]
+[INFO] [rviz2-9]: process started with pid [118631]
+[INFO] [game_camera_view-10]: process started with pid [118632]
+[INFO] [behavior_verifier-11]: process started with pid [118633]
+[INFO] [localization_view-12]: process started with pid [118634]
+[INFO] [preparation_view-13]: process started with pid [118635]
+[INFO] [game_referee-14]: process started with pid [118636]
+[bt_node-4] [INFO] [1795776922.330997344] [bt_node]: Node [ReadWorldModel] created Subscriber to topic [world_model]
+[bt_node-4] [INFO] [1795776922.331851019] [bt_node]: Node [ReadGameState] created Subscriber to topic [/game/kickoff]
+[bt_node-4] [WARN] [1795776922.333725603] [bt_node]: VERIFY MODE: the game tree is not ticked; behaviours run only on behavior_test/request
+[bt_node-4] [INFO] [1795776922.334082597] [bt_node]: Loaded /home/cse/pinky-soccer/install/pinky_soccer_bt/share/pinky_soccer_bt/trees/soccer_1v1.xml, ticking at 15.0 Hz (Groot2 off)
+[bt_node-4] [INFO] [1795776922.401392150] [bt_node]: goal: STOP/VerifyIdle
+[rviz2-9] [INFO] [1795776922.799555999] [rviz2]: Stereo is NOT SUPPORTED
+[rviz2-9] [INFO] [1795776922.799724015] [rviz2]: OpenGl version: 4.6 (GLSL 4.6)
+[rviz2-9] [INFO] [1795776922.845829894] [rviz2]: Stereo is NOT SUPPORTED
+[game_referee-14] [INFO] [1795776923.044701367] [game_referee]: referee: goals from world_model, whole ball past the line; ball reset off
+[world_model_node-3] [INFO] [1795776923.537473071] [world_model_node]: World model: tf, our goal yellow, attack +X
+[world_model_node-3] [WARN] [1795776923.548826645] [world_model_node]: Waiting for self pose
+[game_camera_view-10] [INFO] [1795776923.647070526] [game_camera_view]: camera view: robot 1/1: (no namespace)
+[localization_view-12] QSocketNotifier: Can only be used with threads started with QThread
+[game_camera_view-10] QSocketNotifier: Can only be used with threads started with QThread
+[rectangle_localization-2] [INFO] [1795776923.696799713] [rectangle_localization]: Passive sensor reception. Start calibration: localization/calibrate (Trigger) or R in the localization window. No motion/LED requests before that signal. Records: /home/cse/.ros/pinky_soccer/localization/48ccb45188554b9cb25c3ed511954d02/rectangle_46e823be575649bd89e1ceee39d3c6c4
+[rectangle_localization-2] [INFO] [1795776923.698628072] [rectangle_localization]: Localization state: WAITING_FOR_CALIBRATION
+[ball_detector-1] [INFO] [1795776923.833675190] [ball_detector]: Ball XY correction [0.013, 0.0] m in base_link; source: /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml
+[ball_detector-1] [INFO] [1795776923.838445040] [ball_detector]: Using intrinsics from /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/camera.yaml
+[world_model_node-3] [WARN] [1795776928.580504516] [world_model_node]: Waiting for self pose
+[mpc_controller-6] [INFO] [1795776930.376874182] [mpc_controller]: Fixed-step time-optimal NMPC real/acados: 10 Hz solve, 50 Hz command; up to 80 stages; 92.7 RPM
+[mpc_controller-6] [INFO] [1795776930.377737683] [mpc_controller]: Real motor response: {"applied": true, "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml", "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4", "robot_id": "pinky-pro", "model": "fixed_ramp_first_order_no_delay", "fixed_profile_accel": 74.9, "validation": {"held_out": true, "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged", "rmse_rad_s": 0.13673772694495787, "baseline_rmse_rad_s": 0.2517027001397467, "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance", "horizon_wheel_angle_error_rad": {"0.1s": 0.006039970818655074, "0.25s": 0.01353924291080568, "0.5s": 0.025260526044419987, "1s": 0.050791633435875824, "2s": 0.10842667597723218}, "baseline_horizon_wheel_angle_error_rad": {"0.1s": 0.00451993498306686, "0.25s": 0.010070927021842346, "0.5s": 0.018200915595838738, "1s": 0.03616965200808703, "2s": 0.07592224755230896}}, "parameters": {"tau_left": 0.09031918634164283, "tau_right": 0.08894523651011192}}
+[world_model_node-3] [WARN] [1795776933.580817315] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776938.584237862] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776943.616906966] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776948.647493269] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776953.650135764] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776958.682244103] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776963.682583808] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776968.683164487] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776973.715752590] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776978.716948423] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776983.747865291] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776988.748066199] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776993.780586167] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795776998.781089456] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777003.814183433] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777008.816357275] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777013.847691204] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777018.881045666] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777023.881717656] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777028.918803995] [world_model_node]: Waiting for self pose
+[world_model_node-3] [WARN] [1795777033.923512183] [world_model_node]: Waiting for self pose

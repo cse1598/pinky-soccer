@@ -1,0 +1,1855 @@
+[
+  {
+    "case": "straight",
+    "goal": [
+      -0.1,
+      0.0,
+      0.0
+    ],
+    "start_wall": 9.106976881000008,
+    "start_estimate": {
+      "stamp_ns": 5640000000,
+      "frame": "map",
+      "x": -0.39999944509975643,
+      "y": -4.385465846512559e-05,
+      "yaw": -6.891102268613311e-05,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 5630000000,
+      "v": 3.876000199858684e-15,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 5640000000,
+      "wall": 9.053728876000008
+    },
+    "request_id": 15000,
+    "end_wall": 11.612789625000005,
+    "result": "success",
+    "goal_ids": [
+      "191961038983"
+    ],
+    "samples": {
+      "cmd": 99,
+      "mpc_command": 99,
+      "drive": 50,
+      "plant_command": 0,
+      "joints": 99,
+      "odom": 99,
+      "world": 60,
+      "status": 99,
+      "result": 98,
+      "truth": 99
+    },
+    "cmd_receipt_period_ms": {
+      "n": 98,
+      "mean": 25.066627336734804,
+      "median": 22.786542999995163,
+      "p95": 43.70089799999872,
+      "p99": 52.89004377000055,
+      "maximum": 56.35988800000291
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 98,
+      "mean": 25.04945814285714,
+      "median": 22.926000000012436,
+      "p95": 42.667244300007205,
+      "p99": 52.72088981000053,
+      "maximum": 55.24883300000738
+    },
+    "drive_receipt_period_ms": {
+      "n": 49,
+      "mean": 49.985892265306575,
+      "median": 49.939432999991595,
+      "p95": 51.226700799992386,
+      "p99": 51.88155336000818,
+      "maximum": 51.985326000021814
+    },
+    "joints_receipt_period_ms": {
+      "n": 98,
+      "mean": 25.015203295918337,
+      "median": 23.169239000012,
+      "p95": 38.06982970001655,
+      "p99": 41.171774510008,
+      "maximum": 48.2470679999949
+    },
+    "world_receipt_period_ms": {
+      "n": 59,
+      "mean": 41.89900933898336,
+      "median": 40.866020999999364,
+      "p95": 61.98555990000327,
+      "p99": 74.81164586000604,
+      "maximum": 81.20106100000157
+    },
+    "zero_command_samples": 45,
+    "zero_run_starts": 6,
+    "nonzero_command_samples": 54,
+    "zero_intervals": [
+      {
+        "start_wall": 9.131968083999993,
+        "last_sample_wall": 9.279090929000006,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 9.626500754999995,
+        "last_sample_wall": 9.711032985999992,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 10.066443773999993,
+        "last_sample_wall": 10.162028942999996,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 10.517719717000006,
+        "last_sample_wall": 10.610557381000007,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 10.947039810999996,
+        "last_sample_wall": 11.047884369999991,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 11.132917096,
+        "last_sample_wall": 11.588497563000004,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 4,
+    "command_delta_v": {
+      "n": 98,
+      "mean": 0.02198973335124676,
+      "median": 0.0,
+      "p95": 0.18536401984805298,
+      "p99": 0.26695773282684065,
+      "maximum": 0.26696055998248647
+    },
+    "command_delta_w": {
+      "n": 98,
+      "mean": 0.00023572200838031077,
+      "median": 0.0,
+      "p95": 0.0008356588435158874,
+      "p99": 0.0060946271635261414,
+      "maximum": 0.0060946271635261414
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 0,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 18,
+        "mean": 32.617124722220424,
+        "median": 26.10015899999496,
+        "p95": 68.51208310000486,
+        "p99": 72.96107422000402,
+        "maximum": 74.07332200000383
+      },
+      "acados_ms": {
+        "n": 18,
+        "mean": 15.899944444444449,
+        "median": 11.6335,
+        "p95": 38.449999999999996,
+        "p99": 41.83639999999999,
+        "maximum": 42.683
+      },
+      "worker_wait_ms": {
+        "n": 18,
+        "mean": 10.872667111109358,
+        "median": 9.573438500012799,
+        "p95": 19.972163950004067,
+        "p99": 23.569386390000194,
+        "maximum": 24.468691999999237
+      },
+      "result_pickup_ms": {
+        "n": 18,
+        "mean": 14.77839016666217,
+        "median": 13.368620000008491,
+        "p95": 27.48227790000044,
+        "p99": 27.98111637997806,
+        "maximum": 28.105825999972467
+      }
+    },
+    "solver_status_counts": {
+      "0": 14,
+      "7": 3,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 93,
+      "mean": 4.966158905850162e-13,
+      "median": 8.881784197001252e-13,
+      "p95": 8.881784197001252e-13,
+      "p99": 8.881784197001252e-13,
+      "maximum": 8.881784197001252e-13
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 25,
+      "scheduled optimized input": 54,
+      "waiting for rest": 18,
+      "settled": 1
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 99,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "odom": {
+        "n": 99,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "localization": {
+        "n": 42,
+        "mean": 6.428571428571429,
+        "median": 10.0,
+        "p95": 19.499999999999957,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 60,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 99,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 124,
+      "mean": 0.0002058004547695835,
+      "median": 2.9240897493347413e-05,
+      "p95": 0.0015941423487010244,
+      "p99": 0.0023778060585810225,
+      "maximum": 0.0027149209404560416
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 124,
+      "mean": 0.0002934226509983358,
+      "median": 0.00023742396582333614,
+      "p95": 0.0008725162256387749,
+      "p99": 0.0011188343693162715,
+      "maximum": 0.001280569216702902
+    },
+    "truth_displacement_m": 0.2856949969965736,
+    "truth_yaw_change_rad": -0.0004186525199429589,
+    "truth_path_length_m": 0.2857675822917281,
+    "truth_final_position_error_m": 0.014371965253902358,
+    "truth_final_heading_error_rad": 0.0004186525491011949,
+    "truth_first_legacy_pose_region_wall_s": 1.956864190999994,
+    "success_after_first_truth_region_wall_s": 0.5489485530000024,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 59,
+        "x_rmse_m": 0.00358777551021202,
+        "y_rmse_m": 5.805444447454389e-05,
+        "xy_rmse_m": 0.0035882451742042885,
+        "yaw_rmse_rad": 0.0005293128728050313
+      },
+      "localization": {
+        "n": 41,
+        "x_rmse_m": 0.0006633906364970923,
+        "y_rmse_m": 5.859927186267192e-05,
+        "xy_rmse_m": 0.0006659737316552753,
+        "yaw_rmse_rad": 0.0004957621785046443
+      }
+    },
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 99,
+      "mean": 0.14419480726217934,
+      "median": 0.17753009621114904,
+      "p95": 0.2641437345654859,
+      "p99": 0.2642660743471706,
+      "maximum": 0.26427179393024525
+    },
+    "odom_w_abs": {
+      "n": 99,
+      "mean": 0.0006406143433132698,
+      "median": 0.00014026197221206062,
+      "p95": 0.00393538644101616,
+      "p99": 0.00441738216322122,
+      "maximum": 0.005445469694339969
+    },
+    "elapsed_wall_s": 2.5058127439999964
+  },
+  {
+    "case": "short",
+    "goal": [
+      -0.35,
+      0.0,
+      0.0
+    ],
+    "start_wall": 12.616546570999986,
+    "start_estimate": {
+      "stamp_ns": 8400000000,
+      "frame": "map",
+      "x": -0.11456840239804372,
+      "y": -0.000142191815602296,
+      "yaw": -0.0010063169765218924,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 8380000000,
+      "v": 6.035649442963646e-11,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 8400000000,
+      "wall": 12.560246543000005
+    },
+    "request_id": 15001,
+    "end_wall": 15.533332694999984,
+    "result": "success",
+    "goal_ids": [
+      "191961038984"
+    ],
+    "samples": {
+      "cmd": 96,
+      "mpc_command": 96,
+      "drive": 58,
+      "plant_command": 0,
+      "joints": 96,
+      "odom": 96,
+      "world": 58,
+      "status": 96,
+      "result": 94,
+      "truth": 96
+    },
+    "cmd_receipt_period_ms": {
+      "n": 95,
+      "mean": 30.445029242105182,
+      "median": 27.324386999993067,
+      "p95": 49.61885870000344,
+      "p99": 58.04491348001933,
+      "maximum": 63.59383499997762
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 95,
+      "mean": 30.479894326315623,
+      "median": 27.698749999984784,
+      "p95": 47.28188900000418,
+      "p99": 56.332131159993544,
+      "maximum": 60.57504300000005
+    },
+    "drive_receipt_period_ms": {
+      "n": 57,
+      "mean": 50.033621192982345,
+      "median": 49.929867000003014,
+      "p95": 52.160142199983284,
+      "p99": 53.00417800001469,
+      "maximum": 53.469048000010844
+    },
+    "joints_receipt_period_ms": {
+      "n": 95,
+      "mean": 30.42143426315803,
+      "median": 28.002791999995225,
+      "p95": 44.38719769999863,
+      "p99": 53.58823687999518,
+      "maximum": 54.22626000000719
+    },
+    "world_receipt_period_ms": {
+      "n": 57,
+      "mean": 50.69432817543834,
+      "median": 51.54030499997475,
+      "p95": 71.41176279998261,
+      "p99": 79.99456719999328,
+      "maximum": 82.69556199999784
+    },
+    "zero_command_samples": 48,
+    "zero_run_starts": 5,
+    "nonzero_command_samples": 48,
+    "zero_intervals": [
+      {
+        "start_wall": 12.634345980999996,
+        "last_sample_wall": 12.84889516299998,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 13.20690732899999,
+        "last_sample_wall": 13.360713984,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 13.715300283000005,
+        "last_sample_wall": 13.850631900999986,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 14.531443712999987,
+        "last_sample_wall": 14.669781518000008,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 14.893478700999992,
+        "last_sample_wall": 15.526623758999989,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 3,
+    "command_delta_v": {
+      "n": 95,
+      "mean": 0.019589616749329575,
+      "median": 0.0,
+      "p95": 0.15285583519400403,
+      "p99": 0.2600019574395644,
+      "maximum": 0.2644341405777011
+    },
+    "command_delta_w": {
+      "n": 95,
+      "mean": 0.007791472484088546,
+      "median": 0.0,
+      "p95": 0.009766619689972472,
+      "p99": 0.2083089886916466,
+      "maximum": 0.3399060456071468
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 1,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 14,
+        "mean": 39.075832285720125,
+        "median": 38.80556100000376,
+        "p95": 73.65835750001395,
+        "p99": 75.07647550001309,
+        "maximum": 75.43100500001287
+      },
+      "acados_ms": {
+        "n": 14,
+        "mean": 18.919999999999998,
+        "median": 17.316,
+        "p95": 44.8077,
+        "p99": 46.97194,
+        "maximum": 47.513
+      },
+      "worker_wait_ms": {
+        "n": 14,
+        "mean": 11.578060571429612,
+        "median": 10.83710850001296,
+        "p95": 16.47273604999384,
+        "p99": 16.53069680999181,
+        "maximum": 16.5451869999913
+      },
+      "result_pickup_ms": {
+        "n": 14,
+        "mean": 12.453327499999643,
+        "median": 8.573995999995532,
+        "p95": 28.57746120000115,
+        "p99": 33.46439623998662,
+        "maximum": 34.686129999982995
+      }
+    },
+    "solver_status_counts": {
+      "7": 5,
+      "0": 9
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 89,
+      "mean": 4.590585090584917e-13,
+      "median": 0.0,
+      "p95": 1.7763568394002505e-12,
+      "p99": 1.7763568394002505e-12,
+      "maximum": 1.7763568394002505e-12
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 22,
+      "scheduled optimized input": 48,
+      "waiting for rest": 21,
+      "settled": 3
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 96,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "odom": {
+        "n": 96,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "localization": {
+        "n": 49,
+        "mean": 7.755102040816326,
+        "median": 10.0,
+        "p95": 20.0,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 58,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 96,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 145,
+      "mean": 0.00022318129943225867,
+      "median": 2.9078514778351438e-05,
+      "p95": 0.0012485491146021458,
+      "p99": 0.003667548453265584,
+      "maximum": 0.004597827882237086
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 145,
+      "mean": 0.0004351317152844892,
+      "median": 0.00023497609470562097,
+      "p95": 0.0017493407620534141,
+      "p99": 0.002992496244238895,
+      "maximum": 0.005180351331559714
+    },
+    "truth_displacement_m": 0.22185371437419715,
+    "truth_yaw_change_rad": -0.005157471634922791,
+    "truth_path_length_m": 0.2223438334418388,
+    "truth_final_position_error_m": 0.014036759141602025,
+    "truth_final_heading_error_rad": 0.005572034426896711,
+    "truth_first_legacy_pose_region_wall_s": 2.2699868570000206,
+    "success_after_first_truth_region_wall_s": 0.6467992669999774,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 58,
+        "x_rmse_m": 0.002416903559392661,
+        "y_rmse_m": 0.000125677790157661,
+        "xy_rmse_m": 0.002420168945000292,
+        "yaw_rmse_rad": 0.0012049833158352286
+      },
+      "localization": {
+        "n": 48,
+        "x_rmse_m": 0.0013587887833995758,
+        "y_rmse_m": 8.704618544960698e-05,
+        "xy_rmse_m": 0.0013615740876991701,
+        "yaw_rmse_rad": 0.0009732322194545838
+      }
+    },
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 96,
+      "mean": 0.11508038644085516,
+      "median": 0.11762076129900031,
+      "p95": 0.26117860523755587,
+      "p99": 0.2626269555048682,
+      "maximum": 0.2626886966244911
+    },
+    "odom_w_abs": {
+      "n": 96,
+      "mean": 0.01263446519320958,
+      "median": 0.0012647129478771141,
+      "p95": 0.042421757522681056,
+      "p99": 0.18290803448738724,
+      "maximum": 0.19101188103217903
+    },
+    "elapsed_wall_s": 2.916786123999998
+  },
+  {
+    "case": "rotate",
+    "goal": [
+      -0.4,
+      0.0,
+      1.5707963267948966
+    ],
+    "start_wall": 16.534359926000008,
+    "start_estimate": {
+      "stamp_ns": 11070000000,
+      "frame": "map",
+      "x": -0.3369922471372725,
+      "y": 0.0026489274222246816,
+      "yaw": -0.005124995806543586,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 11060000000,
+      "v": 1.0646772647421583e-07,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 11070000000,
+      "wall": 16.506071899000005
+    },
+    "request_id": 15002,
+    "end_wall": 18.80020693999998,
+    "result": "success",
+    "goal_ids": [
+      "191961038985"
+    ],
+    "samples": {
+      "cmd": 80,
+      "mpc_command": 80,
+      "drive": 45,
+      "plant_command": 0,
+      "joints": 80,
+      "odom": 80,
+      "world": 48,
+      "status": 80,
+      "result": 77,
+      "truth": 80
+    },
+    "cmd_receipt_period_ms": {
+      "n": 79,
+      "mean": 28.108868531645644,
+      "median": 25.316906999989897,
+      "p95": 41.1474323000192,
+      "p99": 57.048512560006074,
+      "maximum": 69.33261400001811
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 79,
+      "mean": 28.18956922784839,
+      "median": 25.615469000001667,
+      "p95": 41.46077740002169,
+      "p99": 58.50657483999781,
+      "maximum": 69.4129420000138
+    },
+    "drive_receipt_period_ms": {
+      "n": 44,
+      "mean": 50.021161749999585,
+      "median": 50.149263999998084,
+      "p95": 52.09979389998267,
+      "p99": 54.75606787000061,
+      "maximum": 55.24703800000452
+    },
+    "joints_receipt_period_ms": {
+      "n": 79,
+      "mean": 28.135435696202496,
+      "median": 24.992796999981692,
+      "p95": 42.36450770001454,
+      "p99": 57.63828917998521,
+      "maximum": 76.60845000000904
+    },
+    "world_receipt_period_ms": {
+      "n": 47,
+      "mean": 47.01915455319145,
+      "median": 46.84561400000575,
+      "p95": 66.58219810002207,
+      "p99": 85.3383549400115,
+      "maximum": 100.66641100002016
+    },
+    "zero_command_samples": 29,
+    "zero_run_starts": 2,
+    "nonzero_command_samples": 51,
+    "zero_intervals": [
+      {
+        "start_wall": 16.558740561999997,
+        "last_sample_wall": 16.744575349,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 18.227839657999994,
+        "last_sample_wall": 18.779341176000003,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 0,
+    "command_delta_v": {
+      "n": 79,
+      "mean": 0.006840448756333697,
+      "median": 0.0,
+      "p95": 0.061565801276484165,
+      "p99": 0.08773382683023402,
+      "maximum": 0.12802521431647432
+    },
+    "command_delta_w": {
+      "n": 79,
+      "mean": 0.06861809010810847,
+      "median": 0.0,
+      "p95": 0.4125634457973027,
+      "p99": 1.2864822381277818,
+      "maximum": 2.5202516788119635
+    },
+    "command_v_sign_changes": 2,
+    "command_w_sign_changes": 1,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 12,
+        "mean": 32.97805700000348,
+        "median": 25.5407815000126,
+        "p95": 87.1112923500064,
+        "p99": 93.16321207000813,
+        "maximum": 94.67619200000854
+      },
+      "acados_ms": {
+        "n": 12,
+        "mean": 18.59033333333333,
+        "median": 14.597,
+        "p95": 51.79924999999999,
+        "p99": 60.311050000000016,
+        "maximum": 62.43900000000001
+      },
+      "worker_wait_ms": {
+        "n": 12,
+        "mean": 9.370823499997035,
+        "median": 8.69657849999328,
+        "p95": 13.848343099995473,
+        "p99": 15.3464894199945,
+        "maximum": 15.721025999994254
+      },
+      "result_pickup_ms": {
+        "n": 12,
+        "mean": 12.697105999992667,
+        "median": 11.64442149999445,
+        "p95": 24.07018804998699,
+        "p99": 27.52441200997794,
+        "maximum": 28.38796799997567
+      }
+    },
+    "solver_status_counts": {
+      "7": 2,
+      "0": 10
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 72,
+      "mean": 7.894919286223336e-13,
+      "median": 0.0,
+      "p95": 1.7763568394002505e-12,
+      "p99": 1.7763568394002505e-12,
+      "maximum": 1.7763568394002505e-12
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 5,
+      "scheduled optimized input": 51,
+      "waiting for rest": 19,
+      "settled": 2
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 80,
+        "mean": 0.5,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 14.199999999999875,
+        "maximum": 30.0
+      },
+      "odom": {
+        "n": 80,
+        "mean": 0.5,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 14.199999999999875,
+        "maximum": 30.0
+      },
+      "localization": {
+        "n": 38,
+        "mean": 5.7894736842105265,
+        "median": 5.0,
+        "p95": 20.0,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 48,
+        "mean": 0.625,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 15.900000000000034,
+        "maximum": 30.0
+      },
+      "truth": {
+        "n": 80,
+        "mean": 0.5,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 14.199999999999875,
+        "maximum": 30.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 112,
+      "mean": 0.0001639955140550073,
+      "median": 2.647382617813048e-05,
+      "p95": 0.0006377543465641366,
+      "p99": 0.0010502392891686481,
+      "maximum": 0.002507555771411821
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 112,
+      "mean": 0.004353983109989456,
+      "median": 0.0005849322702475091,
+      "p95": 0.019835639136226473,
+      "p99": 0.020896546781199357,
+      "maximum": 0.02122429076299914
+    },
+    "truth_displacement_m": 0.060340273129873764,
+    "truth_yaw_change_rad": 1.602529003753778,
+    "truth_path_length_m": 0.0872522720135276,
+    "truth_final_position_error_m": 0.00352020871441244,
+    "truth_final_heading_error_rad": 0.025853186534986253,
+    "truth_first_legacy_pose_region_wall_s": 1.6021148369999878,
+    "success_after_first_truth_region_wall_s": 0.6637321769999858,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 48,
+        "x_rmse_m": 0.001102595815817796,
+        "y_rmse_m": 0.000736516856300836,
+        "xy_rmse_m": 0.001325961768933847,
+        "yaw_rmse_rad": 0.015131761133101369
+      },
+      "localization": {
+        "n": 38,
+        "x_rmse_m": 0.0006620035721652498,
+        "y_rmse_m": 0.00042492856918686825,
+        "xy_rmse_m": 0.0007866466922772574,
+        "yaw_rmse_rad": 0.012251878450937014
+      }
+    },
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 80,
+      "mean": 0.0544778619111201,
+      "median": 0.035884948807407585,
+      "p95": 0.16879389673985126,
+      "p99": 0.17490684298425105,
+      "maximum": 0.17641848112099315
+    },
+    "odom_w_abs": {
+      "n": 80,
+      "mean": 0.9964707457530426,
+      "median": 1.1310957004040167,
+      "p95": 1.973225553411159,
+      "p99": 1.9765799359066294,
+      "maximum": 1.9777353820652153
+    },
+    "elapsed_wall_s": 2.2658470139999736
+  },
+  {
+    "case": "half_turn",
+    "goal": [
+      -0.4,
+      0.0,
+      3.141592653589793
+    ],
+    "start_wall": 19.801065886000004,
+    "start_estimate": {
+      "stamp_ns": 13440000000,
+      "frame": "map",
+      "x": -0.3961601476559444,
+      "y": -0.00019736247725704505,
+      "yaw": 1.5980115520982456,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 13420000000,
+      "v": 5.011629528059759e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 13440000000,
+      "wall": 19.788036019999993
+    },
+    "request_id": 15003,
+    "end_wall": 27.000498223999983,
+    "result": "failure",
+    "goal_ids": [
+      "191961038986"
+    ],
+    "samples": {
+      "cmd": 254,
+      "mpc_command": 254,
+      "drive": 144,
+      "plant_command": 0,
+      "joints": 254,
+      "odom": 254,
+      "world": 152,
+      "status": 254,
+      "result": 251,
+      "truth": 254
+    },
+    "cmd_receipt_period_ms": {
+      "n": 253,
+      "mean": 28.35670792885374,
+      "median": 25.917988000003334,
+      "p95": 45.17968819999964,
+      "p99": 56.777778120002715,
+      "maximum": 61.456742000018494
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 253,
+      "mean": 28.356557470355703,
+      "median": 25.8176570000046,
+      "p95": 43.90046100000971,
+      "p99": 55.66231883998509,
+      "maximum": 61.313309000013305
+    },
+    "drive_receipt_period_ms": {
+      "n": 143,
+      "mean": 49.9987652167831,
+      "median": 49.985370000001694,
+      "p95": 52.09915859999796,
+      "p99": 54.95692679999938,
+      "maximum": 56.73322000001235
+    },
+    "joints_receipt_period_ms": {
+      "n": 253,
+      "mean": 28.346056656126528,
+      "median": 25.494790000010426,
+      "p95": 44.46724499999845,
+      "p99": 48.28273288000785,
+      "maximum": 64.89875200000483
+    },
+    "world_receipt_period_ms": {
+      "n": 151,
+      "mean": 47.24094518543054,
+      "median": 47.24790000000212,
+      "p95": 66.62191250001115,
+      "p99": 73.63206199998729,
+      "maximum": 89.09227899999905
+    },
+    "zero_command_samples": 204,
+    "zero_run_starts": 3,
+    "nonzero_command_samples": 50,
+    "zero_intervals": [
+      {
+        "start_wall": 19.820473822999986,
+        "last_sample_wall": 20.027841671000004,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 21.306274279999997,
+        "last_sample_wall": 26.836924264999993,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 26.972854018999982,
+        "last_sample_wall": 26.994720928999982,
+        "between_nonzero_commands": false,
+        "nearby_reason": "no pose progress for 4 s",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 1,
+    "command_delta_v": {
+      "n": 253,
+      "mean": 0.0001673932213280138,
+      "median": 0.0,
+      "p95": 5.18916521437794e-06,
+      "p99": 0.006303922724711311,
+      "maximum": 0.011234564272944362
+    },
+    "command_delta_w": {
+      "n": 253,
+      "mean": 0.022028215450377656,
+      "median": 0.0,
+      "p95": 3.105601403578896e-05,
+      "p99": 0.4044401813439417,
+      "maximum": 2.0204610948214237
+    },
+    "command_v_sign_changes": 0,
+    "command_w_sign_changes": 2,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 13,
+        "mean": 26.75834407692325,
+        "median": 23.3959939999977,
+        "p95": 68.93585140001046,
+        "p99": 83.2268678800028,
+        "maximum": 86.79962200000091
+      },
+      "acados_ms": {
+        "n": 13,
+        "mean": 16.878999999999998,
+        "median": 11.014,
+        "p95": 50.35239999999997,
+        "p99": 60.48087999999998,
+        "maximum": 63.013
+      },
+      "worker_wait_ms": {
+        "n": 13,
+        "mean": 8.05592407692538,
+        "median": 7.643435000005638,
+        "p95": 9.447084600014932,
+        "p99": 9.732993720022023,
+        "maximum": 9.804471000023796
+      },
+      "result_pickup_ms": {
+        "n": 13,
+        "mean": 18.640656384609255,
+        "median": 18.495481999991625,
+        "p95": 34.93514419999428,
+        "p99": 38.012780839981126,
+        "maximum": 38.782189999977845
+      }
+    },
+    "solver_status_counts": {
+      "7": 2,
+      "0": 10,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 246,
+      "mean": 7.220962761789636e-14,
+      "median": 0.0,
+      "p95": 0.0,
+      "p99": 1.7763568394002505e-12,
+      "maximum": 1.7763568394002505e-12
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 10,
+      "scheduled optimized input": 50,
+      "waiting for rest": 189,
+      "no pose progress for 4 s": 2
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 254,
+        "mean": 0.03937007874015748,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 10.0
+      },
+      "odom": {
+        "n": 254,
+        "mean": 0.03937007874015748,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 10.0
+      },
+      "localization": {
+        "n": 120,
+        "mean": 6.083333383333334,
+        "median": 10.0,
+        "p95": 10.000001,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 152,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 254,
+        "mean": 0.03937007874015748,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 10.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 358,
+      "mean": 2.9508534719695225e-05,
+      "median": 1.1797887688740298e-06,
+      "p95": 0.00015493584567349258,
+      "p99": 0.00028146606122582884,
+      "maximum": 0.0005609179890092537
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 358,
+      "mean": 0.0015657823250559777,
+      "median": 0.00022861428270704032,
+      "p95": 0.014101634619167518,
+      "p99": 0.020476927089059935,
+      "maximum": 0.029316073189903143
+    },
+    "truth_displacement_m": 0.003361937955286962,
+    "truth_yaw_change_rad": 1.487925760142464,
+    "truth_path_length_m": 0.008327867587233004,
+    "truth_final_position_error_m": 0.0008780767983899746,
+    "truth_final_heading_error_rad": 0.055661700714265454,
+    "truth_first_legacy_pose_region_wall_s": 1.4197250099999792,
+    "success_after_first_truth_region_wall_s": null,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 152,
+        "x_rmse_m": 0.0008989794800043044,
+        "y_rmse_m": 0.0001835326782953284,
+        "xy_rmse_m": 0.0009175229422042077,
+        "yaw_rmse_rad": 0.008273474952500987
+      },
+      "localization": {
+        "n": 120,
+        "x_rmse_m": 0.0008931296739907636,
+        "y_rmse_m": 0.00019219747701553112,
+        "xy_rmse_m": 0.0009135756590091394,
+        "yaw_rmse_rad": 0.006902074125245633
+      }
+    },
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "scheduled optimized input"
+      },
+      {
+        "state": 2,
+        "reason": "no pose progress for 4 s"
+      },
+      {
+        "state": 2,
+        "reason": "no pose progress for 4 s"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 254,
+      "mean": 0.0011429189885202983,
+      "median": 5.745532234880467e-05,
+      "p95": 0.008624091701460996,
+      "p99": 0.012750110176560884,
+      "maximum": 0.013024221261489744
+    },
+    "odom_w_abs": {
+      "n": 254,
+      "mean": 0.30376034159160265,
+      "median": 0.0007185627092625828,
+      "p95": 1.9662486532190684,
+      "p99": 1.9681988475101617,
+      "maximum": 1.968395090149949
+    },
+    "elapsed_wall_s": 7.19943233799998
+  },
+  {
+    "case": "curve",
+    "goal": [
+      -0.1,
+      0.2,
+      1.5707963267948966
+    ],
+    "start_wall": 28.00163011699999,
+    "start_estimate": {
+      "stamp_ns": 19200000000,
+      "frame": "map",
+      "x": -0.3985808884535046,
+      "y": -0.000764863077642809,
+      "yaw": 3.0993051211390195,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 19180000000,
+      "v": 2.9344371462746432e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 19200000000,
+      "wall": 27.998320063999984
+    },
+    "request_id": 15004,
+    "end_wall": 33.33348224599999,
+    "result": "success",
+    "goal_ids": [
+      "191961038987"
+    ],
+    "samples": {
+      "cmd": 188,
+      "mpc_command": 187,
+      "drive": 106,
+      "plant_command": 0,
+      "joints": 187,
+      "odom": 187,
+      "world": 112,
+      "status": 187,
+      "result": 184,
+      "truth": 187
+    },
+    "cmd_receipt_period_ms": {
+      "n": 187,
+      "mean": 28.434803598930532,
+      "median": 25.805128000001787,
+      "p95": 46.41323860000454,
+      "p99": 55.519688260004,
+      "maximum": 71.08518799998365
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 186,
+      "mean": 28.437746419354827,
+      "median": 25.987828500007026,
+      "p95": 46.37776349999001,
+      "p99": 56.9873350000009,
+      "maximum": 71.8722249999928
+    },
+    "drive_receipt_period_ms": {
+      "n": 105,
+      "mean": 49.99943765714268,
+      "median": 50.04449800000543,
+      "p95": 51.837741999992204,
+      "p99": 52.7354097999978,
+      "maximum": 52.8148349999924
+    },
+    "joints_receipt_period_ms": {
+      "n": 186,
+      "mean": 28.472806731182718,
+      "median": 25.21451049999257,
+      "p95": 41.85851099998672,
+      "p99": 46.333507700005335,
+      "maximum": 71.78696900001569
+    },
+    "world_receipt_period_ms": {
+      "n": 111,
+      "mean": 47.50596345045038,
+      "median": 46.061303000016096,
+      "p95": 66.11911800000314,
+      "p99": 78.32452619999799,
+      "maximum": 102.87264800001594
+    },
+    "zero_command_samples": 57,
+    "zero_run_starts": 6,
+    "nonzero_command_samples": 131,
+    "zero_intervals": [
+      {
+        "start_wall": 28.004776034999992,
+        "last_sample_wall": 28.21682927499998,
+        "between_nonzero_commands": false,
+        "nearby_reason": null,
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 29.771550539000003,
+        "last_sample_wall": 29.950290851999995,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 30.286844075999994,
+        "last_sample_wall": 30.469292806999988,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 31.098592459999992,
+        "last_sample_wall": 31.241806233999995,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 32.016545971,
+        "last_sample_wall": 32.13033346999998,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 32.742574351,
+        "last_sample_wall": 33.322084308,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 4,
+    "command_delta_v": {
+      "n": 187,
+      "mean": 0.012768529955196558,
+      "median": 0.0,
+      "p95": 0.08112073291540543,
+      "p99": 0.19254386963423054,
+      "maximum": 0.2652794749687295
+    },
+    "command_delta_w": {
+      "n": 187,
+      "mean": 0.08938558503973505,
+      "median": 0.0,
+      "p95": 0.5369520430762346,
+      "p99": 1.9311375059811364,
+      "maximum": 1.9999969786357228
+    },
+    "command_v_sign_changes": 2,
+    "command_w_sign_changes": 2,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 32,
+        "mean": 60.40482984374851,
+        "median": 75.17369949999875,
+        "p95": 95.32743119998912,
+        "p99": 95.93909401998047,
+        "maximum": 96.10111799997867
+      },
+      "acados_ms": {
+        "n": 32,
+        "mean": 34.6899375,
+        "median": 39.3655,
+        "p95": 62.18815,
+        "p99": 62.64834,
+        "maximum": 62.799
+      },
+      "worker_wait_ms": {
+        "n": 32,
+        "mean": 11.115606218749186,
+        "median": 10.723167999998395,
+        "p95": 14.39801349999783,
+        "p99": 17.35802290000777,
+        "maximum": 18.558191000010993
+      },
+      "result_pickup_ms": {
+        "n": 32,
+        "mean": 15.21175031250177,
+        "median": 16.06596049998643,
+        "p95": 26.807741200011037,
+        "p99": 34.861336030004125,
+        "maximum": 37.98830200000225
+      }
+    },
+    "solver_status_counts": {
+      "7": 19,
+      "0": 12,
+      "2": 1
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 179,
+      "mean": -1.6275001210147546e-12,
+      "median": 0.0,
+      "p95": 0.0,
+      "p99": 0.0,
+      "maximum": 0.0
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 31,
+      "scheduled optimized input": 131,
+      "waiting for rest": 19,
+      "settled": 3
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 187,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "odom": {
+        "n": 187,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "localization": {
+        "n": 89,
+        "mean": 6.292134831460674,
+        "median": 10.0,
+        "p95": 20.0,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 112,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 187,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 266,
+      "mean": 0.0009606188201429105,
+      "median": 0.0001736233589434349,
+      "p95": 0.005950861769280313,
+      "p99": 0.006950100483138834,
+      "maximum": 0.008961229273408202
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 266,
+      "mean": 0.003518930628426112,
+      "median": 0.0007550532056723718,
+      "p95": 0.017884699794859293,
+      "p99": 0.02037999218552598,
+      "maximum": 0.02237544372846823
+    },
+    "truth_displacement_m": 0.35397859776431834,
+    "truth_yaw_change_rad": -1.4982300771425712,
+    "truth_path_length_m": 0.4241908419715843,
+    "truth_final_position_error_m": 0.0071129268724936644,
+    "truth_final_heading_error_rad": 0.030815191307793862,
+    "truth_first_legacy_pose_region_wall_s": 4.623575581000011,
+    "success_after_first_truth_region_wall_s": 0.7082765479999864,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 112,
+        "x_rmse_m": 0.0015781785290816391,
+        "y_rmse_m": 0.0013509693929341046,
+        "xy_rmse_m": 0.0020774421220094265,
+        "yaw_rmse_rad": 0.01340048687447291
+      },
+      "localization": {
+        "n": 89,
+        "x_rmse_m": 0.0010310679403005354,
+        "y_rmse_m": 0.0006071642054416623,
+        "xy_rmse_m": 0.0011965573408262529,
+        "yaw_rmse_rad": 0.009753771176622272
+      }
+    },
+    "motion_results": [
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 187,
+      "mean": 0.11302147383486998,
+      "median": 0.11193762226769809,
+      "p95": 0.26090269706598657,
+      "p99": 0.2623104126864145,
+      "maximum": 0.2623517931496126
+    },
+    "odom_w_abs": {
+      "n": 187,
+      "mean": 0.7867020644636349,
+      "median": 0.5206976121943252,
+      "p95": 1.9592849766645366,
+      "p99": 1.9819373924216883,
+      "maximum": 1.9853935488222842
+    },
+    "elapsed_wall_s": 5.331852128999998
+  },
+  {
+    "case": "reverse",
+    "goal": [
+      -0.6,
+      0.0,
+      0.0
+    ],
+    "start_wall": 34.33724202799999,
+    "start_estimate": {
+      "stamp_ns": 23800000000,
+      "frame": "map",
+      "x": -0.10694802520258034,
+      "y": 0.1977666905579024,
+      "yaw": 1.599885158459669,
+      "confidence": 1.0,
+      "state": 0,
+      "last_seen_ns": 23780000000,
+      "v": 1.272631707001165e-05,
+      "role": "world",
+      "topic": "/world_model",
+      "bag_ns": 23800000000,
+      "wall": 34.291939816999985
+    },
+    "request_id": 15005,
+    "end_wall": 40.201760138,
+    "result": "success",
+    "goal_ids": [
+      "191961038988"
+    ],
+    "samples": {
+      "cmd": 214,
+      "mpc_command": 214,
+      "drive": 118,
+      "plant_command": 0,
+      "joints": 214,
+      "odom": 214,
+      "world": 129,
+      "status": 214,
+      "result": 211,
+      "truth": 214
+    },
+    "cmd_receipt_period_ms": {
+      "n": 213,
+      "mean": 27.436124779342737,
+      "median": 26.028431000014507,
+      "p95": 47.72286259999415,
+      "p99": 54.14851843999258,
+      "maximum": 64.46370499998011
+    },
+    "mpc_command_receipt_period_ms": {
+      "n": 213,
+      "mean": 27.441797938967177,
+      "median": 25.699192999979914,
+      "p95": 46.087438000012064,
+      "p99": 54.65490267998348,
+      "maximum": 66.280455999987
+    },
+    "drive_receipt_period_ms": {
+      "n": 117,
+      "mean": 50.000926589743656,
+      "median": 50.03842100001066,
+      "p95": 52.91739200001188,
+      "p99": 54.62098511999557,
+      "maximum": 55.22836899999106
+    },
+    "joints_receipt_period_ms": {
+      "n": 213,
+      "mean": 27.390811323943723,
+      "median": 24.351661999986618,
+      "p95": 43.63509379999755,
+      "p99": 51.42861044000028,
+      "maximum": 56.43661199999883
+    },
+    "world_receipt_period_ms": {
+      "n": 128,
+      "mean": 45.58609282031245,
+      "median": 44.81142849999742,
+      "p95": 68.65324940001044,
+      "p99": 76.45249540998408,
+      "maximum": 82.39306199999419
+    },
+    "zero_command_samples": 71,
+    "zero_run_starts": 9,
+    "nonzero_command_samples": 143,
+    "zero_intervals": [
+      {
+        "start_wall": 34.34497780699999,
+        "last_sample_wall": 34.52148387700001,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": null
+      },
+      {
+        "start_wall": 35.15098022999999,
+        "last_sample_wall": 35.33765007299999,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 36.01137860899999,
+        "last_sample_wall": 36.15079602899999,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 36.48725851500001,
+        "last_sample_wall": 36.592558529,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 36.93083877999999,
+        "last_sample_wall": 37.06875524099999,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 37.80048709100001,
+        "last_sample_wall": 37.910186033,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 38.25147839799999,
+        "last_sample_wall": 38.356641258999986,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 38.695146744,
+        "last_sample_wall": 38.84367314899998,
+        "between_nonzero_commands": true,
+        "nearby_reason": "waiting for scheduled solution",
+        "nearby_activation_missed": false
+      },
+      {
+        "start_wall": 39.621502754999995,
+        "last_sample_wall": 40.188872384999996,
+        "between_nonzero_commands": false,
+        "nearby_reason": "waiting for rest",
+        "nearby_activation_missed": false
+      }
+    ],
+    "zero_intervals_between_nonzero": 7,
+    "command_delta_v": {
+      "n": 213,
+      "mean": 0.01777962731082008,
+      "median": 0.0,
+      "p95": 0.12760772876300608,
+      "p99": 0.2594141914758275,
+      "maximum": 0.26694820367703315
+    },
+    "command_delta_w": {
+      "n": 213,
+      "mean": 0.053229041053415936,
+      "median": 0.0,
+      "p95": 0.3376954011967499,
+      "p99": 0.7989288105590124,
+      "maximum": 1.9998387664206458
+    },
+    "command_v_sign_changes": 1,
+    "command_w_sign_changes": 3,
+    "completed_solver_metrics": {
+      "ms": {
+        "n": 37,
+        "mean": 60.37869935135088,
+        "median": 75.412225000008,
+        "p95": 83.87068199999135,
+        "p99": 86.51518792000729,
+        "maximum": 87.83258200000432
+      },
+      "acados_ms": {
+        "n": 37,
+        "mean": 33.435054054054056,
+        "median": 40.966,
+        "p95": 58.4006,
+        "p99": 60.321079999999995,
+        "maximum": 60.949999999999996
+      },
+      "worker_wait_ms": {
+        "n": 37,
+        "mean": 12.01890659459389,
+        "median": 11.931683000000248,
+        "p95": 17.467719799992665,
+        "p99": 22.25711243998831,
+        "maximum": 24.812264999980016
+      },
+      "result_pickup_ms": {
+        "n": 37,
+        "mean": 12.55680837837835,
+        "median": 8.925403999995751,
+        "p95": 34.61067239998669,
+        "p99": 36.56798040000126,
+        "maximum": 36.850125000000844
+      }
+    },
+    "solver_status_counts": {
+      "7": 16,
+      "0": 19,
+      "2": 2
+    },
+    "missed_slot_count": null,
+    "miss_note": "Legacy activation_missed is sticky; canceled jobs may be unobserved. No exact count inferred.",
+    "activation_jitter_sim_ms": {
+      "n": 206,
+      "mean": -1.5521564616118692e-12,
+      "median": 0.0,
+      "p95": 0.0,
+      "p99": 0.0,
+      "maximum": 0.0
+    },
+    "status_reason_samples": {
+      "waiting for scheduled solution": 48,
+      "scheduled optimized input": 143,
+      "waiting for rest": 19,
+      "settled": 1
+    },
+    "source_age_ms": {
+      "joints": {
+        "n": 214,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "odom": {
+        "n": 214,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "localization": {
+        "n": 98,
+        "mean": 7.653061224489796,
+        "median": 10.0,
+        "p95": 20.0,
+        "p99": 20.0,
+        "maximum": 20.0
+      },
+      "world": {
+        "n": 129,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "truth": {
+        "n": 214,
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      }
+    },
+    "map_odom_translation_step_m": {
+      "n": 293,
+      "mean": 0.0006859938142621101,
+      "median": 9.115497735195549e-05,
+      "p95": 0.0034329988709386164,
+      "p99": 0.006217421828744975,
+      "maximum": 0.007684252959709926
+    },
+    "map_odom_yaw_step_rad": {
+      "n": 293,
+      "mean": 0.0018994428831930331,
+      "median": 0.0003883197350520485,
+      "p95": 0.009029787877674113,
+      "p99": 0.01892488092955387,
+      "maximum": 0.020950437293060897
+    },
+    "truth_displacement_m": 0.5276041586027727,
+    "truth_yaw_change_rad": -1.6032832133378752,
+    "truth_path_length_m": 0.5532448532129882,
+    "truth_final_position_error_m": 0.003971648282070074,
+    "truth_final_heading_error_rad": 0.0035373084301046163,
+    "truth_first_legacy_pose_region_wall_s": 5.151199304000016,
+    "success_after_first_truth_region_wall_s": 0.7133188059999895,
+    "pose_accuracy_source_aligned": {
+      "world": {
+        "n": 129,
+        "x_rmse_m": 0.002329399881883382,
+        "y_rmse_m": 0.0008767990123857796,
+        "xy_rmse_m": 0.0024889516503618534,
+        "yaw_rmse_rad": 0.006839343249262201
+      },
+      "localization": {
+        "n": 97,
+        "x_rmse_m": 0.0014232248145431448,
+        "y_rmse_m": 0.0005465069582944235,
+        "xy_rmse_m": 0.0015245454169015731,
+        "yaw_rmse_rad": 0.00659410470408965
+      }
+    },
+    "motion_results": [
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 0,
+        "reason": "waiting for rest"
+      },
+      {
+        "state": 1,
+        "reason": "settled"
+      }
+    ],
+    "odom_v_abs": {
+      "n": 214,
+      "mean": 0.1286890156043729,
+      "median": 0.13694750009496892,
+      "p95": 0.25887349509595203,
+      "p99": 0.26383905440006844,
+      "maximum": 0.26425378910266234
+    },
+    "odom_w_abs": {
+      "n": 214,
+      "mean": 0.4000679369559052,
+      "median": 0.15112801614694088,
+      "p95": 1.9214315611747874,
+      "p99": 1.9533245124712002,
+      "maximum": 1.9603166114971433
+    },
+    "elapsed_wall_s": 5.864518110000006
+  }
+]

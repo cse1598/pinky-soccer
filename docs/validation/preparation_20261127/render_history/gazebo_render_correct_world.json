@@ -1,0 +1,61 @@
+{
+  "camera_created": true,
+  "scene_models": [
+    {
+      "name": "hardboard_field",
+      "links": []
+    },
+    {
+      "name": "led_validation_camera",
+      "links": []
+    },
+    {
+      "name": "soccer_ball",
+      "links": []
+    },
+    {
+      "name": "pinky",
+      "links": [
+        {
+          "name": "robot_lamp",
+          "visuals": [
+            {
+              "name": "robot_lamp_visual",
+              "id": 348
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "OFF": {
+    "image_received": true,
+    "service_success": false,
+    "message": "Lamp visual not available yet",
+    "changed_pixels": 0
+  },
+  "GREEN": {
+    "image_received": true,
+    "service_success": false,
+    "message": "Lamp visual not available yet",
+    "changed_pixels": 9675
+  },
+  "YELLOW": {
+    "image_received": true,
+    "service_success": false,
+    "message": "Lamp visual not available yet",
+    "changed_pixels": 9692
+  },
+  "BLUE": {
+    "image_received": true,
+    "service_success": false,
+    "message": "Lamp visual not available yet",
+    "changed_pixels": 9696
+  },
+  "RED": {
+    "image_received": true,
+    "service_success": false,
+    "message": "Lamp visual not available yet",
+    "changed_pixels": 9695
+  }
+}

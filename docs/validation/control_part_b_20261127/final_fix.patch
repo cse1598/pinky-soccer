@@ -1,0 +1,189 @@
+diff --git a/src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py
+index b7f1787..97a2836 100644
+--- a/src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py
++++ b/src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py
+@@ -29,6 +29,9 @@ class CollisionMonitor:
+         self.model=RampPredictor(params,.02)
+         self.latency=max(latency,3*max(self.model.tau_l,self.model.tau_r))
+         self.deceleration=deceleration;self.margin=margin
++        self.fast_enabled=True
++        self.footprint_radius=max(math.hypot(x,y) for x0,y0,x1,y1 in FOOTPRINT_RECTS
++                                  for x,y in ((x0,y0),(x0,y1),(x1,y0),(x1,y1)))
+ 
+     def rollout(self,state,previous,command,hold,age):
+         x=np.asarray(state,float);h=.005
+@@ -67,6 +70,28 @@ class CollisionMonitor:
+         uncertainty=max(0.,min(.1,uncertainty));margin=self.margin+uncertainty
+         v=abs((self.model.rl*state[3]+self.model.rr*state[4])/2)
+         stopping=v*(self.latency+age)+v*v/(2*self.deceleration)+margin
++        if self.fast_enabled:
++            # A circumscribed reachable disc proves clearance without choosing a path.
++            # Every wheel/profile state remains bounded by these extrema under the ramp map.
++            maxima=np.max(abs(np.array([state[3:5],state[5:7],previous,command])),axis=0)
++            bound=(self.model.rl*maxima[0]+self.model.rr*maxima[1])/2
++            motor_stop=(self.model.rl*(maxima[0]*self.model.tau_l+maxima[0]**2/(2*self.model.accel))+
++                        self.model.rr*(maxima[1]*self.model.tau_r+maxima[1]**2/(2*self.model.accel)))/2
++            stop_length=max(motor_stop,bound**2/(2*self.deceleration))
++            delay=math.ceil((self.latency+age)/.02-1e-9)*.02
++            nearest=float(np.min(np.linalg.norm(points-np.asarray(state[:2]),axis=1)))
++            def outside(hold):
++                radius=self.footprint_radius+bound*(delay+hold)+stop_length+margin
++                if nearest<=radius:return False
++                horizon=min(3.,delay+hold+max(bound/self.deceleration,
++                    float(max(maxima))/self.model.accel+3*max(self.model.tau_l,self.model.tau_r))+.5)
++                return all(math.hypot(x-state[0],y-state[1])-r-math.hypot(vx,vy)*horizon>radius
++                           for x,y,r,vx,vy in obstacles)
++            if outside(.10):
++                future=outside(.5)
++                return tuple(command),dict(state='CLEAR' if future else 'REPLAN',
++                    reason='conservative reachable disc clear',d_stop=stopping,
++                    replan=not future,fast_bound=True)
+         def safe(u,hold):
+             xs,times=self.rollout(state,previous,u,hold,age)
+             d=clearance(xs[:,:3],points)
+diff --git a/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py
+index b7a5849..f3acfee 100644
+--- a/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py
++++ b/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py
+@@ -92,6 +92,7 @@ class Completion:
+ 
+     def reset(self):
+         self.braking=False;self.since=None;self.done=False;self.previous_plane=None;self.passed=False
++        self.outside_since=None
+         self.legacy.reset()
+ 
+     def update(self,now,pose,raw,goal,v,w,wheels,fresh,policy,can_brake=True):
+@@ -124,7 +125,15 @@ class Completion:
+         if max(d,rd)>position+.005 or max(a,ra)>heading+math.radians(1):
+             self.braking=False;self.since=None;self.done=False
+         stopped=abs(v)<=.01 and abs(w)<=.05 and max(abs(q) for q in wheels)<=.2
+-        if self.braking and stopped and fresh:
++        # A persistent residual in the hysteresis band must not latch standstill forever.
++        # Isolated noisy samples reset this timer; only settled, sustained error resumes control.
++        if self.braking and stopped and fresh and not inside:
++            if self.outside_since is None:self.outside_since=now
++            wait=self.legacy.dwell if policy.mode=='STRICT_STOP' else policy.dwell
++            if now-self.outside_since>=max(.2,wait):
++                self.braking=False;self.since=None;self.done=False;self.outside_since=None
++        else:self.outside_since=None
++        if self.braking and stopped and fresh and (policy.mode!='STRICT_STOP' or inside):
+             if self.since is None:self.since=now
+             dwell=self.legacy.dwell if policy.mode=='STRICT_STOP' else policy.dwell
+             self.done=inside and now-self.since>=dwell
+@@ -147,6 +156,12 @@ class TrajectoryBuffer:
+     def offer(self,result,version):
+         self.pending=(result,version)
+ 
++    def retainable(self,now,wall):
++        """Keep an old plan only with a full next-slot lease, including wall-time reserve."""
++        return (self.active is not None and 0<=now-self.origin
++                and now-self.origin+self.dt<self.max_age-1e-8
++                and 0<=wall-self.wall<=self.dt)
++
+     def activate(self,now,wall,version,validate):
+         pending=self.pending;self.pending=None
+         if pending is None or pending[1]!=version:return None
+diff --git a/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py
+index 5900675..fc92914 100644
+--- a/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py
++++ b/src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py
+@@ -279,6 +279,7 @@ class MotionRuntime:
+     def retain_direction(self,result,now,wall,goal):
+         b=self.buffer
+         if b.active is None or b.version!=tuple(goal) or self.pending_target is not None:return result
++        if not b.retainable(now,wall):return result
+         old=np.asarray(b.result.get('xs',[]));new=np.asarray(result.get('xs',[]))
+         if len(old)<3 or len(new)<3:return result
+         direction=np.array(goal[:2])-np.asarray(self.node.pose[:2])
+diff --git a/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
+index 58bdb05..adbee3e 100644
+--- a/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
++++ b/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
+@@ -336,6 +336,9 @@ class MpcController(Node):
+             self.result_pub.publish(msg)
+ 
+     def stop(self,reason,result=MotionResult.RUNNING,dist=0.,ang=0.):
++        self.motion.completion.reset()
++        self.motion.pending_target=None;self.motion.successor_prepared=False
++        self.motion.handoff_at=self.motion.handoff_wall=None
+         self.send((0.,0.))
+         self.report('failed' if result==MotionResult.FAILURE else 'stop',
+                     reason,result,dist,ang)
+diff --git a/src/pinky_soccer_mpc/test/test_motion_management.py b/src/pinky_soccer_mpc/test/test_motion_management.py
+index 6f5a140..01a6b26 100644
+--- a/src/pinky_soccer_mpc/test/test_motion_management.py
++++ b/src/pinky_soccer_mpc/test/test_motion_management.py
+@@ -160,3 +160,52 @@ def test_brake_latch_waits_until_zero_input_stop_is_inside_task_region():
+     assert not result['brake'] and not result['done']
+     result=c.update(.1,(0,0,.01),(0,0,.01),(0,0,0),0,.03,(0,0),True,p,can_brake=True)
+     assert result['brake'] and not result['done']
++
++
++def test_settled_residual_inside_hysteresis_band_releases_brake_without_false_success():
++    c=Completion(Arrival());p=CompletionPolicy(mode='STRICT_STOP')
++    assert c.update(0,(0,0,.04),(0,0,.04),(0,0,0),0,0,(0,0),True,p)['brake']
++    # 3.44 degrees is outside success (3 deg) but inside the release band (4 deg).
++    out=c.update(.1,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
++    assert out['brake'] and not out['done']
++    out=c.update(.41,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
++    assert not out['brake'] and not out['done']
++    # Re-entry still requires the original acceptance region and full dwell.
++    assert not c.update(.5,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
++    assert c.update(.81,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
++
++
++def test_strict_stop_dwell_does_not_accumulate_outside_acceptance_region():
++    c=Completion(Arrival());p=CompletionPolicy(mode='STRICT_STOP')
++    c.update(0,(0,0,.04),(0,0,.04),(0,0,0),0,0,(0,0),True,p)
++    c.update(.2,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
++    assert not c.update(.31,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
++    assert c.update(.62,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
++
++
++def test_fast_reachable_disc_never_bypasses_precise_braking_collision_check():
++    params=P.load('mujoco');fast=CollisionMonitor(params);precise=CollisionMonitor(params)
++    precise.fast_enabled=False;rng=np.random.default_rng(19);fast_count=0
++    for _ in range(60):
++        state=np.r_[rng.uniform(-.1,.1,2),rng.uniform(-math.pi,math.pi),rng.uniform(-4,4,4)]
++        previous=rng.uniform(-4,4,2);command=rng.uniform(-4,4,2)
++        angles=np.linspace(-math.pi,math.pi,24);radius=rng.uniform(.15,1.)
++        points=state[:2]+radius*np.column_stack((np.cos(angles),np.sin(angles)))
++        obstacles=[(state[0]+.8,state[1],.08,-rng.uniform(0,.1),0)]
++        u,diag=fast.check(state,previous,command,points,.02,obstacles=obstacles)
++        if diag.get('fast_bound'):
++            fast_count+=1
++            expected,reference=precise.check(state,previous,command,points,.02,obstacles=obstacles)
++            assert reference['state'] not in ('STOP','SLOW')
++            assert np.allclose(u,expected)
++    assert fast_count>0
++
++
++def test_retaining_plan_requires_lease_for_next_slot_not_only_current_instant():
++    b=TrajectoryBuffer(.1);r=dict(us=np.ones((8,2)))
++    b.offer(r,'goal');b.activate(1.,10.,'goal',lambda us:True)
++    assert b.retainable(1.1,10.09)
++    assert not b.retainable(1.2,10.1)  # Next ROS slot would meet the expiry boundary.
++    assert not b.retainable(1.1,10.21)  # Slower simulation has consumed the wall lease.
++    b.offer(r,'goal');b.activate(1.1,10.21,'goal',lambda us:True)
++    assert b.continuation(1.15,10.35,'goal',lambda us:True) is not None
+diff --git a/src/pinky_soccer_mpc/test/test_motion_runtime.py b/src/pinky_soccer_mpc/test/test_motion_runtime.py
+index 14f2068..27fce9a 100644
+--- a/src/pinky_soccer_mpc/test/test_motion_runtime.py
++++ b/src/pinky_soccer_mpc/test/test_motion_runtime.py
+@@ -124,3 +124,16 @@ def test_pose_recovery_drops_pre_correction_scan_cache():
+     motion.on_world(world(1.,.04),.04)
+     motion.scan=object();motion.on_world(world(1.,.06),.06)
+     assert motion.filter.valid and motion.scan is None and motion.pending_scan is None
++
++
++def test_stale_feedback_stop_discards_completion_dwell_and_prepared_transfer():
++    from pinky_soccer_mpc.mpc_controller import MpcController
++    motion=runtime();policy=CompletionPolicy(mode='STRICT_STOP')
++    motion.completion.update(0,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)
++    motion.pending_target=(.2,0,0);motion.successor_prepared=True;motion.handoff_at=.1
++    sent=[];n=NS(motion=motion,send=lambda u:sent.append(u),report=lambda *a,**k:None)
++    MpcController.stop(n,'stale wheel feedback')
++    assert sent==[(0.,0.)] and motion.completion.since is None
++    assert motion.pending_target is None and not motion.successor_prepared and motion.handoff_at is None
++    assert not motion.completion.update(.5,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)['done']
++    assert motion.completion.update(.81,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)['done']

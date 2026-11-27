@@ -1,0 +1,2689 @@
+diff --git a/README.md b/README.md
+index e921d39..ae48b2b 100644
+--- a/README.md
++++ b/README.md
+@@ -31,9 +31,10 @@ ROS 2 robot soccer project using Pinky Pro
+   JPEG 미리보기와 원본 한 프레임 서비스 촬영을 분리했고 `-webcam` 로컬 리허설도 지원합니다.
+   [보정 실행·측정 안내](src/pinky_soccer_calibration/ROS_UI.md)
+ - **경기 실행·인식:** 실물/Gazebo/MuJoCo 공통 실행, RViz와 원본/공 표시/마스크 창,
+-  조명·부분 가림에 대응하는 단일 공 검출을 연결했습니다.
++  공통 HLS·원호 피팅 공 검출과 기존 거리/캘리브레이션 보존을 연결했습니다.
++  [거리 보존·보정 적용 검증](docs/BALL_HLS_DISTANCE.md)
+   [경기 실행](src/pinky_soccer_viz/GAMEPLAY.md)
+-- **자기 위치:** LiDAR 지도·AMCL에 골대 색/지자기 방향 확인을 보조로 연결했습니다.
++- **자기 위치:** 실물·MuJoCo·Gazebo가 같은 직사각 외벽·초기 HLS·IMU·odom 경로를 사용합니다. 기존 AMCL은 선택 경로로 보존합니다.
+   실내 자기 간섭과 실제 장착·시간 동기화 검증은 남아 있습니다.
+   [위치 추정](src/pinky_soccer_world_model/LOCALIZATION.md)
+ - **경기장·물성:** 제2 경기장(내부1820×1220mm/외벽200mm)·5mm 골대 판 제작 도면,
+@@ -109,3 +110,19 @@ CSV includes rolling RTF, clock Hz/age/state, simulation time and wall elapsed
+ from the first recorded sample. The summary reports the RTF over recorded samples.
+ Real robot runs leave those columns empty. These are observer-side measurements;
+ DDS delivery jitter or dropped messages can affect the displayed clock rate.
++
++### 실물 GoToPose 오프라인 진단
++
++실물 경기의 새 기본 시작 단계는 [직사각 외곽·골색·IMU 자기위치 보정](src/pinky_soccer_world_model/STARTUP_LOCALIZATION.md)입니다.
++런치/연결 후 데이터만 수신하다가 `localization/calibrate` 신호 또는 보정 창의 R을 받아
++초록 점멸/저속 회전으로 양 골대 기준을 저장하고 완료되면 팀 LED와 MPC 명령 통과로 전환합니다.
++PC 코드만 변경하며 로봇은 기존 센서/LED 서비스를 사용합니다. 세 환경 기본은 같은 rectangle이며, [통합 검증과 Gazebo 구동 제한](docs/LIGHTWEIGHT_LOCALIZATION.md)을 확인하세요.
++
++전진·감속 반복을 조사하는 읽기 전용 ROS bag 분석기는
++`scripts/analyze_gotopose_bag.py`입니다. 속도 명령·watchdog 출력·원시/병합 바퀴 피드백·MPC 시간·위치 추정을
++같은 수신 시간축으로 그립니다. 수집 명령과 해석 한계는 [진단 절차](docs/GOTOPOSE_DIAGNOSTICS.md)를 참고하세요.
++제어기 설정·가중치·안전 정지·주기를 변경하거나 주행 명령을 발행하지 않습니다.
++
++상대 인식·단일 추적·고정 원/속도 화살표의 실행과 검증은 [OPPONENT_TRACKING.md](docs/OPPONENT_TRACKING.md)를 참고하세요.
++
++기본 경기 운영은 [준비→보정→팀 시작 위치→READY→경기 시작](docs/MATCH_PREPARATION.md)입니다. 실물·MuJoCo·Gazebo 공통 상태 관리자와 LED를 사용합니다.
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 21fa8ca..a562e3c 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -14,7 +14,7 @@
+ ```
+ 1. 관측   /camera/image_raw · /scan · /odom · /imu_raw · /us_sensor/range   (기존 센서 계약)
+           ball_detector → /ball_detection (PointStamped, base_link)
+-2. 추정   AMCL(경기장 지도) + goal_heading(골색/지자기 대칭 후보 확인) + world_model_node
++2. 추정   rectangle_localization(외벽·초기 HLS·IMU·odom) + world_model_node
+             → /world_model    (pinky_soccer_msgs/WorldModel, map, ~30 Hz)
+ 3. 판단   bt_node (BehaviorTree.CPP v4 + BehaviorTree.ROS2)
+             → /behavior_goal  (pinky_soccer_msgs/BehaviorGoal, 10–20 Hz)
+@@ -53,7 +53,7 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
+ | `/odom` | `nav_msgs/Odometry` | 센서 계층 | `odom → base_footprint`, TF도 발행 |
+ | `/imu_raw` | `sensor_msgs/Imu` | 센서 계층 | `imu_enabled:=true`일 때만. rad/s |
+ | `/us_sensor/range` | `sensor_msgs/Range` | 센서 계층 | `adc_enabled:=true`일 때만 |
+-| `/cmd_vel` | `geometry_msgs/Twist` | mpc_controller (또는 reactive_controller) | watchdog 입력 |
++| `/cmd_vel` | `geometry_msgs/Twist` | 기본 준비 게이트(내부 MPC/reactive 명령 전달) | watchdog 입력 |
+ | `/mpc/predicted_path`, `/mpc/status` | `nav_msgs/Path`, `std_msgs/String`(JSON) | mpc_controller | NMPC 예측 궤적·진단 |
+ | `/ball_detection` | `geometry_msgs/PointStamped` | ball_detector | `base_link`, 공 중심 |
+ | `/world_model` | `pinky_soccer_msgs/WorldModel` | world_model_node / fake_world_model | `map` |
+@@ -76,15 +76,43 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
+ `BallFilter`를 재사용합니다. JPEG·CameraInfo·실행 TF로 검토하며 판단 입력이나 주행 명령을 새로 발행하지 않습니다.
+ 미보정 HFOV 가정과 실제 내부 보정 출처를 구분하고, map/odom이 없으면 움직이는 base_link에서 필터를 돌리지 않습니다.
+ 
++공 검출은 공통 HLS/원호 피팅이며 하단 ROI 좌표를 원본 영상으로 복원한다. 기존 중심 광선/공 반경
++평면 투영 함수는 유지한다. 선택한 human_verified 공 XY 보정은 base_link 축으로 투영 후 한 번만
++적용한다. UI 비교는 raw 관측에 한 번 적용하며 기존 K/D·장착·보정 원본을 수정하지 않는다.
++손/얼굴 전용 분류는 사용자 요청으로 범위 밖이다. `docs/BALL_HLS_DISTANCE.md` 참조.
++
+ `calibration_ui -webcam`은 시작 옵션 전용 로컬 리허설입니다. DDS/로봇 구독·주행 발행 없이 같은
+ 기록/보정 함수를 사용하며, 웹캠 전용 rehearsal 프로젝트로 분리합니다. 측정한 바닥 높이/기울기로 정의한
+ 고정 `webcam_floor`에서 공 거리/필터를 검토하며 이를 로봇 TF·odom으로 발행하거나 적용하지 않습니다.
+ 
++상대 인식은 측정시각 TF/외벽·고정구조 제거/인덱스 연속 군집 평균점과 단일 Alpha-Beta 추적이다.
++`world_model.opponents`는 최대1대이며 theta는 실제 방위각이 아니다. UI 원은 고정 외곽 크기,
++화살표는 이동 속도 벡터다. 미확정 일반 군집은 별도 `world_model/obstacles`(기존 WorldModel 타입)로
++MPC의 기존 snapshot에 전달하여 상대 확정 조건과 회피 입력을 분리한다. 비용/충돌 반경/제약은 유지한다.
++`opponents/status`는 구독 시 생성하는 진단이다. 상세·미검증 사항은 [OPPONENT_TRACKING.md](OPPONENT_TRACKING.md).
++
++기본 rectangle launch의 최종 명령/경기 허용/LED는 `match_preparation`이 소유한다.
++`preparation/prepare`→기존 보정→기존 GoToPose/MotionResult→odom 정지 확인→READY→별도 시작이다.
++BT 출력은 `preparation/strategy_goal`로 받아 PLAYING에서만 기존 behavior_goal로 전달한다.
++localizer LED는 끄고 보정 출력/50Hz 제어 명령을 최종 준비 게이트로 통과시킨다. World Model과 심판은
++승인된 preparation/playing을 본다. 기존 /game/playing은 시작/중지 요청으로 호환한다.
++알고리즘/제어 수식/전략 XML/공식 서브모듈은 보존한다. [운영·검증·배포](MATCH_PREPARATION.md).
++
+ ## 좌표계
+ 
++- 공통 시작 기본(`localization:=rectangle`, 실물·MuJoCo·Gazebo): 같은 PC `rectangle_localization`이
++  외벽 두 후보를 유지하고 최소각 골대를 조준·정지 후 HLS 한 색으로 IMU 양축을 계산한다. 완료 후 map→odom 단독 발행,
++  `localization/pose`를 월드 모델의 기존 TF 모드에 전달한다. 이 경로에 AMCL/goal_heading을 중복 실행하지 않는다.
++  시작은 센서 수신만 하며 `localization/calibrate` Trigger/R 신호 뒤 PC gate가 보정 회전을 소유한다.
++  완료 후 골대 영상처리를 끄고 LiDAR·IMU·odom으로 추적하며 MPC 50 Hz 명령을 준비 게이트까지 전달한다. 최종 이동 허용·팀 LED는 준비 상태 관리자가 결정한다.
++  단기 가림은 제한된 odom 예측, 장기 상실은 명시적 재초기화로 처리한다. 원본 scan·MPC solver/안전/주기는 유지한다.
++  LED는 기존 로봇 `set_led`/`set_lamp` 서비스만 사용한다. 상세는 `pinky_soccer_world_model/STARTUP_LOCALIZATION.md`.
++  `game.launch.py localization:=auto`는 세 환경 rectangle, 명시 lidar/odom_only는 기존 경로다.
++  Nav2 비교 옵션은 기존 lidar를 유지한다. Ground Truth는 평가·UI만 사용하며 공통 추정 입력이 아니다.
++
+ - `map` = 경기장 좌표계: 원점 경기장 중앙, 바닥 상단 z=0, **+X 파랑 골대 / −X 노랑 골대**, 단위 m·rad.
+ - 시뮬레이터 `world` 원점 = 경기장 중앙 = `map` 원점.
+-- TF: `map → odom`(AMCL 또는 world_model_node의 odom_only 모드) `→ base_footprint → base_link → … → front_camera_optical_frame`. game launch 기본 `localization:=lidar`에서는 AMCL만 map→odom을 발행한다. 센서 전용 launch에는 map이 없다.
++- TF: `map → odom`(선택 localizer 또는 world_model_node의 odom_only 모드) `→ base_footprint → base_link → … → front_camera_optical_frame`. `localization:=lidar`에서는 AMCL만 map→odom을 발행한다. 센서 전용 launch에는 map이 없다.
+ - 공격 방향은 `our_goal_color`(yellow|blue) 파라미터로 정한다. 기본값 `yellow`(−X 수비, +X 공격). 코드에서 "+X = 상대 골대"로 가정하지 않는다.
+ - 경기장 치수·골대 위치는 `pinky_soccer_field`로만 읽는다 (원본 `rcj_field.yaml`). 코드에 하드코딩하지 않는다.
+ - 제2 경기장 원본은 같은 위치의 `hardboard_field.yaml`(내부 1820×1220mm·외벽 200mm). 시뮬레이션·통합 판단/표시 launch는 `field:=rcj|hardboard`로 선택하고, 월드 모델·두 UI의 `field_spec`을 같은 YAML로 맞춘다. 기본 경기장과 원본 위치는 유지한다.
+diff --git a/src/pinky_soccer_bringup/CMakeLists.txt b/src/pinky_soccer_bringup/CMakeLists.txt
+index 7eb9802..1f20e24 100644
+--- a/src/pinky_soccer_bringup/CMakeLists.txt
++++ b/src/pinky_soccer_bringup/CMakeLists.txt
+@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8)
+ project(pinky_soccer_bringup)
+ 
+ find_package(ament_cmake REQUIRED)
++install(PROGRAMS ${PROJECT_NAME}/ensure_led.py DESTINATION lib/${PROJECT_NAME} RENAME ensure_led)
+ find_package(ament_cmake_python REQUIRED)
+ 
+ ament_python_install_package(${PROJECT_NAME})
+diff --git a/src/pinky_soccer_bringup/README.md b/src/pinky_soccer_bringup/README.md
+index bed72e8..68bd8bc 100644
+--- a/src/pinky_soccer_bringup/README.md
++++ b/src/pinky_soccer_bringup/README.md
+@@ -275,3 +275,5 @@ CycloneDDS의 [정적 peer 발견 설정](https://cyclonedds.io/docs/cyclonedds/
+ TF를 `/yellow/tf`·`/yellow/tf_static`으로 분리합니다(프레임 이름은 그대로). 두 대의 토픽이 겹치지 않습니다.
+ PC 경기 launch에도 같은 이름을 줍니다(`game.launch.py robot_name:=yellow team:=Y`). 공식 드라이버들은 상대
+ 토픽 이름을 써서 함께 옮겨집니다. 비우면 예전과 같습니다.
++
++통합 경기 준비 실행에서는 robot.launch가 자체 `ensure_led` 래퍼로 기존 set_led/set_lamp를 재사용하거나 공식 pinky_led 서버를 시작합니다. 새 bringup 전달/빌드가 필요하며 PC에서는 하드웨어 LED 서버를 실행하지 않습니다. [전체 실행·미검증 사항](../../docs/MATCH_PREPARATION.md).
+diff --git a/src/pinky_soccer_bringup/launch/robot.launch.py b/src/pinky_soccer_bringup/launch/robot.launch.py
+index 51efa3c..ef75221 100644
+--- a/src/pinky_soccer_bringup/launch/robot.launch.py
++++ b/src/pinky_soccer_bringup/launch/robot.launch.py
+@@ -90,6 +90,7 @@ def generate_launch_description():
+         DeclareLaunchArgument('screen_tilt_deg', default_value='-25'),
+         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/ttyAMA0'),
+         DeclareLaunchArgument('bumper_enabled', default_value='true'),
++        DeclareLaunchArgument('led_enabled', default_value='true'),
+         DeclareLaunchArgument('bumper_params_file', default_value=PathJoinSubstitution(
+             [soccer_description, 'config', 'bumper_v1_params.yaml'])),
+         *sensor_arguments(),
+@@ -158,6 +159,8 @@ def generate_launch_description():
+                  condition=hardware),
+             Node(package='pinky_soccer_bringup', executable='time_sync_status',
+                  condition=hardware),
++            Node(package='pinky_soccer_bringup', executable='ensure_led',
++                 condition=IfCondition(AndSubstitution(lc('hardware'), lc('led_enabled')))),
+             Node(package='pinky_soccer_bringup', executable='latency_echo',
+                  condition=hardware),
+             # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.
+diff --git a/src/pinky_soccer_bringup/package.xml b/src/pinky_soccer_bringup/package.xml
+index 62177e8..d09c2a8 100644
+--- a/src/pinky_soccer_bringup/package.xml
++++ b/src/pinky_soccer_bringup/package.xml
+@@ -16,6 +16,7 @@
+   <exec_depend>joint_state_publisher</exec_depend>
+   <exec_depend>xacro</exec_depend>
+   <exec_depend>rclpy</exec_depend>
++  <exec_depend>pinky_led</exec_depend>
+   <exec_depend>sensor_msgs</exec_depend>
+   <exec_depend>pinky_soccer_msgs</exec_depend>
+   <exec_depend>tf2_ros</exec_depend>
+diff --git a/src/pinky_soccer_bt/src/bt_node_main.cpp b/src/pinky_soccer_bt/src/bt_node_main.cpp
+index f225110..6d9af92 100644
+--- a/src/pinky_soccer_bt/src/bt_node_main.cpp
++++ b/src/pinky_soccer_bt/src/bt_node_main.cpp
+@@ -88,6 +88,11 @@ int main(int argc, char** argv)
+   pinky_soccer_bt::setKickoffPose(blackboard, kickoff[0], kickoff[1], kickoff[2]);
+   blackboard->set("goal", pinky_soccer_bt::makeGoal("STOP", "Init", BehaviorGoal::STOP,
+                                                     pinky_soccer_bt::Pose2{}, 0.0));
++  auto preparation_pose = node->create_subscription<geometry_msgs::msg::Pose2D>(
++      "preparation/start_pose", rclcpp::QoS(1).transient_local(),
++      [blackboard](geometry_msgs::msg::Pose2D::SharedPtr msg) {
++        pinky_soccer_bt::setKickoffPose(blackboard, msg->x, msg->y, msg->theta);
++      });
+   auto tree = factory.createTree("Main", blackboard);
+   auto publish_tree = factory.createTree("PublishGoal", blackboard);
+ 
+diff --git a/src/pinky_soccer_calibration/README.md b/src/pinky_soccer_calibration/README.md
+index dadc4dd..c05dfa3 100644
+--- a/src/pinky_soccer_calibration/README.md
++++ b/src/pinky_soccer_calibration/README.md
+@@ -18,7 +18,7 @@ ros2 launch pinky_soccer_calibration calibration_ui.launch.py webcam:=true
+ 실행·서버 갱신과 저장 구조는 [ROS_UI.md](ROS_UI.md)를 참고하세요.
+ 
+ 현재 ROS 기반 올인원 UI는 **[ROS 캘리브레이션 스튜디오](ROS_UI.md)**를 사용하세요.
+-**공 인식 검토** 탭은 경기용 HSV 검출·공통 거리 투영·BallFilter를 직접 사용해 공 표시와
++**공 인식 검토** 탭은 경기용 HLS·원호 검출·기존 공통 거리 투영·BallFilter를 직접 사용해 공 표시와
+ 현재/추적 좌표·거리를 보여 줍니다. 범퍼 기준 실측 X/Y·검토용 오프셋을 입력해 오차와 적용 후 값을 비교하고 기록할 수 있습니다([입력 기준](ROS_UI.md#범퍼-기준-공-위치-실측과-오프셋)). 보정이 없으면 명시한 HFOV 가정으로 추정하며 출처를 구분합니다.
+ 프로젝트를 새로 만들거나 기존 폴더를 열어 계속 기록할 수 있습니다. **카메라 보정** 한 탭에서 보드 설정·원본 촬영·파일 추가·사진 분류/삭제·미리보기·계산을 진행합니다.
+ **측정 기록** 탭에서는 바퀴·센서의 측정 횟수/실측값 확인과 삭제·재계산을 진행합니다.
+diff --git a/src/pinky_soccer_calibration/ROS_UI.md b/src/pinky_soccer_calibration/ROS_UI.md
+index f8477e2..310096a 100644
+--- a/src/pinky_soccer_calibration/ROS_UI.md
++++ b/src/pinky_soccer_calibration/ROS_UI.md
+@@ -163,7 +163,7 @@ HFOV 가정만으로 높이·기울기가 생기는 것은 아니므로, 거리
+ 현재 관측 X/Y/Z·수평 거리·방위각, 필터 추적 좌표·OBSERVED/ESTIMATED/LOST·σ·관측 경과 시간을 표시합니다.
+ base_link 출력이면 범퍼 앞면 중앙 기준 공 중심 X/Y도 표시합니다. 좌표/거리의 기준점과 단위를 구분하세요.
+ 
+-- **경기와 공통 코드:** `pinky_soccer_world_model.robust_ball.BallImageDetector`(제한적 화이트밸런스·그림자/반사광 허용·가시 원호 복원·단일 후보 연속 연결),
++- **경기와 공통 코드:** `pinky_soccer_world_model.robust_ball.BallImageDetector`(HLS/색 윤곽·가시 원호 최소제곱 피팅·단일 후보 연결),
+   `ball_vision.project_ball`(왜곡을 고려한 픽셀 광선과 공 중심 높이 평면의 교점),
+   `ball_vision.annotate_ball`, `BallFilter`를 직접 재사용합니다. 경기 노드도 같은 투영/표시 함수를 호출합니다.
+   검토 전용 토픽이나 주행 명령을 발행하지 않으며 경기의 `/ball_detection`·월드모델을 덮어쓰지 않습니다.
+@@ -184,7 +184,7 @@ base_link 출력이면 범퍼 앞면 중앙 기준 공 중심 X/Y도 표시합
+   새 영상에서 공이 안 보일 때만 필터의 ESTIMATED/LOST 상태를 구분합니다.
+ - **설정과 비교:** 설치된 경기 `ball_detector.yaml`/`world_model.yaml`을 기본으로 읽습니다.
+   별도 경기 설정을 사용한다면 **경기 검출/월드모델 설정 YAML 불러오기**로 같은 파일을 선택하고,
+-  HSV·공 크기·180° 반전·가정 HFOV도 맞추세요. 실행 중 경기 노드의 별도 launch/CLI 파라미터를
++  HLS·공 크기·180° 반전·가정 HFOV도 맞추세요. 실행 중 경기 노드의 별도 launch/CLI 파라미터를
+   자동 조회하거나 수정하지는 않습니다. UI의 반전/가정값 변경도 경기 노드에는 자동 반영되지 않습니다.
+   검토는 JPEG/화면 갱신 속도 기준이며 경기 원본 영상과 후보 픽셀·필터 값 차이가 생길 수 있습니다.
+   전체 월드모델의 경기장 벽 제약·자기 위치 추정·탐색 지도는 이 카메라 검토 탭에서 재현하지 않습니다.
+@@ -325,7 +325,11 @@ sudo python3 scripts/setup_time_sync.py pc --apply
+ 정면 공의 앞쪽 표면까지 잰 경우 반경 21.35mm를 더해 중심 거리를 입력하세요.
+ 표시는 인식−실측의 X/Y 오차·수평 거리·위치 오차와 오프셋 적용 후 값을 함께 제공합니다.
+ **현재 실측 차이를 오프셋으로**는 `실측−인식`을 입력란에 복사하며 `보정 표시 = 인식 + 오프셋`입니다.
+-검토용 값이며 경기 검출 좌표/TF·프로필에는 적용하지 않습니다. 여러 거리·좌우 위치에서 별도로 확인하세요.
++입력/비교 저장만으로 현재 실행 중인 경기 노드나 TF는 변경하지 않습니다. 여러 거리·좌우 위치에서 확인하세요.
++2026-11-27부터 명시적으로 내보낸 human_verified 프로필을 경기의 `ball_offset_source`로 선택하면
++해당 `ball_review.offset_xy_m`을 base_link 축의 미터 보정으로 투영 후 한 번 적용합니다.
++`auto`는 선택한 calibration_profile 또는 camera_yaml 옆 프로필, `none`은 기존 raw 투영입니다.
++검토 UI의 `point`는 raw이고 아래 비교에서만 오프셋을 더하므로 중복 적용하지 않습니다.
+ **비교 기록 저장**은 프로젝트 `measurements.ball_review`에 관측 출처·모델 해시·실측·오프셋·오차를 보존합니다.
+ 측정 기록 탭에서 확인/삭제/오차 통계 재계산이 가능하고, 프로젝트를 다시 열면 마지막 저장 입력을 복원합니다.
+ 오프셋은 프로젝트 메타데이터 `ball_review.offset_xy_m`에 별도로 보존하며 비교 기록이 없어도 복원됩니다.
+diff --git a/src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py b/src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py
+index a20d953..5fb1bed 100644
+--- a/src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py
++++ b/src/pinky_soccer_calibration/pinky_soccer_calibration/ball_review.py
+@@ -62,6 +62,11 @@ def gameplay_settings(path=None):
+     if not 0 <= detector['min_circularity'] <= 1 or params.friction_tau <= 0:
+         raise ValueError('원형도/마찰 필터 설정을 확인하세요.')
+     detector['ranges'] = [(tuple(flat[i:i+3]), tuple(flat[i+3:i+6])) for i in range(0, len(flat), 6)]
++    hls = detector.get('hls_ranges', [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99])
++    if not hls or len(hls) % 6:
++        raise ValueError('HLS 범위는 H,L,S 하한/상한 6개씩 입력해야 합니다.')
++    detector['hls_ranges_parsed'] = [(tuple(hls[i:i+3]), tuple(hls[i+3:i+6]))
++                                   for i in range(0, len(hls), 6)]
+     for key, default in BLOB_SHAPE_DEFAULTS.items():
+         detector[key] = float(detector.get(key, default))
+         if not 0 <= detector[key] <= 1:
+@@ -124,7 +129,8 @@ class GameplayReview:
+         shape = {key: settings.get(key, value) for key, value in BLOB_SHAPE_DEFAULTS.items()}
+         options = {key: settings.get(key, value) for key, value in ROBUST_DEFAULTS.items()}
+         self.visual = BallImageDetector(
+-            settings['ranges'], settings['min_area_px'], settings['min_circularity'], shape, options)
++            settings['ranges'], settings['min_area_px'], settings['min_circularity'], shape, options,
++            hls_ranges=settings.get('hls_ranges_parsed'))
+         self.reset()
+ 
+     def reset(self):
+@@ -143,6 +149,9 @@ class GameplayReview:
+         observation = self.visual.detect(frame, observed_at, frame_key)
+         blob = observation.blob
+         report = {'blob': list(blob) if blob else None, 'point': None, 'tracking': None,
++                  'bearing_valid': observation.bearing_valid,
++                  'circle_valid': observation.distance_valid,
++                  'bearing_uv': observation.bearing_uv,
+                   'visual_confidence': observation.confidence,
+                   'visible_arc_fraction': observation.arc_fraction,
+                   'partial_outline': observation.partial,
+@@ -159,7 +168,9 @@ class GameplayReview:
+         report['intrinsics_available'] = k is not None
+         calibration = 'none' if k is None else ('approximate' if is_approximate else 'calibrated')
+         preview = annotate_ball(frame, blob, calibration, observation)
+-        report['reason'] = '주황색 공 후보 미검출' if blob is None else '미터 좌표 계산 대기'
++        report['reason'] = ('원호 신뢰도 부족 · 방향 픽셀만 유효' if observation.bearing_valid
++                            and blob is None else ('주황색 공 후보 미검출' if blob is None
++                                                  else '미터 좌표 계산 대기'))
+         cam = lookup(cfg['floor_frame'], header.frame_id, header.stamp)
+         output = lookup(cfg['output_frame'], cfg['floor_frame'], None)
+         summary = external_mount if external_mount is not None else (
+@@ -178,6 +189,7 @@ class GameplayReview:
+                 report['mount_source'] = '장착 보정값 오류: '+str(error)
+         point = project_ball(blob, frame.shape, k, d, cam, output, cfg['ball_radius'],
+                              cfg['max_range'], rotated)
++        report['range_valid'] = point is not None
+         if blob is not None:
+             if k is None:
+                 report['reason'] = '내부 보정/미보정 추정 설정 확인'
+diff --git a/src/pinky_soccer_mpc/README.md b/src/pinky_soccer_mpc/README.md
+index b830007..8e22297 100644
+--- a/src/pinky_soccer_mpc/README.md
++++ b/src/pinky_soccer_mpc/README.md
+@@ -1,5 +1,25 @@
+ # Pinky Pro NMPC — Phase 1
+ 
++## 실물 모터 시정수 적용 (2026-11-26)
++
++`target:=real`의 `identification` 빈 값/`auto`는 이 프로젝트의 `pinky-pro` 실측 스냅샷
++`config/real_motor_response.yaml`을 적용합니다. 좌 τ=0.0903191863 s, 우 τ=0.0889452365 s입니다.
++기존 ramp 74.9 rad/s²를 고정해 맞춘 **유효 시정수**이며 독립적인 모터 고유 시정수나 통신 지연은 아닙니다.
++실물 48회 중 사전에 분리한 37회로 적합·11회로 검증했습니다. 검증 속도 RMSE는
++0.25170→0.13674 rad/s, 실물 폐루프 GoToPose 개선 여부는 재주행으로 확인해야 합니다.
++가속도까지 함께 맞춘 값은 반복 편차가 커 적용하지 않았습니다.
++
++시뮬레이션의 빈 값/`auto`는 기존 파라미터를 그대로 유지합니다. `identification:=none`으로
++실물도 원래 τ=0.05 s로 복원하고, 명시 파일은 새 `mpc_motor_response_schema: 1`만 받습니다.
++다른 로봇은 해당 로봇의 보정 파일을 지정하거나 `none`을 사용하세요. 이 실측은 모든 Pinky의 공통 상수가 아닙니다.
++속도/가속도 명령 한계·가중치·안전 정지·주기·지연 보상은 변경하지 않습니다.
++시정수는 worker·scalar replay·symbolic/acados·observer에 같은 `params`로 전달되고 솔버 캐시는 새 해시를 사용합니다.
++기동 로그와 `/mpc/status.motor_response`의 SHA256/좌우 τ로 적용 여부를 확인할 수 있습니다.
++기존 실행 중 노드는 재시작해야 하며, 빌드/분석 도구만 실행해 로봇을 주행시키지는 않습니다.
++측정 근거와 적용/복원 명령은 [실물 응답 보정 기록](../../docs/GOTOPOSE_MOTOR_RESPONSE.md)을 참고하세요.
++
++아래는 단계별 개발 이력입니다. 현재 실물 시정수 적용 정책은 위 설명을 따릅니다.
++
+ Only GoToPose is under active skill verification. The BT submits a BehaviorGoal
+ with a unique goal_id and waits for the matching MotionResult. The controller
+ owns arrival, failure and cancellation. No separate P alignment or BT pose
+@@ -211,3 +231,5 @@ Keep the real robot in off mode until validated at low speeds.
+ OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_delay_observer.py src/pinky_soccer_mpc/test/test_damping.py src/pinky_soccer_mpc/test/test_scheduled_input.py src/pinky_soccer_mpc/test/test_acados_time_optimal.py
+ OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados mpc_damping_scale:=0.0 mpc_observer_mode:=ndob verify:=true
+ ```
++
++상대 표시용 단일 추적과 일반 장애물은 분리합니다. 공통 World Model의 `world_model/obstacles`(기존 WorldModel 타입)가 최근 수신되면 미확정 전체 LiDAR 군집을 기존 회피 snapshot에 전달하며, 기존 producer에서는 `world_model` 입력을 유지합니다. 이번 연결로 solver·안전 반경·비용·제약·주기는 바뀌지 않습니다. [상대 추적 및 검증](../../docs/OPPONENT_TRACKING.md).
+diff --git a/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
+index c0d7225..d5dad5e 100644
+--- a/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
++++ b/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py
+@@ -29,6 +29,7 @@ from .scheduled_input import ScheduledInput
+ from .delay_observer import DelayObserver,FORECAST_TAU
+ from . import collision_geometry
+ from . import obstacle_snapshot
++from .response_calibration import apply_response
+ 
+ 
+ class MpcController(Node):
+@@ -38,9 +39,8 @@ class MpcController(Node):
+         target=p('target','real').value
+         profile=p('calibration_profile','').value
+         identification=p('identification','').value
+-        if identification:
+-            raise ValueError('Legacy identification not validated for phase-1 model')
+         self.params=dyn_params.load(target,profile=profile or None)
++        self.params,self.response_calibration=apply_response(self.params,identification)
+         if self.params.m('delay') > 0.:
+             raise ValueError('Phase-1 predictor does not compensate transport delay')
+         self.max_lin=float(p('max_lin',0.).value)
+@@ -151,16 +151,34 @@ class MpcController(Node):
+         self.result_pub=self.create_publisher(MotionResult,'motion/result',10)
+         self.create_subscription(BehaviorGoal,'behavior_goal',self.on_goal,10)
+         self.create_subscription(WorldModel,'world_model',self.on_world,10)
++        self.obstacle_world = None
++        self.obstacle_world_received = None
++        self.create_subscription(WorldModel,'world_model/obstacles',self.on_obstacle_world,10)
+         if self.wheel_feedback:
+             self.create_subscription(JointState,'joint_states',self.on_joints,qos_profile_sensor_data)
+         self.create_timer(1/self.command_rate,self.tick)
+         self.get_logger().info(f'Fixed-step time-optimal NMPC {target}/{self.time_backend}: {self.rate:g} Hz solve, '
+                                f'{self.command_rate:g} Hz command; up to {self.time_mpc.max_steps} stages; '
+                                f'{self.mpc.wmax*30/math.pi:.1f} RPM')
++        if self.response_calibration['applied']:
++            self.get_logger().info('Real motor response: '+json.dumps(self.response_calibration))
+ 
+     def on_goal(self,msg):
+         self.goal,self.goal_time=msg,time.monotonic()
+ 
++    def on_obstacle_world(self,msg):
++        """Unconfirmed scan obstacles: independent of the displayed single opponent."""
++        self.obstacle_world = msg
++        self.obstacle_world_received = time.monotonic()
++
++    def avoidance_world(self):
++        """Legacy producers remain compatible; use fresh candidate stream when present."""
++        if (getattr(self, 'obstacle_world', None) is not None
++                and self.obstacle_world_received is not None
++                and time.monotonic()-self.obstacle_world_received <= .5):
++            return self.obstacle_world
++        return self.world_msg
++
+     def on_world(self,msg):
+         self.world_msg=msg
+         s=msg.self
+@@ -269,6 +287,9 @@ class MpcController(Node):
+                         self.goal is not None and self.goal.action=='GoToPose' else 'slsqp'))
+         data['command_state_age_sim_s'] = (self.last_tick-self.last_solution_input_sim
+             if state=='track' and self.last_solution_input_sim is not None else None)
++        if self.response_calibration['applied']:
++            data['motor_response'] = dict(sha256=self.response_calibration['sha256'],
++                tau_left_s=self.params.m('tau_left'),tau_right_s=self.params.m('tau_right'))
+         data['command_state_age_wall_s'] = (time.monotonic()-self.last_solution_input_wall
+             if state=='track' and self.last_solution_input_wall is not None else None)
+         data['active_solve_id']=self.active_solve_id if state=='track' else None
+@@ -587,7 +608,7 @@ class MpcController(Node):
+     # ------------------------------------------------------------------ avoidance
+     def avoid_snapshot(self,now):
+         return obstacle_snapshot.take(self.avoid,self.avoid_config,self.avoid_field,
+-                                      self.world_msg,now)
++                                      self.avoidance_world(),now)
+ 
+     def avoidance_precheck(self,goal):
+         """Reasons an avoidance request cannot run (None: it can)."""
+diff --git a/src/pinky_soccer_mpc/setup.py b/src/pinky_soccer_mpc/setup.py
+index 42ac1a3..6801a52 100644
+--- a/src/pinky_soccer_mpc/setup.py
++++ b/src/pinky_soccer_mpc/setup.py
+@@ -9,6 +9,7 @@ setup(
+     data_files=[
+         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+         ('share/' + package_name, ['package.xml', 'README.md']),
++        ('share/' + package_name + '/config', ['config/real_motor_response.yaml']),
+     ],
+     install_requires=['setuptools'],
+     zip_safe=True,
+diff --git a/src/pinky_soccer_mpc/test/test_avoidance.py b/src/pinky_soccer_mpc/test/test_avoidance.py
+index 52eb4e9..746c33a 100644
+--- a/src/pinky_soccer_mpc/test/test_avoidance.py
++++ b/src/pinky_soccer_mpc/test/test_avoidance.py
+@@ -131,3 +131,19 @@ def test_closed_loop_keeps_margin(solvers, walls, kind, start, goal, circle):
+     done, worst = closed_loop(p, m, start, goal, snap)
+     assert done
+     assert worst >= snap.config.margin - 2e-3      # plant replay, 5 sub-samples per step
++
++
++def test_unconfirmed_obstacles_have_independent_input_and_legacy_fallback():
++    from pinky_soccer_mpc.mpc_controller import MpcController
++    import time
++    # Constructor-free input selection: no solver execution or safety parameter changes.
++    node = MpcController.__new__(MpcController)
++    node.world_msg = object()
++    node.obstacle_world = None
++    node.obstacle_world_received = None
++    assert node.avoidance_world() is node.world_msg
++    raw = object()
++    node.on_obstacle_world(raw)
++    assert node.avoidance_world() is raw
++    node.obstacle_world_received = time.monotonic()-1
++    assert node.avoidance_world() is node.world_msg
+diff --git a/src/pinky_soccer_sim/CMakeLists.txt b/src/pinky_soccer_sim/CMakeLists.txt
+index afe3d40..9fea7e4 100644
+--- a/src/pinky_soccer_sim/CMakeLists.txt
++++ b/src/pinky_soccer_sim/CMakeLists.txt
+@@ -14,6 +14,7 @@ set_target_properties(pinky_foam_contact PROPERTIES INSTALL_RPATH "$ORIGIN")
+ install(TARGETS pinky_contact_kernel pinky_foam_contact LIBRARY DESTINATION lib)
+ 
+ ament_python_install_package(${PROJECT_NAME})
++install(PROGRAMS ${PROJECT_NAME}/led_visual.py DESTINATION lib/${PROJECT_NAME} RENAME led_visual)
+ install(FILES FIELD.md HARDBOARD_FIELD.md MATERIALS.md SENSOR_NOISE.md DESTINATION share/${PROJECT_NAME})
+ 
+ install(
+diff --git a/src/pinky_soccer_sim/README.md b/src/pinky_soccer_sim/README.md
+index 40172f7..0f34ff9 100644
+--- a/src/pinky_soccer_sim/README.md
++++ b/src/pinky_soccer_sim/README.md
+@@ -2,10 +2,15 @@
+ 
+ 공 기본 지름은 사용자 실측 **42.7mm**(반경/바닥 위 중심 높이 **0.02135m**)입니다.
+ Gazebo·MuJoCo의 시각/충돌 구와 인식·필터 기본 반경을 같은 값으로 맞춥니다.
+-실물 사진의 형광 주황색은 RGB `(1, 0.30, 0)`과 광택으로 근사합니다. 실제 형광의
++공·노랑 골대·파랑 골대 재질은 사용자 제공 실물 카메라 평균 RGB
++`(230,57,4)`·`(237,229,4)`·`(5,75,134)`를 각각 255로 나눈 값입니다.
++RCJ·하드보드의 Gazebo·MuJoCo에 모두 적용합니다. 실제 형광의
+ 자외선 반응·스펙트럼·딤플은 모델링하지 않으며 조명/노출에 따라 영상 색은 달라집니다.
+ 질량45.9g·마찰·반발은 여전히 미실측 가정입니다. 지름 변경만으로 실측 물성으로 간주하지 않습니다.
+ 
++재질 RGB와 렌더링 픽셀 RGB는 다릅니다. 기존 조명에서 측정한 RGB/HLS·실물과의 차이·
++원본 PNG·실행 방법은 [색상 검증 보고서](../../docs/SIMULATION_COLORS.md)에 있습니다.
++
+ 공통 물성은 [`config/materials.yaml`](config/materials.yaml)에서 지정합니다. 기본은 골프공·EVA 계열
+ 폼 요가매트·건조 고무바퀴이며, 두 엔진이 같은 접촉 계산 라이브러리를 사용합니다.
+ 근거/가정·지원 범위·동일 조건 비교 시험은 [MATERIALS.md](MATERIALS.md)를 참고하세요.
+diff --git a/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py b/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py
+index 7526b32..c8926bc 100644
+--- a/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py
++++ b/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py
+@@ -62,8 +62,9 @@ BALL_SDF = """<?xml version="1.0"?>
+       <visual name="visual">
+         <geometry><sphere><radius>{radius}</radius></sphere></geometry>
+         <material>
+-          <!-- Photo-based vivid orange approximation; fluorescence is not simulated. -->
+-          <ambient>1 0.30 0 1</ambient><diffuse>1 0.30 0 1</diffuse>
++          <!-- User-measured onboard-camera RGB (230, 57, 4); no fluorescence. -->
++          <ambient>0.9019607843 0.2235294118 0.01568627451 1</ambient>
++          <diffuse>0.9019607843 0.2235294118 0.01568627451 1</diffuse>
+           <specular>0.5 0.5 0.5 1</specular><shininess>64</shininess>
+         </material>
+       </visual>
+@@ -142,6 +143,14 @@ def setup_robot(context):
+     for ns, model, pose, sensors in robots(context):
+         urdf = robot_xml(context, sensors)
+         directory = Path(tempfile.mkdtemp(prefix='pinky-material-robot-'))
++        # Replace the official hard-coded green breathing visual plugin, not its driver.
++        import xml.etree.ElementTree as ET
++        visual_tree = ET.fromstring(urdf)
++        for parent in visual_tree.iter():
++            for child in list(parent):
++                if child.tag == 'plugin' and child.get('name') == 'pinky_gz_sim::LampControlPlugin':
++                    parent.remove(child)
++        urdf = ET.tostring(visual_tree, encoding='unicode')
+         path = directory/'robot.urdf'
+         path.write_text(urdf)          # ROS description: plain (topics are a gz matter)
+         gz_path = directory/'robot_gz.urdf'
+@@ -149,7 +158,9 @@ def setup_robot(context):
+         converted = subprocess.run(['gz', 'sdf', '-p', str(gz_path)],
+                                    capture_output=True, text=True, check=True)
+         sdf = directory/'robot.sdf'
+-        sdf.write_text(materials.configure_gazebo_robot(converted.stdout, urdf, cfg))
++        from pinky_soccer_sim.led_visual import gazebo_lamp_materials
++        sdf.write_text(gazebo_lamp_materials(
++            materials.configure_gazebo_robot(converted.stdout, urdf, cfg)))
+         if ns:
+             entries, shared = multi_robot.namespace_bridge_config(bridge_entries, ns)
+             bridge_file = directory/'bridge.yaml'
+@@ -165,6 +176,10 @@ def setup_robot(context):
+             bridge_file = directory/'bridge.yaml'
+             bridge_file.write_text(yaml.safe_dump(bridge_entries))
+         nodes = [
++            Node(package='pinky_soccer_sim', executable='led_visual',
++                 parameters=[{'use_sim_time': True,
++                              'model_name': model or ET.parse(sdf).getroot().find('model').get('name'),
++                              'world_name': ET.parse(lc('soccer_world').perform(context)).getroot().find('world').get('name')}]),
+             Node(package='robot_state_publisher', executable='robot_state_publisher',
+                  name='robot_state_publisher',
+                  parameters=[{'robot_description': urdf, 'use_sim_time': True}]),
+diff --git a/src/pinky_soccer_sim/package.xml b/src/pinky_soccer_sim/package.xml
+index b16b742..0986401 100644
+--- a/src/pinky_soccer_sim/package.xml
++++ b/src/pinky_soccer_sim/package.xml
+@@ -22,6 +22,9 @@
+   <exec_depend>xacro</exec_depend>
+   <exec_depend>pinky_mujoco</exec_depend>
+   <exec_depend>rclpy</exec_depend>
++  <exec_depend>pinky_interfaces</exec_depend>
++  <exec_depend>gz_transport_vendor</exec_depend>
++  <exec_depend>gz_msgs_vendor</exec_depend>
+   <exec_depend>pinky_soccer_bringup</exec_depend>
+   <exec_depend>pinky_soccer_dynamics</exec_depend>
+   <exec_depend>geometry_msgs</exec_depend>
+diff --git a/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py b/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py
+index a1aa79b..5fb82d6 100644
+--- a/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py
++++ b/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py
+@@ -44,14 +44,14 @@ def add_ball(scene_path, x=0.3, y=0.0, radius=0.02135, mass=0.0459, name=BALL_NA
+         raise ValueError(f'{scene_path} has no <worldbody>')
+     if worldbody.find(f"body[@name='{name}']") is not None:
+         raise ValueError(f'{scene_path} already has a body named {name}')
+-    # Approximate the photographed glossy fluorescent-orange product in RGB;
+-    # this is not a measured spectral/UV fluorescence material model.
++    # User-measured onboard-camera RGB (230, 57, 4); fluorescence is not simulated.
+     asset = tree.getroot().find('asset')
+     if asset is None:
+         asset = ET.Element('asset')
+         tree.getroot().insert(0, asset)
+     material = f'{name}_material'
+-    ET.SubElement(asset, 'material', name=material, rgba='1 0.30 0 1',
++    ET.SubElement(asset, 'material', name=material,
++                  rgba='0.9019607843 0.2235294118 0.01568627451 1',
+                   specular='0.5', shininess='0.55')
+     # Appended last: pinky_mujoco Physics reads the robot pose from qpos[0:7], so the
+     # robot's free joint must stay first.
+@@ -187,6 +187,12 @@ def main(args=None):
+             bridge, options.opponent_name, options.opponent_sensors,
+             load_config(options.sensor_config) if options.sensor_config else None,
+             options.imu_enabled, options.adc_enabled, camera_only=options.opponent_camera)
++    from pinky_soccer_sim.led_visual import install_mujoco_led, led_materials
++    build_before_led = bridge.build_model
++    def build_led(*args, **kwargs):
++        return led_materials(build_before_led(*args, **kwargs))
++    bridge.build_model = build_led
++    install_mujoco_led(bridge, options.opponent_name)
+     install_callback_drain(bridge)
+     bridge.main(rest)
+ 
+diff --git a/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py b/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py
+index 44f2ad3..a7d80da 100644
+--- a/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py
++++ b/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py
+@@ -15,8 +15,9 @@ import yaml
+ GREEN = (0.035, 0.35, 0.075, 1)
+ BLACK = (0.025, 0.025, 0.025, 1)
+ WHITE = (0.95, 0.95, 0.95, 1)
+-BLUE = (0.08, 0.3, 0.95, 1)
+-YELLOW = (1, 0.85, 0.04, 1)
++# Mean onboard-camera RGB supplied by the user (2026-11-27).
++BLUE = (5/255, 75/255, 134/255, 1)
++YELLOW = (237/255, 229/255, 4/255, 1)
+ 
+ 
+ def vector(values):
+diff --git a/src/pinky_soccer_sim/test/test_mujoco_ball.py b/src/pinky_soccer_sim/test/test_mujoco_ball.py
+index bd0414c..71c7d03 100644
+--- a/src/pinky_soccer_sim/test/test_mujoco_ball.py
++++ b/src/pinky_soccer_sim/test/test_mujoco_ball.py
+@@ -66,7 +66,7 @@ def test_measured_diameter_matches_gazebo_and_perception(tmp_path):
+     assert parse_args([])[0].ball_radius == pytest.approx(radius)
+     material = scene.find("asset/material[@name='soccer_ball_material']")
+     rgba = [float(v) for v in material.get('rgba').split()]
+-    assert rgba == pytest.approx([1, .30, 0, 1])
++    assert rgba == pytest.approx([230/255, 57/255, 4/255, 1])
+     path = Path(__file__).parents[1]/'launch/gazebo_soccer.launch.py'
+     spec = importlib.util.spec_from_file_location('ball_sdf_launch', path)
+     module = importlib.util.module_from_spec(spec)
+diff --git a/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf b/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf
+index 02375e5..faa51f8 100644
+--- a/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf
++++ b/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf
+@@ -8,16 +8,16 @@
+     <geom name="hardboard_side_wall_-1" pos="0 -0.615 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.91 0.005 0.1" />
+     <geom name="hardboard_end_wall_1" pos="0.915 0 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.62 0.1" />
+     <geom name="hardboard_side_wall_1" pos="0 0.615 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.91 0.005 0.1" />
+-    <geom name="hardboard_blue_goal_back" pos="0.8825 0 0.035" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0025 0.2 0.035" />
+-    <geom name="hardboard_blue_goal_side_-1" pos="0.8575 -0.2025 0.035" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
+-    <geom name="hardboard_blue_goal_side_1" pos="0.8575 0.2025 0.035" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
+-    <geom name="hardboard_blue_goal_roof" pos="0.8575 0 0.0725" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.205 0.0025" />
+-    <geom name="hardboard_blue_goal_floor" pos="0.855 0 0.00015" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
+-    <geom name="hardboard_yellow_goal_back" pos="-0.8825 0 0.035" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0025 0.2 0.035" />
+-    <geom name="hardboard_yellow_goal_side_-1" pos="-0.8575 -0.2025 0.035" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
+-    <geom name="hardboard_yellow_goal_side_1" pos="-0.8575 0.2025 0.035" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
+-    <geom name="hardboard_yellow_goal_roof" pos="-0.8575 0 0.0725" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.205 0.0025" />
+-    <geom name="hardboard_yellow_goal_floor" pos="-0.855 0 0.00015" euler="0 0 0" rgba="1 0.85 0.04 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
++    <geom name="hardboard_blue_goal_back" pos="0.8825 0 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0025 0.2 0.035" />
++    <geom name="hardboard_blue_goal_side_-1" pos="0.8575 -0.2025 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
++    <geom name="hardboard_blue_goal_side_1" pos="0.8575 0.2025 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
++    <geom name="hardboard_blue_goal_roof" pos="0.8575 0 0.0725" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.205 0.0025" />
++    <geom name="hardboard_blue_goal_floor" pos="0.855 0 0.00015" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
++    <geom name="hardboard_yellow_goal_back" pos="-0.8825 0 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0025 0.2 0.035" />
++    <geom name="hardboard_yellow_goal_side_-1" pos="-0.8575 -0.2025 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
++    <geom name="hardboard_yellow_goal_side_1" pos="-0.8575 0.2025 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.0025 0.035" />
++    <geom name="hardboard_yellow_goal_roof" pos="-0.8575 0 0.0725" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.0275 0.205 0.0025" />
++    <geom name="hardboard_yellow_goal_floor" pos="-0.855 0 0.00015" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
+     <geom name="hardboard_boundary_side_-1" pos="0 -0.5225 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.83 0.0075 0.0001" />
+     <geom name="hardboard_boundary_end_-1" pos="-0.8225 0 0.0003" euler="0 0 1.570796327" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.53 0.0075 0.0001" />
+     <geom name="hardboard_penalty_side_-1_-1" pos="-0.795 -0.2625 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.035 0.0075 0.0001" />
+diff --git a/src/pinky_soccer_sim/worlds/hardboard_soccer.world b/src/pinky_soccer_sim/worlds/hardboard_soccer.world
+index 549e953..eac8ef6 100644
+--- a/src/pinky_soccer_sim/worlds/hardboard_soccer.world
++++ b/src/pinky_soccer_sim/worlds/hardboard_soccer.world
+@@ -187,8 +187,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -216,8 +216,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -245,8 +245,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -274,8 +274,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -287,8 +287,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -316,8 +316,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -345,8 +345,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -374,8 +374,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -403,8 +403,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -416,8 +416,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+diff --git a/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf b/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf
+index 72dfc49..0dd9b6c 100644
+--- a/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf
++++ b/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf
+@@ -15,16 +15,16 @@
+     <geom name="rcj_side_wall_-1" pos="0 -0.915 0.11" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="1.215 0.005 0.11" />
+     <geom name="rcj_end_wall_1" pos="1.22 0 0.11" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.92 0.11" />
+     <geom name="rcj_side_wall_1" pos="0 0.915 0.11" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="1.215 0.005 0.11" />
+-    <geom name="rcj_blue_goal_back" pos="1.174 0 0.05" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.31 0.05" />
+-    <geom name="rcj_blue_goal_side_-1" pos="1.122 -0.305 0.05" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
+-    <geom name="rcj_blue_goal_side_1" pos="1.122 0.305 0.05" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
+-    <geom name="rcj_blue_goal_roof" pos="1.127 0 0.105" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.052 0.31 0.005" />
+-    <geom name="rcj_blue_goal_floor" pos="1.132 0 0.00015" euler="0 0 0" rgba="0.08 0.3 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.037 0.3 5e-05" />
+-    <geom name="rcj_yellow_goal_back" pos="-1.174 0 0.05" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.31 0.05" />
+-    <geom name="rcj_yellow_goal_side_-1" pos="-1.122 -0.305 0.05" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
+-    <geom name="rcj_yellow_goal_side_1" pos="-1.122 0.305 0.05" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
+-    <geom name="rcj_yellow_goal_roof" pos="-1.127 0 0.105" euler="0 0 0" rgba="1 0.85 0.04 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.052 0.31 0.005" />
+-    <geom name="rcj_yellow_goal_floor" pos="-1.132 0 0.00015" euler="0 0 0" rgba="1 0.85 0.04 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.037 0.3 5e-05" />
++    <geom name="rcj_blue_goal_back" pos="1.174 0 0.05" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.31 0.05" />
++    <geom name="rcj_blue_goal_side_-1" pos="1.122 -0.305 0.05" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
++    <geom name="rcj_blue_goal_side_1" pos="1.122 0.305 0.05" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
++    <geom name="rcj_blue_goal_roof" pos="1.127 0 0.105" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.052 0.31 0.005" />
++    <geom name="rcj_blue_goal_floor" pos="1.132 0 0.00015" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.037 0.3 5e-05" />
++    <geom name="rcj_yellow_goal_back" pos="-1.174 0 0.05" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.005 0.31 0.05" />
++    <geom name="rcj_yellow_goal_side_-1" pos="-1.122 -0.305 0.05" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
++    <geom name="rcj_yellow_goal_side_1" pos="-1.122 0.305 0.05" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.047 0.005 0.05" />
++    <geom name="rcj_yellow_goal_roof" pos="-1.127 0 0.105" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="box" size="0.052 0.31 0.005" />
++    <geom name="rcj_yellow_goal_floor" pos="-1.132 0 0.00015" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.037 0.3 5e-05" />
+     <geom name="rcj_side_ramp_-1" pos="0 0 0" euler="0 0 0" rgba="0.035 0.35 0.075 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="mesh" mesh="rcj_side_ramp_-1" />
+     <geom name="rcj_end_ramp_-1_-1" pos="0 0 0" euler="0 0 0" rgba="0.035 0.35 0.075 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="mesh" mesh="rcj_end_ramp_-1_-1" />
+     <geom name="rcj_end_ramp_-1_1" pos="0 0 0" euler="0 0 0" rgba="0.035 0.35 0.075 1" group="0" contype="1" conaffinity="2" friction="0.8 0.005 0.0001" type="mesh" mesh="rcj_end_ramp_-1_1" />
+diff --git a/src/pinky_soccer_sim/worlds/rcj_soccer.world b/src/pinky_soccer_sim/worlds/rcj_soccer.world
+index af2371e..d929c75 100644
+--- a/src/pinky_soccer_sim/worlds/rcj_soccer.world
++++ b/src/pinky_soccer_sim/worlds/rcj_soccer.world
+@@ -187,8 +187,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -216,8 +216,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -245,8 +245,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -274,8 +274,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -287,8 +287,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>0.08 0.3 0.95 1</ambient>
+-            <diffuse>0.08 0.3 0.95 1</diffuse>
++            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
++            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -316,8 +316,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -345,8 +345,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -374,8 +374,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -403,8 +403,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+@@ -416,8 +416,8 @@
+             </box>
+           </geometry>
+           <material>
+-            <ambient>1 0.85 0.04 1</ambient>
+-            <diffuse>1 0.85 0.04 1</diffuse>
++            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
++            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
+             <specular>0 0 0 1</specular>
+           </material>
+         </visual>
+diff --git a/src/pinky_soccer_viz/GAMEPLAY.md b/src/pinky_soccer_viz/GAMEPLAY.md
+index 42c6570..88a6fc0 100644
+--- a/src/pinky_soccer_viz/GAMEPLAY.md
++++ b/src/pinky_soccer_viz/GAMEPLAY.md
+@@ -1,5 +1,7 @@
+ # 실물·Gazebo·MuJoCo 경기 실행
+ 
++현재 기본 rectangle 경기는 [경기 준비·LED 절차](../../docs/MATCH_PREPARATION.md)를 먼저 수행합니다. 준비 신호와 경기 시작은 분리되며 READY 전에는 시작이 차단됩니다. 실물 robot_host 통합 실행에는 새 자체 bringup 배포가 필요합니다.
++
+ 세 환경 모두 `game.launch.py` 실행 → RViz 경기장 모니터 → 시작 신호 → 자동 플레이 순서입니다.
+ 
+ 기본 `headless:=false`이면 **RViz와 카메라 창이 함께 열립니다.** 카메라 창은
+diff --git a/src/pinky_soccer_viz/README.md b/src/pinky_soccer_viz/README.md
+index 0054d10..7f07b68 100644
+--- a/src/pinky_soccer_viz/README.md
++++ b/src/pinky_soccer_viz/README.md
+@@ -1,7 +1,13 @@
+ # pinky_soccer_viz
+ 
++실물·MuJoCo·Gazebo에서 같은 [직사각 외곽·HLS·IMU 자기위치 보정](../pinky_soccer_world_model/STARTUP_LOCALIZATION.md)을 사용합니다.
++런치 후 정지/센서 수신 상태에서 준비 창 또는 `preparation/prepare`로 보정을 요청합니다.
++초록 점멸은 시작 위치 이동까지 유지하고, 도착/정지 후 READY에서 팀 LED로 바뀝니다.
++경기는 별도 시작 신호가 필요합니다. [실행·LED·검증](../../docs/MATCH_PREPARATION.md). S=정지/R=준비·재시도. `localization_debug:=true`로 외벽·제외점·HLS 마스크를 확인합니다.
++기존 AMCL은 명시적 `localization:=lidar` 및 기존 Nav2 비교에서 유지합니다.
++
+ 실물·Gazebo·MuJoCo 경기 launch는 기본 RViz와 `game_camera_view`를 함께 엽니다.
+-카메라 창은 원본/실제 공 검출 표시/HSV 마스크를 동기화해 보여주고 수신 중단도 표시합니다.
++카메라 창은 원본/실제 공 검출 표시/HLS 마스크를 동기화해 보여주고 수신 중단도 표시합니다.
+ `headless:=true`이면 GUI를 열지 않습니다. 자세한 사용법은 [GAMEPLAY.md](GAMEPLAY.md).
+ 
+ 세 환경 공통 실행은 [GAMEPLAY.md](GAMEPLAY.md)를 참고합니다.
+@@ -50,7 +56,7 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
+ | `our_goal_color` | `yellow` | |
+ | `snapshot_dir`, `snapshot_period` | 빈 값, 0 | 탑뷰 PNG 저장(초 주기) |
+ 
+-`sim_field.launch.py`는 `pinky_soccer_sim`의 launch를 include하고 `field` 선택을 전달합니다. 그 위에 `ball_detector`, 기본 LiDAR AMCL·골색/지자기 방향 확인, `world_model_node`(TF), `bt_node`, `reactive_controller`, UI를 띄웁니다. `localization:=odom_only`로 기존 방식을 선택할 수 있습니다. 월드 모델과 두 UI의 `field_spec`도 선택한 YAML로 맞춥니다. [위치 추정](../pinky_soccer_world_model/LOCALIZATION.md)·[제2 경기장 제작 치수](../pinky_soccer_sim/HARDBOARD_FIELD.md)를 참고하세요.
++`sim_field.launch.py`는 시뮬 센서 launch와 `field` 선택을 전달하고, 공통 rectangle Localization·기존 공 인식·World Model·BT·제어·UI를 연결합니다. `localization:=lidar|odom_only`로 이전 경로를 선택할 수 있습니다. 월드 모델과 UI도 같은 `field_spec`을 사용합니다. [시작 절차](../pinky_soccer_world_model/STARTUP_LOCALIZATION.md)·[제2 경기장 치수](../pinky_soccer_sim/HARDBOARD_FIELD.md)를 참고하세요.
+ 
+ ## UI 표시 규칙 (두 UI 공통, `style.py`)
+ 
+@@ -58,7 +64,7 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
+ |---|---|---|---|
+ | 나 | 실선 로봇 + 방향 화살표 | 위치 공분산 타원 추가 | — |
+ | 공 | 진한 원 | 흐린 원 + 공분산 타원(2σ) | 마지막 위치에 X |
+-| 상대 | 진한 박스 | 흐린 박스 + 마지막 관측 후 경과 시간 | 숨김 |
++| 상대 | 고정 외곽 크기 원 + 속도 비례 화살표 | 흐린/점선 원 + 경과 시간·속도 화살표 | 숨김 |
+ 
+ 추가: 경기장(`pinky_soccer_field`: 외벽, 흰 선, 노랑/파랑 골대, 페널티 구역, 중앙 원, 중립점), 카메라 시야 부채꼴(`camera_info`의 K로 계산, 없으면 60° 가정), 공 예측 궤적(현재 속도로 1.5초, 점선), `ball_search_grid` 히트맵, `/behavior_goal`의 target(자홍 +)과 `planned_path`, 현재 branch/action. 시뮬레이터 실제 위치(`/ground_truth` 로봇, `/sim/ball_ground_truth` 공)는 회색 점으로 겹칩니다 (`show_ground_truth`, 평가용, 판단 입력 아님).
+ 
+@@ -93,3 +99,5 @@ ros2 run pinky_soccer_viz soccer_trial --ros-args -p use_sim_time:=true -p timeo
+ - RViz2·rqt 실행 및 OpenGL 초기화, 히트맵 마커 사용 후 indexed texture 셰이더 오류 해소를 확인했습니다. 실제 경기 중 표시의 현장 시각 검증은 필요합니다.
+ - 페널티 구역의 둥근 모서리는 사각형으로 그립니다.
+ - 히트맵은 경기장 선 위에도 반투명으로 덮입니다.
++
++상대 원의 반지름은 기존 Pinky 외곽 정의에서 계산하며 군집 크기로 바뀌지 않습니다. 화살표는 `pose.theta`가 아닌 `(velocity.x, velocity.y)`이며 정지 시 숨깁니다. 세 UI의 `opponents.velocity_arrow_{scale,min_speed,max_length}` 기본값은 `0.5,0.02,0.35`입니다. [공통 추적·검증](../../docs/OPPONENT_TRACKING.md).
+diff --git a/src/pinky_soccer_viz/REAL_GAME.md b/src/pinky_soccer_viz/REAL_GAME.md
+index 4ff6b76..142c1d6 100644
+--- a/src/pinky_soccer_viz/REAL_GAME.md
++++ b/src/pinky_soccer_viz/REAL_GAME.md
+@@ -1,5 +1,7 @@
+ # 실물 Pinky Pro 시험 경기
+ 
++현재 기본 rectangle 경기는 [경기 준비·LED 절차](../../docs/MATCH_PREPARATION.md)를 먼저 수행합니다. 준비 신호와 경기 시작은 분리되며 READY 전에는 시작이 차단됩니다. 실물 robot_host 통합 실행에는 새 자체 bringup 배포가 필요합니다.
++
+ 로봇은 센서/모터 드라이버, PC는 공 인식·월드 모델·행동 트리·제어를 실행합니다.
+ PC의 `real_game.launch.py`는 시뮬레이터나 실물 드라이버를 추가 실행하지 않습니다.
+ 기본 경기장은 하드보드, 우리 골대는 노랑(-X), 공격은 파랑(+X)입니다.
+diff --git a/src/pinky_soccer_viz/launch/game.launch.py b/src/pinky_soccer_viz/launch/game.launch.py
+index b234348..2fcbfa9 100644
+--- a/src/pinky_soccer_viz/launch/game.launch.py
++++ b/src/pinky_soccer_viz/launch/game.launch.py
+@@ -38,13 +38,16 @@ def setup(context):
+         raise ValueError('Require max_lin <= 0.30 m/s and max_ang <= 6 rad/s '
+                          '(> 0 on the real robot; 0 = wheel limits only in simulation)')
+     common = {name: arg(name) for name in
+-              ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
+-               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'heading_record', 'initial_x', 'initial_y',
++              ('preparation', 'preparation_config', 'field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
++               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
+                'initial_yaw')}
+     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
+-                  identification=arg('identification'))
++                  identification=arg('identification'), ball_offset_source=arg('ball_offset_source'))
++    if common['localization'] == 'auto':
++        common['localization'] = 'lidar' if arg('controller') == 'nav2' else 'rectangle'
+     if mode == 'real':
+         filename = 'real_game.launch.py'
++        common.update({k: arg(k) for k in ('robot_host','robot_workspace','robot_profile')})
+         profile = arg('calibration_profile')
+         common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
+         common['wheel_feedback'] = arg('wheel_feedback')
+@@ -72,7 +75,12 @@ def setup(context):
+ def generate_launch_description():
+     """Every mode starts paused; no game start publisher is launched here."""
+     return LaunchDescription([
++        DeclareLaunchArgument('robot_host', default_value=''),
++        DeclareLaunchArgument('robot_workspace', default_value='pinky-soccer'),
++        DeclareLaunchArgument('robot_profile', default_value=''),
+         DeclareLaunchArgument('mode', default_value='real', choices=['real', 'gazebo', 'mujoco']),
++        DeclareLaunchArgument('preparation', default_value='true'),
++        DeclareLaunchArgument('preparation_config', default_value=''),
+         DeclareLaunchArgument('field', default_value='hardboard', choices=['hardboard', 'rcj']),
+         DeclareLaunchArgument('our_goal_color', default_value='yellow',
+                               choices=['yellow', 'blue']),
+@@ -103,8 +111,15 @@ def generate_launch_description():
+         DeclareLaunchArgument('verify', default_value='false', choices=['true', 'false'],
+                               description='Behaviour verification mode: verifier window, '
+                               'bt_node runs only requested behaviours'),
+-        DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
++        DeclareLaunchArgument('localization', default_value='auto',
++                              choices=['auto', 'rectangle', 'lidar', 'odom_only'],
++                              description='auto: common sensor-only rectangle startup in every environment'),
++        DeclareLaunchArgument('localization_config', default_value='auto',
++                              description='auto: measured simulator HLS override; none: common requested HLS'),
++        DeclareLaunchArgument('localization_debug', default_value='false'),
+         DeclareLaunchArgument('heading_record', default_value=''),
++        DeclareLaunchArgument('ball_offset_source', default_value='auto',
++                              description='auto: selected profile/camera sibling; none: raw projection; or reviewed profile'),
+         DeclareLaunchArgument('max_lin', default_value='auto',
+                               description='auto: real 0.08 m/s, simulation 0 (= wheel limits)'),
+         DeclareLaunchArgument('max_ang', default_value='auto',
+@@ -121,7 +136,8 @@ def generate_launch_description():
+         # Passed explicitly in both modes: included launches inherit this configuration, and
+         # an empty value here once switched off the simulators' own calibration profiles.
+         DeclareLaunchArgument('identification', default_value='',
+-                              description='validated target-specific wheel response YAML'),
++                              description='real: empty/auto uses pinky-pro measured tau; none restores '
++                              'baseline; or fixed-ramp response YAML. Simulation empty is unchanged'),
+         DeclareLaunchArgument('calibration_profile', default_value='auto',
+                               description='auto: simulators use their own odometry profile, '
+                               'real none; or a profile.yaml path; none disables'),
+diff --git a/src/pinky_soccer_viz/launch/real_game.launch.py b/src/pinky_soccer_viz/launch/real_game.launch.py
+index a63aa7f..132b071 100644
+--- a/src/pinky_soccer_viz/launch/real_game.launch.py
++++ b/src/pinky_soccer_viz/launch/real_game.launch.py
+@@ -47,15 +47,37 @@ def setup(context):
+     initial = tuple(default[i] if arg(k) == 'auto' else number(k)
+                     for i, k in enumerate(('initial_x', 'initial_y', 'initial_yaw')))
+     nodes = multi_robot.dds_environment() + [LogInfo(
+-        msg=f'REAL ROBOT {name or "(no namespace)"} team {color}: starts paused. Place robot at '
+-        'its kickoff pose BEFORE launch. Publish /game/playing=true to move; false to stop.')]
++        msg=f'REAL ROBOT {name or "(no namespace)"} team {color}: starts paused. '+
++        ('Receive sensors until preparation/prepare (Trigger) or R; '
++         'calibrate, GoToPose to team start, then wait READY. preparation/stop stops motion. '
++         if arg('localization') == 'rectangle' else
++         'Place robot at its kickoff pose BEFORE launch. ')+
++        'preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.')]
++    if arg('robot_host'):
++        if arg('robot_host') == 'local':
++            from launch.actions import IncludeLaunchDescription
++            from launch.launch_description_sources import PythonLaunchDescriptionSource
++            from pinky_soccer_viz.robot_stack import share
++            nodes.append(IncludeLaunchDescription(PythonLaunchDescriptionSource(
++                share('pinky_soccer_bringup', 'launch', 'robot.launch.py')),
++                launch_arguments={'robot_name': name, 'imu_enabled': 'true',
++                                  'led_enabled': 'true', 'calibration_profile': arg('robot_profile')}.items()))
++        else:
++            nodes.append(Node(package='pinky_soccer_viz', executable='remote_robot',
++                name='remote_robot', output='screen', arguments=['--host', arg('robot_host'),
++                    '--workspace', arg('robot_workspace'), '--name', name,
++                    '--profile', arg('robot_profile')]))
+     nodes += decision_stack(RobotConfig(
++        preparation=flag('preparation'), preparation_config=arg('preparation_config'),
+         name=name, color=color, initial=initial, simulation=False, target='real',
+         field_spec=str(field_spec), localization=arg('localization'),
++        localization_config=arg('localization_config'),
++        localization_debug=flag('localization_debug'),
+         controller=arg('controller'), mpc_backend=arg('mpc_backend'),
+         mpc_damping_scale=float(arg('mpc_damping_scale')),
+         mpc_observer_mode=arg('mpc_observer_mode'), max_lin=max_lin, max_ang=max_ang,
+         calibration_profile=arg('calibration_profile'),
++        ball_offset_source=arg('ball_offset_source'),
+         identification=arg('identification'),
+         wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
+         headless=flag('headless'), groot2=False, heading_record=arg('heading_record'),
+@@ -71,14 +93,21 @@ def setup(context):
+                           name='game_referee', output='screen', parameters=[{
+                               'use_sim_time': False, 'field_spec': str(field_spec),
+                               'source': 'world_model', 'reset_ball': False,
++                              'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
++                                  if flag('preparation') and arg('localization') == 'rectangle' else '/game/playing',
+                               'world_model_topics': [multi_robot.topic(name, 'world_model')]}]))
+     return nodes
+ 
+ 
+ def generate_launch_description():
+-    """Never launch a simulator, sensor driver or automatic start command."""
++    """No simulator/sensor drivers; rectangle startup owns the initial slow spin."""
+     return LaunchDescription([
++        DeclareLaunchArgument('preparation', default_value='true'),
++        DeclareLaunchArgument('preparation_config', default_value=''),
+         DeclareLaunchArgument('field', default_value='hardboard', choices=['rcj', 'hardboard']),
++        DeclareLaunchArgument('robot_host', default_value='', description='SSH user@host; local for on-robot stack; empty for existing external bringup'),
++        DeclareLaunchArgument('robot_workspace', default_value='pinky-soccer'),
++        DeclareLaunchArgument('robot_profile', default_value=''),
+         DeclareLaunchArgument('robot_name', default_value='',
+                               description='namespace; must match the robot bringup'),
+         DeclareLaunchArgument('team', default_value='', choices=['', 'Y', 'B'],
+@@ -97,7 +126,11 @@ def generate_launch_description():
+         DeclareLaunchArgument('max_lin', default_value='0.08'),
+         DeclareLaunchArgument('max_ang', default_value='0.5'),
+         DeclareLaunchArgument('headless', default_value='false'),
+-        DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
++        DeclareLaunchArgument('localization', default_value='rectangle',
++                              choices=['rectangle', 'lidar', 'odom_only']),
++        DeclareLaunchArgument('localization_config', default_value='auto'),
++        DeclareLaunchArgument('localization_debug', default_value='false'),
++        DeclareLaunchArgument('ball_offset_source', default_value='auto'),
+         DeclareLaunchArgument('heading_record', default_value=''),
+         DeclareLaunchArgument('mpc_observer_mode', default_value='off', choices=['off','align','ndob']),
+         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
+@@ -108,7 +141,8 @@ def generate_launch_description():
+                               description='NMPC uses /joint_states wheel speeds (needs the '
+                               'right wheel sign -1 confirmed; open-loop estimate otherwise)'),
+         DeclareLaunchArgument('identification', default_value='',
+-                              description='validated real robot wheel response YAML'),
++                              description='empty/auto: pinky-pro measured tau; none: original tau; '
++                              'or mpc_motor_response_schema YAML'),
+         DeclareLaunchArgument('calibration_profile', default_value='',
+                               description='robot profile.yaml for the NMPC model (empty: '
+                               'official defaults, marked unmeasured)'),
+diff --git a/src/pinky_soccer_viz/launch/sim_field.launch.py b/src/pinky_soccer_viz/launch/sim_field.launch.py
+index c38a45a..fce9227 100644
+--- a/src/pinky_soccer_viz/launch/sim_field.launch.py
++++ b/src/pinky_soccer_viz/launch/sim_field.launch.py
+@@ -134,8 +134,12 @@ def setup(context):
+                             'models': models, 'topics': topics}]))
+ 
+     # ---------------------------------------------------------------- robots
+-    base = {'simulation': True, 'target': sim, 'field_spec': str(spec),
++    base = {'preparation': flag('preparation', context),
++            'preparation_config': lc('preparation_config', context), 'simulation': True, 'target': sim, 'field_spec': str(spec),
+             'localization': lc('localization', context),
++            'localization_config': lc('localization_config', context),
++            'ball_offset_source': lc('ball_offset_source', context),
++            'localization_debug': flag('localization_debug', context),
+             'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context),
+              'mpc_damping_scale': float(lc('mpc_damping_scale', context)),
+              'mpc_observer_mode': lc('mpc_observer_mode', context), 'max_lin': max_lin, 'max_ang': max_ang,
+@@ -165,6 +169,8 @@ def setup(context):
+             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
+             output='screen', parameters=[{
+                 'use_sim_time': True, 'mode': mode,
++                'enable_topic': multi_robot.topic(name, 'preparation/playing')
++                    if base['preparation'] and base['localization'] == 'rectangle' else '',
+                 'speed': float(lc('opponent_speed', context)),
+                 'travel': float(lc('opponent_travel', context)),
+                 'pose_topic': multi_robot.topic(opponent, 'ground_truth')}])])
+@@ -173,6 +179,9 @@ def setup(context):
+     out.append(Node(package='pinky_soccer_viz', executable='game_referee', name='game_referee',
+                     output='screen', parameters=[{
+                         'use_sim_time': True, 'field_spec': str(spec), 'source': 'truth',
++                        'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
++                            if base['preparation'] and base['localization'] == 'rectangle'
++                            else '/game/playing',
+                         'reset_ball': True}]))
+     return out
+ 
+@@ -181,6 +190,8 @@ def generate_launch_description():
+     auto = 'auto'
+     return LaunchDescription([
+         DeclareLaunchArgument('simulator', default_value='mujoco', description='mujoco|gazebo'),
++        DeclareLaunchArgument('preparation', default_value='true'),
++        DeclareLaunchArgument('preparation_config', default_value=''),
+         DeclareLaunchArgument('field', default_value='rcj', choices=['rcj', 'hardboard']),
+         DeclareLaunchArgument('robots', default_value='1', choices=['1', '2']),
+         DeclareLaunchArgument('robot_name', default_value='',
+@@ -207,8 +218,11 @@ def generate_launch_description():
+         DeclareLaunchArgument('use_gpu', default_value='auto',
+                               choices=['auto', 'true', 'false', 'nvidia', 'system']),
+         DeclareLaunchArgument('headless', default_value='false'),
+-        DeclareLaunchArgument('localization', default_value='lidar',
+-                              choices=['lidar', 'odom_only']),
++        DeclareLaunchArgument('localization', default_value='rectangle',
++                              choices=['lidar', 'rectangle', 'odom_only']),
++        DeclareLaunchArgument('localization_config', default_value='auto'),
++        DeclareLaunchArgument('localization_debug', default_value='false'),
++        DeclareLaunchArgument('ball_offset_source', default_value='auto'),
+         DeclareLaunchArgument('heading_record', default_value=''),
+         DeclareLaunchArgument('initial_x', default_value=auto,
+                               description='our start = kickoff pose (auto: own half, 0.4 m '
+diff --git a/src/pinky_soccer_viz/package.xml b/src/pinky_soccer_viz/package.xml
+index e2acff7..960c5cd 100644
+--- a/src/pinky_soccer_viz/package.xml
++++ b/src/pinky_soccer_viz/package.xml
+@@ -8,11 +8,13 @@
+   <license>Apache-2.0</license>
+ 
+   <exec_depend>rclpy</exec_depend>
++  <exec_depend>pinky_interfaces</exec_depend>
+   <exec_depend>rosgraph_msgs</exec_depend>
+   <exec_depend>geometry_msgs</exec_depend>
+   <exec_depend>nav_msgs</exec_depend>
+   <exec_depend>sensor_msgs</exec_depend>
+   <exec_depend>std_msgs</exec_depend>
++  <exec_depend>std_srvs</exec_depend>
+   <exec_depend>visualization_msgs</exec_depend>
+   <exec_depend>cv_bridge</exec_depend>
+   <exec_depend>python3-numpy</exec_depend>
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py b/src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py
+index 0c8d592..929f758 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/behavior_verifier.py
+@@ -78,6 +78,7 @@ class VerifierNode(Node):
+     def __init__(self):
+         super().__init__('behavior_verifier')
+         p = self.declare_parameter
++        self.opponent_arrows = style.arrow_parameters(p)
+         bt_share = get_package_share_directory('pinky_soccer_bt')
+         self.catalog_path = p('catalog', os.path.join(bt_share, 'config',
+                                                       'verify_catalog.yaml')).value
+@@ -1105,12 +1106,13 @@ class VerifierApp:
+             if opp.state == 2:
+                 continue
+             x, y, th = pose_of(opp)
+-            half = style.OPPONENT_SIZE / 2
+             dash = None if opp.state == 0 else (3, 2)
+-            mp.polyline([(x - half, y - half), (x + half, y - half), (x + half, y + half),
+-                         (x - half, y + half), (x - half, y - half)], fill=COLORS['opponent'],
+-                        width=2, dash=dash)
+-            mp.arrow((x, y, th), 0.1, COLORS['opponent'], dash=dash)
++            mp.circle(x, y, style.OPPONENT_RADIUS, outline=COLORS['opponent'],
++                      width=2, dash=dash)
++            vector = style.opponent_velocity(opp, **self.node.opponent_arrows)
++            if vector is not None:
++                mp.arrow((x, y, math.atan2(vector[1], vector[0])),
++                         math.hypot(*vector), '#ffe633', dash=dash)
+             if cov:
+                 mp.ellipse((x, y), opp.covariance, COLORS['opponent'])
+         b = wm.ball
+@@ -1142,7 +1144,8 @@ class VerifierApp:
+         if 'self' in truth:
+             mp.arrow(truth['self'], 0.13, COLORS['truth_self'], width=2)
+         if 'opponent' in truth:
+-            mp.arrow(truth['opponent'], 0.13, COLORS['truth_opp'], width=2)
++            mp.circle(*truth['opponent'][:2], style.OPPONENT_RADIUS,
++                      outline=COLORS['truth_opp'], width=2)
+ 
+ 
+ def main(args=None):
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py b/src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py
+index 016a366..497ae33 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/game_referee.py
+@@ -65,7 +65,8 @@ class GameReferee(Node):
+         self.goal_pub = self.create_publisher(String, '/game/goal', 10)
+         self.score_pub = self.create_publisher(String, '/game/score', latched)
+         self.ball_pub = self.create_publisher(Point, '/sim/set_ball', 10)
+-        self.create_subscription(Bool, '/game/playing', self.on_playing, 10)
++        self.create_subscription(Bool, p('playing_input_topic', '/game/playing').value,
++                                 self.on_playing, 10)
+         if self.source == 'truth':
+             self.create_subscription(PoseStamped, p('ball_truth_topic',
+                                                     '/sim/ball_ground_truth').value,
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py b/src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py
+index 0aab688..af2ed81 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/obstacle_driver.py
+@@ -20,6 +20,7 @@ from geometry_msgs.msg import PoseStamped, Twist
+ from nav_msgs.msg import Odometry
+ import rclpy
+ from rclpy.node import Node
++from std_msgs.msg import Bool
+ 
+ MODES = ('static', 'lateral', 'longitudinal')
+ 
+@@ -92,6 +93,11 @@ class ObstacleDriver(Node):
+             raise ValueError(f'mode must be one of {MODES}')
+         self.shuttle = Shuttle(p('speed', 0.10).value, p('travel', 0.4).value)
+         self.odom = None
++        enable_topic = p('enable_topic', '').value
++        self.enabled = not bool(enable_topic)
++        if enable_topic:
++            self.create_subscription(Bool, enable_topic,
++                lambda msg: setattr(self, 'enabled', msg.data), 10)
+         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
+         pose_topic = p('pose_topic', '').value
+         if pose_topic:
+@@ -114,7 +120,7 @@ class ObstacleDriver(Node):
+     def tick(self):
+         """Publish the obstacle command."""
+         cmd = Twist()
+-        if self.mode != 'static' and self.odom is not None:
++        if self.enabled and self.mode != 'static' and self.odom is not None:
+             if self.shuttle.start is None:
+                 self.shuttle.begin(*self.odom)
+             cmd.linear.x = self.shuttle.command(self.odom[0], self.odom[1])
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py b/src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py
+index bda0c48..7e856a0 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/robot_stack.py
+@@ -10,7 +10,7 @@ that use absolute names get remaps here: goal_heading (camera/IMU/AMCL topics),
+ (/world_model/* displays); /game/playing and /sim/ball_ground_truth stay global.
+ """
+ 
+-from dataclasses import dataclass, field
++from dataclasses import dataclass, field, replace
+ import os
+ from pathlib import Path
+ import tempfile
+@@ -58,13 +58,17 @@ def params_file(path, name):
+ class RobotConfig:
+     """One robot's decision stack settings."""
+ 
++    preparation: bool = True
++    preparation_config: str = ''
+     name: str = ''                       # namespace ('' = none)
+     color: str = 'yellow'                # goal we defend
+     initial: tuple = (0.0, 0.0, 0.0)     # start = kickoff pose (map frame)
+     simulation: bool = True
+     target: str = 'mujoco'               # dynamics target: real | mujoco | gazebo
+     field_spec: str = ''
+-    localization: str = 'lidar'
++    localization: str = 'rectangle'
++    localization_config: str = 'auto'
++    localization_debug: bool = False
+     controller: str = 'mpc'
+     mpc_backend: str = 'acados'
+     mpc_damping_scale: float = 0.0
+@@ -72,6 +76,7 @@ class RobotConfig:
+     max_lin: float = 0.0
+     max_ang: float = 0.0
+     calibration_profile: str = ''
++    ball_offset_source: str = 'auto'
+     identification: str = ''
+     wheel_feedback: bool = True
+     verify: bool = False
+@@ -129,16 +134,38 @@ def decision_stack(cfg):
+     team = {'our_goal_color': cfg.color, 'field_spec': cfg.field_spec}
+     wm = share('pinky_soccer_world_model', 'config')
+     real = cfg.real
+-    lidar = cfg.localization == 'lidar'
++    rectangle = cfg.localization == 'rectangle'
++    preparation = cfg.preparation and rectangle
++    lidar = cfg.localization in ('lidar', 'rectangle')
+     nodes = [
+         Node(package='pinky_soccer_world_model', executable='ball_detector',
+              name='ball_detector', output='screen', parameters=[
+                  params_file(os.path.join(wm, 'ball_detector.yaml'), cfg.name), clock,
+                  {'publish_debug_image': cfg.publish_debug_image,
++                  'ball_offset_source': ((cfg.calibration_profile or real.get('camera_yaml', ''))
++                      if cfg.ball_offset_source == 'auto' else cfg.ball_offset_source),
+                   **{k: real[k] for k in ('allow_uncalibrated', 'approximate_hfov_deg',
+                                           'camera_yaml', 'image_rotated_180') if k in real}}]),
+     ]
+-    if lidar:
++    if rectangle:
++        if cfg.controller == 'nav2':
++            raise ValueError('Nav2 comparison uses localization:=lidar; rectangle is the startup MPC path')
++        localization_params = [os.path.join(wm, 'rectangle_localization.yaml')]
++        if cfg.localization_config == 'auto':
++            if cfg.simulation:
++                localization_params.append(os.path.join(wm, 'rectangle_sim_hls.yaml'))
++        elif cfg.localization_config not in ('', 'none'):
++            localization_params.append(cfg.localization_config)
++        nodes.append(Node(package='pinky_soccer_world_model', executable='rectangle_localization',
++            name='rectangle_localization', output='screen',
++            remappings=[('cmd_vel', 'preparation/localized_cmd_vel' if preparation else cfg.command_topic)], parameters=[*localization_params, clock, team, {
++                'heading_record': cfg.heading_record,
++                'debug_enabled': cfg.localization_debug,
++                'led_enabled': not cfg.simulation and not preparation,
++                'calibration_turn_cap': min(.5, cfg.max_ang or .5),
++                **{k: real[k] for k in ('allow_uncalibrated', 'approximate_hfov_deg',
++                                      'camera_yaml', 'image_rotated_180') if k in real}}]))
++    elif lidar:
+         nodes += localization_nodes(
+             cfg.field_spec, cfg.simulation, cfg.initial,
+             real.get('allow_uncalibrated', False), real.get('approximate_hfov_deg', 66.0),
+@@ -155,18 +182,27 @@ def decision_stack(cfg):
+         Node(package='pinky_soccer_world_model', executable='world_model_node',
+              name='world_model_node', output='screen', parameters=[
+                  params_file(os.path.join(wm, 'world_model.yaml'), cfg.name),
+-                 params_file(os.path.join(wm, 'ball_filter.yaml'), cfg.name), world]),
++                 params_file(os.path.join(wm, 'ball_filter.yaml'), cfg.name), world],
++             remappings=([('amcl_pose', 'localization/pose')] if rectangle else []) +
++                        ([('game/playing', 'preparation/playing')] if preparation else [])),
+         Node(package='pinky_soccer_bt', executable='bt_node', name='bt_node', output='screen',
++             remappings=[('behavior_goal', 'preparation/strategy_goal')] if preparation else [],
+              parameters=[params_file(share('pinky_soccer_bt', 'config', 'bt_node.yaml'),
+                                      cfg.name), clock, {
+                  'verify_mode': cfg.verify, 'groot2_enabled': cfg.groot2,
+                  'kickoff_pose': [float(v) for v in cfg.initial]}]),
+     ]
++    if preparation:
++        nodes.append(Node(package='pinky_soccer_viz', executable='match_preparation',
++            name='match_preparation', output='screen',
++            remappings=[('cmd_vel', cfg.command_topic)], parameters=[
++                *([cfg.preparation_config] if cfg.preparation_config else []), clock, team]))
+     if cfg.controller == 'nav2':
+         from .nav2_stack import nav2_nodes
+         nodes += nav2_nodes(cfg)
+     else:
+-        nodes.append(controller_node(cfg))
++        nodes.append(controller_node(replace(cfg, command_topic='localization/controller_cmd_vel')
++                                     if rectangle else cfg))
+     if cfg.ui:
+         nodes += ui_nodes(cfg, clock, team)
+     return multi_robot.group(cfg.name, remaps(cfg) + nodes)
+@@ -198,6 +234,14 @@ def ui_nodes(cfg, clock, team):
+                 'mode_label': cfg.target + (f' / {cfg.name}' if cfg.name else ''),
+                 'controller_config': share('pinky_soccer', 'config', 'reactive_controller.yaml'),
+                 'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang,
+-                'controller_kind': cfg.controller, 'command_topic': cfg.command_topic,
++                'controller_kind': cfg.controller,
++                'command_topic': ('localization/controller_cmd_vel' if cfg.localization == 'rectangle'
++                                  else cfg.command_topic),
+                 'opponent_truth_topic': cfg.opponent_truth}]))
++    if cfg.localization == 'rectangle':
++        out.append(Node(package='pinky_soccer_viz', executable='localization_view',
++                        name='localization_view', condition=gui, parameters=[clock, {'preparation_enabled': cfg.preparation}]))
++        if cfg.preparation:
++            out.append(Node(package='pinky_soccer_viz', executable='preparation_view',
++                name='preparation_view', condition=gui, parameters=[clock]))
+     return out
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/style.py b/src/pinky_soccer_viz/pinky_soccer_viz/style.py
+index 28df4c5..f43c4da 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/style.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/style.py
+@@ -4,12 +4,13 @@
+ |----------|--------------------------|-----------------------------------|-------------------|
+ | self     | solid robot + arrow      | + covariance ellipse              | -                 |
+ | ball     | solid circle             | faint circle + covariance ellipse | X at last pose    |
+-| opponent | solid box                | faint box + seconds since seen    | hidden            |
++| opponent | solid circle + velocity  | faint circle + seconds since seen    | hidden            |
+ """
+ 
+ import math
+ 
+ import numpy as np
++from pinky_soccer_mpc.collision_geometry import FOOTPRINT_RECTS
+ 
+ OBSERVED, ESTIMATED, LOST = 0, 1, 2
+ STATE_NAMES = {OBSERVED: 'OBSERVED', ESTIMATED: 'ESTIMATED', LOST: 'LOST'}
+@@ -24,6 +25,7 @@ COLORS = {
+     'self': (0.10, 0.80, 0.95),
+     'ball': (1.00, 0.30, 0.00),
+     'opponent': (0.85, 0.15, 0.15),
++    'opponent_velocity': (1.0, 0.9, 0.2),
+     'fov': (1.00, 1.00, 0.60),
+     'target': (0.90, 0.10, 0.90),
+     'path': (0.90, 0.40, 0.90),
+@@ -34,7 +36,28 @@ SOLID_ALPHA, FAINT_ALPHA = 1.0, 0.35
+ ELLIPSE_SIGMA = 2.0          # covariance ellipses are drawn at 2 sigma
+ PREDICTION_SEC = 1.5         # ball prediction horizon (constant velocity, dotted)
+ ROBOT_RADIUS = 0.06          # [m] drawing only
+-OPPONENT_SIZE = 0.12         # [m] drawing only
++# Existing collision geometry documents Pinky chassis/wheels/bumper extents.
++# This is a UI envelope around the observed surface mean, NOT an MPC safety radius.
++OPPONENT_RADIUS = max(math.hypot(x, y) for x0, y0, x1, y1 in FOOTPRINT_RECTS
++                      for x in (x0, x1) for y in (y0, y1))
++OPPONENT_SIZE = 2*OPPONENT_RADIUS  # compatibility for display consumers
++
++
++def arrow_parameters(declare):
++    """Shared ROS display settings; length [m] = scale [s] * speed [m/s]."""
++    return {key: declare('opponents.velocity_arrow_'+key, value).value
++            for key, value in dict(scale=.5, min_speed=.02, max_length=.35).items()}
++
++
++def opponent_velocity(obj, scale=.5, min_speed=.02, max_length=.35):
++    """Map displacement vector for the movement arrow, independent of pose.theta."""
++    v = np.array((obj.velocity.x, obj.velocity.y), float)
++    speed = float(np.linalg.norm(v))
++    if (obj.state == LOST or obj.confidence <= 0 or not np.isfinite(speed)
++            or speed < min_speed or speed == 0 or scale <= 0 or max_length <= 0):
++        return None
++    return v*(min(scale*speed, max_length)/speed)
++
+ 
+ 
+ def bgr(name, scale=1.0):
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/topview.py b/src/pinky_soccer_viz/pinky_soccer_viz/topview.py
+index 3763bc2..803611f 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/topview.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/topview.py
+@@ -19,8 +19,9 @@ def stamp_sec(t):
+ class TopView:
+     """Draws the field once and overlays the dynamic world state each frame."""
+ 
+-    def __init__(self, field, px_per_m=200.0):
++    def __init__(self, field, px_per_m=200.0, opponent_arrows=None):
+         self.field = field
++        self.opponent_arrows = opponent_arrows or {}
+         self.s = px_per_m
+         walls = field.inner_walls
+         t = field.spec['wall_thickness']
+@@ -158,18 +159,20 @@ class TopView:
+     def _draw_opponent(self, img, obj, now):
+         if obj.state == LOST:
+             return
+-        half = style.OPPONENT_SIZE / 2
+-        a, b = self.px(obj.pose.x - half, obj.pose.y + half), \
+-            self.px(obj.pose.x + half, obj.pose.y - half)
+-        if obj.state == OBSERVED:
+-            cv2.rectangle(img, a, b, bgr('opponent'), -1)
+-        else:
+-            overlay = img.copy()
+-            cv2.rectangle(overlay, a, b, bgr('opponent'), -1)
+-            self._blend(img, overlay, style.FAINT_ALPHA)
+-            age = max(0.0, now - stamp_sec(obj.last_seen))
+-            cv2.putText(img, f'{age:.1f}s', (a[0], a[1] - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+-                        bgr('opponent'), 1, cv2.LINE_AA)
++        centre = self.px(obj.pose.x, obj.pose.y)
++        radius = self.m(style.OPPONENT_RADIUS)
++        overlay = img.copy()
++        cv2.circle(overlay, centre, radius, bgr('opponent'), -1, cv2.LINE_AA)
++        self._blend(img, overlay, 1. if obj.state == OBSERVED else style.FAINT_ALPHA)
++        vector = style.opponent_velocity(obj, **self.opponent_arrows)
++        if vector is not None:
++            tip = self.px(obj.pose.x+vector[0], obj.pose.y+vector[1])
++            cv2.arrowedLine(img, centre, tip, bgr('opponent_velocity'), 2,
++                            cv2.LINE_AA, tipLength=.25)
++        if obj.state != OBSERVED:
++            age = max(0.0, now-stamp_sec(obj.last_seen))
++            cv2.putText(img, f'{age:.1f}s', (centre[0], centre[1]-radius-3),
++                        cv2.FONT_HERSHEY_SIMPLEX, .4, bgr('opponent'), 1, cv2.LINE_AA)
+ 
+     def _draw_goal(self, img, goal):
+         if goal.mode == 2:      # STOP
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py b/src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py
+index b6ddd9c..2d65e0f 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py
+@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped
+ from pinky_soccer_field.field_geometry import Field
+ from pinky_soccer_msgs.msg import BehaviorGoal, WorldModel
+ from pinky_soccer_viz.topview import TopView
++from pinky_soccer_viz import style
+ import rclpy
+ from rclpy.node import Node
+ from rclpy.qos import qos_profile_sensor_data
+@@ -30,7 +31,7 @@ class WorldModelTopView(Node):
+         p = self.declare_parameter
+         field = Field.from_file(p('field_spec', '').value or None,
+                                 p('our_goal_color', 'yellow').value)
+-        self.view = TopView(field, p('px_per_m', 200.0).value)
++        self.view = TopView(field, p('px_per_m', 200.0).value, style.arrow_parameters(p))
+         self.show_truth = p('show_ground_truth', True).value
+         self.hfov = math.radians(p('camera_hfov_deg', 60.0).value)
+         self.fov_range = p('fov_range', 1.5).value
+diff --git a/src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py b/src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py
+index 9d85de1..83f82d9 100644
+--- a/src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py
++++ b/src/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py
+@@ -133,6 +133,7 @@ class WorldModelViz(Node):
+     def __init__(self):
+         super().__init__('world_model_viz')
+         p = self.declare_parameter
++        self.opponent_arrows = style.arrow_parameters(p)
+         self.field = Field.from_file(p('field_spec', '').value or None,
+                                      p('our_goal_color', 'yellow').value)
+         self.hfov = math.radians(p('camera_hfov_deg', 60.0).value)
+@@ -224,10 +225,17 @@ class WorldModelViz(Node):
+             if o.state == LOST:
+                 continue
+             alpha = style.SOLID_ALPHA if o.state == OBSERVED else style.FAINT_ALPHA
+-            box = f.make('opponents', Marker.CUBE, color('opponent', alpha),
++            box = f.make('opponents', Marker.CYLINDER, color('opponent', alpha),
+                          (style.OPPONENT_SIZE, style.OPPONENT_SIZE, 0.08))
+             box.pose.position = pt(o.pose.x, o.pose.y, 0.04)
+             out.markers.append(box)
++            vector = style.opponent_velocity(o, **self.opponent_arrows)
++            if vector is not None:
++                arrow = f.make('opponent_velocity', Marker.ARROW,
++                               color('opponent_velocity', alpha), (.008, .02, .025))
++                arrow.points = [pt(o.pose.x, o.pose.y, .09),
++                                pt(o.pose.x+vector[0], o.pose.y+vector[1], .09)]
++                out.markers.append(arrow)
+             if o.state == ESTIMATED:
+                 age = max(0.0, now - (o.last_seen.sec + o.last_seen.nanosec * 1e-9))
+                 text = f.make('opponents', Marker.TEXT_VIEW_FACING, color('opponent'),
+diff --git a/src/pinky_soccer_viz/setup.py b/src/pinky_soccer_viz/setup.py
+index d7923f5..dbabf3f 100644
+--- a/src/pinky_soccer_viz/setup.py
++++ b/src/pinky_soccer_viz/setup.py
+@@ -14,6 +14,7 @@ setup(
+                                    'GAMEPLAY.md', 'VERIFY.md']),
+         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+         ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
++        ('share/' + package_name + '/config', glob('config/*.yaml')),
+     ],
+     install_requires=['setuptools'],
+     zip_safe=True,
+@@ -24,8 +25,12 @@ setup(
+     extras_require={'test': ['pytest']},
+     entry_points={
+         'console_scripts': [
++            'match_preparation = pinky_soccer_viz.match_preparation:main',
++            'preparation_view = pinky_soccer_viz.preparation_view:main',
++            'remote_robot = pinky_soccer_viz.remote_robot:main',
+             'world_model_viz = pinky_soccer_viz.world_model_viz:main',
+             'game_camera_view = pinky_soccer_viz.game_camera_view:main',
++            'localization_view = pinky_soccer_viz.localization_view:main',
+             'world_model_topview = pinky_soccer_viz.world_model_topview:main',
+             'mujoco_eval_bridge = pinky_soccer_viz.mujoco_eval_bridge:main',
+             'soccer_trial = pinky_soccer_viz.soccer_trial:main',
+diff --git a/src/pinky_soccer_world_model/LOCALIZATION.md b/src/pinky_soccer_world_model/LOCALIZATION.md
+index c26f9d6..8c0dfe5 100644
+--- a/src/pinky_soccer_world_model/LOCALIZATION.md
++++ b/src/pinky_soccer_world_model/LOCALIZATION.md
+@@ -1,6 +1,10 @@
+ # LiDAR·골대 색·지자기로 경기장 위치 추정
+ 
+-`game.launch.py`의 기본 `localization:=lidar`는 세 환경에서 같은 구성을 사용합니다.
++2026-11-27: 실물·MuJoCo·Gazebo 기본은 같은 [직사각 외곽·HLS·IMU 시작 보정](STARTUP_LOCALIZATION.md)이다.
++`game.launch.py localization:=auto`는 세 환경에서 rectangle을 선택한다(Nav2 비교 옵션은 기존 lidar).
++아래는 명시적 `localization:=lidar`의 AMCL 경로 설명이다. 이번 시작 보정 추가는 PC 코드만 변경하며 로봇 소스 교체는 필요 없다.
++
++`game.launch.py`의 명시적 `localization:=lidar`는 세 환경에서 같은 구성을 사용합니다.
+ 기존 방식은 `localization:=odom_only`로 선택할 수 있습니다. AMCL은 경기장
+ YAML에서 생성한 지도와 `/scan`을 비교하고, 바퀴 odom TF로 스캔 사이 움직임을
+ 예측합니다. `map → odom`은 AMCL만, `odom → base_footprint`는 기존 드라이버만
+diff --git a/src/pinky_soccer_world_model/README.md b/src/pinky_soccer_world_model/README.md
+index 178055d..148678d 100644
+--- a/src/pinky_soccer_world_model/README.md
++++ b/src/pinky_soccer_world_model/README.md
+@@ -1,9 +1,14 @@
+ # pinky_soccer_world_model
+ 
++실물·MuJoCo·Gazebo의 기본 위치 추정은 같은 [경량 직사각형 Localization](STARTUP_LOCALIZATION.md)입니다.
++외벽 정합→최소각 골대 조준→정지 후 HLS 3프레임→단일색으로 IMU 양축 확정→팀 LED 순서입니다.
++런치 후에는 센서 수신만 하고, `localization/calibrate` Trigger 또는 창의 R 신호로 보정을 시작합니다.
++
+ 센서 → `/world_model` 계층입니다. 행동 트리는 이 토픽만 봅니다.
+ 
+-경기 launch 기본 위치 추정은 **LiDAR AMCL + 골대 색/지자기 대칭 후보 확인**입니다.
+-기록·실물 NDOF 드라이버·세 환경 실행/검증은 [LOCALIZATION.md](LOCALIZATION.md)를 참고하세요.
++초기화 뒤에는 골대 영상처리 없이 LiDAR·IMU·odom으로 추적합니다.
++기존 AMCL은 `localization:=lidar`로 보존하며 [LOCALIZATION.md](LOCALIZATION.md)에 설명합니다.
++구현·성능·미검증 사항은 [통합 보고서](../../docs/LIGHTWEIGHT_LOCALIZATION.md)에 있습니다.
+ 
+ | 실행 파일 | 입력 | 출력 |
+ |---|---|---|
+@@ -20,12 +25,25 @@ ros2 run pinky_soccer_world_model fake_world_model --ros-args --params-file $(ro
+ 
+ ## ball_detector
+ 
+-- 경기와 보정 UI가 같은 `robust_ball.BallImageDetector`를 사용합니다. 원본/제한적 화이트밸런스의 주황색 단서 → 밝기 CLAHE와 정규화 R−G 경계 → Hough 원 후보 → 보이는 원호의 방사 방향 경계 검사와 이상점 제거 원 맞춤 → 점수·시간 연속성으로 **최대 하나**를 선택합니다. 색 영역이 책상과 이어져도 영상 경계로 공을 분리하며, 원본 픽셀은 변경하지 않습니다.
+-- 기본 색상 씨앗 H3~19는 유지하고 그림자에 대해 S/V 하한을 최대95/25로 완화합니다. 약한 주변색(H±4)·흰 반사광은 내부 지지로만 사용하며 독립적인 공 씨앗이 아닙니다. 엄격한 채움/축비/원형도 검사는 완전한 색 윤곽 후보 경로이고, 가림은 별도 원호 경로로 복원합니다. 기본 원호 지지율≥42%, 주황 단서≥10%, 내부 설명 비율≥42%, 점수≥0.48은 실험적 초기값입니다.
+-- 원 안/밖의 정규화 R−G 대비와 남은 색의 채도 일관성도 확인해 책상 무늬·피부의 원호를 줄입니다. 점수는 원호·색·내부 지지·경계 대비·색 강도의 가중합이며 확률이 아닙니다. 최근0.7초의 위치/크기는 후보 연결에만 사용하고 현재 영상 근거가 없으면 **미검출**입니다. 전체 가림/완전한 백색 포화에서는 복원할 수 없고 같은 색의 둥근 물체는 오인식할 수 있습니다. 부분 가림과 화면 잘림은 충분한 원호가 있을 때 허용하므로 중심/반지름 오차는 커질 수 있습니다.
+-- `publish_debug_image:=true`는 `/ball_detection/debug_image`(일반 초록 원, 가림/반사광 복원 황색 점선·점수)와 `/ball_detection/debug_mask`(mono8, 흰색=색상 씨앗)를 같은 원본 시각으로 발행합니다. 투영은 원 중심 광선과 `base_footprint`의 z=공 반지름 평면 교차 후 `base_link` 변환으로 유지합니다. 보정 UI도 같은 설정값/구현을 쓰며 이전 사용자 YAML이 새 기본값을 덮어쓰는지 확인하세요.
+-- HSV 범위·최소 면적·원형도는 **가정**입니다(시뮬레이터 공 rgba `1 0.30 0` 기준). 공 지름은 사용자 실측42.7mm이며 형광 주황 외관은 사진 기반 근사입니다. 실제 공과 경기장 조명에서 HSV 조건은 별도로 검증해야 합니다.
+-- 2026-11-22 검증: 실제 노트북 웹캠의 공/책상 장면84프레임 검출·마지막 처리16ms, 저장 영상의 조명색/감광/가림/백색 반사광 변형에서 연속 대상 유지, 알려진 중심/반경 합성 시험·손실/재획득 시험 통과. 이는 영상 검출 검증이며 실물 조명 전체나 거리 정확도 보장은 아닙니다. 처음부터 심하게 가린 경우보다 온전한 공으로 추적을 시작한 경우가 안정적입니다.
++- 실물·MuJoCo·Gazebo·보정 UI가 같은 `robust_ball.BallImageDetector`를 사용합니다.
++  하단350px(640×480에서 y≥130)에서 HLS 한 번 변환 → 색 윤곽 → 원호 합의/기존 최소제곱 원 피팅으로 최대 하나를 선택합니다.
++  Hough·Sobel·CLAHE·화이트밸런스·딥러닝을 사용하지 않습니다. 원본 영상과 K/D는 바꾸지 않습니다.
++- 원래 영상 픽셀의 `(u,v,r,area)`를 유지하고 ROI Y오프셋을 복원합니다. 충분한 원호이면 잘림/가림의 전체 원을 추정합니다.
++  근거가 부족하면 원/미터 좌표를 강제하지 않고 `ball_detection/status`에 방향 픽셀과 거리 유효 상태를 분리해 표시합니다.
++  방향 전용 위치는 보이는 원호의 대략적 중심이며 정밀한 전체 공 중심 관측이 아닙니다.
++- 기존 `project_ball`은 그대로입니다. 영상 r로 거리를 계산하지 않고 중심 광선을 왜곡 보정한 뒤
++  공 반경 **0.02135m** 높이의 평면과 교차합니다. 지름42.7mm·K/D·센서 TF·좌표 변환을 보존합니다.
++- `ball_offset_source:=auto`는 선택한 보정 프로필 또는 camera_yaml의 형제 profile.yaml에 저장된
++  human_verified 오프셋을 읽습니다. `none`은 보정 없는 기존 투영, 경로를 지정하면 그 프로필입니다.
++  base_link X/Y[m] 보정은 투영/좌표 변환 후 한 번 적용하며 Z는 유지합니다.
++  보정 UI는 기존 raw 관측+범퍼 기준 비교에서 한 번만 적용하므로 중복 보정하지 않습니다.
++- `publish_debug_image:=true`는 기존 원본/표시/mono8 마스크 토픽을 유지합니다.
++  현재 ROS 미터 출력은 기존 PointStamped이며, 신뢰할 수 없는 원은 발행하지 않습니다.
++- HLS/원호 임계값은 `config/ball_detector.yaml`에 있습니다. 기존 HSV·compact-shape 키 일부는
++  과거 설정 로드를 위해 남겼으며 새 HLS 마스크/Hough 없는 경로에서는 사용하지 않습니다.
++  최근0.7초의 기억은 연결만 돕고 새 관측/반지름을 만들지 않습니다.
++- 코드 경로·192개 동일 입력 비교·캘리브레이션 보존·반지름 편차·실행 방법은
++  [HLS 교체 및 거리 보존 보고서](../../docs/BALL_HLS_DISTANCE.md)를 참고하세요.
+ - 내부 파라미터: `camera_yaml`(ROS camera YAML 또는 보정 UI의 `profile.yaml`)이 있으면 그것, 없으면 `camera_info`. `camera_info`의 K가 0(미보정)이면 미터 단위 `/ball_detection`을 발행하지 않고 경고합니다. 픽셀 미리보기는 보정 없이도 가능합니다. 보정 프로필을 launch의 `calibration_profile`로 적용했다면 `camera_info`에 이미 들어 있습니다.
+ - 실물 영상이 광학 프레임 기준 180° 돌아 있으면 `image_rotated_180:=true` (`MEMORY.md` 열린 질문: 실물 방향 미확인).
+ - 공 중심 높이에서 교차하므로 공이 바닥에 있다는 가정입니다. YOLO로 바꿀 때는 같은 `/ball_detection` 토픽을 내면 됩니다.
+@@ -69,18 +87,18 @@ ros2 run rqt_image_view rqt_image_view /ball_detection/debug_image
+ 없으면 `NO BALL`, 미보정이면 `UNCALIBRATED`로 표시합니다.
+ 영상 자체를 회전시키지 않으므로 `image_rotated_180` 설정과 관계없이 표시가 공에 겹칩니다.
+ 이 확인에는 TF·경기장 위치·카메라 보정값이 필요하지 않습니다.
+-주황색 다른 물체도 후보가 될 수 있으므로 실제 공과 조명에서 HSV 범위를 확인해야 합니다.
++경기장 영상에서 실제 공과 조명에 맞는 HLS 범위를 확인합니다.
+ 보정 전에는 거리·경기장 좌표를 만들지 않으며, 이 검출기만 실행해도 주행 명령은 발행되지 않습니다.
+ 정확한 거리 추정·공 추적·경기 제어는 내부 보정 및 카메라 장착 자세 검증 후 진행합니다.
+ 
+ ## world_model_node
+ 
+ - **자기 위치**: `localization:=tf`면 TF `map→base_footprint`(AMCL 사용 시). `odom_only`면 `/odom`을 킥오프 자세 `initial_pose`(map) 뒤에 붙이고 `map→odom` static TF를 냅니다 (AMCL 연동 전 단계).
+-- 경기 launch 기본 `localization:=lidar`는 AMCL의 TF를 사용하며 AMCL·odom 단절 시 playing=false를 내보냅니다. `localization:=odom_only` 선택 시 실물은 `align_first_odom:=true`로 첫 odom을 `initial_pose`에 맞춥니다.
++- 경기 launch 기본 `localization:=rectangle`는 단독 map→odom과 기존 `localization/pose`를 제공합니다. 명시적 `localization:=lidar`는 기존 AMCL 경로입니다. `localization:=odom_only` 선택 시 실물은 `align_first_odom:=true`로 첫 odom을 `initial_pose`에 맞춥니다.
+ - **공**: 2D 등속 + 마찰 감쇠 칼만 필터(`ball_filter.py`). 관측이 없으면 예측만 하고 공분산이 커집니다. 측정 표준편차는 거리 제곱에 비례해 커집니다. 마할라노비스 게이트로 튀는 값을 버리되 3번 연속이면 공이 옮겨진 것으로 보고 다시 잡습니다. 경기장 밖으로 예측되면 외벽 안쪽(공 반지름만큼)으로 제한하고 그 축 속도를 0으로 둡니다(비탄성 가정).
+ - **상태**: OBSERVED = 마지막 관측 후 `observed_timeout`(0.3 s) 이내, LOST = `lost_timeout`(5 s) 초과 또는 최대 표준편차 > `lost_sigma`(0.5 m), 그 사이 ESTIMATED.
+ - **ball_search_grid**: 셀마다 공 존재 믿음(0~1, 메시지는 0~100). 카메라가 살아 있고(최근 0.5 s 내 `camera_info`) 공이 OBSERVED가 아니면 시야 부채꼴 안 셀을 낮추고, 모든 셀은 시간이 지나면 사전값 0.5로 돌아갑니다. 검출되면 그 주변을 높입니다. 시야각은 `camera_info`의 K에서 계산, 거리 범위(0.15~1.5 m)는 가정. 상대에 의한 가림은 TODO.
+-- **상대**: `/scan` 점 중 외벽 안쪽 `wall_margin`보다 안의 점을 이웃 거리로 묶고, 크기 ≤ 0.30 m인 군집을 상대 후보로 냅니다. 정교한 추적(ID 유지, 속도)은 TODO. 라이다(0.125 m)는 공(지름 0.043 m)을 보지 못합니다.
++- **상대**: 측정시각 TF·외벽/골대 제거·인덱스 연속 O(N) 군집 평균점 → 3/5 스캔 확정·단일 Alpha-Beta 추적. 미확정 전체 군집은 `world_model/obstacles`로 기존 MPC 회피에 별도 전달합니다. [설계·검증·실물 적용](../../docs/OPPONENT_TRACKING.md).
+ - **경기 시작**: `/game/playing`(std_msgs/Bool). 기본 `playing_default: false`.
+ 
+ ## fake_world_model
+@@ -89,12 +107,12 @@ ros2 run rqt_image_view rqt_image_view /ball_detection/debug_image
+ 
+ ## 테스트
+ 
+-`colcon test --packages-select pinky_soccer_world_model`: 필터 상태 전이·마찰 예측·벽 제한·이상치 처리, 검색 그리드, 광선-바닥 교차, HSV 검출, 라이다 군집 (12개, flake8 포함).
++기능 검사는 필터 상태·마찰·벽 제한·이상치·검색 그리드·기존 광선 투영·HLS/원호·거리 보존·보정 적용·라이다·Localization을 포함합니다. 실행 결과와 lint 범위는 각 검증 보고서에 기록합니다.
+ 
+ ## 가정과 남은 일
+ 
+ - 필터·그리드·검출 수치는 모두 시작값 가정입니다. 카펫 위 골프공 구름(마찰 시간 상수)은 실측이 필요합니다.
+-- AMCL·골대 색/지자기 방향 확인은 연결됐으며 실물 간섭·HSV·지도 정합 검증이 필요합니다. wheel+gyro EKF, 상대 추적·가림 처리는 후속입니다.
++- AMCL·골대 색/지자기 방향 확인은 연결됐으며 실물 간섭·HSV·지도 정합 검증이 필요합니다. wheel+gyro EKF와 공 시야 가림 처리는 후속입니다. 상대 추적은 공통 Alpha-Beta 경로를 사용하며 실물 정확도는 미검증입니다.
+ 
+ ## 카메라 보정 UI의 공 검토
+ 
+diff --git a/src/pinky_soccer_world_model/config/ball_detector.yaml b/src/pinky_soccer_world_model/config/ball_detector.yaml
+index 1e0237a..690fe34 100644
+--- a/src/pinky_soccer_world_model/config/ball_detector.yaml
++++ b/src/pinky_soccer_world_model/config/ball_detector.yaml
+@@ -1,27 +1,33 @@
+-# HSV ball detector. All thresholds are ASSUMPTIONS (sim ball rgba 1 0.30 0); measure on the
+-# real orange golf ball under the venue lighting and update.
++# Shared HLS/arc detector. K/D, physical radius and mounting remain unchanged.
+ ball_detector:
+   ros__parameters:
+     ball_radius: 0.02135           # user-measured diameter 42.7 mm
+     # Groups of 6: [h_lo, s_lo, v_lo, h_hi, s_hi, v_hi], OpenCV HSV (H 0..180). Assumption.
+-    hsv_ranges: [3, 160, 70, 19, 255, 255]  # seed hue; recovery relaxes S/V and balances white
++    hsv_ranges: [3, 160, 70, 19, 255, 255]  # legacy setting accepted; active mask is HLS below
++    # Active HLS bounds: H 0..180, L/S 0..255. Includes dim/simulation orange;
++    # old hsv_ranges stays loadable for archived settings, not used for masking.
++    hls_ranges: [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99]
+     min_area_px: 12.0               # assumption
+-    # Strict compact-contour proposals; partial-arc proposals use the options below.
++    # Legacy compact-shape settings stay loadable; min_color_fraction also guards arc fill.
+     min_circularity: 0.72
+     min_circle_fill: 0.72           # contour area / enclosing circle area; square ~=0.64
+     min_axis_ratio: 0.75            # min bbox side / max side
+     min_color_fraction: 0.55        # orange pixels within circle; tolerate logo/highlights
+     max_radial_error: 0.15          # outline-to-circle RMS / radius
+-    # Below: independent visible-arc recovery even when colour merges with a table.
++    # Current visible-arc support. No image gradients/Hough/CLAHE/white balance.
+     min_arc_fraction: 0.42          # supported circular edge directions, not visible area
+-    min_seed_fraction: 0.10         # remaining orange identity evidence
+-    min_explained_fraction: 0.42    # orange/shadow/highlight support inside recovered circle
++    min_seed_fraction: 0.10         # legacy setting retained for archived YAMLs
++    min_explained_fraction: 0.42    # legacy setting retained for archived YAMLs
+     min_detection_confidence: 0.48  # heuristic score, NOT a calibrated probability
+     visual_memory_s: 0.7           # association only; absent evidence still returns NO BALL
+-    detection_top_fraction: 0.3333333333333333  # ignore upper third; 0 = full frame
++    detection_top_fraction: 0.2708333333333333  # y>=130 at 640x480; UV restored before projection
++    min_bearing_arc_fraction: 0.16  # shorter arcs may produce pixels only, never metric output
++    max_radius_uncertainty: 0.08    # relative one-sigma LS radius limit (plus >=42% arc support)
++    min_contiguous_arc_fraction: 0.25
+     max_range: 2.5                  # [m] reject hits farther than the field diagonal
+     image_rotated_180: false        # real camera: verify orientation (see MEMORY open question)
+     camera_yaml: ""                 # optional camera YAML or calibration profile.yaml; else camera_info
++    ball_offset_source: ""          # reviewed profile; else camera_yaml/sibling profile; no implicit project
+     publish_debug_image: false      # pixel preview also works without intrinsics or TF
+     allow_uncalibrated: false       # explicit TEST ONLY opt-in; never a measured calibration
+     approximate_hfov_deg: 66.0      # ASSUMPTION: official sim HFOV 1.1519 rad, not measured
+diff --git a/src/pinky_soccer_world_model/config/world_model.yaml b/src/pinky_soccer_world_model/config/world_model.yaml
+index 5cd6913..11ed97f 100644
+--- a/src/pinky_soccer_world_model/config/world_model.yaml
++++ b/src/pinky_soccer_world_model/config/world_model.yaml
+@@ -24,3 +24,17 @@ world_model_node:
+     opponents.min_points: 3
+     opponents.max_size: 0.30        # [m]
+     opponents.hold_sec: 1.0         # [s] keep as ESTIMATED after the last scan hit
++    # Single opponent only. Legacy unconfirmed clusters still feed MPC separately.
++    opponents.min_size: 0.015       # [m] measured span, not robot diameter
++    opponents.self_radius: 0.08     # [m] sensor-near self returns; validate mounting
++    opponents.max_beam_gap: 3       # at most two missing/removed beams
++    opponents.max_adaptive_gap: 0.09
++    opponents.confirm_hits: 3
++    opponents.confirm_window: 5
++    opponents.alpha: 0.6
++    opponents.beta: 0.06
++    opponents.tf_wait_sec: 0.3      # nonblocking queue, measurement-time TF only
++    opponents.max_speed: 0.6        # [m/s] association bound, not MPC speed constraint
++    opponents.association_slack: 0.08
++    opponents.velocity_deadband: 0.015
++    opponents.observed_sec: 0.3
+diff --git a/src/pinky_soccer_world_model/package.xml b/src/pinky_soccer_world_model/package.xml
+index 56cb6ed..dca9a62 100644
+--- a/src/pinky_soccer_world_model/package.xml
++++ b/src/pinky_soccer_world_model/package.xml
+@@ -23,6 +23,7 @@
+   <exec_depend>python3-yaml</exec_depend>
+   <exec_depend>pinky_soccer_msgs</exec_depend>
+   <exec_depend>pinky_soccer_field</exec_depend>
++  <exec_depend>pinky_interfaces</exec_depend>
+ 
+   <test_depend>ament_flake8</test_depend>
+   <test_depend>python3-pytest</test_depend>
+diff --git a/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py b/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py
+index 5268faa..4ae1244 100644
+--- a/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py
++++ b/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py
+@@ -1,4 +1,4 @@
+-"""Detect the orange golf ball by HSV colour and publish its centre on the floor.
++"""Detect the orange golf ball by HLS arcs and reuse the original floor projection.
+ 
+ Input  /camera/image_raw (BEST_EFFORT), /camera/camera_info
+ Output /ball_detection (geometry_msgs/PointStamped, frame base_link, image stamp)
+@@ -9,6 +9,7 @@ A YOLO detector can replace this node later by publishing the same topic.
+ """
+ 
+ from pathlib import Path
++import json
+ from urllib.parse import unquote, urlparse
+ 
+ from cv_bridge import CvBridge
+@@ -24,9 +25,36 @@ from rclpy.node import Node
+ from rclpy.qos import qos_profile_sensor_data
+ from rclpy.time import Time
+ from sensor_msgs.msg import CameraInfo, Image
++from std_msgs.msg import String
+ from tf2_ros import Buffer, TransformException, TransformListener
+ import yaml
+ 
++from .ball_offset import apply_ball_offset, load_ball_offset
++
++
++def observation_status(node, observation, header, point=None):
++    """Keep bearing evidence separate from a valid metric observation."""
++    publisher = getattr(node, 'status_pub', None)
++    if publisher is not None:
++        horizontal = None
++        if observation.bearing_uv is not None:
++            u = observation.bearing_uv[0]
++            width = observation.mask.shape[1]
++            u = width-1-u if getattr(node, 'rotated', False) else u
++            horizontal = u-(width-1)/2
++        publisher.publish(String(data=json.dumps(dict(
++            stamp=header.stamp.sec+header.stamp.nanosec/1e9,
++            image_frame=header.frame_id, bearing_valid=observation.bearing_valid,
++            bearing_uv=observation.bearing_uv, circle_valid=observation.distance_valid,
++            bearing_horizontal_px=horizontal, bearing_positive='image_right_after_rotation',
++            bearing_source='fitted_center' if observation.blob else 'visible_arc_centroid',
++            range_valid=point is not None, blob=observation.blob,
++            confidence=observation.confidence, arc_fraction=observation.arc_fraction,
++            radius_uncertainty_px=observation.radius_uncertainty_px,
++            fit_error_px=observation.fit_error_px, roi_top=observation.roi_top,
++            offset_xy_m=list(getattr(node, 'offset_xy', (0., 0.))),
++            offset_frame='base_link', offset_source=getattr(node, 'offset_source', 'none')))))
++
+ 
+ def load_camera_yaml(path, _seen=None):
+     """Read K and D from a ROS camera_info YAML or a calibration profile.yaml."""
+@@ -61,7 +89,7 @@ def transform_matrix(tf):
+ 
+ 
+ class BallDetector(Node):
+-    """HSV ball detector (YOLO-replaceable by keeping the output topic)."""
++    """Shared HLS detector with the existing metric PointStamped contract."""
+ 
+     def __init__(self):
+         super().__init__('ball_detector')
+@@ -72,6 +100,10 @@ class BallDetector(Node):
+             raise ValueError('hsv_ranges must hold groups of 6 numbers')
+         self.ranges = [(tuple(flat[i:i + 3]), tuple(flat[i + 3:i + 6]))
+                        for i in range(0, len(flat), 6)]
++        hls = list(p('hls_ranges', [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99]).value)
++        if not hls or len(hls) % 6:
++            raise ValueError('hls_ranges must hold groups of six H,L,S bounds')
++        self.hls_ranges = [(tuple(hls[i:i+3]), tuple(hls[i+3:i+6])) for i in range(0, len(hls), 6)]
+         self.min_area = p('min_area_px', 12.0).value
+         self.min_circularity = p('min_circularity', .72).value
+         self.shape = {key: float(p(key, value).value)
+@@ -81,12 +113,18 @@ class BallDetector(Node):
+         self.robust_options = {key: float(p(key, value).value)
+                                for key, value in ROBUST_DEFAULTS.items()}
+         self.visual = BallImageDetector(
+-            self.ranges, self.min_area, self.min_circularity, self.shape, self.robust_options)
++            self.ranges, self.min_area, self.min_circularity, self.shape, self.robust_options,
++            hls_ranges=self.hls_ranges)
+         self.max_range = p('max_range', 2.5).value
+         self.rotated = p('image_rotated_180', False).value
+         self.floor_frame = p('floor_frame', 'base_footprint').value
+         self.output_frame = p('output_frame', 'base_link').value
+         camera_yaml = p('camera_yaml', '').value
++        self.offset_xy, self.offset_source = load_ball_offset(
++            p('ball_offset_source', '').value or camera_yaml,
++            simulation=bool(self.get_parameter('use_sim_time').value))
++        self.get_logger().info(f'Ball XY correction {self.offset_xy.tolist()} m in base_link; '
++                               f'source: {self.offset_source}')
+         self.K = self.D = None
+         self.allow_uncalibrated = p('allow_uncalibrated', False).value
+         self.approximate_hfov = float(p('approximate_hfov_deg', 66.0).value)
+@@ -104,6 +142,7 @@ class BallDetector(Node):
+         self.tf = Buffer()
+         self.listener = TransformListener(self.tf, self)
+         self.pub = self.create_publisher(PointStamped, 'ball_detection', 10)
++        self.status_pub = self.create_publisher(String, 'ball_detection/status', qos_profile_sensor_data)
+         self.debug_pub = (self.create_publisher(Image, 'ball_detection/debug_image',
+                                                 qos_profile_sensor_data)
+                           if p('publish_debug_image', False).value else None)
+@@ -169,6 +208,7 @@ class BallDetector(Node):
+                 debug_mask.header = msg.header
+                 self.mask_pub.publish(debug_mask)
+         if blob is None or self.K is None:
++            observation_status(self, observation, msg.header)
+             return
+         try:
+             cam = self.tf.lookup_transform(self.floor_frame, msg.header.frame_id,
+@@ -181,11 +221,23 @@ class BallDetector(Node):
+                 out = self.tf.lookup_transform(self.output_frame, self.floor_frame, Time())
+             except TransformException as exc:
+                 self.get_logger().warn(f'No camera TF: {exc}', throttle_duration_sec=5.0)
++                observation_status(self, observation, msg.header)
+                 return
+         point = project_ball(blob, frame.shape, self.K, self.D, transform_matrix(cam),
+                              transform_matrix(out), self.radius, self.max_range, self.rotated)
+         if point is None:
++            observation_status(self, observation, msg.header)
+             return
++        offset = getattr(self, 'offset_xy', (0., 0.))
++        rotation = None
++        if np.any(np.asarray(offset) != 0) and self.output_frame != 'base_link':
++            try:
++                rotation, _ = transform_matrix(self.tf.lookup_transform(self.output_frame, 'base_link', Time()))
++            except TransformException:
++                observation_status(self, observation, msg.header)
++                return
++        point = apply_ball_offset(point, offset, rotation)
++        observation_status(self, observation, msg.header, point)
+         detection = PointStamped()
+         detection.header.stamp = msg.header.stamp
+         detection.header.frame_id = self.output_frame
+diff --git a/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py b/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py
+index b53e572..f1e82c0 100644
+--- a/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py
++++ b/src/pinky_soccer_world_model/pinky_soccer_world_model/ball_vision.py
+@@ -33,6 +33,10 @@ def annotate_ball(frame, blob, calibration='calibrated', observation=None):
+         cv2.putText(preview, 'OUTSIDE SEARCH AREA', (8, max(60, top-8)),
+                     cv2.FONT_HERSHEY_SIMPLEX, .45, (255, 200, 0), 1, cv2.LINE_AA)
+     status = 'NO BALL'
++    if blob is None and observation is not None and observation.bearing_valid:
++        center = tuple(round(v) for v in observation.bearing_uv)
++        cv2.drawMarker(preview, center, (0, 210, 255), cv2.MARKER_TILTED_CROSS, 12, 1)
++        status = 'BEARING ONLY: radius/centre fit insufficient for metric output'
+     if blob is not None:
+         u, v, radius, _ = blob
+         center = (round(u), round(v))
+diff --git a/src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py b/src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py
+index 0041738..f206c47 100644
+--- a/src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py
++++ b/src/pinky_soccer_world_model/pinky_soccer_world_model/opponents.py
+@@ -1,5 +1,8 @@
+ """Opponent candidates from a 2D scan: points left after removing the known walls."""
+ 
++from collections import deque
++from dataclasses import dataclass
++
+ import numpy as np
+ 
+ 
+@@ -43,3 +46,184 @@ def cluster_opponents(points, walls, wall_margin=0.06, gap=0.05, min_points=3,
+         if len(c) >= min_points and size <= max_size:
+             out.append((float(c[:, 0].mean()), float(c[:, 1].mean()), size))
+     return out
++
++
++@dataclass(frozen=True)
++class Candidate:
++    """Observed surface mean, not an inferred robot centre [map metres]."""
++
++    x: float
++    y: float
++    size: float
++    count: int
++
++    @property
++    def xy(self):
++        return np.array((self.x, self.y))
++
++
++def indexed_candidates(ranges, angle_min, angle_increment, range_min, range_max,
++                       rotation, translation, walls, structures=(), wall_margin=.06,
++                       gap=.05, min_points=3, min_size=.015, max_size=.30,
++                       self_radius=.08, max_beam_gap=3, max_adaptive_gap=.09):
++    """O(N) scan-order clustering. Retain beam holes; wrap only a full revolution.
++
++    Adaptive distance allows sparse far returns but cannot exceed max_adaptive_gap.
++    A few missing beams can join fragments only within that same spatial bound.
++    No circle, shape completion, or ground-truth input is used.
++    """
++    r = np.asarray(ranges, float)
++    indices = np.arange(len(r))
++    angles = angle_min + indices * angle_increment
++    valid = np.isfinite(r) & (r >= max(range_min, self_radius)) & (r <= range_max)
++    local = np.column_stack((r[valid]*np.cos(angles[valid]),
++                             r[valid]*np.sin(angles[valid])))
++    pts = local @ np.asarray(rotation)[:2, :2].T + np.asarray(translation)[:2]
++    ids, distances = indices[valid], r[valid]
++    if not len(pts):
++        return []
++    keep = ((pts[:, 0] >= walls.xmin+wall_margin) &
++            (pts[:, 0] <= walls.xmax-wall_margin) &
++            (pts[:, 1] >= walls.ymin+wall_margin) &
++            (pts[:, 1] <= walls.ymax-wall_margin))
++    for rect in structures:
++        # Distance to an existing solid footprint, not its bounding disk.
++        dx = np.maximum(np.maximum(rect.xmin-pts[:, 0], 0), pts[:, 0]-rect.xmax)
++        dy = np.maximum(np.maximum(rect.ymin-pts[:, 1], 0), pts[:, 1]-rect.ymax)
++        keep &= np.hypot(dx, dy) > wall_margin
++    pts, ids, distances = pts[keep], ids[keep], distances[keep]
++    if not len(pts):
++        return []
++
++    def adjacent(a, b, beam_gap):
++        threshold = min(max_adaptive_gap, max(gap, 1.8*min(distances[a], distances[b])
++                                             * abs(angle_increment)*beam_gap))
++        return (beam_gap <= max_beam_gap and
++                np.linalg.norm(pts[a]-pts[b]) <= threshold)
++
++    groups, start = [], 0
++    for i in range(1, len(pts)):
++        if not adjacent(i-1, i, ids[i]-ids[i-1]):
++            groups.append(np.arange(start, i))
++            start = i
++    groups.append(np.arange(start, len(pts)))
++    full_scan = abs(angle_increment)*len(r) >= 2*np.pi-2*abs(angle_increment)
++    if (full_scan and len(groups) > 1 and
++            adjacent(len(pts)-1, 0, len(r)-ids[-1]+ids[0])):
++        groups[0] = np.concatenate((groups.pop(), groups[0]))
++    out = []
++    for g in groups:
++        c = pts[g]
++        centre = c.mean(axis=0)
++        size = float(2*np.max(np.linalg.norm(c-centre, axis=1)))
++        if len(g) >= min_points and min_size <= size <= max_size:
++            out.append(Candidate(float(centre[0]), float(centre[1]), size, len(g)))
++    return out
++
++
++class SingleOpponentTracker:
++    """One map-frame alpha-beta track, confirmed by hits in distinct scan stamps."""
++
++    def __init__(self, alpha=.6, beta=.06, hold_sec=1., observed_sec=.3,
++                 confirm_hits=3, confirm_window=5, max_speed=.6,
++                 association_slack=.08, velocity_deadband=.015):
++        if not (0 < alpha <= 1 and 0 <= beta <= 1 and hold_sec > 0 and
++                observed_sec > 0 and 1 <= confirm_hits <= confirm_window and
++                max_speed > 0 and association_slack > 0 and velocity_deadband >= 0):
++            raise ValueError('invalid opponent tracking parameters')
++        self.alpha, self.beta = alpha, beta
++        self.hold, self.observed_sec = hold_sec, observed_sec
++        self.hits, self.window = confirm_hits, confirm_window
++        self.max_speed, self.slack = max_speed, association_slack
++        self.deadband = velocity_deadband
++        self.reset()
++
++    def reset(self):
++        self.position = self.velocity = self.measured = None
++        self.last_seen = self.last_scan = None
++        self.pending = []
++        self.velocity_valid = False
++
++    def update(self, candidates, stamp):
++        """At most one correction per increasing measurement timestamp (seconds)."""
++        if not np.isfinite(stamp) or stamp <= 0:
++            return False
++        if self.last_scan is not None:
++            if stamp < self.last_scan:
++                return False  # late packets are not a new measurement epoch
++            elif stamp == self.last_scan:
++                return False
++        self.last_scan = stamp
++        if self.position is not None and stamp-self.last_seen > self.hold:
++            self.position = self.velocity = self.measured = None
++            self.velocity_valid = False
++            self.pending = []
++        if self.position is not None:
++            dt = stamp-self.last_seen
++            predicted = self.position+self.velocity*dt
++            nearby = [c for c in candidates
++                      if np.linalg.norm(c.xy-self.measured) <= self.slack+self.max_speed*dt
++                      and np.linalg.norm(c.xy-predicted) <= self.slack+self.max_speed*dt]
++            if not nearby:
++                return False
++            chosen = min(nearby, key=lambda c: np.linalg.norm(c.xy-predicted))
++            residual = chosen.xy-predicted
++            self.position = predicted+self.alpha*residual
++            self.velocity += self.beta*residual/max(dt, .001)
++            speed = np.linalg.norm(self.velocity)
++            if speed > self.max_speed:
++                self.velocity *= self.max_speed/speed
++            if np.linalg.norm(chosen.xy-self.measured) < self.deadband*dt:
++                self.velocity *= .5
++            self.measured, self.last_seen = chosen.xy, stamp
++            self.velocity_valid = True
++            return True
++
++        # Bounded tentative hypotheses, each containing one bool per scan, not per tick.
++        used = set()
++        surviving = []
++        for track in self.pending:
++            point, seen, history = track
++            if stamp-seen > self.hold:
++                continue
++            options = [(i, c) for i, c in enumerate(candidates) if i not in used and
++                       np.linalg.norm(c.xy-point) <= self.slack+self.max_speed*(stamp-seen)]
++            history.append(False)
++            if options:
++                i, chosen = min(options, key=lambda ic: np.linalg.norm(ic[1].xy-point))
++                used.add(i)
++                point, seen, history[-1] = chosen.xy, stamp, True
++                if sum(history) >= self.hits:
++                    self.position, self.measured = point.copy(), point.copy()
++                    self.velocity = np.zeros(2)
++                    self.last_seen = stamp
++                    self.pending = []
++                    return True
++            if any(history):
++                surviving.append((point, seen, history))
++        for i, c in enumerate(candidates):
++            if i not in used and len(surviving) < 8:
++                surviving.append((c.xy, stamp, deque([True], maxlen=self.window)))
++        self.pending = surviving
++        if self.hits == 1 and self.pending:
++            self.position = self.measured = self.pending[0][0].copy()
++            self.velocity, self.last_seen = np.zeros(2), stamp
++            self.pending = []
++            return True
++        return False
++
++    def sample(self, now):
++        """Read-only prediction; tick frequency never changes the filter state."""
++        if self.position is None:
++            return None
++        age = now-self.last_seen
++        if age < 0 or age > self.hold:
++            return None
++        state = 0 if age <= self.observed_sec and self.last_scan == self.last_seen else 1
++        velocity = self.velocity.copy() if self.velocity_valid else np.zeros(2)
++        if np.linalg.norm(velocity) < self.deadband:
++            velocity.fill(0)
++        position = self.position+velocity*age
++        return dict(position=position, velocity=velocity, state=state,
++                    last_seen=self.last_seen, confidence=max(0., 1-age/self.hold),
++                    variance=.01+(.05*age)**2)
+diff --git a/src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py b/src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py
+index 71d8e0e..1cd8f8f 100644
+--- a/src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py
++++ b/src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py
+@@ -1,26 +1,19 @@
+-"""Single orange-ball observation from colour evidence and visible circular arcs.
+-
+-Colour seeds suggest identity, not a connected object silhouette. Image edges
+-separate a ball from a similarly coloured table. Missing colour under glare and
+-missing arcs under occlusion are allowed; a circle without evidence is not.
+-"""
+-
++"""Common HLS/arc detector; pixel observations retain full-image coordinates."""
+ from dataclasses import dataclass
+ import math
+ 
+-import cv2
+ import numpy as np
+ 
+-from .geometry import _compact_blob, color_mask
+-
+ ROBUST_DEFAULTS = {'min_arc_fraction': .42, 'min_seed_fraction': .10,
+                    'min_explained_fraction': .42, 'min_detection_confidence': .48,
+-                   'visual_memory_s': .7, 'detection_top_fraction': 1/3}
++                   'visual_memory_s': .7, 'detection_top_fraction': 130/480,
++                   'min_bearing_arc_fraction': .16, 'max_radius_uncertainty': .08,
++                   'min_contiguous_arc_fraction': .25}
+ 
+ 
+ @dataclass
+ class BallObservation:
+-    """One current-frame observation, not a prediction through complete invisibility."""
++    """A current observation; absent/unreliable circles never become metric points."""
+ 
+     blob: tuple | None
+     mask: np.ndarray
+@@ -30,28 +23,11 @@ class BallObservation:
+     partial: bool = False
+     candidates: int = 0
+     roi_top: int = 0
+-
+-
+-def illumination_evidence(frame, ranges):
+-    """Combine raw and bounded neutral-patch white balance, preserving dark colour."""
+-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+-    neutral = (hsv[:, :, 1] < 80) & (hsv[:, :, 2] > 120)
+-    gain = np.ones(3)
+-    if np.count_nonzero(neutral) > max(64, frame.shape[0]*frame.shape[1]*.005):
+-        white = np.mean(frame[neutral], axis=0)
+-        gain = np.clip(np.mean(white)/np.maximum(white, 1), .75, 1.3)
+-    balanced = np.clip(frame.astype(np.float32)*gain, 0, 255).astype(np.uint8)
+-    seed_ranges, weak_ranges = [], []
+-    for low, high in ranges:
+-        # Hue stays user-configurable; relax only saturation/value for shadows.
+-        seed_ranges.append(((low[0], min(low[1], 95), min(low[2], 25)), tuple(high)))
+-        weak_ranges.append(((max(0, low[0]-4), 35, 15),
+-                            (min(179, high[0]+4), high[1], high[2])))
+-    seed = color_mask(frame, seed_ranges) | color_mask(balanced, seed_ranges)
+-    weak = color_mask(frame, weak_ranges) | color_mask(balanced, weak_ranges)
+-    glare = (hsv[:, :, 1] < 85) & (hsv[:, :, 2] > 115)
+-    explained = (weak > 0) | glare
+-    return seed, explained
++    bearing_uv: tuple | None = None
++    bearing_valid: bool = False
++    distance_valid: bool = False
++    fit_error_px: float | None = None
++    radius_uncertainty_px: float | None = None
+ 
+ 
+ def circle_fit(points):
+@@ -70,214 +46,42 @@ def circle_fit(points):
+     return float(x+mean[0]), float(y+mean[1]), float(math.sqrt(radius2))
+ 
+ 
+-def edge_support(circle, gradients):
+-    """Find observed edge points with a radial normal, in 96 angular sectors."""
+-    u, v, radius = circle
+-    angles = np.linspace(0, 2*math.pi, 96, endpoint=False)
+-    c, s = np.cos(angles), np.sin(angles)
+-    step = max(1., radius*.035)
+-    radii = radius+np.arange(-2, 3)[:, None]*step
+-    xx = np.rint(u+radii*c).astype(int)
+-    yy = np.rint(v+radii*s).astype(int)
+-    height, width = gradients[0][0].shape
+-    valid = (xx >= 1) & (xx < width-1) & (yy >= 1) & (yy < height-1)
+-    x, y = np.clip(xx, 0, width-1), np.clip(yy, 0, height-1)
+-    scores = np.zeros(xx.shape)
+-    for gx, gy in gradients:
+-        dx, dy = gx[y, x], gy[y, x]
+-        magnitude = np.hypot(dx, dy)
+-        alignment = np.abs(dx*c+dy*s)/(magnitude+1e-6)
+-        votes = np.where(valid & (alignment > .90) & (magnitude > 25), magnitude, 0.)
+-        scores = np.maximum(scores, votes)
+-    best = scores.argmax(axis=0)
+-    supported = scores[best, np.arange(96)] > 0
+-    points = np.column_stack((xx[best, np.arange(96)][supported],
+-                              yy[best, np.arange(96)][supported])).astype(float)
+-    return float(supported.mean()), points, supported
+-
+-
+-def circle_fractions(circle, seed, explained):
+-    """Measure evidence inside a proposed circle, including partly visible circles."""
+-    u, v, radius = circle
+-    height, width = seed.shape
+-    x0, y0 = max(0, int(u-radius)), max(0, int(v-radius))
+-    x1, y1 = min(width, math.ceil(u+radius+1)), min(height, math.ceil(v+radius+1))
+-    if x1 <= x0 or y1 <= y0:
+-        return 0., 0.
+-    yy, xx = np.ogrid[y0:y1, x0:x1]
+-    inside = (xx-u)**2+(yy-v)**2 <= (radius*.93)**2
+-    count = max(1, np.count_nonzero(inside))
+-    return (float(np.count_nonzero(seed[y0:y1, x0:x1][inside])/count),
+-            float(np.count_nonzero(explained[y0:y1, x0:x1][inside])/count))
+-
+ 
+ def observe_ball(frame, ranges, min_area=12, min_circularity=.72,
+-                 shape=None, options=None, previous=None):
+-    """Search the field ROI and restore full-image coordinates for projection."""
+-    fraction = (options or {}).get('detection_top_fraction',
+-                                   ROBUST_DEFAULTS['detection_top_fraction'])
++                 shape=None, options=None, previous=None, hls_ranges=None):
++    """Fit within the lower ROI and restore u/v/r in original image pixels.
++
++    ranges/min_circularity remain accepted for old callers; HLS uses its explicit
++    configuration. No radius-to-distance formula is introduced here.
++    """
++    from .hls_ball import HLS_RANGES, region
++    cfg = {**ROBUST_DEFAULTS, **(options or {})}
++    fraction = cfg['detection_top_fraction']
+     if not math.isfinite(fraction) or not 0 <= fraction < 1:
+         raise ValueError('detection_top_fraction must be between 0 (inclusive) and 1')
+     height, width = frame.shape[:2]
+     top = min(height-1, math.ceil(height*fraction))
+     if min(height-top, width) < 8:
+         return BallObservation(None, np.zeros((height, width), np.uint8), roi_top=top)
+-    prior = previous
+-    if prior is not None:
+-        prior = ((prior[0], prior[1]-top, *prior[2:])
+-                 if prior[1] >= top else None)
+-    result = _observe_ball_region(frame[top:], ranges, min_area, min_circularity,
+-                                  shape, options, prior)
++    prior = ((previous[0], previous[1]-top, *previous[2:])
++             if previous is not None and previous[1] >= top else None)
++    result = region(frame[top:], HLS_RANGES if hls_ranges is None else hls_ranges,
++                    min_area, shape or {}, cfg, prior)
+     mask = np.zeros((height, width), np.uint8)
+     mask[top:] = result.mask
+     result.mask, result.roi_top = mask, top
+     if result.blob is not None:
+         u, v, radius, area = result.blob
+-        result.blob = (u, v+top, radius, area) if v >= 0 else None
+-    return result
+-
+-
+-def _observe_ball_region(frame, ranges, min_area=12, min_circularity=.72,
+-                         shape=None, options=None, previous=None):
+-    """Generate circle hypotheses, refit visible arcs, then return at most one."""
+-    cfg = {**ROBUST_DEFAULTS, **(options or {})}
+-    height, width = frame.shape[:2]
+-    scale = min(1., 480/max(height, width))
+-    image = cv2.resize(frame, (round(width*scale), round(height*scale))) if scale < 1 else frame
+-    seed, explained = illumination_evidence(image, ranges)
+-    result = BallObservation(None, cv2.resize(seed, (width, height)) if scale < 1 else seed)
+-    if np.count_nonzero(seed) < min_area*scale*scale:
+-        return result
+-    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+-    light = cv2.createCLAHE(clipLimit=2., tileGridSize=(8, 8)).apply(lab[:, :, 0])
+-    rgb = image.astype(np.float32)
+-    saturation = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:, :, 1]
+-    red_excess = (rgb[:, :, 2]-rgb[:, :, 1])/(rgb.sum(axis=2)+1)
+-    chroma = np.clip(red_excess*765, 0, 255)
+-    planes = [cv2.GaussianBlur(light, (5, 5), 1),
+-              cv2.GaussianBlur(chroma.astype(np.uint8), (5, 5), 1)]
+-    gradients = [(cv2.Sobel(p, cv2.CV_32F, 1, 0), cv2.Sobel(p, cv2.CV_32F, 0, 1))
+-                 for p in planes]
+-    proposals = []
+-    compact = _compact_blob(image, ranges, min_area*scale*scale,
+-                            min_circularity, **(shape or {}))
+-    if compact is not None:
+-        proposals.append(compact[:3])
+-    fast_previous = False
+-    if previous is not None:
+-        prior = tuple(v*scale for v in previous[:3])
+-        coverage, _, _ = edge_support(prior, gradients)
+-        fraction, explanation = circle_fractions(prior, seed, explained)
+-        fast_previous = coverage >= .65 and fraction >= .15 and explanation >= .5
+-        proposals.append(prior)
+-    for plane in ([] if fast_previous else planes):
+-        x0 = y0 = 0
+-        crop = plane
+-        min_radius, max_radius = 4, max(5, min(image.shape[:2])//3)
+-        if previous is not None:
+-            u, v, r = (value*scale for value in previous[:3])
+-            margin = r*2.5+16
+-            x0, y0 = max(0, int(u-margin)), max(0, int(v-margin))
+-            x1 = min(plane.shape[1], math.ceil(u+margin))
+-            y1 = min(plane.shape[0], math.ceil(v+margin))
+-            crop = plane[y0:y1, x0:x1]
+-            min_radius, max_radius = max(3, int(r*.5)), max(5, int(r*1.7))
+-        for method, threshold in [(cv2.HOUGH_GRADIENT, 20), (cv2.HOUGH_GRADIENT_ALT, .65)]:
+-            circles = cv2.HoughCircles(
+-                crop, method, dp=1.5, minDist=16, param1=100, param2=threshold,
+-                minRadius=min_radius, maxRadius=max_radius)
+-            if circles is not None:
+-                proposals.extend((float(row[0]+x0), float(row[1]+y0), float(row[2]))
+-                                 for row in circles[0, :24])
+-    accepted = []
+-    for proposed in proposals:
+-        seed_fraction, explained_fraction = circle_fractions(proposed, seed, explained)
+-        if (seed_fraction < cfg['min_seed_fraction']
+-                or explained_fraction < cfg['min_explained_fraction']):
+-            continue
+-        coverage, points, _ = edge_support(proposed, gradients)
+-        if coverage < cfg['min_arc_fraction']:
+-            continue
+-        # Robust trimming removes finger/straight-edge points before circle fitting.
+-        fitted = proposed
+-        for _ in range(2):
+-            distances = np.linalg.norm(points-np.array(fitted[:2]), axis=1)
+-            inliers = points[np.abs(distances-fitted[2]) < max(1.8, fitted[2]*.055)]
+-            update = circle_fit(inliers)
+-            if update is None:
+-                break
+-            if (np.linalg.norm(np.array(update[:2])-proposed[:2]) > proposed[2]*.25
+-                    or not .75 < update[2]/proposed[2] < 1.25):
+-                break
+-            fitted = update
+-        coverage, _, supported = edge_support(fitted, gradients)
+-        fraction, explained_fraction = circle_fractions(fitted, seed, explained)
+-        if (coverage < cfg['min_arc_fraction'] or fraction < cfg['min_seed_fraction']
+-                or explained_fraction < cfg['min_explained_fraction']):
+-            continue
+-        # Circular texture in skin/wood must not count as an orange object edge.
+-        angles = np.linspace(0, 2*math.pi, 96, endpoint=False)
+-        samples = []
+-        for factor in [.8, 1.2]:
+-            xx = np.rint(fitted[0]+factor*fitted[2]*np.cos(angles)).astype(int)
+-            yy = np.rint(fitted[1]+factor*fitted[2]*np.sin(angles)).astype(int)
+-            valid = ((xx >= 0) & (xx < seed.shape[1])
+-                     & (yy >= 0) & (yy < seed.shape[0]))
+-            samples.append((red_excess[np.clip(yy, 0, seed.shape[0]-1),
+-                                       np.clip(xx, 0, seed.shape[1]-1)], valid))
+-        contrast = (samples[0][0]-samples[1][0] > .035)
+-        contrast &= samples[0][1] & samples[1][1] & supported
+-        if contrast.mean() < .25:
+-            continue
+-        if coverage < .75:
+-            angles = np.linspace(0, 2*math.pi, 96, endpoint=False)
+-            xx = np.rint(fitted[0]+1.3*fitted[2]*np.cos(angles)).astype(int)
+-            yy = np.rint(fitted[1]+1.3*fitted[2]*np.sin(angles)).astype(int)
+-            valid = ((xx >= 0) & (xx < seed.shape[1]) & (yy >= 0) & (yy < seed.shape[0])
+-                     & ~supported)
+-            if valid.any() and np.mean(seed[yy[valid], xx[valid]] > 0) > .6:
+-                continue  # a coloured shape continuing beyond the proposed circle
+-        yy, xx = np.ogrid[:seed.shape[0], :seed.shape[1]]
+-        interior = (xx-fitted[0])**2+(yy-fitted[1])**2 < (.8*fitted[2])**2
+-        colour_values = red_excess[interior]
+-        strength = float(np.percentile(colour_values, 70))
+-        coloured = saturation[interior & (seed > 0)]
+-        # Glare/occluders are excluded from this identity check. Allow uniformly
+-        # washed-out orange, but reject mixed weak skin/wood texture.
+-        if (len(coloured) == 0
+-                or (np.mean(coloured >= 160) < .6 and np.std(coloured) > 25)):
+-            continue
+-        vividness = float(np.clip((strength-.06)/.24, 0, 1))
+-        score = (.30*coverage+.15*min(1., fraction/.7)+.10*explained_fraction
+-                 + .15*min(1., contrast.mean()/.65)+.30*vividness)
+-        if score < cfg['min_detection_confidence']:
+-            continue
+-        blob = (fitted[0]/scale, fitted[1]/scale, fitted[2]/scale,
+-                math.pi*(fitted[2]/scale)**2*fraction)
+-        if blob[3] < min_area:
+-            continue
+-        continuity = 0.
+-        if previous is not None:
+-            shift = math.hypot(blob[0]-previous[0], blob[1]-previous[1])
+-            if shift < max(20., previous[2]*2) and .5 < blob[2]/previous[2] < 2:
+-                continuity = .12*(1-shift/max(20., previous[2]*2))
+-        accepted.append((score+continuity, score, coverage, fraction, blob))
+-    result.candidates = len(accepted)
+-    if previous is not None:
+-        accepted = [row for row in accepted
+-                    if math.hypot(row[4][0]-previous[0], row[4][1]-previous[1])
+-                    < max(20., previous[2]*2) and .5 < row[4][2]/previous[2] < 2]
+-    if accepted:
+-        (_, result.confidence, result.arc_fraction,
+-         result.color_fraction, result.blob) = max(accepted)
+-        result.partial = result.arc_fraction < .8 or result.color_fraction < .6
++        result.blob = (u, v+top, radius, area)
++    if result.bearing_uv is not None:
++        result.bearing_uv = (result.bearing_uv[0], result.bearing_uv[1]+top)
+     return result
+ 
+ 
+ class BallImageDetector:
+     """Retain one pixel target briefly, but never manufacture a current observation."""
+ 
+-    def __init__(self, ranges, min_area=12, min_circularity=.72, shape=None, options=None):
++    def __init__(self, ranges, min_area=12, min_circularity=.72, shape=None, options=None, hls_ranges=None):
+         self.ranges, self.min_area, self.min_circularity = ranges, min_area, min_circularity
+         self.shape, self.options = shape, {**ROBUST_DEFAULTS, **(options or {})}
+         for key, value in self.options.items():
+@@ -287,6 +91,12 @@ class BallImageDetector:
+                 continue
+             if not math.isfinite(value) or value <= 0 or (key != 'visual_memory_s' and value > 1):
+                 raise ValueError(f'Invalid robust detector option: {key}')
++        from .hls_ball import HLS_RANGES
++        self.hls_ranges = HLS_RANGES if hls_ranges is None else hls_ranges
++        for low, high in self.hls_ranges:
++            if (len(low) != 3 or len(high) != 3 or
++                    any(not 0 <= a <= b <= limit for a, b, limit in zip(low, high, (180, 255, 255)))):
++                raise ValueError('Invalid HLS ball bounds')
+         self.reset()
+ 
+     def reset(self):
+@@ -305,7 +115,7 @@ class BallImageDetector:
+                 and timestamp-self.last_observed > self.options['visual_memory_s']):
+             self.previous = None
+         self.result = observe_ball(frame, self.ranges, self.min_area, self.min_circularity,
+-                                   self.shape, self.options, self.previous)
++                                   self.shape, self.options, self.previous, self.hls_ranges)
+         self.frame_key, self.last_time = frame_key, timestamp
+         if self.result.blob is not None:
+             self.previous, self.last_observed = self.result.blob, timestamp
+diff --git a/src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py b/src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py
+index 7f514a3..0afa45d 100644
+--- a/src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py
++++ b/src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py
+@@ -6,10 +6,12 @@ Self pose
+                            then also broadcasts map -> odom (static) so TF users agree.
+ Ball      : /ball_detection (PointStamped) -> map -> BallFilter (Kalman + friction).
+ Search    : SearchGrid lowered inside the camera field of view when nothing is seen.
+-Opponents : /scan points inside the walls, clustered (basic; tracking is TODO).
++Opponents : /scan points inside the walls, clustered, confirmed and alpha-beta tracked (one opponent).
+ Game      : /game/playing (std_msgs/Bool).
+ """
+ 
++from collections import deque
++import json
+ import math
+ import time
+ 
+@@ -23,15 +25,16 @@ from pinky_soccer_world_model.ball_filter import BallFilter, BallFilterParams, L
+ from pinky_soccer_world_model.geometry import compose2d, inverse2d, quat_from_yaw, yaw_from_quat
+ from pinky_soccer_world_model.geometry import wrap
+ from pinky_soccer_world_model.msgs import tracked, world_model
+-from pinky_soccer_world_model.opponents import cluster_opponents, scan_points
++from pinky_soccer_world_model.opponents import (
++    SingleOpponentTracker, cluster_opponents, indexed_candidates, scan_points)
+ from pinky_soccer_world_model.search_grid import SearchGrid
+ import rclpy
+ from rclpy.duration import Duration
+ from rclpy.node import Node
+-from rclpy.qos import qos_profile_sensor_data
++from rclpy.qos import DurabilityPolicy, QoSProfile, qos_profile_sensor_data
+ from rclpy.time import Time
+ from sensor_msgs.msg import CameraInfo, LaserScan
+-from std_msgs.msg import Bool
++from std_msgs.msg import Bool, String
+ from tf2_ros import Buffer, StaticTransformBroadcaster, TransformException, TransformListener
+ 
+ 
+@@ -83,6 +86,16 @@ class WorldModelNode(Node):
+                         'max_size': p('opponents.max_size', 0.30).value}
+         self.opp_hold = p('opponents.hold_sec', 1.0).value
+         self.opponents, self.opp_time = [], None
++        self.opponent_tracker = SingleOpponentTracker(
++            hold_sec=self.opp_hold, **{k: p('opponents.'+k, v).value for k, v in dict(
++                alpha=.6, beta=.06, observed_sec=.3, confirm_hits=3, confirm_window=5,
++                max_speed=.6, association_slack=.08, velocity_deadband=.015).items()})
++        self.opp_extra = {k: p('opponents.'+k, v).value for k, v in dict(
++            min_size=.015, self_radius=.08, max_beam_gap=3, max_adaptive_gap=.09).items()}
++        self.opp_map_alignment = None
++        self.opp_pending = deque(maxlen=5)
++        self.opp_tf_wait = p('opponents.tf_wait_sec', .3).value
++        self.opp_processed = self.opp_expired = 0
+ 
+         self.pose = None            # (x, y, theta) map
+         self.pose_source_stamp = None
+@@ -98,7 +111,12 @@ class WorldModelNode(Node):
+             if self.odom_offset is not None:
+                 self.static.sendTransform(self.map_to_odom())
+         self.pub = self.create_publisher(WorldModel, 'world_model', 10)
++        # Existing unconfirmed clusters remain available for collision avoidance.
++        self.obstacle_pub = self.create_publisher(WorldModel, 'world_model/obstacles', 10)
++        self.opponent_status_pub = self.create_publisher(String, 'opponents/status', 5)
+         self.create_subscription(Odometry, 'odom', self.on_odom, 20)
++        self.create_subscription(String, 'preparation/team', self.on_team,
++            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+         self.create_subscription(PointStamped, 'ball_detection', self.on_ball, 10)
+         self.create_subscription(CameraInfo, 'camera/camera_info', self.on_info,
+                                  qos_profile_sensor_data)
+@@ -127,6 +145,10 @@ class WorldModelNode(Node):
+          t.transform.rotation.w) = q
+         return t
+ 
++    def on_team(self, msg):
++        if not self.playing and msg.data in ('yellow', 'blue'):
++            self.field = Field(self.field.spec, msg.data)
++
+     def on_playing(self, msg):
+         """Latest game start/stop."""
+         self.playing = msg.data
+@@ -185,21 +207,81 @@ class WorldModelNode(Node):
+                          float(np.hypot(local[0], local[1])))
+         self.grid.observe(np.zeros_like(self.grid.p, bool), 0.0, world[:2])
+ 
++    def scan_transform(self, target, source, stamp):
++        """Require measurement-time TF: latest fallback would invent map velocity."""
++        if stamp.sec == 0 and stamp.nanosec == 0:
++            return None
++        try:
++            tf = self.tf.lookup_transform(target, source, Time.from_msg(stamp),
++                                           timeout=Duration(seconds=0.0))
++            return transform_matrix(tf)
++        except TransformException:
++            return None
++
+     def on_scan(self, msg):
+-        """Opponent candidates from wall-free LiDAR clusters."""
++        """Same scan feeds legacy avoidance candidates and one confirmed opponent."""
+         if not self.opp_enabled:
+             return
+-        rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+-        if rt is None:
+-            return
++        self.opp_pending.append(msg)
++        self.process_opponent_scans()
++
++    def process_opponent_scans(self):
++        """Retry delayed TF without blocking callbacks or replacing measurement time."""
++        while self.opp_pending:
++            msg = self.opp_pending[0]
++            stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
++            last = self.opponent_tracker.last_scan
++            if stamp <= 0 or (last is not None and stamp <= last):
++                self.opp_pending.popleft()
++                continue
++            rt = self.scan_transform(self.map_frame, msg.header.frame_id, msg.header.stamp)
++            if rt is None:
++                if self.now()-stamp <= self.opp_tf_wait:
++                    break
++                self.opp_expired += 1
++                self.opp_pending.popleft()
++                continue
++            self.opp_pending.popleft()
++            self.process_opponent_scan(msg, rt)
++
++    def process_opponent_scan(self, msg, rt):
++        start = time.perf_counter()
++        stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
++        alignment = self.scan_transform(self.map_frame, self.odom_frame, msg.header.stamp)
++        if alignment is not None:
++            ar, at = alignment
++            pose = (float(at[0]), float(at[1]), math.atan2(ar[1, 0], ar[0, 0]))
++            previous = self.opp_map_alignment
++            if previous is not None and (math.hypot(pose[0]-previous[0], pose[1]-previous[1])
++                                         > .15 or abs(wrap(pose[2]-previous[2])) > .35):
++                self.opponent_tracker.reset()
++                self.opponents, self.opp_time = [], None
++            self.opp_map_alignment = pose
+         R, t = rt
+         pts = scan_points(msg.ranges, msg.angle_min, msg.angle_increment,
+                           msg.range_min, msg.range_max)
+-        if len(pts) == 0:
+-            return
+         world = (R[:2, :2] @ pts.T).T + t[:2]
+-        self.opponents = cluster_opponents(world, self.field.inner_walls, **self.opp_cfg)
+-        self.opp_time = self.now()
++        # Preserve the pre-existing candidate geometry/radii for MPC, without confirmation.
++        legacy = cluster_opponents(world, self.field.inner_walls, **self.opp_cfg)
++        if self.opp_time is None or stamp > self.opp_time:
++            self.opponents, self.opp_time = legacy, stamp
++        structures = [o.rect for o in self.field.obstacles_seen_at(float(t[2]))
++                      if 'roof' not in o.name]
++        candidates = indexed_candidates(
++            msg.ranges, msg.angle_min, msg.angle_increment, msg.range_min, msg.range_max,
++            R, t, self.field.inner_walls, structures, **self.opp_cfg, **self.opp_extra)
++        self.opponent_tracker.update(candidates, stamp)
++        self.opp_processed += 1
++        if self.opponent_status_pub.get_subscription_count():
++            self.opponent_status_pub.publish(String(data=json.dumps(dict(
++                stamp=stamp, processed=self.opp_processed, expired_tf=self.opp_expired,
++                pickup_age_s=self.now()-stamp,
++                legacy_count=len(legacy), candidate_count=len(candidates),
++                candidates=[dict(x=c.x, y=c.y, size=c.size, points=c.count)
++                            for c in candidates],
++                confirmed=self.opponent_tracker.sample(stamp) is not None,
++                velocity_valid=self.opponent_tracker.velocity_valid,
++                processing_ms=1000*(time.perf_counter()-start)))))
+ 
+     # ------------------------------------------------------------------ output
+     def on_localization_pose(self, msg):
+@@ -225,16 +307,23 @@ class WorldModelNode(Node):
+             self.ball = BallFilter(self.ball.p, self.field.inner_walls, self.ball_radius)
+             self.grid.p.fill(self.grid.prior)
+             self.opponents, self.opp_time = [], None
++            self.opponent_tracker.reset()
+         self.pose = pose
+         self.pose_source_stamp=self.last_lookup_stamp
+ 
+     def tick(self):
+         """Predict, update the search grid and publish."""
+         now = self.now()
++        if self.last_tick is not None and now < self.last_tick:
++            self.opponent_tracker.reset()
++            self.opponents, self.opp_time = [], None
++            self.opp_map_alignment = None
++            self.opp_pending.clear()
+         dt = 0.0 if self.last_tick is None else max(0.0, now - self.last_tick)
+         self.last_tick = now
+         if self.localization == 'tf':
+             self.update_pose_from_tf()
++        self.process_opponent_scans()
+         if self.pose is None:
+             self.get_logger().warn('Waiting for self pose', throttle_duration_sec=5.0)
+             return
+@@ -262,13 +351,22 @@ class WorldModelNode(Node):
+                            state=TrackedObject.LOST, confidence=0.0)
+ 
+         opponents = []
+-        if self.opp_time is not None and now - self.opp_time <= self.opp_hold:
+-            fresh = now - self.opp_time <= 0.3
++        sample = self.opponent_tracker.sample(now) if self.opp_enabled else None
++        if sample is not None:
++            x, y = sample['position']
++            v = sample['variance']
++            opponents.append(tracked(
++                'opp_0', (x, y, 0.), sample['velocity'],
++                [v, 0, 0, 0, v, 0, 0, 0, 10.], sample['state'],
++                sample['last_seen'], sample['confidence']))
++        obstacles = []
++        if self.opp_time is not None and 0 <= now-self.opp_time <= self.opp_hold:
+             for i, (ox, oy, _) in enumerate(self.opponents):
+-                opponents.append(tracked(
+-                    f'opp_{i}', (ox, oy, 0.0), cov=[0.01, 0, 0, 0, 0.01, 0, 0, 0, 10.0],
+-                    state=TrackedObject.OBSERVED if fresh else TrackedObject.ESTIMATED,
+-                    last_seen=self.opp_time, confidence=1.0 if fresh else 0.5))
++                obstacles.append(tracked(
++                    f'candidate_{i}', (ox, oy, 0.),
++                    cov=[.01, 0, 0, 0, .01, 0, 0, 0, 10.],
++                    state=TrackedObject.OBSERVED if now-self.opp_time <= .3
++                    else TrackedObject.ESTIMATED, last_seen=self.opp_time))
+ 
+         me = tracked('self', self.pose, self.velocity, self.pose_cov, TrackedObject.OBSERVED,
+                      self.pose_source_stamp or 0., 1.0)
+@@ -284,6 +382,9 @@ class WorldModelNode(Node):
+                 me.state, me.confidence = TrackedObject.ESTIMATED, 0.0
+         self.pub.publish(world_model(self.get_clock().now().to_msg(), self.field, me, ball,
+                                      opponents, self.playing and odom_fresh, self.grid))
++        self.obstacle_pub.publish(world_model(self.get_clock().now().to_msg(), self.field,
++                                              me, ball, obstacles,
++                                              self.playing and odom_fresh))
+ 
+ 
+ def main(args=None):
+diff --git a/src/pinky_soccer_world_model/setup.py b/src/pinky_soccer_world_model/setup.py
+index 0cd6674..32800ea 100644
+--- a/src/pinky_soccer_world_model/setup.py
++++ b/src/pinky_soccer_world_model/setup.py
+@@ -10,7 +10,8 @@ setup(
+     packages=find_packages(exclude=['test']),
+     data_files=[
+         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+-        ('share/' + package_name, ['package.xml', 'README.md', 'LOCALIZATION.md']),
++        ('share/' + package_name, ['package.xml', 'README.md', 'LOCALIZATION.md',
++                                  'STARTUP_LOCALIZATION.md']),
+         ('share/' + package_name + '/config', glob('config/*.yaml')),
+         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+     ],
+@@ -26,6 +27,7 @@ setup(
+             'ball_detector = pinky_soccer_world_model.ball_detector:main',
+             'world_model_node = pinky_soccer_world_model.world_model_node:main',
+             'goal_heading = pinky_soccer_world_model.goal_heading_node:main',
++            'rectangle_localization = pinky_soccer_world_model.rectangle_localization_node:main',
+             'fake_world_model = pinky_soccer_world_model.fake_world_model:main',
+         ],
+     },

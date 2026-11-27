@@ -1,0 +1,40 @@
+identification_schema: 1
+target: mujoco
+robot_id: mujoco-sim
+experiment_utc: '2026-11-24T11:55:17.072034+00:00'
+units:
+  tau: s
+  delay: s
+  wheel_accel_max: rad/s^2
+model: first-order wheel response with dead time and optional slope limit
+parameters:
+  tau_left: 0.03135631169377763
+  tau_right: 0.02936728043053756
+  delay: 0.0
+  wheel_accel_max: 74.9
+fit:
+  left:
+    tau: 0.03135631169377763
+    delay: 0.0
+    accel_max: 74.9
+    rms: 0.15444328799997095
+  right:
+    tau: 0.02936728043053756
+    delay: 0.0
+    accel_max: 74.9
+    rms: 0.12017129004866611
+validation:
+  left:
+    rms: 0.13468559691700988
+    max_abs: 0.6836491888292655
+    rms_relative: 0.01915968890921896
+  right:
+    rms: 0.13504127045857928
+    max_abs: 0.6655061369292303
+    rms_relative: 0.01951964962682487
+thresholds:
+  rms_relative: 0.1
+accepted: true
+notes: headless soccer MuJoCo; profile=/home/cse/pinky-soccer/install/pinky_soccer_sim/share/pinky_soccer_sim/config/calibration/mujoco_profile.yaml;
+  zero_delay=True
+calibration_profile: /home/cse/pinky-soccer/install/pinky_soccer_sim/share/pinky_soccer_sim/config/calibration/mujoco_profile.yaml

@@ -1,0 +1,6 @@
+AcadosTimeOptimalMpc 0 91.54 True [(80, True, 0.0), (64, True, 0.0), (56, False, 0.0)]
+AcadosTimeOptimalMpc 1 97.23 True [(63, True, 0.0), (55, False, 0.7147), (59, True, 0.0)]
+AcadosTimeOptimalMpc 2 92.49 True [(58, True, 0.0), (53, False, 5.3521), (55, False, 0.7968)]
+AvoidanceTimeOptimalMpc 0 98.88 False [(80, False, 0.5292), (20, False, 0.0)]
+AvoidanceTimeOptimalMpc 1 103.93 False [(80, False, 0.5292), (20, False, 0.0)]
+AvoidanceTimeOptimalMpc 2 102.02 False [(80, False, 0.5292), (20, False, 0.0)]

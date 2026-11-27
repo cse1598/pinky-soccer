@@ -1,0 +1,641 @@
+<mujoco model="pinky_pro">
+  <compiler angle="radian" eulerseq="XYZ" autolimits="true" inertiafromgeom="false" fusestatic="false" />
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast" cone="elliptic" iterations="80" />
+  <visual>
+    <global offwidth="1920" offheight="1080" />
+  </visual>
+  <default>
+    <geom solref="0.008 1" solimp="0.95 0.99 0.001" friction="0.9 0.002 0.0001" condim="4" />
+    <joint armature="1e-05" damping="0.0001" />
+  </default>
+  <asset>
+    <texture name="floor_tex" type="2d" builtin="checker" rgb1="0.84 0.87 0.9" rgb2="0.94 0.95 0.97" width="512" height="512" />
+    <material name="floor_mat" texture="floor_tex" texrepeat="40 40" reflectance="0.05" />
+    <mesh name="mesh_0" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/base_link.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_1" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_2" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part1.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_3" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part2.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_4" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part3.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_5" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part4.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_6" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part5.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_7" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part6.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_8" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part7.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_9" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part8.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_10" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part9.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_11" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part10.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_12" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part11.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_13" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part12.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_14" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part13.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_15" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part14.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_16" file="/home/cse/.cache/pinky_soccer_mujoco/base_link_36e1f0cea0/part15.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_17" file="/home/cse/.cache/pinky_soccer_mujoco/main_wheel_20c8ac303c/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_18" file="/home/cse/.cache/pinky_soccer_mujoco/main_wheel_20c8ac303c/part1.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_19" file="/home/cse/.cache/pinky_soccer_mujoco/main_wheel_20c8ac303c/part2.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_20" file="/home/cse/.cache/pinky_soccer_mujoco/main_wheel_20c8ac303c/part3.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_21" file="/home/cse/.cache/pinky_soccer_mujoco/main_wheel_20c8ac303c/part4.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_22" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/caster_mount.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_23" file="/home/cse/.cache/pinky_soccer_mujoco/caster_mount_2c948a95ec/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_24" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/caster_rotate.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_25" file="/home/cse/.cache/pinky_soccer_mujoco/caster_rotate_4f00de9314/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_26" file="/home/cse/.cache/pinky_soccer_mujoco/caster_wheel_0f727a5f8b/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_27" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/robot_lamp.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_28" file="/home/cse/.cache/pinky_soccer_mujoco/robot_lamp_3a04803e56/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_29" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/rplidar_c1.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_30" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_31" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part1.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_32" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part2.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_33" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part3.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_34" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part4.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_35" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part5.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_36" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part6.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_37" file="/home/cse/.cache/pinky_soccer_mujoco/rplidar_c1_d05cf40e0a/part7.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_38" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/camera_assy.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_39" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_40" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part1.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_41" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part2.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_42" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part3.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_43" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part4.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_44" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part5.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_45" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part6.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_46" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part7.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_47" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part8.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_48" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part9.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_49" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part10.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_50" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part11.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_51" file="/home/cse/.cache/pinky_soccer_mujoco/camera_assy_c1994e96a9/part12.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_52" file="/home/cse/pinky-soccer/src/pinky_pro/pinky_description/meshes/collision/screen_assy.stl" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_53" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part0.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_54" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part1.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_55" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part2.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_56" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part3.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_57" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part4.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_58" file="/home/cse/.cache/pinky_soccer_mujoco/screen_assy_1f6566b98d/part5.obj" scale="1 1 1" inertia="shell" />
+    <mesh name="mesh_59" file="/home/cse/pinky-soccer/src/pinky_soccer_description/meshes/collision/bumper_v1_collision.stl" scale="1.0 1.0 1.0" inertia="shell" />
+    <mesh name="mesh_60" file="/home/cse/pinky-soccer/src/pinky_soccer_description/meshes/visual/bumper_v1.stl" scale="1.0 1.0 1.0" inertia="shell" />
+    <material name="soccer_ball_material" rgba="0.9019607843 0.2235294118 0.01568627451 1" specular="0.5" shininess="0.55" />
+  <material name="robot_lamp_visual_0_0_soccer_led" rgba="0 0 0 1" emission="1" /><material name="opp_robot_lamp_visual_0_0_soccer_led" rgba="0 0 0 1" emission="1" /></asset>
+  <worldbody>
+    <light pos="0 0 4" dir="0 0 -1" diffuse="0.8 0.8 0.8" />
+    <body name="base_link" pos="-0.4 0 0.03" quat="1 0 0 0">
+      <freejoint name="floating_base" />
+      <inertial pos="-0.025 0 0.025" mass="0.8" fullinertia="0.0009197333333333333 0.0010330666666666666 0.0009666666666666666 0 0 0" />
+      <geom pos="0 0 0" euler="0 0 0" name="base_link_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_0" friction="0.9 0 0" priority="0" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_0" type="mesh" mesh="mesh_1" rgba="0.302 0.302 0.302 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_1" type="mesh" mesh="mesh_2" rgba="0.9137 0.9137 0.9137 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_2" type="mesh" mesh="mesh_3" rgba="0.6039 0.6471 0.6863 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_3" type="mesh" mesh="mesh_4" rgba="0.6549 0.8235 0.5725 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_4" type="mesh" mesh="mesh_5" rgba="0.698 0.698 0.698 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_5" type="mesh" mesh="mesh_6" rgba="0.502 0.502 0.502 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_6" type="mesh" mesh="mesh_7" rgba="0.902 0.902 0.902 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_7" type="mesh" mesh="mesh_8" rgba="0.2784 0.5451 0.1569 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_8" type="mesh" mesh="mesh_9" rgba="0.749 0.749 0.749 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_9" type="mesh" mesh="mesh_10" rgba="1 1 1 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_10" type="mesh" mesh="mesh_11" rgba="0 0 0 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_11" type="mesh" mesh="mesh_12" rgba="0 0.4902 1 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_12" type="mesh" mesh="mesh_13" rgba="0.9333 0.9333 0.651 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_13" type="mesh" mesh="mesh_14" rgba="0.7961 0.8235 0.9333 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_14" type="mesh" mesh="mesh_15" rgba="0.298 0.298 0.298 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="base_link_visual_0_15" type="mesh" mesh="mesh_16" rgba="0.6667 0.6667 0.6667 1" />
+      <body name="l_wheel" pos="0 0.04055 0" euler="0 0 0">
+        <joint name="l_wheel_joint" type="hinge" axis="0 1 0" />
+        <inertial pos="0 0.008 0" mass="0.2" fullinertia="6.272000000000001e-05 6.272000000000001e-05 6.272000000000001e-05 0 0 0" />
+        <geom pos="0 0.008 0" euler="0 0 0" name="l_wheel_collision_0" group="5" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.028" friction="0.9 0 0" condim="4" priority="0" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="l_wheel_visual_0_0" type="mesh" mesh="mesh_17" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="l_wheel_visual_0_1" type="mesh" mesh="mesh_18" rgba="0.6039 0.6471 0.6863 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="l_wheel_visual_0_2" type="mesh" mesh="mesh_19" rgba="0.2588 0.2784 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="l_wheel_visual_0_3" type="mesh" mesh="mesh_20" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="l_wheel_visual_0_4" type="mesh" mesh="mesh_21" rgba="0.5373 0.6824 0.8392 1" />
+      </body>
+      <body name="r_wheel" pos="0 -0.04055 0" euler="0 0 0">
+        <joint name="r_wheel_joint" type="hinge" axis="0 1 0" />
+        <inertial pos="0 -0.008 0" mass="0.2" fullinertia="6.272000000000001e-05 6.272000000000001e-05 6.272000000000001e-05 0 0 0" />
+        <geom pos="0 -0.008 0" euler="0 0 0" name="r_wheel_collision_0" group="5" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.028" friction="0.9 0 0" condim="4" priority="0" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="r_wheel_visual_0_0" type="mesh" mesh="mesh_17" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="r_wheel_visual_0_1" type="mesh" mesh="mesh_18" rgba="0.6039 0.6471 0.6863 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="r_wheel_visual_0_2" type="mesh" mesh="mesh_19" rgba="0.2588 0.2784 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="r_wheel_visual_0_3" type="mesh" mesh="mesh_20" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="r_wheel_visual_0_4" type="mesh" mesh="mesh_21" rgba="0.5373 0.6824 0.8392 1" />
+      </body>
+      <body name="caster_mount_link" pos="-0.0585 0 -0.007" euler="0 0 0">
+        <inertial pos="0 0 -0.0015" mass="0.1" fullinertia="6.177083333333333e-06 6.635416666666668e-06 1.2608333333333334e-05 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="caster_mount_link_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_22" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="caster_mount_link_visual_0_0" type="mesh" mesh="mesh_23" rgba="0.902 0.902 0.902 1" />
+        <body name="caster_roate_link" pos="0 0 -0.0035" euler="0 0 0">
+          <joint name="caster_rotate_joint" type="hinge" axis="0 0 1" />
+          <inertial pos="-0.010 0 -0.006" mass="0.05" fullinertia="1.4833333333333332e-06 1.7666666666666668e-06 2.4166666666666667e-06 0 0 0" />
+          <geom pos="0 0 0" euler="0 0 0" name="caster_roate_link_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_24" friction="0.9 0 0" priority="0" />
+          <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="caster_roate_link_visual_0_0" type="mesh" mesh="mesh_25" rgba="0.902 0.902 0.902 1" />
+          <body name="caster_wheel" pos="-0.011 0 -0.011" euler="0 0 0">
+            <joint name="caster_wheel_joint" type="hinge" axis="0 1 0" />
+            <inertial pos="0 0 0" mass="0.05" fullinertia="8.449999999999999e-07 8.449999999999999e-07 8.449999999999999e-07 0 0 0" />
+            <geom pos="0 0 0" euler="0 0 0" name="caster_wheel_collision_0" group="5" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.0065" friction="0.9 0 0" condim="3" priority="0" />
+            <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="caster_wheel_visual_0_0" type="mesh" mesh="mesh_26" rgba="0.6 0.3529 0.05098 1" />
+          </body>
+        </body>
+      </body>
+      <body name="robot_lamp" pos="0 0 0" euler="0 0 0">
+        <inertial pos="-0.06425 0 0.078" mass="0.01" fullinertia="3.0733333333333337e-06 4.96875e-07 3.0302083333333336e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="robot_lamp_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_27" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="robot_lamp_visual_0_0" type="mesh" mesh="mesh_28" material="robot_lamp_visual_0_0_soccer_led" />
+      </body>
+      <body name="rplidar_mount" pos="-0.017 0 0.067" euler="0 0 0">
+        <inertial pos="0 0 0.021" mass="0.11" fullinertia="3.335750000000001e-05 3.335750000000001e-05 3.4375e-05 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="rplidar_mount_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_29" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_0" type="mesh" mesh="mesh_30" rgba="0.2 0.2 0.2 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_1" type="mesh" mesh="mesh_31" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_2" type="mesh" mesh="mesh_32" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_3" type="mesh" mesh="mesh_33" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_4" type="mesh" mesh="mesh_34" rgba="0.651 0.6392 0.7647 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_5" type="mesh" mesh="mesh_35" rgba="0.2 0.2 0.2 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_6" type="mesh" mesh="mesh_36" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="rplidar_mount_visual_0_7" type="mesh" mesh="mesh_37" rgba="0.4 0.4 0.4 1" />
+        <body name="rplidar_link" pos="0 0 0.030" euler="0 0 3.141592653589793">
+          <site name="lidar" size="0.002" rgba="1 0 0 1" />
+        </body>
+      </body>
+      <body name="front_camera_mount" pos="0.020 0 0.0495" euler="0 0.13962634015954636 0">
+        <inertial pos="0.01 0 -0.0121" mass="0.01" fullinertia="2.4374999999999995e-06 9.76875e-07 1.9143749999999998e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="front_camera_mount_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_38" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_0" type="mesh" mesh="mesh_39" rgba="1 1 1 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_1" type="mesh" mesh="mesh_40" rgba="0.09804 0.349 0.1373 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_2" type="mesh" mesh="mesh_41" rgba="0.8235 0.6235 0.03529 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_3" type="mesh" mesh="mesh_42" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_4" type="mesh" mesh="mesh_43" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_5" type="mesh" mesh="mesh_44" rgba="0.9765 0.7098 0.003922 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_6" type="mesh" mesh="mesh_45" rgba="0 1 0 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_7" type="mesh" mesh="mesh_46" rgba="0.4157 0.4157 0.4157 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_8" type="mesh" mesh="mesh_47" rgba="0.7647 0.8863 0.949 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_9" type="mesh" mesh="mesh_48" rgba="1 1 0.5255 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_10" type="mesh" mesh="mesh_49" rgba="0.6471 0.6471 0.6471 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_11" type="mesh" mesh="mesh_50" rgba="0.6157 0.8118 0.9255 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="front_camera_mount_visual_0_12" type="mesh" mesh="mesh_51" rgba="0.9882 1 0.8431 1" />
+        <body name="front_camera_link" pos="0.015 0 -0.0121" euler="0 0 0">
+          <camera name="front_camera" xyaxes="0 -1 0 0 0 1" fovy="51.9365" />
+        </body>
+      </body>
+      <body name="screen_mount" pos="0.0165 0 0.071" euler="0 -0.4363323129985824 0">
+        <inertial pos="0.01 0 -0.004" mass="0.01" fullinertia="5.601666666666667e-06 1.5208333333333335e-06 4.320833333333333e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="screen_mount_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_52" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_0" type="mesh" mesh="mesh_53" rgba="0.0902 0.0902 0.0902 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_1" type="mesh" mesh="mesh_54" rgba="0.3255 0.5255 0.749 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_2" type="mesh" mesh="mesh_55" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_3" type="mesh" mesh="mesh_56" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_4" type="mesh" mesh="mesh_57" rgba="0.9137 0.9137 0.9137 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="screen_mount_visual_0_5" type="mesh" mesh="mesh_58" rgba="1 1 0.498 1" />
+      </body>
+      <body name="ultrasonic_link" pos="0.0267 0 0.009" euler="0 0 0">
+        <site name="soccer_ultrasonic_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="ir_mid_link" pos="0.0295 0 -0.015" euler="0 0 0">
+        <site name="soccer_ir_mid_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="ir_l_link" pos="0.0295 0.02 -0.015" euler="0 0 0">
+        <site name="soccer_ir_l_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="ir_r_link" pos="0.0295 -0.02 -0.015" euler="0 0 0">
+        <site name="soccer_ir_r_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="imu_link" pos="-0.044 0 0.0525" euler="0 0 0">
+        <site name="soccer_imu_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="bumper_link" pos="0.03433 0.0 0.00107" euler="0 0 0">
+        <inertial pos="0 0 0" mass="0.01583" fullinertia="1.51206e-05 3.45757e-06 1.37719e-05 -2.61746e-11 9.6426e-08 5.30461e-12" />
+        <geom pos="0 0 0" euler="0 0 0" name="bumper_link_collision_0" group="5" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_59" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="bumper_link_visual_0_0" type="mesh" mesh="mesh_60" rgba="0.8 0.8 0.82 1" />
+      </body>
+    </body>
+    <geom name="hardboard_carpet" pos="0 0 -0.01" euler="0 0 0" rgba="0.035 0.35 0.075 1" group="0" contype="1" conaffinity="4" friction="0.9 0 0" type="box" size="0.91 0.61 0.01" priority="1" />
+    <geom name="hardboard_end_wall_-1" pos="-0.915 0 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.005 0.62 0.1" priority="1" />
+    <geom name="hardboard_side_wall_-1" pos="0 -0.615 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.91 0.005 0.1" priority="1" />
+    <geom name="hardboard_end_wall_1" pos="0.915 0 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.005 0.62 0.1" priority="1" />
+    <geom name="hardboard_side_wall_1" pos="0 0.615 0.1" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.91 0.005 0.1" priority="1" />
+    <geom name="hardboard_blue_goal_back" pos="0.8825 0 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0025 0.2 0.035" priority="1" />
+    <geom name="hardboard_blue_goal_side_-1" pos="0.8575 -0.2025 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.0025 0.035" priority="1" />
+    <geom name="hardboard_blue_goal_side_1" pos="0.8575 0.2025 0.035" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.0025 0.035" priority="1" />
+    <geom name="hardboard_blue_goal_roof" pos="0.8575 0 0.0725" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.205 0.0025" priority="1" />
+    <geom name="hardboard_blue_goal_floor" pos="0.855 0 0.00015" euler="0 0 0" rgba="0.01960784314 0.2941176471 0.5254901961 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
+    <geom name="hardboard_yellow_goal_back" pos="-0.8825 0 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0025 0.2 0.035" priority="1" />
+    <geom name="hardboard_yellow_goal_side_-1" pos="-0.8575 -0.2025 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.0025 0.035" priority="1" />
+    <geom name="hardboard_yellow_goal_side_1" pos="-0.8575 0.2025 0.035" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.0025 0.035" priority="1" />
+    <geom name="hardboard_yellow_goal_roof" pos="-0.8575 0 0.0725" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="0" contype="2" conaffinity="20" friction="0.35 0 0" type="box" size="0.0275 0.205 0.0025" priority="1" />
+    <geom name="hardboard_yellow_goal_floor" pos="-0.855 0 0.00015" euler="0 0 0" rgba="0.9294117647 0.8980392157 0.01568627451 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.025 0.2 5e-05" />
+    <geom name="hardboard_boundary_side_-1" pos="0 -0.5225 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.83 0.0075 0.0001" />
+    <geom name="hardboard_boundary_end_-1" pos="-0.8225 0 0.0003" euler="0 0 1.570796327" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.53 0.0075 0.0001" />
+    <geom name="hardboard_penalty_side_-1_-1" pos="-0.795 -0.2625 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.035 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_000" pos="-0.6675557102 -0.1722693799 0.0003" euler="0 0 -1.595340019" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_001" pos="-0.6677784165 -0.1768026727 0.0003" euler="0 0 -1.644427405" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_002" pos="-0.6682232928 -0.1813195772 0.0003" euler="0 0 -1.69351479" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_003" pos="-0.6688892672 -0.1858092118 0.0003" euler="0 0 -1.742602175" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_004" pos="-0.6697747353 -0.1902607607 0.0003" euler="0 0 -1.79168956" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_005" pos="-0.670877564 -0.1946634996 0.0003" euler="0 0 -1.840776945" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_006" pos="-0.6721950965 -0.199006822 0.0003" euler="0 0 -1.889864331" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_007" pos="-0.6737241586 -0.2032802645 0.0003" euler="0 0 -1.938951716" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_008" pos="-0.6754610668 -0.2074735318 0.0003" euler="0 0 -1.988039101" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_009" pos="-0.6774016367 -0.2115765221 0.0003" euler="0 0 -2.037126486" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_010" pos="-0.6795411933 -0.215579351 0.0003" euler="0 0 -2.086213872" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_011" pos="-0.6818745822 -0.2194723752 0.0003" euler="0 0 -2.135301257" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_012" pos="-0.6843961821 -0.2232462161 0.0003" euler="0 0 -2.184388642" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_013" pos="-0.6870999182 -0.2268917822 0.0003" euler="0 0 -2.233476027" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_014" pos="-0.689979277 -0.2304002911 0.0003" euler="0 0 -2.282563412" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_015" pos="-0.6930273218 -0.2337632903 0.0003" euler="0 0 -2.331650798" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_016" pos="-0.6962367097 -0.2369726782 0.0003" euler="0 0 -2.380738183" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_017" pos="-0.6995997089 -0.240020723 0.0003" euler="0 0 -2.429825568" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_018" pos="-0.7031082178 -0.2429000818 0.0003" euler="0 0 -2.478912953" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_019" pos="-0.7067537839 -0.2456038179 0.0003" euler="0 0 -2.528000338" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_020" pos="-0.7105276248 -0.2481254178 0.0003" euler="0 0 -2.577087724" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_021" pos="-0.714420649 -0.2504588067 0.0003" euler="0 0 -2.626175109" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_022" pos="-0.7184234779 -0.2525983633 0.0003" euler="0 0 -2.675262494" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_023" pos="-0.7225264682 -0.2545389332 0.0003" euler="0 0 -2.724349879" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_024" pos="-0.7267197355 -0.2562758414 0.0003" euler="0 0 -2.773437264" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_025" pos="-0.730993178 -0.2578049035 0.0003" euler="0 0 -2.82252465" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_026" pos="-0.7353365004 -0.259122436 0.0003" euler="0 0 -2.871612035" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_027" pos="-0.7397392393 -0.2602252647 0.0003" euler="0 0 -2.92069942" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_028" pos="-0.7441907882 -0.2611107328 0.0003" euler="0 0 -2.969786805" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_029" pos="-0.7486804228 -0.2617767072 0.0003" euler="0 0 -3.018874191" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_030" pos="-0.7531973273 -0.2622215835 0.0003" euler="0 0 -3.067961576" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_-1_031" pos="-0.7577306201 -0.2624442898 0.0003" euler="0 0 -3.117048961" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_side_-1_1" pos="-0.795 0.2625 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.035 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_000" pos="-0.7577306201 0.2624442898 0.0003" euler="0 0 -0.02454369261" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_001" pos="-0.7531973273 0.2622215835 0.0003" euler="0 0 -0.07363107782" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_002" pos="-0.7486804228 0.2617767072 0.0003" euler="0 0 -0.122718463" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_003" pos="-0.7441907882 0.2611107328 0.0003" euler="0 0 -0.1718058482" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_004" pos="-0.7397392393 0.2602252647 0.0003" euler="0 0 -0.2208932335" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_005" pos="-0.7353365004 0.259122436 0.0003" euler="0 0 -0.2699806187" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_006" pos="-0.730993178 0.2578049035 0.0003" euler="0 0 -0.3190680039" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_007" pos="-0.7267197355 0.2562758414 0.0003" euler="0 0 -0.3681553891" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_008" pos="-0.7225264682 0.2545389332 0.0003" euler="0 0 -0.4172427743" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_009" pos="-0.7184234779 0.2525983633 0.0003" euler="0 0 -0.4663301595" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_010" pos="-0.714420649 0.2504588067 0.0003" euler="0 0 -0.5154175447" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_011" pos="-0.7105276248 0.2481254178 0.0003" euler="0 0 -0.5645049299" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_012" pos="-0.7067537839 0.2456038179 0.0003" euler="0 0 -0.6135923152" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_013" pos="-0.7031082178 0.2429000818 0.0003" euler="0 0 -0.6626797004" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_014" pos="-0.6995997089 0.240020723 0.0003" euler="0 0 -0.7117670856" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_015" pos="-0.6962367097 0.2369726782 0.0003" euler="0 0 -0.7608544708" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_016" pos="-0.6930273218 0.2337632903 0.0003" euler="0 0 -0.809941856" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_017" pos="-0.689979277 0.2304002911 0.0003" euler="0 0 -0.8590292412" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_018" pos="-0.6870999182 0.2268917822 0.0003" euler="0 0 -0.9081166264" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_019" pos="-0.6843961821 0.2232462161 0.0003" euler="0 0 -0.9572040116" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_020" pos="-0.6818745822 0.2194723752 0.0003" euler="0 0 -1.006291397" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_021" pos="-0.6795411933 0.215579351 0.0003" euler="0 0 -1.055378782" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_022" pos="-0.6774016367 0.2115765221 0.0003" euler="0 0 -1.104466167" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_023" pos="-0.6754610668 0.2074735318 0.0003" euler="0 0 -1.153553552" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_024" pos="-0.6737241586 0.2032802645 0.0003" euler="0 0 -1.202640938" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_025" pos="-0.6721950965 0.199006822 0.0003" euler="0 0 -1.251728323" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_026" pos="-0.670877564 0.1946634996 0.0003" euler="0 0 -1.300815708" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_027" pos="-0.6697747353 0.1902607607 0.0003" euler="0 0 -1.349903093" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_028" pos="-0.6688892672 0.1858092118 0.0003" euler="0 0 -1.398990479" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_029" pos="-0.6682232928 0.1813195772 0.0003" euler="0 0 -1.448077864" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_030" pos="-0.6677784165 0.1768026727 0.0003" euler="0 0 -1.497165249" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_-1_1_031" pos="-0.6675557102 0.1722693799 0.0003" euler="0 0 -1.546252634" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_front_-1" pos="-0.6675 0 0.0003" euler="0 0 1.570796327" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.17 0.0075 0.0001" />
+    <geom name="hardboard_boundary_side_1" pos="0 0.5225 0.0003" euler="0 0 0" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.83 0.0075 0.0001" />
+    <geom name="hardboard_boundary_end_1" pos="0.8225 0 0.0003" euler="0 0 1.570796327" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.53 0.0075 0.0001" />
+    <geom name="hardboard_penalty_side_1_-1" pos="0.795 -0.2625 0.0003" euler="0 0 3.141592654" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.035 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_000" pos="0.6675557102 -0.1722693799 0.0003" euler="0 0 -1.546252634" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_001" pos="0.6677784165 -0.1768026727 0.0003" euler="0 0 -1.497165249" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_002" pos="0.6682232928 -0.1813195772 0.0003" euler="0 0 -1.448077864" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_003" pos="0.6688892672 -0.1858092118 0.0003" euler="0 0 -1.398990479" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_004" pos="0.6697747353 -0.1902607607 0.0003" euler="0 0 -1.349903093" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_005" pos="0.670877564 -0.1946634996 0.0003" euler="0 0 -1.300815708" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_006" pos="0.6721950965 -0.199006822 0.0003" euler="0 0 -1.251728323" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_007" pos="0.6737241586 -0.2032802645 0.0003" euler="0 0 -1.202640938" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_008" pos="0.6754610668 -0.2074735318 0.0003" euler="0 0 -1.153553552" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_009" pos="0.6774016367 -0.2115765221 0.0003" euler="0 0 -1.104466167" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_010" pos="0.6795411933 -0.215579351 0.0003" euler="0 0 -1.055378782" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_011" pos="0.6818745822 -0.2194723752 0.0003" euler="0 0 -1.006291397" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_012" pos="0.6843961821 -0.2232462161 0.0003" euler="0 0 -0.9572040116" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_013" pos="0.6870999182 -0.2268917822 0.0003" euler="0 0 -0.9081166264" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_014" pos="0.689979277 -0.2304002911 0.0003" euler="0 0 -0.8590292412" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_015" pos="0.6930273218 -0.2337632903 0.0003" euler="0 0 -0.809941856" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_016" pos="0.6962367097 -0.2369726782 0.0003" euler="0 0 -0.7608544708" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_017" pos="0.6995997089 -0.240020723 0.0003" euler="0 0 -0.7117670856" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_018" pos="0.7031082178 -0.2429000818 0.0003" euler="0 0 -0.6626797004" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_019" pos="0.7067537839 -0.2456038179 0.0003" euler="0 0 -0.6135923152" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_020" pos="0.7105276248 -0.2481254178 0.0003" euler="0 0 -0.5645049299" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_021" pos="0.714420649 -0.2504588067 0.0003" euler="0 0 -0.5154175447" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_022" pos="0.7184234779 -0.2525983633 0.0003" euler="0 0 -0.4663301595" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_023" pos="0.7225264682 -0.2545389332 0.0003" euler="0 0 -0.4172427743" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_024" pos="0.7267197355 -0.2562758414 0.0003" euler="0 0 -0.3681553891" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_025" pos="0.730993178 -0.2578049035 0.0003" euler="0 0 -0.3190680039" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_026" pos="0.7353365004 -0.259122436 0.0003" euler="0 0 -0.2699806187" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_027" pos="0.7397392393 -0.2602252647 0.0003" euler="0 0 -0.2208932335" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_028" pos="0.7441907882 -0.2611107328 0.0003" euler="0 0 -0.1718058482" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_029" pos="0.7486804228 -0.2617767072 0.0003" euler="0 0 -0.122718463" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_030" pos="0.7531973273 -0.2622215835 0.0003" euler="0 0 -0.07363107782" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_-1_031" pos="0.7577306201 -0.2624442898 0.0003" euler="0 0 -0.02454369261" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_side_1_1" pos="0.795 0.2625 0.0003" euler="0 0 3.141592654" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.035 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_000" pos="0.7577306201 0.2624442898 0.0003" euler="0 0 -3.117048961" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_001" pos="0.7531973273 0.2622215835 0.0003" euler="0 0 -3.067961576" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_002" pos="0.7486804228 0.2617767072 0.0003" euler="0 0 -3.018874191" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_003" pos="0.7441907882 0.2611107328 0.0003" euler="0 0 -2.969786805" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_004" pos="0.7397392393 0.2602252647 0.0003" euler="0 0 -2.92069942" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_005" pos="0.7353365004 0.259122436 0.0003" euler="0 0 -2.871612035" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_006" pos="0.730993178 0.2578049035 0.0003" euler="0 0 -2.82252465" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_007" pos="0.7267197355 0.2562758414 0.0003" euler="0 0 -2.773437264" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_008" pos="0.7225264682 0.2545389332 0.0003" euler="0 0 -2.724349879" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_009" pos="0.7184234779 0.2525983633 0.0003" euler="0 0 -2.675262494" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_010" pos="0.714420649 0.2504588067 0.0003" euler="0 0 -2.626175109" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_011" pos="0.7105276248 0.2481254178 0.0003" euler="0 0 -2.577087724" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_012" pos="0.7067537839 0.2456038179 0.0003" euler="0 0 -2.528000338" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_013" pos="0.7031082178 0.2429000818 0.0003" euler="0 0 -2.478912953" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_014" pos="0.6995997089 0.240020723 0.0003" euler="0 0 -2.429825568" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_015" pos="0.6962367097 0.2369726782 0.0003" euler="0 0 -2.380738183" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_016" pos="0.6930273218 0.2337632903 0.0003" euler="0 0 -2.331650798" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_017" pos="0.689979277 0.2304002911 0.0003" euler="0 0 -2.282563412" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_018" pos="0.6870999182 0.2268917822 0.0003" euler="0 0 -2.233476027" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_019" pos="0.6843961821 0.2232462161 0.0003" euler="0 0 -2.184388642" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_020" pos="0.6818745822 0.2194723752 0.0003" euler="0 0 -2.135301257" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_021" pos="0.6795411933 0.215579351 0.0003" euler="0 0 -2.086213872" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_022" pos="0.6774016367 0.2115765221 0.0003" euler="0 0 -2.037126486" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_023" pos="0.6754610668 0.2074735318 0.0003" euler="0 0 -1.988039101" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_024" pos="0.6737241586 0.2032802645 0.0003" euler="0 0 -1.938951716" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_025" pos="0.6721950965 0.199006822 0.0003" euler="0 0 -1.889864331" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_026" pos="0.670877564 0.1946634996 0.0003" euler="0 0 -1.840776945" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_027" pos="0.6697747353 0.1902607607 0.0003" euler="0 0 -1.79168956" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_028" pos="0.6688892672 0.1858092118 0.0003" euler="0 0 -1.742602175" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_029" pos="0.6682232928 0.1813195772 0.0003" euler="0 0 -1.69351479" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_030" pos="0.6677784165 0.1768026727 0.0003" euler="0 0 -1.644427405" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_arc_1_1_031" pos="0.6675557102 0.1722693799 0.0003" euler="0 0 -1.595340019" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.002270063638 0.0075 0.0001" />
+    <geom name="hardboard_penalty_front_1" pos="0.6675 0 0.0003" euler="0 0 1.570796327" rgba="0.95 0.95 0.95 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.17 0.0075 0.0001" />
+    <geom name="hardboard_center_circle_000" pos="0.1998795456 0.004906767433 0.0003" euler="0 0 1.595340019" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_001" pos="0.1993980183 0.01470848147 0.0003" euler="0 0 1.644427405" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_002" pos="0.1984361237 0.02447476148 0.0003" euler="0 0 1.69351479" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_003" pos="0.196996179 0.03418207965 0.0003" euler="0 0 1.742602175" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_004" pos="0.1950816534 0.04380705019 0.0003" euler="0 0 1.79168956" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_005" pos="0.1926971589 0.05332648572 0.0003" euler="0 0 1.840776945" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_006" pos="0.1898484401 0.06271745306 0.0003" euler="0 0 1.889864331" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_007" pos="0.1865423598 0.07195732858 0.0003" euler="0 0 1.938951716" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_008" pos="0.1827868826 0.08102385258 0.0003" euler="0 0 1.988039101" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_009" pos="0.1785910557 0.08989518303 0.0003" euler="0 0 2.037126486" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_010" pos="0.1739649874 0.0985499481 0.0003" euler="0 0 2.086213872" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_011" pos="0.1689198222 0.1069672977 0.0003" euler="0 0 2.135301257" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_012" pos="0.1634677144 0.1151269538 0.0003" euler="0 0 2.184388642" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_013" pos="0.1576217985 0.1230092589 0.0003" euler="0 0 2.233476027" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_014" pos="0.1513961579 0.1305952239 0.0003" euler="0 0 2.282563412" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_015" pos="0.1448057907 0.1378665736 0.0003" euler="0 0 2.331650798" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_016" pos="0.1378665736 0.1448057907 0.0003" euler="0 0 2.380738183" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_017" pos="0.1305952239 0.1513961579 0.0003" euler="0 0 2.429825568" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_018" pos="0.1230092589 0.1576217985 0.0003" euler="0 0 2.478912953" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_019" pos="0.1151269538 0.1634677144 0.0003" euler="0 0 2.528000338" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_020" pos="0.1069672977 0.1689198222 0.0003" euler="0 0 2.577087724" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_021" pos="0.0985499481 0.1739649874 0.0003" euler="0 0 2.626175109" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_022" pos="0.08989518303 0.1785910557 0.0003" euler="0 0 2.675262494" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_023" pos="0.08102385258 0.1827868826 0.0003" euler="0 0 2.724349879" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_024" pos="0.07195732858 0.1865423598 0.0003" euler="0 0 2.773437264" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_025" pos="0.06271745306 0.1898484401 0.0003" euler="0 0 2.82252465" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_026" pos="0.05332648572 0.1926971589 0.0003" euler="0 0 2.871612035" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_027" pos="0.04380705019 0.1950816534 0.0003" euler="0 0 2.92069942" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_028" pos="0.03418207965 0.196996179 0.0003" euler="0 0 2.969786805" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_029" pos="0.02447476148 0.1984361237 0.0003" euler="0 0 3.018874191" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_030" pos="0.01470848147 0.1993980183 0.0003" euler="0 0 3.067961576" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_031" pos="0.004906767433 0.1998795456 0.0003" euler="0 0 3.117048961" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_032" pos="-0.004906767433 0.1998795456 0.0003" euler="0 0 -3.117048961" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_033" pos="-0.01470848147 0.1993980183 0.0003" euler="0 0 -3.067961576" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_034" pos="-0.02447476148 0.1984361237 0.0003" euler="0 0 -3.018874191" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_035" pos="-0.03418207965 0.196996179 0.0003" euler="0 0 -2.969786805" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_036" pos="-0.04380705019 0.1950816534 0.0003" euler="0 0 -2.92069942" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_037" pos="-0.05332648572 0.1926971589 0.0003" euler="0 0 -2.871612035" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_038" pos="-0.06271745306 0.1898484401 0.0003" euler="0 0 -2.82252465" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_039" pos="-0.07195732858 0.1865423598 0.0003" euler="0 0 -2.773437264" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_040" pos="-0.08102385258 0.1827868826 0.0003" euler="0 0 -2.724349879" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_041" pos="-0.08989518303 0.1785910557 0.0003" euler="0 0 -2.675262494" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_042" pos="-0.0985499481 0.1739649874 0.0003" euler="0 0 -2.626175109" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_043" pos="-0.1069672977 0.1689198222 0.0003" euler="0 0 -2.577087724" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_044" pos="-0.1151269538 0.1634677144 0.0003" euler="0 0 -2.528000338" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_045" pos="-0.1230092589 0.1576217985 0.0003" euler="0 0 -2.478912953" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_046" pos="-0.1305952239 0.1513961579 0.0003" euler="0 0 -2.429825568" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_047" pos="-0.1378665736 0.1448057907 0.0003" euler="0 0 -2.380738183" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_048" pos="-0.1448057907 0.1378665736 0.0003" euler="0 0 -2.331650798" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_049" pos="-0.1513961579 0.1305952239 0.0003" euler="0 0 -2.282563412" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_050" pos="-0.1576217985 0.1230092589 0.0003" euler="0 0 -2.233476027" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_051" pos="-0.1634677144 0.1151269538 0.0003" euler="0 0 -2.184388642" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_052" pos="-0.1689198222 0.1069672977 0.0003" euler="0 0 -2.135301257" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_053" pos="-0.1739649874 0.0985499481 0.0003" euler="0 0 -2.086213872" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_054" pos="-0.1785910557 0.08989518303 0.0003" euler="0 0 -2.037126486" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_055" pos="-0.1827868826 0.08102385258 0.0003" euler="0 0 -1.988039101" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_056" pos="-0.1865423598 0.07195732858 0.0003" euler="0 0 -1.938951716" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_057" pos="-0.1898484401 0.06271745306 0.0003" euler="0 0 -1.889864331" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_058" pos="-0.1926971589 0.05332648572 0.0003" euler="0 0 -1.840776945" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_059" pos="-0.1950816534 0.04380705019 0.0003" euler="0 0 -1.79168956" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_060" pos="-0.196996179 0.03418207965 0.0003" euler="0 0 -1.742602175" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_061" pos="-0.1984361237 0.02447476148 0.0003" euler="0 0 -1.69351479" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_062" pos="-0.1993980183 0.01470848147 0.0003" euler="0 0 -1.644427405" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_063" pos="-0.1998795456 0.004906767433 0.0003" euler="0 0 -1.595340019" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_064" pos="-0.1998795456 -0.004906767433 0.0003" euler="0 0 -1.546252634" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_065" pos="-0.1993980183 -0.01470848147 0.0003" euler="0 0 -1.497165249" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_066" pos="-0.1984361237 -0.02447476148 0.0003" euler="0 0 -1.448077864" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_067" pos="-0.196996179 -0.03418207965 0.0003" euler="0 0 -1.398990479" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_068" pos="-0.1950816534 -0.04380705019 0.0003" euler="0 0 -1.349903093" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_069" pos="-0.1926971589 -0.05332648572 0.0003" euler="0 0 -1.300815708" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_070" pos="-0.1898484401 -0.06271745306 0.0003" euler="0 0 -1.251728323" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_071" pos="-0.1865423598 -0.07195732858 0.0003" euler="0 0 -1.202640938" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_072" pos="-0.1827868826 -0.08102385258 0.0003" euler="0 0 -1.153553552" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_073" pos="-0.1785910557 -0.08989518303 0.0003" euler="0 0 -1.104466167" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_074" pos="-0.1739649874 -0.0985499481 0.0003" euler="0 0 -1.055378782" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_075" pos="-0.1689198222 -0.1069672977 0.0003" euler="0 0 -1.006291397" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_076" pos="-0.1634677144 -0.1151269538 0.0003" euler="0 0 -0.9572040116" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_077" pos="-0.1576217985 -0.1230092589 0.0003" euler="0 0 -0.9081166264" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_078" pos="-0.1513961579 -0.1305952239 0.0003" euler="0 0 -0.8590292412" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_079" pos="-0.1448057907 -0.1378665736 0.0003" euler="0 0 -0.809941856" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_080" pos="-0.1378665736 -0.1448057907 0.0003" euler="0 0 -0.7608544708" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_081" pos="-0.1305952239 -0.1513961579 0.0003" euler="0 0 -0.7117670856" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_082" pos="-0.1230092589 -0.1576217985 0.0003" euler="0 0 -0.6626797004" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_083" pos="-0.1151269538 -0.1634677144 0.0003" euler="0 0 -0.6135923152" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_084" pos="-0.1069672977 -0.1689198222 0.0003" euler="0 0 -0.5645049299" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_085" pos="-0.0985499481 -0.1739649874 0.0003" euler="0 0 -0.5154175447" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_086" pos="-0.08989518303 -0.1785910557 0.0003" euler="0 0 -0.4663301595" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_087" pos="-0.08102385258 -0.1827868826 0.0003" euler="0 0 -0.4172427743" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_088" pos="-0.07195732858 -0.1865423598 0.0003" euler="0 0 -0.3681553891" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_089" pos="-0.06271745306 -0.1898484401 0.0003" euler="0 0 -0.3190680039" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_090" pos="-0.05332648572 -0.1926971589 0.0003" euler="0 0 -0.2699806187" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_091" pos="-0.04380705019 -0.1950816534 0.0003" euler="0 0 -0.2208932335" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_092" pos="-0.03418207965 -0.196996179 0.0003" euler="0 0 -0.1718058482" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_093" pos="-0.02447476148 -0.1984361237 0.0003" euler="0 0 -0.122718463" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_094" pos="-0.01470848147 -0.1993980183 0.0003" euler="0 0 -0.07363107782" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_095" pos="-0.004906767433 -0.1998795456 0.0003" euler="0 0 -0.02454369261" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_096" pos="0.004906767433 -0.1998795456 0.0003" euler="0 0 0.02454369261" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_097" pos="0.01470848147 -0.1993980183 0.0003" euler="0 0 0.07363107782" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_098" pos="0.02447476148 -0.1984361237 0.0003" euler="0 0 0.122718463" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_099" pos="0.03418207965 -0.196996179 0.0003" euler="0 0 0.1718058482" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_100" pos="0.04380705019 -0.1950816534 0.0003" euler="0 0 0.2208932335" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_101" pos="0.05332648572 -0.1926971589 0.0003" euler="0 0 0.2699806187" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_102" pos="0.06271745306 -0.1898484401 0.0003" euler="0 0 0.3190680039" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_103" pos="0.07195732858 -0.1865423598 0.0003" euler="0 0 0.3681553891" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_104" pos="0.08102385258 -0.1827868826 0.0003" euler="0 0 0.4172427743" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_105" pos="0.08989518303 -0.1785910557 0.0003" euler="0 0 0.4663301595" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_106" pos="0.0985499481 -0.1739649874 0.0003" euler="0 0 0.5154175447" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_107" pos="0.1069672977 -0.1689198222 0.0003" euler="0 0 0.5645049299" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_108" pos="0.1151269538 -0.1634677144 0.0003" euler="0 0 0.6135923152" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_109" pos="0.1230092589 -0.1576217985 0.0003" euler="0 0 0.6626797004" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_110" pos="0.1305952239 -0.1513961579 0.0003" euler="0 0 0.7117670856" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_111" pos="0.1378665736 -0.1448057907 0.0003" euler="0 0 0.7608544708" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_112" pos="0.1448057907 -0.1378665736 0.0003" euler="0 0 0.809941856" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_113" pos="0.1513961579 -0.1305952239 0.0003" euler="0 0 0.8590292412" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_114" pos="0.1576217985 -0.1230092589 0.0003" euler="0 0 0.9081166264" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_115" pos="0.1634677144 -0.1151269538 0.0003" euler="0 0 0.9572040116" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_116" pos="0.1689198222 -0.1069672977 0.0003" euler="0 0 1.006291397" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_117" pos="0.1739649874 -0.0985499481 0.0003" euler="0 0 1.055378782" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_118" pos="0.1785910557 -0.08989518303 0.0003" euler="0 0 1.104466167" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_119" pos="0.1827868826 -0.08102385258 0.0003" euler="0 0 1.153553552" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_120" pos="0.1865423598 -0.07195732858 0.0003" euler="0 0 1.202640938" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_121" pos="0.1898484401 -0.06271745306 0.0003" euler="0 0 1.251728323" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_122" pos="0.1926971589 -0.05332648572 0.0003" euler="0 0 1.300815708" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_123" pos="0.1950816534 -0.04380705019 0.0003" euler="0 0 1.349903093" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_124" pos="0.196996179 -0.03418207965 0.0003" euler="0 0 1.398990479" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_125" pos="0.1984361237 -0.02447476148 0.0003" euler="0 0 1.448077864" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_126" pos="0.1993980183 -0.01470848147 0.0003" euler="0 0 1.497165249" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_center_circle_127" pos="0.1998795456 -0.004906767433 0.0003" euler="0 0 1.546252634" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="box" size="0.004908245705 0.001 0.0001" />
+    <geom name="hardboard_neutral_0" pos="0 0 0.0005" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="cylinder" size="0.0035 0.0001" />
+    <geom name="hardboard_neutral_1" pos="-0.53 -0.27 0.0005" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="cylinder" size="0.0035 0.0001" />
+    <geom name="hardboard_neutral_2" pos="-0.53 0.27 0.0005" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="cylinder" size="0.0035 0.0001" />
+    <geom name="hardboard_neutral_3" pos="0.53 -0.27 0.0005" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="cylinder" size="0.0035 0.0001" />
+    <geom name="hardboard_neutral_4" pos="0.53 0.27 0.0005" euler="0 0 0" rgba="0.025 0.025 0.025 1" group="2" contype="0" conaffinity="0" friction="0.8 0.005 0.0001" type="cylinder" size="0.0035 0.0001" />
+    <body name="soccer_ball" pos="0 0 0.02235">
+      <freejoint name="soccer_ball_free" />
+      <inertial pos="0 0 0" mass="0.0459" diaginertia="8.3689011e-06 8.3689011e-06 8.3689011e-06" />
+      <geom name="soccer_ball_geom" type="sphere" size="0.02135" material="soccer_ball_material" group="0" contype="8" conaffinity="20" friction="0.35 0 0" priority="2" />
+    </body>
+  <body name="opp_base_link" pos="0.2 0 0.03" quat="6.123234e-17 0 0 1">
+      <freejoint name="opp_floating_base" />
+      <inertial pos="-0.025 0 0.025" mass="0.8" fullinertia="0.0009197333333333333 0.0010330666666666666 0.0009666666666666666 0 0 0" />
+      <geom pos="0 0 0" euler="0 0 0" name="opp_base_link_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_0" friction="0.9 0 0" priority="0" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_0" type="mesh" mesh="mesh_1" rgba="0.302 0.302 0.302 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_1" type="mesh" mesh="mesh_2" rgba="0.9137 0.9137 0.9137 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_2" type="mesh" mesh="mesh_3" rgba="0.6039 0.6471 0.6863 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_3" type="mesh" mesh="mesh_4" rgba="0.6549 0.8235 0.5725 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_4" type="mesh" mesh="mesh_5" rgba="0.698 0.698 0.698 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_5" type="mesh" mesh="mesh_6" rgba="0.502 0.502 0.502 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_6" type="mesh" mesh="mesh_7" rgba="0.902 0.902 0.902 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_7" type="mesh" mesh="mesh_8" rgba="0.2784 0.5451 0.1569 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_8" type="mesh" mesh="mesh_9" rgba="0.749 0.749 0.749 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_9" type="mesh" mesh="mesh_10" rgba="1 1 1 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_10" type="mesh" mesh="mesh_11" rgba="0 0 0 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_11" type="mesh" mesh="mesh_12" rgba="0 0.4902 1 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_12" type="mesh" mesh="mesh_13" rgba="0.9333 0.9333 0.651 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_13" type="mesh" mesh="mesh_14" rgba="0.7961 0.8235 0.9333 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_14" type="mesh" mesh="mesh_15" rgba="0.298 0.298 0.298 1" />
+      <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_base_link_visual_0_15" type="mesh" mesh="mesh_16" rgba="0.6667 0.6667 0.6667 1" />
+      <body name="opp_l_wheel" pos="0 0.04055 0" euler="0 0 0">
+        <joint name="opp_l_wheel_joint" type="hinge" axis="0 1 0" />
+        <inertial pos="0 0.008 0" mass="0.2" fullinertia="6.272000000000001e-05 6.272000000000001e-05 6.272000000000001e-05 0 0 0" />
+        <geom pos="0 0.008 0" euler="0 0 0" name="opp_l_wheel_collision_0" group="3" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.028" friction="0.9 0 0" condim="4" priority="0" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_l_wheel_visual_0_0" type="mesh" mesh="mesh_17" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_l_wheel_visual_0_1" type="mesh" mesh="mesh_18" rgba="0.6039 0.6471 0.6863 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_l_wheel_visual_0_2" type="mesh" mesh="mesh_19" rgba="0.2588 0.2784 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_l_wheel_visual_0_3" type="mesh" mesh="mesh_20" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_l_wheel_visual_0_4" type="mesh" mesh="mesh_21" rgba="0.5373 0.6824 0.8392 1" />
+      </body>
+      <body name="opp_r_wheel" pos="0 -0.04055 0" euler="0 0 0">
+        <joint name="opp_r_wheel_joint" type="hinge" axis="0 1 0" />
+        <inertial pos="0 -0.008 0" mass="0.2" fullinertia="6.272000000000001e-05 6.272000000000001e-05 6.272000000000001e-05 0 0 0" />
+        <geom pos="0 -0.008 0" euler="0 0 0" name="opp_r_wheel_collision_0" group="3" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.028" friction="0.9 0 0" condim="4" priority="0" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_r_wheel_visual_0_0" type="mesh" mesh="mesh_17" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_r_wheel_visual_0_1" type="mesh" mesh="mesh_18" rgba="0.6039 0.6471 0.6863 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_r_wheel_visual_0_2" type="mesh" mesh="mesh_19" rgba="0.2588 0.2784 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_r_wheel_visual_0_3" type="mesh" mesh="mesh_20" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 -1.5707963267948966" group="2" contype="0" conaffinity="0" name="opp_r_wheel_visual_0_4" type="mesh" mesh="mesh_21" rgba="0.5373 0.6824 0.8392 1" />
+      </body>
+      <body name="opp_caster_mount_link" pos="-0.0585 0 -0.007" euler="0 0 0">
+        <inertial pos="0 0 -0.0015" mass="0.1" fullinertia="6.177083333333333e-06 6.635416666666668e-06 1.2608333333333334e-05 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_caster_mount_link_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_22" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_caster_mount_link_visual_0_0" type="mesh" mesh="mesh_23" rgba="0.902 0.902 0.902 1" />
+        <body name="opp_caster_roate_link" pos="0 0 -0.0035" euler="0 0 0">
+          <joint name="opp_caster_rotate_joint" type="hinge" axis="0 0 1" />
+          <inertial pos="-0.010 0 -0.006" mass="0.05" fullinertia="1.4833333333333332e-06 1.7666666666666668e-06 2.4166666666666667e-06 0 0 0" />
+          <geom pos="0 0 0" euler="0 0 0" name="opp_caster_roate_link_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_24" friction="0.9 0 0" priority="0" />
+          <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_caster_roate_link_visual_0_0" type="mesh" mesh="mesh_25" rgba="0.902 0.902 0.902 1" />
+          <body name="opp_caster_wheel" pos="-0.011 0 -0.011" euler="0 0 0">
+            <joint name="opp_caster_wheel_joint" type="hinge" axis="0 1 0" />
+            <inertial pos="0 0 0" mass="0.05" fullinertia="8.449999999999999e-07 8.449999999999999e-07 8.449999999999999e-07 0 0 0" />
+            <geom pos="0 0 0" euler="0 0 0" name="opp_caster_wheel_collision_0" group="3" contype="16" conaffinity="10" rgba="0.4 0.4 0.4 0.01" type="sphere" size="0.0065" friction="0.9 0 0" condim="3" priority="0" />
+            <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_caster_wheel_visual_0_0" type="mesh" mesh="mesh_26" rgba="0.6 0.3529 0.05098 1" />
+          </body>
+        </body>
+      </body>
+      <body name="opp_robot_lamp" pos="0 0 0" euler="0 0 0">
+        <inertial pos="-0.06425 0 0.078" mass="0.01" fullinertia="3.0733333333333337e-06 4.96875e-07 3.0302083333333336e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_robot_lamp_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_27" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_robot_lamp_visual_0_0" type="mesh" mesh="mesh_28" material="opp_robot_lamp_visual_0_0_soccer_led" />
+      </body>
+      <body name="opp_rplidar_mount" pos="-0.017 0 0.067" euler="0 0 0">
+        <inertial pos="0 0 0.021" mass="0.11" fullinertia="3.335750000000001e-05 3.335750000000001e-05 3.4375e-05 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_rplidar_mount_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_29" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_0" type="mesh" mesh="mesh_30" rgba="0.2 0.2 0.2 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_1" type="mesh" mesh="mesh_31" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_2" type="mesh" mesh="mesh_32" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_3" type="mesh" mesh="mesh_33" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_4" type="mesh" mesh="mesh_34" rgba="0.651 0.6392 0.7647 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_5" type="mesh" mesh="mesh_35" rgba="0.2 0.2 0.2 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_6" type="mesh" mesh="mesh_36" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_rplidar_mount_visual_0_7" type="mesh" mesh="mesh_37" rgba="0.4 0.4 0.4 1" />
+        <body name="opp_rplidar_link" pos="0 0 0.030" euler="0 0 3.141592653589793">
+          <site name="opp_lidar" size="0.002" rgba="1 0 0 1" />
+        </body>
+      </body>
+      <body name="opp_front_camera_mount" pos="0.020 0 0.0495" euler="0 0.13962634015954636 0">
+        <inertial pos="0.01 0 -0.0121" mass="0.01" fullinertia="2.4374999999999995e-06 9.76875e-07 1.9143749999999998e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_front_camera_mount_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_38" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_0" type="mesh" mesh="mesh_39" rgba="1 1 1 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_1" type="mesh" mesh="mesh_40" rgba="0.09804 0.349 0.1373 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_2" type="mesh" mesh="mesh_41" rgba="0.8235 0.6235 0.03529 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_3" type="mesh" mesh="mesh_42" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_4" type="mesh" mesh="mesh_43" rgba="0.498 0.498 0.498 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_5" type="mesh" mesh="mesh_44" rgba="0.9765 0.7098 0.003922 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_6" type="mesh" mesh="mesh_45" rgba="0 1 0 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_7" type="mesh" mesh="mesh_46" rgba="0.4157 0.4157 0.4157 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_8" type="mesh" mesh="mesh_47" rgba="0.7647 0.8863 0.949 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_9" type="mesh" mesh="mesh_48" rgba="1 1 0.5255 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_10" type="mesh" mesh="mesh_49" rgba="0.6471 0.6471 0.6471 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_11" type="mesh" mesh="mesh_50" rgba="0.6157 0.8118 0.9255 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_front_camera_mount_visual_0_12" type="mesh" mesh="mesh_51" rgba="0.9882 1 0.8431 1" />
+        <body name="opp_front_camera_link" pos="0.015 0 -0.0121" euler="0 0 0">
+          <camera name="opp_front_camera" xyaxes="0 -1 0 0 0 1" fovy="51.9365" />
+        </body>
+      </body>
+      <body name="opp_screen_mount" pos="0.0165 0 0.071" euler="0 -0.4363323129985824 0">
+        <inertial pos="0.01 0 -0.004" mass="0.01" fullinertia="5.601666666666667e-06 1.5208333333333335e-06 4.320833333333333e-06 0 0 0" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_screen_mount_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_52" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_0" type="mesh" mesh="mesh_53" rgba="0.0902 0.0902 0.0902 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_1" type="mesh" mesh="mesh_54" rgba="0.3255 0.5255 0.749 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_2" type="mesh" mesh="mesh_55" rgba="0.302 0.302 0.302 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_3" type="mesh" mesh="mesh_56" rgba="0.4 0.4 0.4 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_4" type="mesh" mesh="mesh_57" rgba="0.9137 0.9137 0.9137 1" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_screen_mount_visual_0_5" type="mesh" mesh="mesh_58" rgba="1 1 0.498 1" />
+      </body>
+      <body name="opp_ultrasonic_link" pos="0.0267 0 0.009" euler="0 0 0">
+        <site name="opp_soccer_ultrasonic_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="opp_ir_mid_link" pos="0.0295 0 -0.015" euler="0 0 0">
+        <site name="opp_soccer_ir_mid_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="opp_ir_l_link" pos="0.0295 0.02 -0.015" euler="0 0 0">
+        <site name="opp_soccer_ir_l_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="opp_ir_r_link" pos="0.0295 -0.02 -0.015" euler="0 0 0">
+        <site name="opp_soccer_ir_r_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="opp_imu_link" pos="-0.044 0 0.0525" euler="0 0 0">
+        <site name="opp_soccer_imu_link" size="0.001" rgba="0 0 0 0" />
+      </body>
+      <body name="opp_bumper_link" pos="0.03433 0.0 0.00107" euler="0 0 0">
+        <inertial pos="0 0 0" mass="0.01583" fullinertia="1.51206e-05 3.45757e-06 1.37719e-05 -2.61746e-11 9.6426e-08 5.30461e-12" />
+        <geom pos="0 0 0" euler="0 0 0" name="opp_bumper_link_collision_0" group="3" contype="4" conaffinity="11" rgba="0.4 0.4 0.4 0.01" type="mesh" mesh="mesh_59" friction="0.9 0 0" priority="0" />
+        <geom pos="0 0 0" euler="0 0 0" group="2" contype="0" conaffinity="0" name="opp_bumper_link_visual_0_0" type="mesh" mesh="mesh_60" rgba="0.8 0.8 0.82 1" />
+      </body>
+    </body>
+    </worldbody>
+  <actuator>
+    <velocity name="l_motor" joint="l_wheel_joint" kv="0.08" ctrlrange="-10.7861347773 10.7861347773" forcerange="-0.15 0.15" />
+    <velocity name="r_motor" joint="r_wheel_joint" kv="0.08" ctrlrange="-10.7861347773 10.7861347773" forcerange="-0.15 0.15" />
+  <velocity name="opp_l_motor" joint="opp_l_wheel_joint" kv="0.08" ctrlrange="-10.7861347773 10.7861347773" forcerange="-0.15 0.15" />
+    <velocity name="opp_r_motor" joint="opp_r_wheel_joint" kv="0.08" ctrlrange="-10.7861347773 10.7861347773" forcerange="-0.15 0.15" />
+  </actuator>
+  <sensor>
+    <accelerometer name="soccer_acc" site="soccer_imu_link" />
+    <gyro name="soccer_gyro" site="soccer_imu_link" />
+    <framequat name="soccer_quat" objtype="site" objname="soccer_imu_link" />
+  <accelerometer name="opp_soccer_acc" site="opp_soccer_imu_link" />
+    <gyro name="opp_soccer_gyro" site="opp_soccer_imu_link" />
+    <framequat name="opp_soccer_quat" objtype="site" objname="opp_soccer_imu_link" />
+  </sensor>
+</mujoco>

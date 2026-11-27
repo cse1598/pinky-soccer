@@ -1,0 +1,225 @@
+[INFO] [launch]: All log files can be found below /home/cse/.ros/log/2026-11-27-21-26-35-628525-cse-pc-177845
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: REAL ROBOT (no namespace) team yellow: starts paused. Receive sensors until preparation/prepare (Trigger) or R; calibrate, GoToPose to team start, then wait READY. preparation/stop stops motion. preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.
+[INFO] [launch.user]: VERIFY MODE: the game tree is off; behaviours run only from the verifier window. Keep a hand on the robot power switch.
+[INFO] [ball_detector-1]: process started with pid [177848]
+[INFO] [rectangle_localization-2]: process started with pid [177849]
+[INFO] [world_model_node-3]: process started with pid [177850]
+[INFO] [bt_node-4]: process started with pid [177851]
+[INFO] [match_preparation-5]: process started with pid [177852]
+[INFO] [mpc_controller-6]: process started with pid [177853]
+[INFO] [world_model_viz-7]: process started with pid [177854]
+[INFO] [world_model_topview-8]: process started with pid [177855]
+[INFO] [behavior_verifier-9]: process started with pid [177857]
+[bt_node-4] [INFO] [1795782395.778117011] [bt_node]: Node [ReadWorldModel] created Subscriber to topic [world_model]
+[bt_node-4] [INFO] [1795782395.778480579] [bt_node]: Node [ReadGameState] created Subscriber to topic [/game/kickoff]
+[bt_node-4] [WARN] [1795782395.780654053] [bt_node]: VERIFY MODE: the game tree is not ticked; behaviours run only on behavior_test/request
+[bt_node-4] [INFO] [1795782395.780698426] [bt_node]: Loaded /home/cse/pinky-soccer/install/pinky_soccer_bt/share/pinky_soccer_bt/trees/soccer_1v1.xml, ticking at 15.0 Hz (Groot2 off)
+[bt_node-4] [INFO] [1795782395.847822901] [bt_node]: goal: STOP/VerifyIdle
+[world_model_node-3] [INFO] [1795782396.784561905] [world_model_node]: World model: tf, our goal yellow, attack +X
+[world_model_node-3] [WARN] [1795782396.799422122] [world_model_node]: Waiting for self pose
+[ball_detector-1] [INFO] [1795782396.849437884] [ball_detector]: Ball XY correction [0.013, 0.0] m in base_link; source: /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml
+[ball_detector-1] [INFO] [1795782396.853091922] [ball_detector]: Using intrinsics from /home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/camera.yaml
+[rectangle_localization-2] [INFO] [1795782397.092568353] [rectangle_localization]: Passive sensor reception. Start calibration: localization/calibrate (Trigger) or R in the localization window. No motion/LED requests before that signal. Records: /home/cse/.ros/pinky_soccer/localization/46d9480c07f34d14b69df1dec70a26d0/rectangle_94df26d4b7354c9ab5174295aa370395
+[rectangle_localization-2] [INFO] [1795782397.095823490] [rectangle_localization]: Localization state: WAITING_FOR_CALIBRATION
+[rectangle_localization-2] [INFO] [1795782400.256282550] [rectangle_localization]: Localization state: WAITING_FOR_ROBOT
+[rectangle_localization-2] [INFO] [1795782400.455980248] [rectangle_localization]: Localization state: SETTLING_GOAL
+[rectangle_localization-2] [INFO] [1795782400.875680763] [rectangle_localization]: Localization state: READING_GOAL
+[rectangle_localization-2] [INFO] [1795782401.076120076] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795782401.715970822] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795782401.936380453] [rectangle_localization]: Localization state: READY
+[rectangle_localization-2] [INFO] [1795782402.157260499] [rectangle_localization]: Localization state: ODOM_COAST
+[rectangle_localization-2] [INFO] [1795782402.376386495] [rectangle_localization]: Localization state: READY
+[mpc_controller-6] [INFO] [1795782404.235439708] [mpc_controller]: Fixed-step time-optimal NMPC real/acados: 10 Hz solve, 50 Hz command; up to 80 stages; 92.7 RPM
+[mpc_controller-6] [INFO] [1795782404.236120885] [mpc_controller]: Real motor response: {"applied": true, "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml", "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4", "robot_id": "pinky-pro", "model": "fixed_ramp_first_order_no_delay", "fixed_profile_accel": 74.9, "validation": {"held_out": true, "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged", "rmse_rad_s": 0.13673772694495787, "baseline_rmse_rad_s": 0.2517027001397467, "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance", "horizon_wheel_angle_error_rad": {"0.1s": 0.006039970818655074, "0.25s": 0.01353924291080568, "0.5s": 0.025260526044419987, "1s": 0.050791633435875824, "2s": 0.10842667597723218}, "baseline_horizon_wheel_angle_error_rad": {"0.1s": 0.00451993498306686, "0.25s": 0.010070927021842346, "0.5s": 0.018200915595838738, "1s": 0.03616965200808703, "2s": 0.07592224755230896}}, "parameters": {"tau_left": 0.09031918634164283, "tau_right": 0.08894523651011192}}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [behavior_verifier-9]: sending signal 'SIGINT' to process[behavior_verifier-9]
+[INFO] [world_model_topview-8]: sending signal 'SIGINT' to process[world_model_topview-8]
+[INFO] [world_model_viz-7]: sending signal 'SIGINT' to process[world_model_viz-7]
+[INFO] [mpc_controller-6]: sending signal 'SIGINT' to process[mpc_controller-6]
+[INFO] [match_preparation-5]: sending signal 'SIGINT' to process[match_preparation-5]
+[INFO] [bt_node-4]: sending signal 'SIGINT' to process[bt_node-4]
+[INFO] [world_model_node-3]: sending signal 'SIGINT' to process[world_model_node-3]
+[INFO] [rectangle_localization-2]: sending signal 'SIGINT' to process[rectangle_localization-2]
+[INFO] [ball_detector-1]: sending signal 'SIGINT' to process[ball_detector-1]
+[ERROR] [bt_node-4]: process has died [pid 177851, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_bt/lib/pinky_soccer_bt/bt_node --ros-args -r __node:=bt_node --params-file /home/cse/pinky-soccer/install/pinky_soccer_bt/share/pinky_soccer_bt/config/bt_node.yaml --params-file /tmp/launch_params_vxcsthyu --params-file /tmp/launch_params_8v4k25ow -r behavior_goal:=preparation/strategy_goal'].
+[bt_node-4] [INFO] [1795782404.328015286] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[world_model_topview-8] Traceback (most recent call last):
+[world_model_topview-8]   File "/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/world_model_topview", line 33, in <module>
+[world_model_topview-8]     sys.exit(load_entry_point('pinky-soccer-viz', 'console_scripts', 'world_model_topview')())
+[world_model_topview-8]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[world_model_topview-8]   File "/home/cse/pinky-soccer/build/pinky_soccer_viz/pinky_soccer_viz/world_model_topview.py", line 110, in main
+[world_model_topview-8]     node.destroy_node()
+[world_model_topview-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1962, in destroy_node
+[world_model_topview-8]     self.destroy_service(self._services[0])
+[world_model_topview-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1886, in destroy_service
+[world_model_viz-7] Traceback (most recent call last):
+[world_model_viz-7]   File "/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/world_model_viz", line 33, in <module>
+[world_model_viz-7]     sys.exit(load_entry_point('pinky-soccer-viz', 'console_scripts', 'world_model_viz')())
+[world_model_viz-7]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[world_model_viz-7]   File "/home/cse/pinky-soccer/build/pinky_soccer_viz/pinky_soccer_viz/world_model_viz.py", line 288, in main
+[world_model_viz-7]     node.destroy_node()
+[world_model_viz-7]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1962, in destroy_node
+[world_model_topview-8]     service.destroy()
+[world_model_topview-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/service.py", line 123, in destroy
+[world_model_topview-8]     self.__service.destroy_when_not_in_use()
+[world_model_topview-8] KeyboardInterrupt
+[world_model_viz-7]     self.destroy_service(self._services[0])
+[world_model_viz-7]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1886, in destroy_service
+[world_model_viz-7]     service.destroy()
+[world_model_viz-7]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/service.py", line 123, in destroy
+[world_model_viz-7]     self.__service.destroy_when_not_in_use()
+[world_model_viz-7] KeyboardInterrupt
+[mpc_controller-6] Traceback (most recent call last):
+[mpc_controller-6]   File "/home/cse/pinky-soccer/install/pinky_soccer_mpc/lib/pinky_soccer_mpc/mpc_controller", line 33, in <module>
+[mpc_controller-6]     sys.exit(load_entry_point('pinky-soccer-mpc', 'console_scripts', 'mpc_controller')())
+[mpc_controller-6]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/home/cse/pinky-soccer/build/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py", line 742, in main
+[mpc_controller-6]     node.send((0.,0.))
+[mpc_controller-6]   File "/home/cse/pinky-soccer/build/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py", line 236, in send
+[mpc_controller-6]     self.pub.publish(msg)
+[mpc_controller-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 70, in publish
+[mpc_controller-6]     self.__publisher.publish(msg)
+[mpc_controller-6] rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[mpc_controller-6] Error in sys.excepthook:
+[mpc_controller-6] Traceback (most recent call last):
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 228, in partial_apport_excepthook
+[mpc_controller-6]     return apport_excepthook(binary, exc_type, exc_obj, exc_tb)
+[mpc_controller-6]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 66, in apport_excepthook
+[mpc_controller-6]     import apport.report
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport/__init__.py", line 7, in <module>
+[match_preparation-5] Traceback (most recent call last):
+[match_preparation-5]   File "/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/match_preparation", line 33, in <module>
+[match_preparation-5]     sys.exit(load_entry_point('pinky-soccer-viz', 'console_scripts', 'match_preparation')())
+[match_preparation-5]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/home/cse/pinky-soccer/build/pinky_soccer_viz/pinky_soccer_viz/match_preparation.py", line 366, in main
+[match_preparation-5]     node.command_pub.publish(Twist())
+[match_preparation-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 70, in publish
+[match_preparation-5]     self.__publisher.publish(msg)
+[match_preparation-5] rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[match_preparation-5] Error in sys.excepthook:
+[match_preparation-5] Traceback (most recent call last):
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 228, in partial_apport_excepthook
+[match_preparation-5]     return apport_excepthook(binary, exc_type, exc_obj, exc_tb)
+[match_preparation-5]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 66, in apport_excepthook
+[match_preparation-5]     import apport.report
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport/__init__.py", line 7, in <module>
+[match_preparation-5]     from apport.packaging_impl import impl as packaging
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/__init__.py", line 33, in <module>
+[match_preparation-5]     impl = load_packaging_implementation()
+[match_preparation-5]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/__init__.py", line 27, in load_packaging_implementation
+[match_preparation-5]     module = importlib.import_module(
+[match_preparation-5]              ^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+[match_preparation-5]     return _bootstrap._gcd_import(name[level:], package, level)
+[match_preparation-5]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/apt_dpkg.py", line 46, in <module>
+[match_preparation-5]     import urllib.request
+[match_preparation-5]   File "/usr/lib/python3.12/urllib/request.py", line 88, in <module>
+[match_preparation-5]     import http.client
+[match_preparation-5]   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+[match_preparation-5]   File "<frozen importlib._bootstrap>", line 1322, in _find_and_load_unlocked
+[match_preparation-5]   File "<frozen importlib._bootstrap>", line 1262, in _find_spec
+[match_preparation-5]   File "<frozen importlib._bootstrap_external>", line 1528, in find_spec
+[match_preparation-5]   File "<frozen importlib._bootstrap_external>", line 1502, in _get_spec
+[match_preparation-5]   File "<frozen importlib._bootstrap_external>", line 1605, in find_spec
+[match_preparation-5]   File "<frozen importlib._bootstrap_external>", line 1648, in _fill_cache
+[match_preparation-5] KeyboardInterrupt
+[match_preparation-5] 
+[match_preparation-5] Original exception was:
+[match_preparation-5] Traceback (most recent call last):
+[match_preparation-5]   File "/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/match_preparation", line 33, in <module>
+[match_preparation-5]     sys.exit(load_entry_point('pinky-soccer-viz', 'console_scripts', 'match_preparation')())
+[match_preparation-5]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[match_preparation-5]   File "/home/cse/pinky-soccer/build/pinky_soccer_viz/pinky_soccer_viz/match_preparation.py", line 366, in main
+[mpc_controller-6]     from apport.packaging_impl import impl as packaging
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/__init__.py", line 33, in <module>
+[mpc_controller-6]     impl = load_packaging_implementation()
+[mpc_controller-6]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/__init__.py", line 27, in load_packaging_implementation
+[mpc_controller-6]     module = importlib.import_module(
+[mpc_controller-6]              ^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+[mpc_controller-6]     return _bootstrap._gcd_import(name[level:], package, level)
+[mpc_controller-6]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apport/packaging_impl/apt_dpkg.py", line 49, in <module>
+[mpc_controller-6]     import apt
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apt/__init__.py", line 23, in <module>
+[mpc_controller-6]     from apt.cache import Cache as Cache
+[mpc_controller-6]   File "/usr/lib/python3/dist-packages/apt/cache.py", line 34, in <module>
+[mpc_controller-6]     from apt.package import Package, Version
+[mpc_controller-6]   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+[mpc_controller-6]   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+[mpc_controller-6]   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+[mpc_controller-6]   File "<frozen importlib._bootstrap_external>", line 991, in exec_module
+[mpc_controller-6]   File "<frozen importlib._bootstrap_external>", line 1124, in get_code
+[mpc_controller-6]   File "<frozen importlib._bootstrap_external>", line 755, in _compile_bytecode
+[mpc_controller-6]   File "<frozen importlib._bootstrap>", line 491, in _verbose_message
+[mpc_controller-6] KeyboardInterrupt
+[mpc_controller-6] 
+[mpc_controller-6] Original exception was:
+[mpc_controller-6] Traceback (most recent call last):
+[mpc_controller-6]   File "/home/cse/pinky-soccer/install/pinky_soccer_mpc/lib/pinky_soccer_mpc/mpc_controller", line 33, in <module>
+[mpc_controller-6]     sys.exit(load_entry_point('pinky-soccer-mpc', 'console_scripts', 'mpc_controller')())
+[mpc_controller-6]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[mpc_controller-6]   File "/home/cse/pinky-soccer/build/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py", line 742, in main
+[match_preparation-5]     node.command_pub.publish(Twist())
+[match_preparation-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 70, in publish
+[match_preparation-5]     self.__publisher.publish(msg)
+[match_preparation-5] rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[mpc_controller-6]     node.send((0.,0.))
+[mpc_controller-6]   File "/home/cse/pinky-soccer/build/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py", line 236, in send
+[mpc_controller-6]     self.pub.publish(msg)
+[mpc_controller-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 70, in publish
+[mpc_controller-6]     self.__publisher.publish(msg)
+[mpc_controller-6] rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423
+[ball_detector-1] Traceback (most recent call last):
+[ball_detector-1]   File "/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/ball_detector", line 33, in <module>
+[ball_detector-1]     sys.exit(load_entry_point('pinky-soccer-world-model', 'console_scripts', 'ball_detector')())
+[ball_detector-1]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ball_detector-1]   File "/home/cse/pinky-soccer/build/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py", line 257, in main
+[ball_detector-1]     node.destroy_node()
+[ball_detector-1]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1956, in destroy_node
+[ball_detector-1]     self.destroy_publisher(self._publishers[0])
+[ball_detector-1]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1836, in destroy_publisher
+[ball_detector-1]     publisher.destroy()
+[ball_detector-1]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 105, in destroy
+[ball_detector-1]     self.__publisher.destroy_when_not_in_use()
+[ball_detector-1] KeyboardInterrupt
+[rectangle_localization-2] Traceback (most recent call last):
+[rectangle_localization-2]   File "/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/rectangle_localization", line 33, in <module>
+[rectangle_localization-2]     sys.exit(load_entry_point('pinky-soccer-world-model', 'console_scripts', 'rectangle_localization')())
+[rectangle_localization-2]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rectangle_localization-2]   File "/home/cse/pinky-soccer/build/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization_node.py", line 704, in main
+[rectangle_localization-2]     node.destroy_node()
+[rectangle_localization-2]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1956, in destroy_node
+[rectangle_localization-2]     self.destroy_publisher(self._publishers[0])
+[rectangle_localization-2]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1836, in destroy_publisher
+[rectangle_localization-2]     publisher.destroy()
+[rectangle_localization-2]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 105, in destroy
+[rectangle_localization-2]     self.__publisher.destroy_when_not_in_use()
+[rectangle_localization-2] KeyboardInterrupt
+[world_model_node-3] Traceback (most recent call last):
+[world_model_node-3]   File "/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/world_model_node", line 33, in <module>
+[world_model_node-3]     sys.exit(load_entry_point('pinky-soccer-world-model', 'console_scripts', 'world_model_node')())
+[world_model_node-3]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[world_model_node-3]   File "/home/cse/pinky-soccer/build/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py", line 399, in main
+[world_model_node-3]     node.destroy_node()
+[world_model_node-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1956, in destroy_node
+[world_model_node-3]     self.destroy_publisher(self._publishers[0])
+[world_model_node-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1836, in destroy_publisher
+[world_model_node-3]     publisher.destroy()
+[world_model_node-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/publisher.py", line 105, in destroy
+[world_model_node-3]     self.__publisher.destroy_when_not_in_use()
+[world_model_node-3] KeyboardInterrupt
+[ERROR] [world_model_topview-8]: process has died [pid 177855, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/world_model_topview --ros-args -r __node:=world_model_topview --params-file /tmp/launch_params_7_rlea81 --params-file /tmp/launch_params_568z2mbi --params-file /tmp/launch_params_zs3gxaol'].
+[ERROR] [world_model_viz-7]: process has died [pid 177854, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/world_model_viz --ros-args -r __node:=world_model_viz --params-file /tmp/launch_params_zmkjl6rq --params-file /tmp/launch_params_8jfclj6e'].
+[ERROR] [ball_detector-1]: process has died [pid 177848, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/ball_detector --ros-args -r __node:=ball_detector --params-file /home/cse/pinky-soccer/install/pinky_soccer_world_model/share/pinky_soccer_world_model/config/ball_detector.yaml --params-file /tmp/launch_params_ez_a2jqp --params-file /tmp/launch_params_86pjzplv'].
+[ERROR] [match_preparation-5]: process has died [pid 177852, exit code 1, cmd '/home/cse/pinky-soccer/install/pinky_soccer_viz/lib/pinky_soccer_viz/match_preparation --ros-args -r __node:=match_preparation --params-file /tmp/launch_params_fe8jdhlg --params-file /tmp/launch_params_fl6lgb3z -r cmd_vel:=cmd_vel'].
+[ERROR] [rectangle_localization-2]: process has died [pid 177849, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/rectangle_localization --ros-args -r __node:=rectangle_localization --params-file /home/cse/pinky-soccer/install/pinky_soccer_world_model/share/pinky_soccer_world_model/config/rectangle_localization.yaml --params-file /tmp/launch_params_fgr9uaqu --params-file /tmp/launch_params_7xh14jq6 --params-file /tmp/launch_params_umsomlli -r cmd_vel:=preparation/localized_cmd_vel'].
+[ERROR] [mpc_controller-6]: process has died [pid 177853, exit code 1, cmd '/home/cse/pinky-soccer/install/pinky_soccer_mpc/lib/pinky_soccer_mpc/mpc_controller --ros-args -r __node:=mpc_controller --params-file /tmp/launch_params_0u97skoh -r cmd_vel:=localization/controller_cmd_vel'].
+[ERROR] [world_model_node-3]: process has died [pid 177850, exit code -2, cmd '/home/cse/pinky-soccer/install/pinky_soccer_world_model/lib/pinky_soccer_world_model/world_model_node --ros-args -r __node:=world_model_node --params-file /home/cse/pinky-soccer/install/pinky_soccer_world_model/share/pinky_soccer_world_model/config/world_model.yaml --params-file /home/cse/pinky-soccer/install/pinky_soccer_world_model/share/pinky_soccer_world_model/config/ball_filter.yaml --params-file /tmp/launch_params_rsgtrdjs -r amcl_pose:=localization/pose -r game/playing:=preparation/playing'].
+[INFO] [behavior_verifier-9]: process has finished cleanly [pid 177857]

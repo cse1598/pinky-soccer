@@ -1,0 +1,193 @@
+[
+  {
+    "case": "00_damping2_align",
+    "damping": 2.0,
+    "observer": "align",
+    "preparation": {
+      "state": "READY",
+      "ready": true,
+      "stamp_ros": 1795783850.4983072,
+      "reason": "",
+      "team": "yellow",
+      "start_pose": [
+        -0.4,
+        0.0,
+        0.0
+      ],
+      "own_goal": [
+        -0.83,
+        0.0
+      ],
+      "localization": {
+        "source": "rectangle_lidar_goal_imu",
+        "state": "READY",
+        "ready": true,
+        "stamp": 1795783850.4537356,
+        "calibration_requested": true,
+        "team": "yellow",
+        "learned_colors": [
+          "blue"
+        ],
+        "initialization_complete": true,
+        "valid": true,
+        "confidence": 0.8580986261367798,
+        "hypotheses": [
+          [
+            -0.39855535074917275,
+            -0.0025532345648118793,
+            -0.0023026884785912324
+          ],
+          [
+            0.39855535074917275,
+            0.0025532345648118793,
+            3.139289965111202
+          ]
+        ],
+        "pose": [
+          -0.39855535072604203,
+          -0.0025532253823546654,
+          -0.002271009625708655
+        ],
+        "selected_goal_sign": 1,
+        "provisional_goal_sign": 1,
+        "selected_goal_color": "blue",
+        "debug_enabled": false,
+        "goal_centers": [
+          [
+            -0.9099999999999999,
+            0.0
+          ],
+          [
+            0.9099999999999999,
+            0.0
+          ]
+        ],
+        "target_error_rad": 0.006243549690971614,
+        "goal_pixel_counts": {
+          "yellow": 0,
+          "blue": 5148
+        },
+        "goal_streak": 3,
+        "imu_map_offset_rad": -0.3516087120483094,
+        "fit_accepted": true,
+        "rejected_fits": 0,
+        "fit_attempts": 51,
+        "fit_successes": 51,
+        "fit_source_hz": 7.250986263194836,
+        "imu_outliers": 0,
+        "processing_ms": {
+          "mean": 9.815545019627475,
+          "p95": 21.104471499711508,
+          "maximum": 85.0880430007237
+        },
+        "startup_inputs_ready": false,
+        "missing_inputs": [],
+        "led": "service_unavailable",
+        "records": "/home/cse/.ros/pinky_soccer/localization/b65052ebfcdb493b814a47ae526cfefb/rectangle_09ea7be5abe2489794236f8fc29cd20a",
+        "rotation_rad": 1.4211467750710784,
+        "imu_yaw_deg": -20.317878799233014,
+        "goal_axis_imu_deg": {
+          "yellow": 159.85729530039634,
+          "blue": -20.142704699603662
+        },
+        "sensors": {
+          "imu": true,
+          "lidar_outer_walls": true,
+          "odom": true,
+          "camera_intrinsics_tf": false
+        },
+        "fit_residual_m": 0.006060044272070711
+      },
+      "localization_valid": true,
+      "arrived": true,
+      "odom_fresh": true,
+      "sensors": {
+        "lidar": true,
+        "imu": true,
+        "odom": true,
+        "camera": true
+      },
+      "led": {
+        "color": [
+          96,
+          96,
+          0
+        ],
+        "blink": false,
+        "service": "pending"
+      },
+      "led_callback_ms": {
+        "mean": 0.03355635317030055,
+        "p95": 0.2139490006811684,
+        "maximum": 0.7612299996253569
+      },
+      "goal_id": 1795783849809508768
+    },
+    "goals": [
+      {
+        "name": "curve",
+        "target": [
+          -0.2,
+          0.15,
+          1.5707963267948966
+        ],
+        "outcome": "success",
+        "message": "",
+        "duration": 6.594351109000854,
+        "world_start": [
+          -0.39855535068212766,
+          -0.002553206138490416,
+          -0.001828630112317492
+        ],
+        "referee_start": [
+          -0.4320954514374789,
+          -0.012070401760760612
+        ],
+        "world_end": [
+          -0.20116989597803842,
+          0.15466146204991316,
+          1.5398396763128999
+        ],
+        "referee_end": [
+          -0.18156811160198508,
+          0.1514019577228664
+        ],
+        "world_error_m": 0.004806025909440258,
+        "referee_error_unaligned_m": 0.01848512903318725,
+        "displacement_disagreement_m": 0.05350905209089123
+      },
+      {
+        "name": "reverse",
+        "target": [
+          -0.2,
+          -0.1,
+          1.5707963267948966
+        ],
+        "outcome": "success",
+        "message": "",
+        "duration": 3.156191497000691,
+        "world_start": [
+          -0.20116989597803842,
+          0.15466146204991316,
+          1.5398396763128999
+        ],
+        "referee_start": [
+          -0.18156811160198508,
+          0.1514019577228664
+        ],
+        "world_end": [
+          -0.20214344781935434,
+          -0.09487417055897063,
+          1.5580687756689353
+        ],
+        "referee_end": [
+          -0.19704382963415842,
+          -0.126011551981428
+        ],
+        "world_error_m": 0.005555942405462674,
+        "referee_error_unaligned_m": 0.0261789950096334,
+        "displacement_disagreement_m": 0.03142433540385649
+      }
+    ]
+  }
+]

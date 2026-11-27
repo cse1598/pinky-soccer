@@ -1,0 +1,35 @@
+{
+  "scene": "/tmp/pinky-led-render-scene.xml",
+  "front_camera_changes": {
+    "OFF": {
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "GREEN": {
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "YELLOW": {
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "BLUE": {
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    },
+    "RED": {
+      "changed_pixels": 0,
+      "max_rgb_difference": 0
+    }
+  },
+  "physical_arrays_equal": {
+    "body_mass": true,
+    "body_inertia": true,
+    "geom_size": true,
+    "geom_friction": true,
+    "geom_contype": true,
+    "geom_conaffinity": true,
+    "dof_damping": true,
+    "jnt_range": true
+  }
+}

@@ -1,0 +1,787 @@
+{
+  "topics": {
+    "status": {
+      "count": 3509,
+      "receipt_period_ms": {
+        "n": 3508,
+        "min": 3.7063020000047686,
+        "median": 20.029620000000747,
+        "p95": 24.441061750008686,
+        "max": 53.26369400000175
+      },
+      "mean_hz": 49.9433052148504,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 0
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 3509,
+      "receipt_minus_source_ms": {
+        "n": 0
+      }
+    },
+    "cmd": {
+      "count": 1570,
+      "receipt_period_ms": {
+        "n": 1569,
+        "min": 0.07471099999634134,
+        "median": 49.89317800000137,
+        "p95": 51.711611000000346,
+        "max": 128.28473900000148
+      },
+      "mean_hz": 22.350370268473153,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 0
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 1570,
+      "receipt_minus_source_ms": {
+        "n": 0
+      }
+    },
+    "goal": {
+      "count": 1408,
+      "receipt_period_ms": {
+        "n": 1407,
+        "min": 5.58711000000045,
+        "median": 49.993573000001845,
+        "p95": 52.512732000000106,
+        "max": 56.68558900000065
+      },
+      "mean_hz": 20.0426827044954,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 1407,
+        "min": 5.592897,
+        "median": 49.986695,
+        "p95": 51.7512983,
+        "max": 56.161844
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 1408,
+        "min": 0.077788,
+        "median": 0.2105665,
+        "p95": 1.03249615,
+        "max": 5.070481
+      }
+    },
+    "joints": {
+      "count": 1401,
+      "receipt_period_ms": {
+        "n": 1400,
+        "min": 18.337868000003255,
+        "median": 50.55308199999953,
+        "p95": 62.83034845000124,
+        "max": 93.12700899999982
+      },
+      "mean_hz": 20.003268556943084,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 1400,
+        "min": 48.902696,
+        "median": 49.9999095,
+        "p95": 50.420858,
+        "max": 51.133956
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 1401,
+        "min": 2.558858,
+        "median": 9.062715,
+        "p95": 24.584798,
+        "max": 79.886969
+      }
+    },
+    "odom": {
+      "count": 2103,
+      "receipt_period_ms": {
+        "n": 2102,
+        "min": 0.0225810000000215,
+        "median": 33.13711050000023,
+        "p95": 47.25540835000146,
+        "max": 62.82339799999903
+      },
+      "mean_hz": 30.0302345441448,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 2102,
+        "min": 32.379285,
+        "median": 33.3348685,
+        "p95": 33.46883635,
+        "max": 34.383712
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 2103,
+        "min": 5.260786,
+        "median": 12.466269,
+        "p95": 21.403744299999996,
+        "max": 83.900811
+      }
+    },
+    "raw_joints": {
+      "count": 2103,
+      "receipt_period_ms": {
+        "n": 2102,
+        "min": 0.04996300000001397,
+        "median": 33.30320799999953,
+        "p95": 47.2021339999987,
+        "max": 62.82778900000352
+      },
+      "mean_hz": 30.03470793602707,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 2102,
+        "min": 32.379285,
+        "median": 33.3348685,
+        "p95": 33.46883635,
+        "max": 34.383712
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 2103,
+        "min": 5.271522,
+        "median": 12.726884,
+        "p95": 21.679561099999994,
+        "max": 94.333957
+      }
+    },
+    "drive": {
+      "count": 1402,
+      "receipt_period_ms": {
+        "n": 1401,
+        "min": 0.01868500000001827,
+        "median": 50.08077699999802,
+        "p95": 63.69570700000082,
+        "max": 76.23862300000184
+      },
+      "mean_hz": 20.0157374491463,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 0
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 1402,
+      "receipt_minus_source_ms": {
+        "n": 0
+      }
+    },
+    "tf": {
+      "count": 1451,
+      "receipt_period_ms": {
+        "n": 1450,
+        "min": 0.3898840000005066,
+        "median": 20.10388750000658,
+        "p95": 53.252639800001944,
+        "max": 86.95934899999713
+      },
+      "mean_hz": 46.88506691602787,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 1450,
+        "min": 0.506562,
+        "median": 20.0901925,
+        "p95": 53.44919555,
+        "max": 87.162628
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 1451,
+        "min": 0.061797,
+        "median": 0.199534,
+        "p95": 0.7409425000000001,
+        "max": 4.137843
+      }
+    },
+    "world": {
+      "count": 928,
+      "receipt_period_ms": {
+        "n": 927,
+        "min": 12.5643740000001,
+        "median": 33.2935580000111,
+        "p95": 40.47963299999892,
+        "max": 53.15665500000222
+      },
+      "mean_hz": 30.000050298142583,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 927,
+        "min": 14.373374,
+        "median": 33.277984,
+        "p95": 38.875864,
+        "max": 50.874139
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 928,
+        "min": 0.220769,
+        "median": 0.634978,
+        "p95": 2.41827085,
+        "max": 5.908746
+      }
+    },
+    "result": {
+      "count": 172,
+      "receipt_period_ms": {
+        "n": 171,
+        "min": 3.7074749999987944,
+        "median": 20.137570000002825,
+        "p95": 29.261147500001528,
+        "max": 53.348382999999444
+      },
+      "mean_hz": 49.01461013453771,
+      "gaps_over_200ms": 0,
+      "source_period_ms": {
+        "n": 171,
+        "min": 3.717313,
+        "median": 20.121757,
+        "p95": 29.2715735,
+        "max": 53.265025
+      },
+      "nonincreasing_source_stamps": 0,
+      "missing_or_zero_source_stamp": 0,
+      "receipt_minus_source_ms": {
+        "n": 172,
+        "min": 0.057177,
+        "median": 0.124646,
+        "p95": 0.6192694,
+        "max": 3.752144
+      }
+    }
+  },
+  "decode_errors": {},
+  "conclusions": [
+    "No root cause is established automatically; use time-aligned evidence and trial context.",
+    "A missed flag is not a unique activation event. True-run count is only a lower bound.",
+    "Completed-solve metrics omit canceled generations: short observed solves do not rule out deadline misses.",
+    "Receipt minus source stamp includes clock offset and buffering, not just sensor/network delay.",
+    "AMCL/TF/world steps can be legitimate localization corrections; wheel odom is not independent ground truth.",
+    "Low commanded speed with zero wheel feedback is a candidate deadzone/stiction observation, not proof.",
+    "Real bringup merges wheel feedback through joint_state_publisher at 20 Hz and restamps it. Record raw_joints to assess physical measurement freshness."
+  ],
+  "timing": {
+    "observed_completed_solves": 25,
+    "missed_flag_true_runs_lower_bound": 0,
+    "exact_missed_slot_count": null,
+    "reason": "activation_missed is sticky; canceled generation results have no completion metrics",
+    "metrics": {
+      "ms": {
+        "n": 25,
+        "min": 2.3714210001344327,
+        "median": 27.386087000195403,
+        "p95": 73.84005940002679,
+        "max": 79.12210600079561
+      },
+      "acados_ms": {
+        "n": 25,
+        "min": 0.182,
+        "median": 15.950000000000001,
+        "p95": 31.65639999999999,
+        "max": 56.693
+      },
+      "worker_wait_ms": {
+        "n": 25,
+        "min": 1.4819640000496292,
+        "median": 3.688771999804885,
+        "p95": 24.871961600365463,
+        "max": 34.8779679989093
+      },
+      "result_pickup_ms": {
+        "n": 25,
+        "min": 1.1937680010305485,
+        "median": 10.956928999803495,
+        "p95": 17.68020380077359,
+        "max": 32.9062349992455
+      },
+      "solve_input_age_wall_s": {
+        "n": 25,
+        "min": 0.01891363899994758,
+        "median": 0.04889724100030435,
+        "p95": 0.09708727879915385,
+        "max": 0.10256329599906167
+      },
+      "solve_input_age_sim_s": {
+        "n": 25,
+        "min": 0.0189058780670166,
+        "median": 0.04889678955078125,
+        "p95": 0.09708313941955565,
+        "max": 0.10256218910217285
+      }
+    },
+    "status_reasons": {
+      "stale input": 1967,
+      "STOP goal": 1370,
+      "waiting for scheduled solution": 17,
+      "scheduled optimized input": 113,
+      "waiting for rest": 41,
+      "settled": 1
+    },
+    "sticky_jitter_status_weighted_ms": {
+      "n": 166,
+      "min": 0.0858306884765625,
+      "median": 0.47397613525390625,
+      "p95": 20.19047737121582,
+      "max": 20.339012145996094
+    }
+  },
+  "command_chain": {
+    "comparable_samples": 1402,
+    "receipt_latest_cmd_age_ms": {
+      "n": 1402,
+      "min": 0.10841900000002624,
+      "median": 23.707249500002803,
+      "p95": 39.69644295000068,
+      "max": 110.52486300000197
+    },
+    "mismatches": 11,
+    "transport_latency_ms": null,
+    "reason": "Twist has no stamp/sequence; PC recorder order is not watchdog callback order"
+  },
+  "zero_command_starts": [
+    {
+      "t": 0.019870293,
+      "status_state": "stop",
+      "reason": "stale input",
+      "activation_missed": null,
+      "goal_id": "0"
+    },
+    {
+      "t": 38.308923787,
+      "status_state": "stop",
+      "reason": "stale input",
+      "activation_missed": null,
+      "goal_id": "0"
+    },
+    {
+      "t": 40.311504385,
+      "status_state": "waiting",
+      "reason": "waiting for scheduled solution",
+      "activation_missed": false,
+      "goal_id": "1795776749317004399"
+    },
+    {
+      "t": 42.076180604,
+      "status_state": "settle",
+      "reason": "waiting for rest",
+      "activation_missed": false,
+      "goal_id": "1795776749317004399"
+    }
+  ],
+  "missing_roles": [
+    "amcl"
+  ],
+  "driver_diagnostics": {
+    "serial_write_ms": {
+      "n": 0
+    },
+    "feedback_bulk_read_ms": {
+      "n": 0
+    },
+    "info": [],
+    "note": "Diagnostic driver must already be enabled; this tool does not enable it."
+  },
+  "input": "/tmp/pinky_base_mpc_align2_20261127",
+  "context": "2026-11-27 real Pinky, user requested base acados GoToPose/no avoidance, damping=2.0, observer=align, max_lin=max_ang=0; preparation test target (-0.3,0,0), original tau/wheel profile, independent safety/watchdog retained. READY then explicit STOP.",
+  "origin_bag_ns": 1795776709994506155,
+  "clock_synchronized_asserted": true,
+  "requested_topics": {
+    "cmd": "/cmd_vel",
+    "drive": "/drive/cmd_vel",
+    "joints": "/joint_states",
+    "raw_joints": "/wheel_joint_states_raw",
+    "wheel_joints": "/wheel_joint_states",
+    "status": "/mpc/status",
+    "odom": "/odom",
+    "amcl": "/amcl_pose",
+    "world": "/world_model",
+    "goal": "/behavior_goal",
+    "result": "/motion/result",
+    "motor": "/motor/diagnostics",
+    "motor_info": "/motor/info",
+    "tf": "/tf",
+    "sync": "/calibration/time_sync_status"
+  },
+  "inventory": {
+    "/imu_raw": "sensor_msgs/msg/Imu",
+    "/scan": "sensor_msgs/msg/LaserScan",
+    "/motion/result": "pinky_soccer_msgs/msg/MotionResult",
+    "/behavior_goal": "pinky_soccer_msgs/msg/BehaviorGoal",
+    "/preparation/status": "std_msgs/msg/String",
+    "/world_model": "pinky_soccer_msgs/msg/WorldModel",
+    "/camera/image_raw/compressed": "sensor_msgs/msg/CompressedImage",
+    "/localization/status": "std_msgs/msg/String",
+    "/wheel_joint_states_raw": "sensor_msgs/msg/JointState",
+    "/tf": "tf2_msgs/msg/TFMessage",
+    "/drive/cmd_vel": "geometry_msgs/msg/Twist",
+    "/mpc/status": "std_msgs/msg/String",
+    "/cmd_vel": "geometry_msgs/msg/Twist",
+    "/tf_static": "tf2_msgs/msg/TFMessage",
+    "/odom": "nav_msgs/msg/Odometry",
+    "/joint_states": "sensor_msgs/msg/JointState"
+  },
+  "code_baseline": {
+    "head": "bcffef185e57f7c68d0f94f873c4db52841b52a8",
+    "status": "M docs/CONTROL_PART_B.md\n M docs/MATCH_PREPARATION.md\n M src/pinky_soccer_mpc/pinky_soccer_mpc/collision_monitor.py\n M src/pinky_soccer_mpc/pinky_soccer_mpc/motion_management.py\n M src/pinky_soccer_mpc/pinky_soccer_mpc/motion_runtime.py\n M src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py\n M src/pinky_soccer_mpc/test/test_motion_management.py\n M src/pinky_soccer_mpc/test/test_motion_runtime.py\n M src/pinky_soccer_referee/CMakeLists.txt\n M src/pinky_soccer_referee/README.md\n M src/pinky_soccer_referee/msg/TrackedObject.msg\n M src/pinky_soccer_referee/package.xml\n M src/pinky_soccer_referee/scripts/referee_core.py\n M src/pinky_soccer_referee/scripts/referee_node.py\n M src/pinky_soccer_referee/test/test_core.py\n M src/pinky_soccer_viz/config/preparation.yaml\n M src/pinky_soccer_viz/launch/game.launch.py\n M src/pinky_soccer_viz/launch/real_game.launch.py\n M src/pinky_soccer_viz/pinky_soccer_viz/localization_view.py\n M src/pinky_soccer_viz/pinky_soccer_viz/match_preparation.py\n M src/pinky_soccer_viz/pinky_soccer_viz/preparation_view.py\n M src/pinky_soccer_viz/test/test_rectangle_launch.py\n M src/pinky_soccer_world_model/pinky_soccer_world_model/rectangle_localization_node.py\n?? docs/validation/\n?? identification_mujoco.yaml\n?? identification_mujoco_zero_delay.yaml\n?? src/pinky_soccer_referee/launch/\n?? src/pinky_soccer_referee/scripts/referee_recorder.py",
+    "files": {
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": "bb06f5b71a38ab02d56898127d4bd922c49f98197637aa795637f9b7825bf042",
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/scheduled_input.py": "b91234bc3f46a2c914e1268d1b888e85b72626f9d83dffbf2154e9d7f2204b14",
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/acados_time_optimal.py": "c722c25af2cf7391682968071129c1e92a818f5ef53118d7ec0a9378fc8d7b67",
+      "src/pinky_soccer_dynamics/config/dynamics.yaml": "f83df7d3c3e61c99bb8485450f8628e4bfc8f4bd69cb082d5f8243887c5e42f8",
+      "src/pinky_soccer_dynamics/pinky_soccer_dynamics/profile_model.py": "c6914d15bee9aca9ab32a3e789c19bdd01a6c870c2e68d0485d0d51cbd15c000",
+      "src/pinky_soccer_bringup/pinky_soccer_bringup/command_watchdog.py": "1b454776d5144386da66d48e8689321e6d0a2545248bd49472d9467afcc8124e"
+    },
+    "unchanged_from_head": {
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": false,
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/scheduled_input.py": true,
+      "src/pinky_soccer_mpc/pinky_soccer_mpc/acados_time_optimal.py": true,
+      "src/pinky_soccer_dynamics/config/dynamics.yaml": true,
+      "src/pinky_soccer_dynamics/pinky_soccer_dynamics/profile_model.py": true,
+      "src/pinky_soccer_bringup/pinky_soccer_bringup/command_watchdog.py": true
+    },
+    "analyzer_sha256": "7dc3e387baf69bb2322b70e318793075400989cb659103f4525fb7f098eeafcf"
+  },
+  "analysis_model": {
+    "target": "real",
+    "inputs": [
+      "/home/cse/pinky-soccer/src/pinky_soccer_dynamics/config/dynamics.yaml",
+      "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+      "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml"
+    ],
+    "model": {
+      "left_radius": {
+        "value": 0.02767183193047861,
+        "source": "measured",
+        "ref": "profile results.wheels.left_radius_m",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+          "robot_id": "pinky-pro",
+          "environment": "real",
+          "exported_utc": "2026-11-23T17:21:19.554918+00:00",
+          "project_revision": 263,
+          "trials": 12,
+          "equation_residual": {
+            "count": 12,
+            "mean": 0.0022991155901538516,
+            "sample_std": 0.0033634997047776974,
+            "max": 0.012304928590983755
+          },
+          "condition_number": null
+        }
+      },
+      "right_radius": {
+        "value": 0.02767183193047861,
+        "source": "measured",
+        "ref": "profile results.wheels.right_radius_m",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+          "robot_id": "pinky-pro",
+          "environment": "real",
+          "exported_utc": "2026-11-23T17:21:19.554918+00:00",
+          "project_revision": 263,
+          "trials": 12,
+          "equation_residual": {
+            "count": 12,
+            "mean": 0.0022991155901538516,
+            "sample_std": 0.0033634997047776974,
+            "max": 0.012304928590983755
+          },
+          "condition_number": null
+        }
+      },
+      "track": {
+        "value": 0.09811273330198911,
+        "source": "measured",
+        "ref": "profile results.wheels.separation_m",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+          "robot_id": "pinky-pro",
+          "environment": "real",
+          "exported_utc": "2026-11-23T17:21:19.554918+00:00",
+          "project_revision": 263,
+          "trials": 12,
+          "equation_residual": {
+            "count": 12,
+            "mean": 0.0022991155901538516,
+            "sample_std": 0.0033634997047776974,
+            "max": 0.012304928590983755
+          },
+          "condition_number": null
+        }
+      },
+      "tau_left": {
+        "value": 0.09031918634164283,
+        "source": "measured",
+        "ref": "fixed-ramp effective tau fit",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+          "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+          "robot_id": "pinky-pro",
+          "model": "fixed_ramp_first_order_no_delay",
+          "fixed_profile_accel": 74.9,
+          "validation": {
+            "held_out": true,
+            "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+            "rmse_rad_s": 0.13673772694495787,
+            "baseline_rmse_rad_s": 0.2517027001397467,
+            "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+            "horizon_wheel_angle_error_rad": {
+              "0.1s": 0.006039970818655074,
+              "0.25s": 0.01353924291080568,
+              "0.5s": 0.025260526044419987,
+              "1s": 0.050791633435875824,
+              "2s": 0.10842667597723218
+            },
+            "baseline_horizon_wheel_angle_error_rad": {
+              "0.1s": 0.00451993498306686,
+              "0.25s": 0.010070927021842346,
+              "0.5s": 0.018200915595838738,
+              "1s": 0.03616965200808703,
+              "2s": 0.07592224755230896
+            }
+          }
+        }
+      },
+      "tau_right": {
+        "value": 0.08894523651011192,
+        "source": "measured",
+        "ref": "fixed-ramp effective tau fit",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+          "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+          "robot_id": "pinky-pro",
+          "model": "fixed_ramp_first_order_no_delay",
+          "fixed_profile_accel": 74.9,
+          "validation": {
+            "held_out": true,
+            "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+            "rmse_rad_s": 0.13673772694495787,
+            "baseline_rmse_rad_s": 0.2517027001397467,
+            "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+            "horizon_wheel_angle_error_rad": {
+              "0.1s": 0.006039970818655074,
+              "0.25s": 0.01353924291080568,
+              "0.5s": 0.025260526044419987,
+              "1s": 0.050791633435875824,
+              "2s": 0.10842667597723218
+            },
+            "baseline_horizon_wheel_angle_error_rad": {
+              "0.1s": 0.00451993498306686,
+              "0.25s": 0.010070927021842346,
+              "0.5s": 0.018200915595838738,
+              "1s": 0.03616965200808703,
+              "2s": 0.07592224755230896
+            }
+          }
+        }
+      },
+      "delay": {
+        "value": 0.0,
+        "source": "assumption",
+        "ref": "not identified; command-to-motion dead time"
+      },
+      "wheel_speed_max": {
+        "value": 10.47,
+        "source": "official_default",
+        "ref": "bringup.py MAX_RPM 100 -> 10.47 rad/s"
+      },
+      "wheel_accel_max": {
+        "value": 74.9,
+        "source": "official_default",
+        "ref": "dynamixel_driver Profile Acceleration 200 x 214.577 rpm/min"
+      }
+    },
+    "driver": {
+      "wheel_radius": {
+        "value": 0.02767183193047861,
+        "source": "measured",
+        "ref": "profile launch.wheel_radius",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+          "robot_id": "pinky-pro",
+          "environment": "real",
+          "exported_utc": "2026-11-23T17:21:19.554918+00:00",
+          "project_revision": 263
+        }
+      },
+      "wheel_separation": {
+        "value": 0.09811273330198911,
+        "source": "measured",
+        "ref": "profile launch.wheel_separation",
+        "meta": {
+          "file": "/home/cse/pinky-soccer/ros_20261123_195718_b5b380/exports/6fa01d7d19d64855b878e2613e1d5824/profile.yaml",
+          "robot_id": "pinky-pro",
+          "environment": "real",
+          "exported_utc": "2026-11-23T17:21:19.554918+00:00",
+          "project_revision": 263
+        }
+      },
+      "max_rpm": {
+        "value": 100.0,
+        "source": "official_default",
+        "ref": "bringup.py twist_callback MAX_RPM (ratio-preserving scale)"
+      },
+      "rpm_resolution": {
+        "value": 0.229,
+        "source": "official_default",
+        "ref": "dynamixel_driver RPM_TO_VALUE_SCALE (int truncation)"
+      }
+    },
+    "joint_sign": {
+      "left": {
+        "value": 1,
+        "source": "assumption",
+        "ref": "code analysis, not verified on hardware"
+      },
+      "right": {
+        "value": -1,
+        "source": "assumption",
+        "ref": "code analysis, not verified on hardware"
+      }
+    },
+    "limits": {
+      "motor_rated_rpm": {
+        "value": 103.0,
+        "source": "manual",
+        "ref": "ROBOTIS e-Manual XL330-M288-T no-load speed 103 rev/min at 5.0 V. Model listed on PinkLAB official Pinky Pro product page https://pinklab.art/pinky-pro/; actual supply voltage and hardware registers not read from the robot"
+      },
+      "motor_accel": {
+        "value": 74.9,
+        "source": "official_default",
+        "ref": "the manual gives no physical acceleration limit; the motor ramps at the official driver's Profile Acceleration 200 = 74.9 rad/s^2"
+      },
+      "usage_ratio": {
+        "value": 0.9,
+        "source": "user_decision",
+        "ref": "2026-11-24 user: use up to 90 % of the manual maximum (speed and acceleration)"
+      }
+    },
+    "unmeasured": [
+      "delay",
+      "wheel_speed_max",
+      "wheel_accel_max"
+    ]
+  },
+  "analysis_response": {
+    "applied": true,
+    "file": "/home/cse/pinky-soccer/src/pinky_soccer_mpc/config/real_motor_response.yaml",
+    "sha256": "9366d48b9857614a53237ea746320966bb070f1b9fc6b27c4834f19d346537d4",
+    "robot_id": "pinky-pro",
+    "model": "fixed_ramp_first_order_no_delay",
+    "fixed_profile_accel": 74.9,
+    "validation": {
+      "held_out": true,
+      "split": "Per kind, every fourth active completed experiment reserved before fitting; original purpose labels unchanged",
+      "rmse_rad_s": 0.13673772694495787,
+      "baseline_rmse_rad_s": 0.2517027001397467,
+      "scope": "Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance",
+      "horizon_wheel_angle_error_rad": {
+        "0.1s": 0.006039970818655074,
+        "0.25s": 0.01353924291080568,
+        "0.5s": 0.025260526044419987,
+        "1s": 0.050791633435875824,
+        "2s": 0.10842667597723218
+      },
+      "baseline_horizon_wheel_angle_error_rad": {
+        "0.1s": 0.00451993498306686,
+        "0.25s": 0.010070927021842346,
+        "0.5s": 0.018200915595838738,
+        "1s": 0.03616965200808703,
+        "2s": 0.07592224755230896
+      }
+    },
+    "parameters": {
+      "tau_left": 0.09031918634164283,
+      "tau_right": 0.08894523651011192
+    }
+  },
+  "analysis_model_note": "Offline comparison assumptions; not proof of the running robot parameters",
+  "motor_feedback_role": "joints",
+  "motor": {
+    "l": {
+      "one_step_error_rad_s": {
+        "n": 1390,
+        "min": -1.5908700843102155,
+        "median": 0.008265313290799985,
+        "p95": 0.012219830272258867,
+        "max": 2.0447590772189965
+      },
+      "low_command_stationary_samples": 0
+    },
+    "r": {
+      "one_step_error_rad_s": {
+        "n": 1390,
+        "min": -1.995998740246271,
+        "median": -0.010391175230689387,
+        "p95": -0.00626143894091669,
+        "max": 1.6224787601312674
+      },
+      "low_command_stationary_samples": 0
+    }
+  },
+  "pose_increments": {
+    "odom": {
+      "distance_m": {
+        "n": 2102,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 2.122402927347175e-05,
+        "max": 0.009274900792509585
+      },
+      "wrapped_yaw_rad": {
+        "n": 2102,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.000843659241576388,
+        "max": 0.028554620484130433
+      }
+    },
+    "amcl": {
+      "distance_m": {
+        "n": 0
+      },
+      "wrapped_yaw_rad": {
+        "n": 0
+      }
+    },
+    "world": {
+      "distance_m": {
+        "n": 927,
+        "min": 0.0,
+        "median": 5.551115123125783e-17,
+        "p95": 0.0029047609401923187,
+        "max": 0.014857091900223628
+      },
+      "wrapped_yaw_rad": {
+        "n": 927,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.004246196516036317,
+        "max": 0.04294567298253532
+      }
+    },
+    "tf": {
+      "distance_m": {
+        "n": 1450,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.0003817649839193095,
+        "max": 0.011025140543007097
+      },
+      "wrapped_yaw_rad": {
+        "n": 1450,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.0012858658211277623,
+        "max": 0.023131870947820377
+      }
+    }
+  }
+}

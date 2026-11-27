@@ -1,0 +1,70 @@
+{
+  "motor_scatter.png": {
+    "sha256": "0a672187fa9775a8f1c2316e324ae073adc3e6ac000e78fcd3bf9e353d36d674",
+    "bytes": 79911
+  },
+  "summary.json": {
+    "sha256": "37415128ba215356672759fabe7f5ba2baff008d6242c09cdbec2a43a4121f90",
+    "bytes": 26775
+  },
+  "normal_launch.log": {
+    "sha256": "c10105350cf06e08c83d1f94ba14b9ac6ee53380c0d01ae81b7fabbdfcbb5e58",
+    "bytes": 7248
+  },
+  "live_metrics.json": {
+    "sha256": "a19a25cda1a190b853d9f84db5404c195bae42193c9e267dbbe4787be173fd3e",
+    "bytes": 1795
+  },
+  "tests_final.txt": {
+    "sha256": "4a23d6dc40412858c44106e1e3088bc06b3a2f88f8e363e50c15e04d44047dc1",
+    "bytes": 5612
+  },
+  "status.json": {
+    "sha256": "2c3ac9a31580e1126ad27d713425264bfebb26e4703647470dc55e0b5b8097a6",
+    "bytes": 7458363
+  },
+  "timeline.png": {
+    "sha256": "d5e10e132a51344f72872e750efb62fdfc6eeb8ead30cf76f1ef6f47ef423321",
+    "bytes": 393165
+  },
+  "timing.png": {
+    "sha256": "72cabd486b6e115a99e27f2a0a79ce4e4651f3c7ac05c027efa3fa4e617db282",
+    "bytes": 462946
+  },
+  "launch.log": {
+    "sha256": "ff1ab57928adf6ca48991a28774dc7b7b983fb0be11b7fa1bfd78bb7fdccbb83",
+    "bytes": 40242
+  },
+  "report.md": {
+    "sha256": "d81cc5b0f50fd05062d45d1e7389903416ba2c02ec3bbce1827fe98972097491",
+    "bytes": 4255
+  },
+  "idle_monitor.jpg": {
+    "sha256": "7b6d7a41d2eb0adab61ccc7999aa0c22d8e4608198ae7a6960c2949ee1460152",
+    "bytes": 64966
+  },
+  "source_sha256.json": {
+    "sha256": "4f82526e07915dbdb76c1de870abb2ddb7c337db217a5ad6be7436c4abf6f6f3",
+    "bytes": 619
+  },
+  "samples.csv": {
+    "sha256": "ae2ddc319bd1de87aabf3e349d0a0c2fa4e7d6d539c8b433fc3a89b16c7707da",
+    "bytes": 10005778
+  },
+  "feedback.png": {
+    "sha256": "04a01a1ed761d0792129017b8e5d6565c7291bf5d5644912452344e7f0c24cf4",
+    "bytes": 500964
+  },
+  "localization.png": {
+    "sha256": "eedb86bc7e43eb88e75b32fffe8d9178cc07906f963705086658c370e9fe6233",
+    "bytes": 201849
+  },
+  "raw_bag/pinky_base_mpc_align2_20261127_0.mcap": {
+    "sha256": "b121165485fd9139b1aadb4c85405c61badeea43dbbf88d457f4f44d84a92ad7",
+    "bytes": 49991236
+  },
+  "raw_bag/metadata.yaml": {
+    "sha256": "9b58722b8a19fd5f5e0c040985fe9db04f3ab3659b657c7481a647a1a32f6a06",
+    "bytes": 12613
+  }
+}

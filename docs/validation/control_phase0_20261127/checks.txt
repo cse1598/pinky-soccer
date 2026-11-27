@@ -1,0 +1,27 @@
+{
+  "checks": 385,
+  "passed": true
+}
+{
+  "baseline_files": 384,
+  "missing": [],
+  "changed": [
+    "README.md",
+    "src/pinky_soccer_mpc/README.md",
+    "src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py"
+  ],
+  "unexpected_changes": [],
+  "controller_ast_equal_after_removing_only_trace_statements": true,
+  "passed": true,
+  "limits": "Diagnostic runtime overhead and exception behavior are not proven by AST comparison; covered by measured runs and tests."
+}
+{
+  "flake8_F": {
+    "returncode": 0,
+    "output": ""
+  },
+  "compile": {
+    "returncode": 0,
+    "output": ""
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "points": 360,
+  "radius_m": 1.0,
+  "state": [
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1
+  ],
+  "previous": [
+    1,
+    1
+  ],
+  "command": [
+    1,
+    1
+  ],
+  "age_s": 0.02,
+  "samples": 10,
+  "precise_mean_ms": 4.721,
+  "precise_max_ms": 5.276,
+  "fast_mean_ms": 0.051,
+  "fast_max_ms": 0.117,
+  "scope": "Local synthetic function timing only; not end-to-end speed or hardware safety evidence."
+}

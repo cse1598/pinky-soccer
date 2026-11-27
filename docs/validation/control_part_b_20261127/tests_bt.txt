@@ -1,0 +1,13 @@
+Internal ctest changing into directory: /home/cse/pinky-soccer/build/pinky_soccer_bt
+Test project /home/cse/pinky-soccer/build/pinky_soccer_bt
+    Start 1: test_soccer_logic
+1/2 Test #1: test_soccer_logic ................   Passed    0.07 sec
+    Start 2: test_soccer_tree
+2/2 Test #2: test_soccer_tree .................   Passed    0.65 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Label Time Summary:
+gtest    =   0.71 sec*proc (2 tests)
+
+Total Test time (real) =   0.72 sec

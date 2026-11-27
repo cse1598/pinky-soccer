@@ -1,0 +1,19 @@
+{
+  "a/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf b/src/pinky_soccer_sim/worlds/rcj_soccer.mjcf": true,
+  "a/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py b/src/pinky_soccer_sim/pinky_soccer_sim/rcj_field.py": true,
+  "a/src/pinky_soccer_sim/worlds/rcj_soccer.world b/src/pinky_soccer_sim/worlds/rcj_soccer.world": true,
+  "a/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf b/src/pinky_soccer_sim/worlds/hardboard_soccer.mjcf": true,
+  "a/src/pinky_soccer_sim/worlds/hardboard_soccer.world b/src/pinky_soccer_sim/worlds/hardboard_soccer.world": true,
+  "a/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py b/src/pinky_soccer_sim/pinky_soccer_sim/mujoco_soccer_bridge.py": true,
+  "a/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py b/src/pinky_soccer_mpc/pinky_soccer_mpc/mpc_controller.py": true,
+  "a/src/pinky_soccer_sim/test/test_mujoco_ball.py b/src/pinky_soccer_sim/test/test_mujoco_ball.py": true,
+  "a/src/pinky_soccer_sim/README.md b/src/pinky_soccer_sim/README.md": true,
+  "a/src/pinky_soccer_mpc/README.md b/src/pinky_soccer_mpc/README.md": true,
+  "a/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py b/src/pinky_soccer_sim/launch/gazebo_soccer.launch.py": true,
+  "a/src/pinky_soccer_mpc/setup.py b/src/pinky_soccer_mpc/setup.py": true,
+  "src/pinky_soccer_world_model/pinky_soccer_world_model/world_model_node.py": true,
+  "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_detector.py": true,
+  "src/pinky_soccer_world_model/pinky_soccer_world_model/robust_ball.py": true,
+  "src/pinky_soccer_world_model/pinky_soccer_world_model/heading_reference.py": true,
+  "src/pinky_soccer_world_model/pinky_soccer_world_model/ball_filter.py": true
+}

@@ -1,0 +1,227 @@
+{
+  "bag": "/tmp/pinky_gotopose_referee_curve_20261127",
+  "decode_errors": {},
+  "cases": [
+    {
+      "case": "00_damping2_align",
+      "preparation": "READY",
+      "preparation_reason": "",
+      "slots": 62,
+      "missed": 2,
+      "timing_ms": {
+        "ms": {
+          "n": 65,
+          "min": 1.6446240006189328,
+          "median": 50.713844000711106,
+          "p95": 90.13704639910429,
+          "max": 98.34371299984923
+        },
+        "worker_wait_ms": {
+          "n": 65,
+          "min": 1.4791270004934631,
+          "median": 4.115945001103682,
+          "p95": 13.97013699970557,
+          "max": 27.629404999970575
+        },
+        "result_pickup_ms": {
+          "n": 65,
+          "min": -0.43636200098262634,
+          "median": 7.577489001050708,
+          "p95": 17.8634019997844,
+          "max": 19.030224000744056
+        },
+        "end_to_pickup_ms": {
+          "n": 65,
+          "min": 18.751167999653262,
+          "median": 60.038390998670366,
+          "p95": 117.52781799950753,
+          "max": 119.08373700134689
+        }
+      },
+      "jitter_ms": {
+        "n": 62,
+        "min": 0.04649162292480469,
+        "median": 18.467426300048828,
+        "p95": 21.16912603378296,
+        "max": 29.88886833190918
+      },
+      "goals": [
+        {
+          "name": "curve",
+          "target": [
+            -0.2,
+            0.15,
+            1.5707963267948966
+          ],
+          "outcome": "success",
+          "message": "",
+          "duration": 6.594351109000854,
+          "world_start": [
+            -0.39855535068212766,
+            -0.002553206138490416,
+            -0.001828630112317492
+          ],
+          "referee_start": [
+            -0.4320954514374789,
+            -0.012070401760760612
+          ],
+          "world_end": [
+            -0.20116989597803842,
+            0.15466146204991316,
+            1.5398396763128999
+          ],
+          "referee_end": [
+            -0.18156811160198508,
+            0.1514019577228664
+          ],
+          "world_error_m": 0.004806025909440258,
+          "referee_error_unaligned_m": 0.01848512903318725,
+          "displacement_disagreement_m": 0.05350905209089123,
+          "failure_reasons": [],
+          "topic_coverage": {
+            "cmd": {
+              "n": 326,
+              "span_s": 6.557001106,
+              "starts_after_episode_s": 0.0016963481903076172,
+              "max_gap_s": 0.06563663482666016
+            },
+            "drive": {
+              "n": 131,
+              "span_s": 6.499683059,
+              "starts_after_episode_s": 0.04745626449584961,
+              "max_gap_s": 0.05964803695678711
+            },
+            "odom": {
+              "n": 197,
+              "span_s": 6.532203525,
+              "starts_after_episode_s": 0.02138519287109375,
+              "max_gap_s": 0.04444384574890137
+            }
+          },
+          "outcome_meaning": "BT terminal result only; not a motion quality pass",
+          "world_path_quality": {
+            "max_displacement_from_start_m": 0.2860073952397189,
+            "chord_length_m": 0.25039310690918676,
+            "max_overshoot_along_chord_m": 0.035324364576502676,
+            "max_cross_track_to_chord_m": 0.03724153539821132
+          },
+          "referee_path_quality": {
+            "max_displacement_from_start_m": 0.3199989028904485,
+            "chord_length_m": 0.2830814612525191,
+            "max_overshoot_along_chord_m": 0.03676563012977374,
+            "max_cross_track_to_chord_m": 0.04320295471215823
+          },
+          "drive_interval_covered": true,
+          "drive_zero_bouts_ge80ms": [
+            {
+              "start_ros": 1795783853.4638817,
+              "duration_s": 0.15484857559204102,
+              "mpc_state_at_start": "waiting",
+              "mpc_reason_at_start": "waiting for scheduled solution"
+            },
+            {
+              "start_ros": 1795783854.9692943,
+              "duration_s": 0.29469752311706543,
+              "mpc_state_at_start": "settle",
+              "mpc_reason_at_start": "waiting for rest"
+            },
+            {
+              "start_ros": 1795783855.5156455,
+              "duration_s": 0.25281810760498047,
+              "mpc_state_at_start": "settle",
+              "mpc_reason_at_start": "waiting for rest"
+            }
+          ],
+          "drive_sign_changes_over_1cms": 7,
+          "peak_drive_mps": 0.25620494805230104,
+          "peak_odom_mps": 0.2528881520022499,
+          "referee_settled_mean": [
+            -0.18239618210301384,
+            0.1528244313436804
+          ],
+          "referee_settled_error_m": 0.017828960064047904,
+          "referee_y_std_m": 0.060930648142440196,
+          "referee_missing_frames": 0
+        },
+        {
+          "name": "reverse",
+          "target": [
+            -0.2,
+            -0.1,
+            1.5707963267948966
+          ],
+          "outcome": "success",
+          "message": "",
+          "duration": 3.156191497000691,
+          "world_start": [
+            -0.20116989597803842,
+            0.15466146204991316,
+            1.5398396763128999
+          ],
+          "referee_start": [
+            -0.18156811160198508,
+            0.1514019577228664
+          ],
+          "world_end": [
+            -0.20214344781935434,
+            -0.09487417055897063,
+            1.5580687756689353
+          ],
+          "referee_end": [
+            -0.19704382963415842,
+            -0.126011551981428
+          ],
+          "world_error_m": 0.005555942405462674,
+          "referee_error_unaligned_m": 0.0261789950096334,
+          "displacement_disagreement_m": 0.03142433540385649,
+          "failure_reasons": [],
+          "topic_coverage": {
+            "cmd": {
+              "n": 156,
+              "span_s": 3.119271227,
+              "starts_after_episode_s": 0.002874612808227539,
+              "max_gap_s": 0.06524229049682617
+            },
+            "drive": {
+              "n": 63,
+              "span_s": 3.095957792,
+              "starts_after_episode_s": 0.021476268768310547,
+              "max_gap_s": 0.05949544906616211
+            },
+            "odom": {
+              "n": 94,
+              "span_s": 3.095531627,
+              "starts_after_episode_s": 0.014812231063842773,
+              "max_gap_s": 0.04341745376586914
+            }
+          },
+          "outcome_meaning": "BT terminal result only; not a motion quality pass",
+          "world_path_quality": {
+            "max_displacement_from_start_m": 0.2557759726775522,
+            "chord_length_m": 0.2546641492436632,
+            "max_overshoot_along_chord_m": 0.001098285375200403,
+            "max_cross_track_to_chord_m": 0.00430488720652251
+          },
+          "referee_path_quality": {
+            "max_displacement_from_start_m": 0.2804764177161772,
+            "chord_length_m": 0.2520767320813383,
+            "max_overshoot_along_chord_m": 0.028355615296489556,
+            "max_cross_track_to_chord_m": 0.009547473741450813
+          },
+          "drive_interval_covered": true,
+          "drive_zero_bouts_ge80ms": [],
+          "drive_sign_changes_over_1cms": 3,
+          "peak_drive_mps": 0.26861880258593285,
+          "peak_odom_mps": 0.28590420968830577,
+          "referee_settled_mean": [
+            -0.19661299068679483,
+            -0.12604730974124131
+          ],
+          "referee_settled_error_m": 0.026266598120881644,
+          "referee_y_std_m": 0.1068432633630847,
+          "referee_missing_frames": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+........................................................................ [ 59%]
+..................................................                       [100%]
+=============================== warnings summary ===============================
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py: 3 warnings
+src/pinky_soccer_mpc/test/test_acados_verify.py: 3 warnings
+src/pinky_soccer_mpc/test/test_avoidance.py: 6 warnings
+  Warning: Call to deprecated function (or staticmethod) N. (Use `ocp.solver_options.N` instead.) -- Deprecated since version 0.4.0.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) ext_fun_compile_flags. (Use AcadosOcp.code_gen_options.ext_fun_compile_flags instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) ext_fun_expand_constr. (Use AcadosOcp.code_gen_options.ext_fun_expand_constr instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) ext_fun_expand_cost. (Use AcadosOcp.code_gen_options.ext_fun_expand_cost instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) ext_fun_expand_precompute. (Use AcadosOcp.code_gen_options.ext_fun_expand_precompute instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) ext_fun_expand_dyn. (Use AcadosOcp.code_gen_options.ext_fun_expand_dyn instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) model_external_shared_lib_dir. (Use AcadosOcp.code_gen_options.model_external_shared_lib_dir instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) model_external_shared_lib_name. (Use AcadosOcp.code_gen_options.model_external_shared_lib_name instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py: 4 warnings
+src/pinky_soccer_mpc/test/test_acados_verify.py: 4 warnings
+src/pinky_soccer_mpc/test/test_avoidance.py: 8 warnings
+  Warning: Call to deprecated function (or staticmethod) with_solution_sens_wrt_params. (Use AcadosOcp.code_gen_options.with_solution_sens_wrt_params instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py: 4 warnings
+src/pinky_soccer_mpc/test/test_acados_verify.py: 4 warnings
+src/pinky_soccer_mpc/test/test_avoidance.py: 8 warnings
+  Warning: Call to deprecated function (or staticmethod) with_value_sens_wrt_params. (Use AcadosOcp.code_gen_options.with_value_sens_wrt_params instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_time_optimal.py::test_generated_solver_resizes
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+src/pinky_soccer_mpc/test/test_avoidance.py::test_base_hooks_are_identity
+  Warning: Call to deprecated function (or staticmethod) sens_forw_p. (Use AcadosOcp.code_gen_options.sens_forw_p instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+  Warning: Call to deprecated function (or staticmethod) code_export_directory. (Use AcadosOcp.code_gen_options.code_export_directory instead.) -- Deprecated since version 0.5.4.
+
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+  Warning:  The `json_file` argument is deprecated in v0.5.6 and will be removed in a future release. Set AcadosOcp.code_gen_options.json_file instead.
+
+src/pinky_soccer_mpc/test/test_acados_verify.py::test_wheel_model_ocp_solves_with_status_zero
+  Warning: A path is provided for json_file. This is not supported. The json file will be written to the code_export_directory /home/cse/.cache/pinky_soccer_mpc/c_generated_code_pinky_verify_b3853bba instead.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+122 passed, 3 deselected, 111 warnings in 36.39s

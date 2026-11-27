@@ -1,0 +1,28 @@
+{
+  "camera_created": true,
+  "OFF": {
+    "image_received": true,
+    "service_success": false,
+    "changed_pixels": 0
+  },
+  "GREEN": {
+    "image_received": true,
+    "service_success": false,
+    "changed_pixels": 6996
+  },
+  "YELLOW": {
+    "image_received": true,
+    "service_success": false,
+    "changed_pixels": 6998
+  },
+  "BLUE": {
+    "image_received": true,
+    "service_success": false,
+    "changed_pixels": 7002
+  },
+  "RED": {
+    "image_received": true,
+    "service_success": false,
+    "changed_pixels": 7000
+  }
+}

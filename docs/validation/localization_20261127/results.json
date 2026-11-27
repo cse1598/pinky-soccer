@@ -1,0 +1,951 @@
+{
+  "baseline_mujoco_valid": {
+    "ready_wall_s": 10.011716683000486,
+    "sources": {
+      "amcl": {
+        "samples": 94,
+        "xy_rmse_m": [
+          0.007214542687097837,
+          0.0012183611525695267
+        ],
+        "position_rmse_m": 0.007316695297881922,
+        "yaw_rmse_deg": 0.5234526632822918,
+        "pose_hz": 2.2195704057279237
+      }
+    },
+    "behavior_results": {
+      "9101": "success",
+      "9102": "success"
+    },
+    "localization_cpu_percent_one_core": 38.05997561493139,
+    "initial_rotation_imu_rad": null,
+    "last_status": {
+      "stamp": 42.5,
+      "lidar_pose_ready": true,
+      "magnetic_ready": true,
+      "heading_anchor_ready": true,
+      "field_minus_magnetic_yaw": -0.0018743199923480919,
+      "record": "/home/cse/.ros/pinky_soccer/localization/pinky_soccer_localization_8ntnefvw/heading_reference.yaml",
+      "method": "AMCL + confirmed symmetry reseed"
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 2,
+    "final_commands": null,
+    "last_truth": null
+  },
+  "baseline_gazebo_valid": {
+    "ready_wall_s": 10.010793413000101,
+    "sources": {
+      "amcl": {
+        "samples": 167,
+        "xy_rmse_m": [
+          0.2086774869663006,
+          0.02027089616808856
+        ],
+        "position_rmse_m": 0.20965973098816085,
+        "yaw_rmse_deg": 39.54142973694981,
+        "pose_hz": 4.438502673796791
+      }
+    },
+    "behavior_results": {
+      "9101": "failure",
+      "9102": "failure"
+    },
+    "localization_cpu_percent_one_core": 76.30791299559533,
+    "initial_rotation_imu_rad": null,
+    "last_status": {
+      "stamp": 37.5,
+      "lidar_pose_ready": true,
+      "magnetic_ready": true,
+      "heading_anchor_ready": true,
+      "field_minus_magnetic_yaw": 0.03328121424319877,
+      "record": "/home/cse/.ros/pinky_soccer/localization/pinky_soccer_localization_opsbu6gz/heading_reference.yaml",
+      "method": "AMCL + confirmed symmetry reseed"
+    },
+    "wrong_pi_branch_events": 1,
+    "pose_jump_events": 1,
+    "cpu_components": 2,
+    "final_commands": null,
+    "last_truth": null
+  },
+  "mujoco_release_drive": {
+    "ready_wall_s": 2.8428616269993654,
+    "sources": {
+      "rectangle": {
+        "samples": 587,
+        "xy_rmse_m": [
+          0.00034718364894067825,
+          0.0005473615016561678
+        ],
+        "position_rmse_m": 0.0006481829213941534,
+        "yaw_rmse_deg": 0.12219401698590741,
+        "pose_hz": 17.04479348458406
+      }
+    },
+    "behavior_results": {
+      "9101": "success",
+      "9102": "success"
+    },
+    "localization_cpu_percent_one_core": 36.88305878133,
+    "initial_rotation_imu_rad": 0.012753466564436888,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "stamp": 35.21,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9875000000000025,
+      "hypotheses": [
+        [
+          -0.104807258981639,
+          -0.0018652021402931207,
+          0.9686090368374626
+        ],
+        [
+          0.104807258981639,
+          0.0018652021402931207,
+          -2.172983616752331
+        ]
+      ],
+      "pose": [
+        -0.10480725898163902,
+        -0.001865202140293136,
+        0.9688804625544316
+      ],
+      "selected_goal_sign": 1,
+      "provisional_goal_sign": 1,
+      "selected_goal_color": "blue",
+      "debug_enabled": false,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": 0.0005255119238725998,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 4413
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": -0.00175132135778577,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 352,
+      "fit_successes": 352,
+      "fit_source_hz": 10.0,
+      "imu_outliers": 16,
+      "processing_ms": {
+        "mean": 3.666598394891645,
+        "p95": 6.3378468003065755,
+        "maximum": 39.16408700024476
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.012753466564436888,
+      "imu_yaw_deg": 55.541413312451056,
+      "goal_axis_imu_deg": {
+        "yellow": 179.97196467899784,
+        "blue": -0.028035321002173673
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.005778770745140921
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        35.28,
+        -0.10431143756978221,
+        -0.0011004979178339642,
+        0.9685861118928044
+      ]
+    ]
+  },
+  "mujoco_corner": {
+    "ready_wall_s": 6.0621109750009055,
+    "sources": {
+      "rectangle": {
+        "samples": 86,
+        "xy_rmse_m": [
+          0.0009220835638504894,
+          0.0002865179150488046
+        ],
+        "position_rmse_m": 0.000965572687252044,
+        "yaw_rmse_deg": 0.0373043281754908,
+        "pose_hz": 17.068273092369477
+      }
+    },
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 38.99352097353356,
+    "initial_rotation_imu_rad": 0.8715368964889152,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9249999999999994,
+      "hypotheses": [
+        [
+          -0.5492247520425664,
+          0.30294842593851706,
+          -2.409470487958478
+        ],
+        [
+          0.5492247520425664,
+          -0.30294842593851706,
+          0.7321221656313153
+        ]
+      ],
+      "pose": [
+        0.5492244273366842,
+        -0.30294871777788707,
+        0.7336971625821728
+      ],
+      "selected_goal_sign": -1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": -0.020738688506411033,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 46246
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": -0.0006861281424610483,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "imu_outliers": 4,
+      "processing_ms": {
+        "mean": 4.234772892881925,
+        "p95": 5.6174060005105275,
+        "maximum": 38.15391100033594
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.8715368964889152,
+      "imu_yaw_deg": 42.05919391524617,
+      "goal_axis_imu_deg": {
+        "yellow": 179.95093405160785,
+        "blue": -0.04906594839216673
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.0053327914100899845
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        8.84,
+        0.5500958495176005,
+        -0.30267294572807707,
+        0.7323867514023682
+      ]
+    ]
+  },
+  "mujoco_far_goal": {
+    "ready_wall_s": 5.060950432000027,
+    "sources": {
+      "rectangle": {
+        "samples": 87,
+        "xy_rmse_m": [
+          0.0005006621661055874,
+          8.355056165209992e-05
+        ],
+        "position_rmse_m": 0.000507585757209479,
+        "yaw_rmse_deg": 0.0381369265961778,
+        "pose_hz": 17.62295081967213
+      }
+    },
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 40.72133009292772,
+    "initial_rotation_imu_rad": 0.5528766297114787,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "yellow"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9874999999999992,
+      "hypotheses": [
+        [
+          -0.5527186167042414,
+          0.29915052822410343,
+          -0.17796558498222764
+        ],
+        [
+          0.5527186167042414,
+          -0.29915052822410343,
+          2.9636270686075656
+        ]
+      ],
+      "pose": [
+        0.5527186167042414,
+        -0.29915052822410343,
+        2.9634349584021638
+      ],
+      "selected_goal_sign": 1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": -0.009060269076974135,
+      "goal_pixel_counts": {
+        "yellow": 3530,
+        "blue": 0
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": -0.0005214586258834274,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "imu_outliers": 3,
+      "processing_ms": {
+        "mean": 4.407274648386832,
+        "p95": 5.538123000133052,
+        "maximum": 54.10350899910554
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.5528766297114787,
+      "imu_yaw_deg": 169.66211973523923,
+      "goal_axis_imu_deg": {
+        "yellow": 179.98375230775892,
+        "blue": -0.01624769224107891
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.005530351512796402
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        7.74,
+        0.5521138297252595,
+        -0.29898963192165534,
+        2.9640973136994324
+      ]
+    ]
+  },
+  "gazebo_aligned": {
+    "ready_wall_s": 5.33967415799998,
+    "sources": {
+      "rectangle": {
+        "samples": 87,
+        "xy_rmse_m": [
+          0.001879296992045349,
+          4.553550933357539e-05
+        ],
+        "position_rmse_m": 0.0018798485755296796,
+        "yaw_rmse_deg": 0.03611592554408004,
+        "pose_hz": 17.916666666666668
+      }
+    },
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 66.32287449329627,
+    "initial_rotation_imu_rad": 0.04550335404950438,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.9812499999999993,
+      "hypotheses": [
+        [
+          -0.4005131526213201,
+          -0.0032543580331689803,
+          -0.0032585913608111886
+        ],
+        [
+          0.4005131526213201,
+          0.0032543580331689803,
+          3.138334062228982
+        ]
+      ],
+      "pose": [
+        -0.4005131526213201,
+        -0.0032543580331689803,
+        -0.0032585913608111886
+      ],
+      "selected_goal_sign": 1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": 0.004984123270749103,
+      "goal_pixel_counts": {
+        "yellow": 25,
+        "blue": 5063
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": 0.11842394596041546,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "imu_outliers": 3,
+      "processing_ms": {
+        "mean": 6.143602681814545,
+        "p95": 7.574294149799244,
+        "maximum": 79.91158500044548
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.04550335404950438,
+      "imu_yaw_deg": 6.52107936706248,
+      "goal_axis_imu_deg": {
+        "yellow": -173.16294583502363,
+        "blue": 6.837054164976397
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.0053608514746549
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "drive/motor_cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        5.9,
+        -0.4022732345185578,
+        -0.0032445941603360755,
+        -0.00320381701970191
+      ]
+    ]
+  },
+  "rectangle_gazebo_probe": {
+    "ready_wall_s": null,
+    "sources": {},
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 78.5185470908184,
+    "initial_rotation_imu_rad": null,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "AIMING_GOAL",
+      "ready": false,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [],
+      "initialization_complete": false,
+      "valid": false,
+      "confidence": 0.0,
+      "hypotheses": [
+        [
+          -0.4000490071234366,
+          -0.003453201397755401,
+          0.1180165608662374
+        ],
+        [
+          0.4000490071234366,
+          0.003453201397755401,
+          -3.023576092723556
+        ]
+      ],
+      "pose": null,
+      "selected_goal_sign": 1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": -0.1175283767662926,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 0
+      },
+      "goal_streak": 0,
+      "imu_map_offset_rad": null,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "imu_outliers": 16,
+      "processing_ms": {
+        "mean": 4.48017705850284,
+        "p95": 6.390804299280718,
+        "maximum": 83.62597899940738
+      },
+      "startup_inputs_ready": true,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.6903116249967185,
+      "imu_yaw_deg": 6.785484061033333,
+      "goal_axis_imu_deg": {},
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": true
+      },
+      "fit_residual_m": 0.005603209985457333
+    },
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        -0.3
+      ],
+      "cmd_vel": [
+        0.0,
+        -0.3
+      ],
+      "drive/motor_cmd_vel": [
+        0.0,
+        -0.2999999999999998
+      ]
+    },
+    "last_truth": [
+      [
+        35.666,
+        -0.40188192720474497,
+        -0.003636449386966057,
+        0.1180218027573094
+      ]
+    ]
+  },
+  "rectangle_gazebo_rate05": {
+    "ready_wall_s": null,
+    "sources": {},
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 78.02298877957485,
+    "initial_rotation_imu_rad": null,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "AIMING_GOAL",
+      "ready": false,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [],
+      "initialization_complete": false,
+      "valid": false,
+      "confidence": 0.0,
+      "hypotheses": [
+        [
+          -0.3999867919237759,
+          -0.003471581518564526,
+          0.1180714191060132
+        ],
+        [
+          0.3999867919237759,
+          0.003471581518564526,
+          -3.0235212344837805
+        ]
+      ],
+      "pose": null,
+      "selected_goal_sign": 1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": -0.11750468597145021,
+      "goal_pixel_counts": {
+        "yellow": 0,
+        "blue": 0
+      },
+      "goal_streak": 0,
+      "imu_map_offset_rad": null,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "imu_outliers": 16,
+      "processing_ms": {
+        "mean": 4.210945091005334,
+        "p95": 6.000693299756676,
+        "maximum": 66.41112699981022
+      },
+      "startup_inputs_ready": true,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.7139217612947253,
+      "imu_yaw_deg": 6.734375227030856,
+      "goal_axis_imu_deg": {},
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": true
+      },
+      "fit_residual_m": 0.005891818394211991
+    },
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        -0.5
+      ],
+      "cmd_vel": [
+        0.0,
+        -0.5
+      ],
+      "drive/motor_cmd_vel": [
+        0.0,
+        -0.5
+      ]
+    },
+    "last_truth": [
+      [
+        35.946,
+        -0.40188192720474497,
+        -0.0036364493869660516,
+        0.11802180275730798
+      ]
+    ]
+  },
+  "mujoco_strict_hls": {
+    "ready_wall_s": 17.34499583700017,
+    "sources": {
+      "rectangle": {
+        "samples": 3,
+        "xy_rmse_m": [
+          0.000961089135525077,
+          7.757263957614688e-05
+        ],
+        "position_rmse_m": 0.0009642146238442717,
+        "yaw_rmse_deg": 0.04362110275268538,
+        "pose_hz": 16.66666666666653
+      }
+    },
+    "behavior_results": {},
+    "localization_cpu_percent_one_core": 36.80836447400707,
+    "initial_rotation_imu_rad": 3.2049696460912402,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "stamp": 14.98,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "yellow"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.837499999999999,
+      "hypotheses": [
+        [
+          -0.40183904583208596,
+          -0.0018953902575980508,
+          3.1274824500669904
+        ],
+        [
+          0.40183904583208596,
+          0.0018953902575980508,
+          -0.014110203522802922
+        ]
+      ],
+      "pose": [
+        -0.40183115745642656,
+        -0.0018955074337159495,
+        3.1259108136158447
+      ],
+      "selected_goal_sign": -1,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": 0.01185998288222578,
+      "goal_pixel_counts": {
+        "yellow": 1000,
+        "blue": 0
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": 0.0013604590048905685,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 98,
+      "fit_successes": 98,
+      "imu_outliers": 5,
+      "processing_ms": {
+        "mean": 3.4631128775837,
+        "p95": 5.661471101393544,
+        "maximum": 36.672865999207716
+      },
+      "startup_inputs_ready": true,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 3.2049696460912402,
+      "imu_yaw_deg": 179.179445313674,
+      "goal_axis_imu_deg": {
+        "yellow": -179.92205144081922,
+        "blue": 0.07794855918079739
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": true
+      },
+      "fit_residual_m": 0.005644980432569694
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        14.98,
+        -0.40277767813320825,
+        -0.001980369660215143,
+        3.1269430311124653
+      ]
+    ]
+  },
+  "mujoco_curve_opponent": {
+    "ready_wall_s": 2.941708853999444,
+    "sources": {
+      "rectangle": {
+        "samples": 584,
+        "xy_rmse_m": [
+          0.000212798775450909,
+          0.0005835692317326738
+        ],
+        "position_rmse_m": 0.0006211572804519557,
+        "yaw_rmse_deg": 0.23352359774281983,
+        "pose_hz": 22.083333333333336
+      }
+    },
+    "behavior_results": {
+      "9101": "success",
+      "9102": "success"
+    },
+    "localization_cpu_percent_one_core": 33.19126493859592,
+    "initial_rotation_imu_rad": 0.011339861412164507,
+    "last_status": {
+      "source": "rectangle_lidar_goal_imu",
+      "state": "READY",
+      "ready": true,
+      "stamp": 27.19,
+      "calibration_requested": true,
+      "team": "yellow",
+      "learned_colors": [
+        "blue"
+      ],
+      "initialization_complete": true,
+      "valid": true,
+      "confidence": 0.8875000000000002,
+      "hypotheses": [
+        [
+          -0.30222607860025225,
+          -0.10282096823658182,
+          -1.1863099732661309
+        ],
+        [
+          0.30222607860025225,
+          0.10282096823658182,
+          1.9552826803236623
+        ]
+      ],
+      "pose": [
+        -0.3022261824461293,
+        -0.10282071160208836,
+        -1.1863995429975698
+      ],
+      "selected_goal_sign": 1,
+      "provisional_goal_sign": 1,
+      "selected_goal_color": "blue",
+      "debug_enabled": false,
+      "goal_centers": [
+        [
+          -0.9099999999999999,
+          0.0
+        ],
+        [
+          0.9099999999999999,
+          0.0
+        ]
+      ],
+      "target_error_rad": -4.22731998622799e-06,
+      "goal_pixel_counts": {
+        "yellow": 13,
+        "blue": 2184
+      },
+      "goal_streak": 3,
+      "imu_map_offset_rad": 0.00182919252746909,
+      "fit_accepted": true,
+      "rejected_fits": 0,
+      "fit_attempts": 271,
+      "fit_successes": 271,
+      "fit_source_hz": 10.0,
+      "imu_outliers": 10,
+      "processing_ms": {
+        "mean": 3.850853018322455,
+        "p95": 6.231115999071335,
+        "maximum": 37.471413999810466
+      },
+      "startup_inputs_ready": false,
+      "missing_inputs": [],
+      "led": "service_unavailable",
+      "rotation_rad": 0.011339861412164507,
+      "imu_yaw_deg": -67.89904023805391,
+      "goal_axis_imu_deg": {
+        "yellow": 179.98845227294916,
+        "blue": -0.01154772705084976
+      },
+      "sensors": {
+        "imu": true,
+        "lidar_outer_walls": true,
+        "odom": true,
+        "camera_intrinsics_tf": false
+      },
+      "fit_residual_m": 0.005568512835007674
+    },
+    "wrong_pi_branch_events": 0,
+    "pose_jump_events": 0,
+    "cpu_components": 1,
+    "final_commands": {
+      "drive/cmd_vel": [
+        0.0,
+        0.0
+      ],
+      "cmd_vel": [
+        0.0,
+        0.0
+      ]
+    },
+    "last_truth": [
+      [
+        27.24,
+        -0.30193978805418487,
+        -0.1037258650049271,
+        -1.1860404420889807
+      ]
+    ]
+  }
+}

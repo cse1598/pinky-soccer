@@ -1,0 +1,2 @@
+case,result,elapsed_wall_s,truth_final_position_error_m,truth_final_heading_error_rad,zero_run_starts,zero_intervals_between_nonzero,success_after_first_truth_region_wall_s
+fixed_profile,profile_completed,13.001107369000238,,,3,2,

@@ -1,0 +1,559 @@
+{
+  "strict_stop": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 1.997861402000126,
+      "final_position_error_m": 0.007451433595296325,
+      "final_heading_error_rad": 0.0008884916461125747,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "short",
+      "result": "success",
+      "elapsed_wall_s": 1.927425002999371,
+      "final_position_error_m": 0.0073972504751526015,
+      "final_heading_error_rad": 0.0004989794207914991,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 1.9330369679955766,
+      "final_position_error_m": 0.0035636159472949343,
+      "final_heading_error_rad": 0.03672578600436971,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "half_turn",
+      "result": "success",
+      "elapsed_wall_s": 1.7328948930007755,
+      "final_position_error_m": 0.0006670098677519378,
+      "final_heading_error_rad": 0.0017447432054960251,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "curve",
+      "result": "success",
+      "elapsed_wall_s": 3.4636693639986333,
+      "final_position_error_m": 0.002090397917297326,
+      "final_heading_error_rad": 0.01255456449496406,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "reverse",
+      "result": "success",
+      "elapsed_wall_s": 3.93176418600342,
+      "final_position_error_m": 0.005685973108323081,
+      "final_heading_error_rad": 0.0010062542910558498,
+      "middle_zero_intervals": 0
+    }
+  ],
+  "practical_stop": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 1.7136692780040903,
+      "final_position_error_m": 0.005099212769643508,
+      "final_heading_error_rad": 0.0002204699432345928,
+      "middle_zero_intervals": 1
+    },
+    {
+      "case": "short",
+      "result": "success",
+      "elapsed_wall_s": 1.6630969479956548,
+      "final_position_error_m": 0.004069514936193038,
+      "final_heading_error_rad": 0.010886932815054233,
+      "middle_zero_intervals": 1
+    },
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 1.8616863310016925,
+      "final_position_error_m": 0.007742920446157412,
+      "final_heading_error_rad": 0.029134267293158933,
+      "middle_zero_intervals": 1
+    },
+    {
+      "case": "half_turn",
+      "result": "success",
+      "elapsed_wall_s": 1.399190249001549,
+      "final_position_error_m": 0.00081219258961967,
+      "final_heading_error_rad": 0.04046353947443704,
+      "middle_zero_intervals": 0
+    },
+    {
+      "case": "curve",
+      "result": "success",
+      "elapsed_wall_s": 3.5311435089970473,
+      "final_position_error_m": 0.0048479870011177584,
+      "final_heading_error_rad": 0.021963714258910194,
+      "middle_zero_intervals": 3
+    },
+    {
+      "case": "reverse",
+      "result": "success",
+      "elapsed_wall_s": 3.399799159000395,
+      "final_position_error_m": 0.0017825819181741442,
+      "final_heading_error_rad": 0.009092433562488992,
+      "middle_zero_intervals": 2
+    }
+  ],
+  "rotate_braking": [
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 1.2448444459951133,
+      "final_position_error_m": 0.0014042193232848461,
+      "final_heading_error_rad": 0.024401351443101186,
+      "middle_zero_intervals": 0
+    }
+  ],
+  "pass_through": {
+    "first_success": true,
+    "second_success": true,
+    "first_reason": "handoff_ready",
+    "transition_command_samples": 7,
+    "transition_zero_samples": 0
+  },
+  "handoff": {
+    "first_success": true,
+    "second_success": true,
+    "first_reason": "handoff_ready",
+    "transition_command_samples": 7,
+    "transition_zero_samples": 0
+  },
+  "limits": [
+    "MuJoCo functional checks at different development revisions, not a controlled speed ranking.",
+    "Intermittent MPC activation misses remain; zero intervals are retained, not hidden.",
+    "Hardware and Gazebo not tested. Synthetic noise is not measured hardware noise."
+  ],
+  "checkpoint_before_residual_fix": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 2.5058127439999964,
+      "truth_final_position_error_m": 0.014371965253902358,
+      "truth_final_heading_error_rad": 0.0004186525491011949,
+      "zero_intervals_between_nonzero": 4,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "short",
+      "result": "success",
+      "elapsed_wall_s": 2.916786123999998,
+      "truth_final_position_error_m": 0.014036759141602025,
+      "truth_final_heading_error_rad": 0.005572034426896711,
+      "zero_intervals_between_nonzero": 3,
+      "motion_results": [
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 2.2658470139999736,
+      "truth_final_position_error_m": 0.00352020871441244,
+      "truth_final_heading_error_rad": 0.025853186534986253,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "half_turn",
+      "result": "failure",
+      "elapsed_wall_s": 7.19943233799998,
+      "truth_final_position_error_m": 0.0008780767983899746,
+      "truth_final_heading_error_rad": 0.055661700714265454,
+      "zero_intervals_between_nonzero": 1,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "scheduled optimized input"
+        },
+        {
+          "state": 2,
+          "reason": "no pose progress for 4 s"
+        },
+        {
+          "state": 2,
+          "reason": "no pose progress for 4 s"
+        }
+      ]
+    },
+    {
+      "case": "curve",
+      "result": "success",
+      "elapsed_wall_s": 5.331852128999998,
+      "truth_final_position_error_m": 0.0071129268724936644,
+      "truth_final_heading_error_rad": 0.030815191307793862,
+      "zero_intervals_between_nonzero": 4,
+      "motion_results": [
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "reverse",
+      "result": "success",
+      "elapsed_wall_s": 5.864518110000006,
+      "truth_final_position_error_m": 0.003971648282070074,
+      "truth_final_heading_error_rad": 0.0035373084301046163,
+      "zero_intervals_between_nonzero": 7,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    }
+  ],
+  "strict_stop_final": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 2.5122973489999936,
+      "truth_final_position_error_m": 0.003425382730224431,
+      "truth_final_heading_error_rad": 0.0007964950514712828,
+      "zero_intervals_between_nonzero": 3,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "short",
+      "result": "success",
+      "elapsed_wall_s": 2.5331300679999913,
+      "truth_final_position_error_m": 0.005367533500103351,
+      "truth_final_heading_error_rad": 0.005335797129303785,
+      "zero_intervals_between_nonzero": 3,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 2.2657398769999872,
+      "truth_final_position_error_m": 0.0035123385944455547,
+      "truth_final_heading_error_rad": 0.04448473210682202,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "half_turn",
+      "result": "success",
+      "elapsed_wall_s": 2.1326322360000063,
+      "truth_final_position_error_m": 0.001915718600575984,
+      "truth_final_heading_error_rad": 0.03124869561416954,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "curve",
+      "result": "success",
+      "elapsed_wall_s": 6.063573285000018,
+      "truth_final_position_error_m": 0.003610791260279097,
+      "truth_final_heading_error_rad": 0.006253074810613102,
+      "zero_intervals_between_nonzero": 7,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "reverse",
+      "result": "success",
+      "elapsed_wall_s": 9.931583063000005,
+      "truth_final_position_error_m": 0.004507521174120382,
+      "truth_final_heading_error_rad": 0.01837728391834087,
+      "zero_intervals_between_nonzero": 8,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    }
+  ],
+  "final_fix": "Release brake after persistent settled residual outside acceptance; STRICT_STOP dwell resets outside acceptance. Success tolerances unchanged.",
+  "strict_stop_fast_final": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 3.295601099000123,
+      "truth_final_position_error_m": 0.0031582359566204605,
+      "truth_final_heading_error_rad": 0.000458002612555937,
+      "zero_intervals_between_nonzero": 2,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "short",
+      "result": "success",
+      "elapsed_wall_s": 2.8629413009998643,
+      "truth_final_position_error_m": 0.00915866233010704,
+      "truth_final_heading_error_rad": 0.005677478216844088,
+      "zero_intervals_between_nonzero": 3,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "rotate",
+      "result": "success",
+      "elapsed_wall_s": 2.396825814999829,
+      "truth_final_position_error_m": 0.004134716743196055,
+      "truth_final_heading_error_rad": 0.050617648372348174,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "half_turn",
+      "result": "success",
+      "elapsed_wall_s": 2.3320790660000057,
+      "truth_final_position_error_m": 0.0017415129758336736,
+      "truth_final_heading_error_rad": 0.04025712072397703,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "curve",
+      "result": "success",
+      "elapsed_wall_s": 6.3982234820000485,
+      "truth_final_position_error_m": 0.00859062823590996,
+      "truth_final_heading_error_rad": 0.017240522530621805,
+      "zero_intervals_between_nonzero": 7,
+      "motion_results": [
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    },
+    {
+      "case": "reverse",
+      "result": "success",
+      "elapsed_wall_s": 6.33471271999997,
+      "truth_final_position_error_m": 0.00590294748017898,
+      "truth_final_heading_error_rad": 0.009407086909183661,
+      "zero_intervals_between_nonzero": 6,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    }
+  ],
+  "lease_final": [
+    {
+      "case": "straight",
+      "result": "success",
+      "elapsed_wall_s": 2.5642067029998543,
+      "truth_final_position_error_m": 0.012203774036232903,
+      "truth_final_heading_error_rad": 0.00012535195026876876,
+      "zero_intervals_between_nonzero": 0,
+      "motion_results": [
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 0,
+          "reason": "waiting for rest"
+        },
+        {
+          "state": 1,
+          "reason": "settled"
+        }
+      ]
+    }
+  ],
+  "final_lease_fix": "Do not retain an old trajectory when the next activation slot or conservative wall lease approaches expiry; activate a prepared fresh candidate instead."
+}

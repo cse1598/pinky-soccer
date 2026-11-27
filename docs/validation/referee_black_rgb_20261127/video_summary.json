@@ -1,0 +1,89 @@
+{
+  "sampled_frames": 588,
+  "sample_stride_frames": 15,
+  "initial_120_stride": 3,
+  "count_changes": [
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 300,
+      "old_blobs": 2,
+      "new_blobs": 1,
+      "old_observations": 2,
+      "new_observations": 1,
+      "ball_equal": true
+    },
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 315,
+      "old_blobs": 2,
+      "new_blobs": 1,
+      "old_observations": 2,
+      "new_observations": 1,
+      "ball_equal": true
+    },
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 330,
+      "old_blobs": 2,
+      "new_blobs": 1,
+      "old_observations": 2,
+      "new_observations": 1,
+      "ball_equal": true
+    },
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 345,
+      "old_blobs": 2,
+      "new_blobs": 1,
+      "old_observations": 2,
+      "new_observations": 1,
+      "ball_equal": true
+    },
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 360,
+      "old_blobs": 1,
+      "new_blobs": 2,
+      "old_observations": 1,
+      "new_observations": 2,
+      "ball_equal": true
+    },
+    {
+      "clip": "20261127_201621_612013",
+      "frame": 375,
+      "old_blobs": 3,
+      "new_blobs": 2,
+      "old_observations": 2,
+      "new_observations": 2,
+      "ball_equal": true
+    }
+  ],
+  "ball_output_changes": 0,
+  "counts": {
+    "old_observations": {
+      "1": 53,
+      "2": 535
+    },
+    "new_observations": {
+      "1": 56,
+      "2": 532
+    }
+  },
+  "timing_ms": {
+    "old": {
+      "mean": 16.10660245575803,
+      "p95": 20.50304464964938,
+      "max": 31.775580999237718
+    },
+    "new": {
+      "mean": 20.000940096934404,
+      "p95": 23.827717999483866,
+      "max": 47.687625999969896
+    }
+  },
+  "limits": [
+    "No per-frame manual GT for this automated sample; observation count is not detection accuracy",
+    "Shared white-line rectangle ROI from recorded calibration metadata, not reconstructed full green mat ROI",
+    "LED/heading evaluated with no historical tracks in both versions; no tracking algorithm changed"
+  ]
+}

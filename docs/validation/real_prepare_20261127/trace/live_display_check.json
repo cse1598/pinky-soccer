@@ -1,0 +1,15 @@
+{
+  "process": 95844,
+  "launch_debug_argument": true,
+  "actual_parameter": true,
+  "observed_state": [
+    "READY",
+    "ODOM_COAST"
+  ],
+  "map_images_3s": 70,
+  "goal_images_3s": 0,
+  "goal_processing_disabled_after_initialization": true,
+  "probe_later": "Original launch exited before second monitor render probe; no received image in that probe cannot establish monitor failure",
+  "ssh": "Existing SSH terminal present; new BatchMode connection denied publickey,password; ControlMaster request pending",
+  "correction": "Earlier bag debug=false does not describe latest launch; user supplied true correctly"
+}
