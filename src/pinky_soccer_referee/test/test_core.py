@@ -253,3 +253,59 @@ def test_goal_strip_rejects_long_color_artifact():
     goals=goal_intervals(img,f)
     assert goals[-1][0]=="yellow" and goals[1][0]=="blue"
     assert .37<goals[1][2]-goals[1][1]<.43
+
+
+@pytest.mark.parametrize("angle",[0.,45.,90.,135.,180.,225.,270.,315.])
+def test_body_end_search_rotated_led(angle):
+    from referee_core import body_end_led_candidates, wrap_angle
+    img=np.full((240,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(105,90),(195,150),(22,22,22),-1)
+    cv2.rectangle(img,(101,100),(111,140),(220,220,220),-1)
+    matrix=cv2.getRotationMatrix2D((150,120),angle,1.)
+    img=cv2.warpAffine(img,matrix,(300,240),borderValue=(70,100,70))
+    hls=cv2.cvtColor(img,cv2.COLOR_BGR2HLS)
+    body=cv2.inRange(hls,(0,0,0),(180,62,255))
+    raw=np.where(hls[:,:,1]>=105,255,0).astype(np.uint8)
+    cs=cv2.findContours(body,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]
+    c=max(cs,key=cv2.contourArea)
+    rect=cv2.minAreaRect(c)
+    box=cv2.boxPoints(rect)
+    v1,v2=box[1]-box[0],box[2]-box[1]
+    axis=max((v1,v2),key=np.linalg.norm)
+    axis=axis/np.linalg.norm(axis)
+    results=body_end_led_candidates(img,raw,body,np.array(rect[0]),c.reshape(-1,2),
+                                    axis,max(rect[1])/min(rect[1]),550.,None,125,{})
+    assert results
+    best=max(results,key=lambda q:q[0])
+    assert best[1]=="unknown"
+    theta=np.arctan2(-best[2][1],best[2][0])
+    assert abs(wrap_angle(theta-np.deg2rad(angle)))<np.deg2rad(16.)
+
+
+def test_body_end_search_rejects_floor_tape():
+    from referee_core import body_end_led_candidates
+    img=np.full((240,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(100,0),(108,239),(220,220,220),-1)
+    cv2.rectangle(img,(105,90),(195,150),(22,22,22),-1)
+    hls=cv2.cvtColor(img,cv2.COLOR_BGR2HLS)
+    body=cv2.inRange(hls,(0,0,0),(180,62,255))
+    raw=np.where(hls[:,:,1]>=105,255,0).astype(np.uint8)
+    cs=cv2.findContours(body,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]
+    c=max(cs,key=cv2.contourArea)
+    results=body_end_led_candidates(img,raw,body,np.array([150.,120.]),c.reshape(-1,2),
+                                    np.array([1.,0.]),1.5,550.,None,125,{})
+    assert not results
+
+
+def test_debug_recorder_writes_index_and_diagnostics(tmp_path):
+    import json
+    from referee_recorder import DebugRecorder
+    r=DebugRecorder(str(tmp_path),True,False)
+    r.submit({"frame":1,"t":0.03,"stage":"TRACKING","observations":[{"led_rejected":{"fill":2}}],
+              "tracks":[{"id":1,"heading":float("nan")}],"calibration":{"K":np.eye(3)},"events":[]})
+    status=r.close()
+    assert status["error"] is None and not status["writer_still_running"]
+    data=json.loads((r.directory/"detection.jsonl").read_text().strip())
+    assert data["observations"][0]["led_rejected"]["fill"]==2
+    assert (r.directory/"tracking.csv").is_file()
+    assert (r.directory/"calibration_00000001.yaml").is_file()
