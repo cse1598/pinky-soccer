@@ -36,15 +36,19 @@ DEFAULTS = {
     "robot_reacquire_frames": "2",
     "blue_led_min_light": "125",
     "velocity_arrow_min_mps": "0.035",
+    "distortion_mode": "auto",
+    "calibration_frames": "9",
+    "calibration_max_error_px": "5.0",
+    "debug_ui": "false",
 }
 
-BOOL_PARAMS = ("show_ui", "publish_image", "require_camera_info", "allow_approximate_rules")
-INT_PARAMS = ("warmup_frames", "robot_reacquire_frames", "blue_led_min_light")
+BOOL_PARAMS = ("show_ui", "publish_image", "require_camera_info", "allow_approximate_rules", "debug_ui")
+INT_PARAMS = ("warmup_frames", "robot_reacquire_frames", "blue_led_min_light", "calibration_frames")
 FLOAT_PARAMS = (
     "field_length_m", "field_width_m", "pixels_per_meter", "margin_m",
     "ball_radius_m", "yellow_goal_y_min", "yellow_goal_y_max",
     "blue_goal_y_min", "blue_goal_y_max", "frame_timeout_s",
-    "robot_match_gate_m", "velocity_arrow_min_mps",
+    "robot_match_gate_m", "velocity_arrow_min_mps", "calibration_max_error_px",
 )
 
 
@@ -63,7 +67,7 @@ def setup(context):
     params.update({k: int(value(k)) for k in INT_PARAMS})
     params.update({k: float(value(k)) for k in FLOAT_PARAMS})
     params.update(video_path="", image_topic=value("image_topic"),
-                  camera_info_topic=value("camera_info_topic"))
+                  camera_info_topic=value("camera_info_topic"), distortion_mode=value("distortion_mode"))
     actions = []
 
     if mode == "realsense":
