@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.2.4 prototype)
+# Pinky Soccer Referee (v0.2.5 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -249,6 +249,37 @@ frames.jsonl의 t와 stamp를 기준으로 해석한다.
 MP4 세 영상 동시 인코딩은 추가 부하가 있으므로 성능 검증 시 record_video를 끈 상태도 측정한다.
 LED 후보의 탈락 사유는 집계이며 원본 영상과 함께 분석한다.
 ROS 및 실물 영상 검증 전의 초기값/프로토타입이다.
+
+## v0.2.5 경사진 LED 및 위치 중심 안정화
+
+LED 법선과 검은색 몸체 장축이 불일치해도, LED 한쪽의 몸체 점유율이 65% 이상이고
+양쪽 점유율 차가 35%p 이상이면 장축 조건을 완화한다. 바닥 테이프 연장 검사와
+LED 크기·충실도 조건은 유지한다. 몸체 기반 보조 탐색은 장축/단축 양 끝을 모두 검사한다.
+헤딩 부호는 기존과 동일하게 LED를 후방으로 간주한다. 실물 전방 기준을 확인해야 한다.
+
+발행 위치는 검은색 최대 contour의 면적 모멘트 중심으로 바꾼다.
+LED 탐색용 회전 사각형 중심은 별도 유지한다. 이 중심은 바퀴 축의 실측 위치가 아니며,
+정확한 물리 원점과 높이별 시차 보정은 별도 작업이 필요하다.
+기존 Kalman filter, 경기장 보정, 골대/공 검출, 메시지 및 launch 옵션은 유지한다.
+
+팀 판별에서는 최대 RGB >=245 및 최소 RGB >=200인 밝은 무채색 포화 픽셀을 제외한다.
+남은 유효 픽셀은 전체의 35% 이상이어야 하며 기존 HLS/RGB 색 조건도 만족해야 한다.
+전체 LED 샘플 대비 노랑 55%, 파랑 50% 이상의 색 증거도 요구한다.
+흰색/OFF 및 과노출로 색 정보를 잃은 LED는 UNKNOWN이다. 헤딩과 색은 분리한다.
+
+Pinky Pro 공식 LED 서비스로 발광 밝기를 수동 시험할 수 있다.
+심판 노드 자체는 로봇 명령을 발행하지 않는다. 연결 대상 로봇의 ROS_DOMAIN_ID 및
+네임스페이스를 확인하고 실행하며 기존 LED 서버가 있으면 중복 실행하지 않는다.
+
+    ros2 service list | grep -E 'set_led|set_brightness'
+    ros2 service call /set_brightness pinky_interfaces/srv/SetBrightness "{brightness: 10}"
+    ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'fill', r: 255, g: 255, b: 0}"
+    ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'fill', r: 0, g: 0, b: 255}"
+    ros2 service call /set_led pinky_interfaces/srv/SetLed "{command: 'clear'}"
+
+밝기는 5, 10, 15, 20 등에서 카메라 영상으로 비교한다.
+정확한 밝기 설정 범위는 설치된 pinkylib 구현에서 확인하며, 색상 분리가 불충분하면
+카메라 노출과 LED 출력값도 조정한다. 실제 노란색/파란색 LED 데이터의 검증은 아직 필요하다.
 
 ## 검증 및 한계
 
