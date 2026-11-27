@@ -530,6 +530,114 @@ def classify_led_pixels(bgr, blue_led_min_light=125):
     return "unknown"
 
 
+def body_end_led_candidates(image,raw_mask,body,center,p,axis,aspect,ppm,prior,blue_min,debug):
+    """Sample in chassis coordinates rather than requiring an isolated contour.
+
+    Search both ends of the long axis (also the short axis for near-square
+    silhouettes). A bright transverse strip must have finite endpoints, dark
+    chassis immediately inward, and sufficient evidence on the current image.
+    The prior only proposes search directions, never creates measurements.
+    """
+    axes=[axis,-axis]
+    if aspect<1.30:
+        perpendicular=np.array([-axis[1],axis[0]])
+        axes.extend([perpendicular,-perpendicular])
+    if prior is not None:
+        a=prior.heading
+        axes.append(np.array([math.cos(a),-math.sin(a)]))
+    candidates=[]
+    bright=raw_mask.astype(np.float32)/255.
+    dark=body.astype(np.float32)/255.
+    def sample(src,normal,tangent,depth,lateral):
+        xx=center[0]+normal[0]*depth+tangent[0]*lateral
+        yy=center[1]+normal[1]*depth+tangent[1]*lateral
+        return cv2.remap(src,xx.astype(np.float32),yy.astype(np.float32),cv2.INTER_LINEAR,
+                         borderMode=cv2.BORDER_CONSTANT,borderValue=0)
+    for base in axes:
+        for offset in (-12.,0.,12.):
+            a=math.atan2(base[1],base[0])+math.radians(offset)
+            normal=np.array([math.cos(a),math.sin(a)])
+            tangent=np.array([-normal[1],normal[0]])
+            axial=(p-center)@normal
+            lateral=(p-center)@tangent
+            rear=float(np.percentile(axial,2))
+            half=float((np.percentile(lateral,98)-np.percentile(lateral,2))/2)
+            if not .025*ppm<half<.15*ppm:
+                continue
+            # Body-relative patch, extending beyond the expected bar ends.
+            xs=np.arange(math.floor(-half-.035*ppm),math.ceil(half+.035*ppm)+1,dtype=float)
+            ys=np.arange(math.floor(rear-.028*ppm),math.ceil(rear+.022*ppm)+1,dtype=float)
+            X,Y=np.meshgrid(xs,ys)
+            patch=sample(bright,normal,tangent,Y,X)
+            inner=abs(xs)<=.68*half
+            if inner.sum()<5:
+                continue
+            profile=np.mean(patch[:,inner],axis=1)
+            rows=np.flatnonzero(profile>=.60)
+            runs=[r for r in np.split(rows,np.where(np.diff(rows)>1)[0]+1) if len(r)]
+            for run in runs:
+                if not max(2,.004*ppm)<=len(run)<=.038*ppm:
+                    debug["end_thickness"]=debug.get("end_thickness",0)+1
+                    continue
+                # Detect the real lateral extent on the selected strip.
+                coverage=np.mean(patch[run],axis=0)
+                cols=np.flatnonzero(coverage>=.55)
+                segments=[r for r in np.split(cols,np.where(np.diff(cols)>1)[0]+1) if len(r)]
+                segments=[r for r in segments if abs(float(np.mean(xs[r])))<.026*ppm]
+                if not segments:
+                    debug["end_span"]=debug.get("end_span",0)+1
+                    continue
+                seg=max(segments,key=len)
+                long=len(seg); short=len(run)
+                if not .028*ppm<=long<=min(.135*ppm,1.85*half) or long/short<1.7:
+                    debug["end_span"]=debug.get("end_span",0)+1
+                    continue
+                # A tape crossing the patch usually continues past the body
+                # on both ends; an actual LED has two finite endpoints.
+                if seg[0]<=1 or seg[-1]>=len(xs)-2:
+                    debug["end_tape"]=debug.get("end_tape",0)+1
+                    continue
+                d=float(np.mean(ys[run])); l=float(np.mean(xs[seg]))
+                if abs(d-rear)>.024*ppm:
+                    debug["end_offset"]=debug.get("end_offset",0)+1
+                    continue
+                probe_x,probe_y=np.meshgrid(xs[seg],np.arange(ys[run[-1]]+2,ys[run[-1]]+max(4,int(.020*ppm))))
+                inward=float(np.mean(sample(dark,normal,tangent,probe_y,probe_x)))
+                if inward<.28:
+                    debug["end_body"]=debug.get("end_body",0)+1
+                    continue
+                occupancy=float(np.mean(patch[np.ix_(run,seg)]))
+                if occupancy<.62:
+                    debug["end_fill"]=debug.get("end_fill",0)+1
+                    continue
+                led=center+d*normal+l*tangent
+                # Reject unrelated line fragments that extend on both sides in
+                # the original ROI, not merely inside the clipped patch.
+                ext=[]
+                for sign in (-1,1):
+                    test=led+sign*tangent*(long/2+np.array([.006,.014,.024])*ppm)[:,None]
+                    xy=np.rint(test).astype(int)
+                    valid=(xy[:,0]>=0)&(xy[:,0]<raw_mask.shape[1])&(xy[:,1]>=0)&(xy[:,1]<raw_mask.shape[0])
+                    ext.append(bool(valid.all() and np.mean(raw_mask[xy[:,1],xy[:,0]]>0)>.65))
+                if all(ext):
+                    debug["end_tape"]=debug.get("end_tape",0)+1
+                    continue
+                corners=np.array([led+u*normal*short*.35+v*tangent*long*.35
+                                  for u,v in ((-1,-1),(1,-1),(1,1),(-1,1))])
+                region=np.zeros(raw_mask.shape,np.uint8)
+                cv2.fillConvexPoly(region,np.rint(corners).astype(np.int32),255)
+                color=classify_led_pixels(image[region>0],blue_min)
+                score=.40*occupancy+.30*min(inward/.65,1.)+.20*min(long/(1.35*half),1.)+.10*(1-min(abs(d-rear)/(.024*ppm),1.))
+                if prior is not None:
+                    angle=math.atan2(-normal[1],normal[0])
+                    score+=.06*max(0.,1-abs(wrap_angle(angle-prior.heading))/math.radians(40))
+                if score>=.68:
+                    candidates.append((min(score,1.),color,normal,led,(short/ppm,long/ppm)))
+                else:
+                    debug["end_score"]=debug.get("end_score",0)+1
+    return candidates
+
+
 def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=()):
     """Detect the rear transverse LED inside each dark body ROI.
 
@@ -576,6 +684,9 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
         support=cv2.dilate(chassis,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2*radius+1,2*radius+1)))
         mask=cv2.morphologyEx(raw_mask & support,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
         candidates=[]
+        rejected={}
+        def reject(reason):
+            rejected[reason]=rejected.get(reason,0)+1
         # Also search a local window around the last measured LED relative to
         # the current chassis, so tape joined to the LED in the global mask
         # cannot remove the short rear bar from the candidate set.
@@ -597,15 +708,19 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             ar=cv2.contourArea(cc)
             xx,yy,ww,hh=cv2.boundingRect(cc)
             if xx<=0 or yy<=0 or xx+ww>=a.shape[1] or yy+hh>=a.shape[0]:
+                reject("roi_boundary")
                 continue
             if not .000055*ppm**2<=ar<=.003*ppm**2:
+                reject("area")
                 continue
             rr=cv2.minAreaRect(cc)
             short,long=sorted(rr[1])
             if not .034*ppm<=long<=.13*ppm or short<.006*ppm or not 2.0<=long/short<=8.0:
+                reject("dimensions")
                 continue
             fill=ar/max(short*long,1.)
             if fill<.55:
+                reject("fill")
                 continue
             bb=cv2.boxPoints(rr)
             z1,z2=bb[1]-bb[0],bb[2]-bb[1]
@@ -616,12 +731,14 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             delta=center-led
             distance=np.linalg.norm(delta)
             if not .025*ppm<=distance<=.14*ppm:
+                reject("distance")
                 continue
             if np.dot(normal,delta)<0:
                 normal=-normal
             radial=float(normal@delta/distance)
             # LED long side should span the rear, not run along the chassis.
             if radial<.78 or (aspect>1.25 and abs(normal@axis)<.72):
+                reject("axis")
                 continue
             # Check the LED lies near the rear edge of this very body, not a
             # separate piece of white tape or a nearby goal.
@@ -630,6 +747,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             longitudinal=float(normal@delta)
             lateral=abs(float(major@delta))
             if abs(longitudinal-rear)>.032*ppm or lateral>.045*ppm:
+                reject("end_location")
                 continue
             # Reject long floor tape running beyond the candidate ends.
             # A single visible continuation can occur when the robot overlaps a line.
@@ -642,15 +760,18 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
                     hits.append(bool(raw_mask[iy,ix]) if 0<=ix<a.shape[1] and 0<=iy<a.shape[0] else True)
                 continuation.append(np.mean(hits)>.65)
             if all(continuation):
+                reject("tape")
                 continue
             # Check that the inward edge is adjacent to dark body pixels.
             probe=led+normal*(short/2+.010*ppm)
             px,py=np.rint(probe).astype(int)
             if not (0<=px<a.shape[1] and 0<=py<a.shape[0]):
+                reject("body_probe")
                 continue
             rad=max(2,int(.012*ppm))
             nearby=body[max(0,py-rad):py+rad+1,max(0,px-rad):px+rad+1]
             if not nearby.size or np.mean(nearby>0)<.18:
+                reject("body_adjacency")
                 continue
             score=.36*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.18*(1-min(abs(longitudinal-rear)/(.032*ppm),1.))
             # Sample the inner bar, excluding edge reflections and background.
@@ -662,6 +783,19 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             if prior is not None:
                 score+=.08*max(0.,1-abs(wrap_angle(angle-prior.heading))/math.radians(40))
             candidates.append((min(score,1.),color,normal,led,(short/ppm,long/ppm)))
+        def ambiguous(items):
+            if not items:
+                return True
+            best=max(items,key=lambda z:z[0])
+            return best[0]<.62 or any(q>best[0]-.07 and np.dot(best[2],n)<.85 for q,_,n,_,_size in items)
+        method="contour"
+        contour_count=len(candidates)
+        if ambiguous(candidates):
+            fallback=body_end_led_candidates(rgb,raw_mask,body,center,p,axis,aspect,ppm,prior,blue_led_min_light,rejected)
+            if fallback:
+                # Do not combine conflicting modes into a false confident result.
+                candidates=fallback
+                method="body_end"
         candidates.sort(key=lambda z:z[0],reverse=True)
         heading=None
         team="unknown"
@@ -688,6 +822,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
                 length_m=(hi-lo)/ppm
                 width_m=(bhi-blo)/ppm
             else:
+                reject("ambiguous_or_low_score")
                 quality=0.
         global_center=center+np.array([x0,y0])
         result.append({"p":field.metric(global_center),
@@ -695,7 +830,9 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
                        "heading":heading,"team":team,"quality":float(quality),
                        "length":float(length_m),"width":float(width_m),
                        "led_offset":led_offset,"led_size":led_size if heading is not None else None,
-                       "led_candidates":len(candidates)})
+                       "led_candidates":len(candidates),"led_method":method if heading is not None else "missing",
+                       "led_rejected":rejected,"contour_candidates":contour_count,
+                       "led_center_px":(led+np.array([x0,y0])).tolist() if heading is not None else None})
     return result
 
 
@@ -743,6 +880,7 @@ class RobotTrack(Track):
         self.led_offset=None
         self.led_size=None
         self.led_candidates=0
+        self.led_method="missing"
         self.angular_velocity=None
         self.bbox=None
         self.length=.16
@@ -806,6 +944,7 @@ class RobotTrack(Track):
             self.led_offset=None
             self.led_size=None
         self.led_candidates=obs.get("led_candidates",0)
+        self.led_method=obs.get("led_method","missing") if self.heading_measured else "missing"
         observed=obs["team"] if self.heading_measured else "unknown"
         if observed=="unknown":
             self.color_candidate="unknown"
@@ -835,6 +974,8 @@ class RobotTrack(Track):
         self.position_filter=None
         self.led_offset=None
         self.led_size=None
+        self.led_method="missing"
+        self.led_candidates=0
         self.heading_confidence=0.
         self.angular_velocity=None
         self.team="unknown"
