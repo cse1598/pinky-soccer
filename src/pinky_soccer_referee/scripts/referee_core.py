@@ -397,12 +397,29 @@ def iou_box(a,b):
     return inter/max(w*h+W*H-inter,1.e-9)
 
 
+def classify_led_pixels(bgr, blue_led_min_light=125):
+    """Classify ONLY the interior of the already selected LED bar."""
+    pixels=np.asarray(bgr,np.uint8).reshape(-1,3)
+    if len(pixels)<8:
+        return "unknown"
+    h,l,s=cv2.cvtColor(pixels.reshape(-1,1,3),cv2.COLOR_BGR2HLS).reshape(-1,3).astype(float).T
+    b,g,r=pixels.astype(float).T
+    rg=np.minimum(r,g)
+    yellow=(h>=18)&(h<=38)&(s>=145)&(l>=100)&(rg-b>=55)&(b<=.65*rg)&(np.abs(r-g)<=.35*np.maximum(r,g))
+    blue=(h>=90)&(h<=135)&(s>=125)&(l>=blue_led_min_light)&(b-r>=45)&(b-g>=20)
+    if np.mean(yellow)>=.75:
+        return "yellow"
+    if np.mean(blue)>=.70:
+        return "blue"
+    return "unknown"
+
+
 def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
     """Detect the rear transverse LED inside each dark body ROI.
 
-    White LED establishes heading but not team. Blue wheels are excluded by
-    lightness, elongated rectangular geometry, body-axis and end constraints.
-    Thresholds are provisional: illuminated LEDs require real data.
+    Detect bar geometry independently of team color, then classify interior.
+    Body support, end geometry and tape continuation checks reject clutter.
+    White/off and ambiguous colors remain UNKNOWN.
     """
     hls=cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
     result=[]
@@ -414,6 +431,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         x0,y0=max(0,x-pad),max(0,y-pad)
         x1,y1=min(image.shape[1],x+w+pad),min(image.shape[0],y+h+pad)
         a=hls[y0:y1,x0:x1]
+        rgb=image[y0:y1,x0:x1]
         body=mask_hls(a,(0,0,0),(180,62,255))
         body=cv2.morphologyEx(body,cv2.MORPH_CLOSE,np.ones((7,7),np.uint8))
         cs=contours(body)
@@ -430,63 +448,81 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         axis=v1 if np.linalg.norm(v1)>=np.linalg.norm(v2) else v2
         axis=axis/max(np.linalg.norm(axis),1.e-9)
         aspect=max(rect[1])/max(min(rect[1]),1.e-9)
-        masks={
-            "white":mask_hls(a,(0,125,0),(180,255,80)),
-            "yellow":mask_hls(a,(12,110,100),(40,255,255)),
-            "blue":mask_hls(a,(90,int(blue_led_min_light),70),(135,255,255)),
-        }
+        # Same geometry search for white/off, yellow, and blue.
+        raw_mask=np.where((a[:,:,1]>=105)|((rgb.max(axis=2)>=155)&(a[:,:,1]>=75)),255,0).astype(np.uint8)
+        # Keep only near the detected chassis; this clips unrelated floor lines.
+        chassis=np.zeros(a.shape[:2],np.uint8)
+        cv2.drawContours(chassis,[c],-1,255,-1)
+        radius=max(3,int(.025*ppm))
+        support=cv2.dilate(chassis,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2*radius+1,2*radius+1)))
+        mask=cv2.morphologyEx(raw_mask & support,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
         candidates=[]
-        for color,mask in masks.items():
-            mask=cv2.morphologyEx(mask,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
-            for cc in contours(mask):
-                ar=cv2.contourArea(cc)
-                xx,yy,ww,hh=cv2.boundingRect(cc)
-                if xx<=1 or yy<=1 or xx+ww>=a.shape[1]-1 or yy+hh>=a.shape[0]-1:
-                    continue
-                if not .000055*ppm**2<=ar<=.003*ppm**2:
-                    continue
-                rr=cv2.minAreaRect(cc)
-                short,long=sorted(rr[1])
-                if not .034*ppm<=long<=.13*ppm or short<.006*ppm or not 2.0<=long/short<=8.0:
-                    continue
-                fill=ar/max(short*long,1.)
-                if fill<.67:
-                    continue
-                bb=cv2.boxPoints(rr)
-                z1,z2=bb[1]-bb[0],bb[2]-bb[1]
-                major=z1 if np.linalg.norm(z1)>=np.linalg.norm(z2) else z2
-                major=major/np.linalg.norm(major)
-                normal=np.array([-major[1],major[0]])
-                led=np.array(rr[0])
-                delta=center-led
-                distance=np.linalg.norm(delta)
-                if not .025*ppm<=distance<=.14*ppm:
-                    continue
-                if np.dot(normal,delta)<0:
-                    normal=-normal
-                radial=float(normal@delta/distance)
-                # LED long side should span the rear, not run along the chassis.
-                if radial<.78 or (aspect>1.25 and abs(normal@axis)<.72):
-                    continue
-                # Check the LED lies near the rear edge of this very body, not a
-                # separate piece of white tape or a nearby goal.
-                extent=(p-center)@normal
-                rear=-float(extent.min())
-                longitudinal=float(normal@delta)
-                lateral=abs(float(major@delta))
-                if abs(longitudinal-rear)>.032*ppm or lateral>.045*ppm:
-                    continue
-                # Check that the inward edge is adjacent to dark body pixels.
-                probe=led+normal*(short/2+.010*ppm)
-                px,py=np.rint(probe).astype(int)
-                if not (0<=px<a.shape[1] and 0<=py<a.shape[0]):
-                    continue
-                rad=max(2,int(.012*ppm))
-                nearby=body[max(0,py-rad):py+rad+1,max(0,px-rad):px+rad+1]
-                if not nearby.size or np.mean(nearby>0)<.18:
-                    continue
-                score=.36*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.18*(1-min(abs(longitudinal-rear)/(.032*ppm),1.))
-                candidates.append((score,color,normal,led))
+        for cc in contours(mask):
+            ar=cv2.contourArea(cc)
+            xx,yy,ww,hh=cv2.boundingRect(cc)
+            if xx<=0 or yy<=0 or xx+ww>=a.shape[1] or yy+hh>=a.shape[0]:
+                continue
+            if not .000055*ppm**2<=ar<=.003*ppm**2:
+                continue
+            rr=cv2.minAreaRect(cc)
+            short,long=sorted(rr[1])
+            if not .034*ppm<=long<=.13*ppm or short<.006*ppm or not 2.0<=long/short<=8.0:
+                continue
+            fill=ar/max(short*long,1.)
+            if fill<.67:
+                continue
+            bb=cv2.boxPoints(rr)
+            z1,z2=bb[1]-bb[0],bb[2]-bb[1]
+            major=z1 if np.linalg.norm(z1)>=np.linalg.norm(z2) else z2
+            major=major/np.linalg.norm(major)
+            normal=np.array([-major[1],major[0]])
+            led=np.array(rr[0])
+            delta=center-led
+            distance=np.linalg.norm(delta)
+            if not .025*ppm<=distance<=.14*ppm:
+                continue
+            if np.dot(normal,delta)<0:
+                normal=-normal
+            radial=float(normal@delta/distance)
+            # LED long side should span the rear, not run along the chassis.
+            if radial<.78 or (aspect>1.25 and abs(normal@axis)<.72):
+                continue
+            # Check the LED lies near the rear edge of this very body, not a
+            # separate piece of white tape or a nearby goal.
+            extent=(p-center)@normal
+            rear=-float(extent.min())
+            longitudinal=float(normal@delta)
+            lateral=abs(float(major@delta))
+            if abs(longitudinal-rear)>.032*ppm or lateral>.045*ppm:
+                continue
+            # Reject long floor tape running beyond the candidate ends.
+            # A single visible continuation can occur when the robot overlaps a line.
+            continuation=[]
+            for sign in (-1,1):
+                hits=[]
+                for dpx in (.006*ppm,.012*ppm,.020*ppm):
+                    pt=led+sign*major*(long/2+dpx)
+                    ix,iy=np.rint(pt).astype(int)
+                    hits.append(bool(raw_mask[iy,ix]) if 0<=ix<a.shape[1] and 0<=iy<a.shape[0] else True)
+                continuation.append(np.mean(hits)>.65)
+            if all(continuation):
+                continue
+            # Check that the inward edge is adjacent to dark body pixels.
+            probe=led+normal*(short/2+.010*ppm)
+            px,py=np.rint(probe).astype(int)
+            if not (0<=px<a.shape[1] and 0<=py<a.shape[0]):
+                continue
+            rad=max(2,int(.012*ppm))
+            nearby=body[max(0,py-rad):py+rad+1,max(0,px-rad):px+rad+1]
+            if not nearby.size or np.mean(nearby>0)<.18:
+                continue
+            score=.36*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.18*(1-min(abs(longitudinal-rear)/(.032*ppm),1.))
+            # Sample the inner bar, excluding edge reflections and background.
+            roi_mask=np.zeros(a.shape[:2],np.uint8)
+            interior=led+(bb-led)*np.array(0.70)
+            cv2.fillConvexPoly(roi_mask,np.rint(interior).astype(np.int32),255)
+            color=classify_led_pixels(rgb[roi_mask>0],blue_led_min_light)
+            candidates.append((score,color,normal,led))
         candidates.sort(key=lambda z:z[0],reverse=True)
         heading=None
         team="unknown"
@@ -496,7 +532,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         if candidates:
             quality,color,normal,led=candidates[0]
             # Do not manufacture a direction if two plausible bars disagree.
-            conflict=any(s>quality-.07 and (np.dot(normal,n)<.85 or color!=col)
+            conflict=any(s>quality-.07 and (np.dot(normal,n)<.85)
                          for s,col,n,_ in candidates[1:])
             if quality>=.67 and not conflict:
                 heading=math.atan2(-normal[1],normal[0])
@@ -506,7 +542,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
                 bb=p@side
                 lo,hi=np.percentile(aa,[1,99])
                 blo,bhi=np.percentile(bb,[1,99])
-                center=normal*((lo+hi)/2)+side*((blo+bhi)/2)
+                # Keep body center independent of LED detection success.
                 length_m=(hi-lo)/ppm
                 width_m=(bhi-blo)/ppm
             else:
@@ -524,6 +560,8 @@ class RobotTrack(Track):
         super().__init__(ident)
         self.team="unknown"
         self.identity_team="unknown"
+        self.color_candidate="unknown"
+        self.color_count=0
         self.heading=None
         self.heading_confidence=0.
         self.angular_velocity=None
@@ -546,8 +584,16 @@ class RobotTrack(Track):
         self.heading_confidence=obs["quality"] if self.heading is not None else 0.
         self.angular_velocity=(wrap_angle(self.heading-old_heading)/dt
             if continuous and self.velocity_valid and self.heading is not None and old_heading is not None and .001<dt<.30 else None)
-        self.team=obs["team"]
-        if self.team!="unknown":
+        observed=obs["team"]
+        if observed=="unknown":
+            self.color_candidate="unknown"
+            self.color_count=0
+            self.team="unknown"
+            self.identity_team="unknown"
+        else:
+            self.color_count=self.color_count+1 if observed==self.color_candidate and continuous else 1
+            self.color_candidate=observed
+            self.team=observed if self.color_count>=5 else "unknown"
             self.identity_team=self.team
         self.bbox=obs["bbox"]
         self.length=obs["length"]
@@ -563,6 +609,8 @@ class RobotTrack(Track):
         self.heading_confidence=0.
         self.angular_velocity=None
         self.team="unknown"
+        self.color_candidate="unknown"
+        self.color_count=0
         self.reacquired=False
         self.match_confidence=0.
 
@@ -575,7 +623,7 @@ def associate_robots(tracks,observations,t,gate=.12,reacquire_frames=2):
     computed across a relocation. IDs remain provisional without colored LEDs.
     """
     def compatible(tr,o):
-        return tr.identity_team=="unknown" or o["team"]=="unknown" or tr.identity_team==o["team"]
+        return True  # color may change; never block position tracking on one LED sample
     obs=list(observations)
     known=[tr for tr in tracks if tr.visible and tr.position is not None and tr.stamp is not None and .001<t-tr.stamp<.3]
     def cost(tr,o):
@@ -589,7 +637,8 @@ def associate_robots(tracks,observations,t,gate=.12,reacquire_frames=2):
         pred=tr.bbox.copy()
         pred[:2]+=delta*np.array([1.,-1.])
         overlap=iou_box(pred,o["bbox"])
-        value=.72*distance/gate+.28*(1-overlap)
+        mismatch=tr.identity_team!="unknown" and o["team"]!="unknown" and tr.identity_team!=o["team"]
+        value=.72*distance/gate+.28*(1-overlap)+(.10 if mismatch else 0.)
         return value if value<=.85 else float("inf")
     best=None
     for n in range(min(len(known),len(obs)),-1,-1):
