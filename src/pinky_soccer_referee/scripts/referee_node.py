@@ -12,6 +12,7 @@ from std_srvs.srv import Trigger
 from cv_bridge import CvBridge
 from pinky_soccer_referee.msg import TrackedObject, RefereeState, RefereeEvent
 from pinky_soccer_referee.srv import GetState
+from referee_recorder import DebugRecorder
 from referee_core import (Field, Track, RobotTrack, Rules, detect, orient_goals,
                           associate, robot_observations, associate_robots, trapezoid_points)
 
@@ -35,6 +36,8 @@ class Referee(Node):
             "blue_led_min_light": 125, "velocity_arrow_min_mps": .035,
             "distortion_mode": "auto", "calibration_frames": 9,
             "calibration_max_error_px": 5.0, "debug_ui": False,
+            "debug_log": False, "record_video": False,
+            "debug_dir": "~/pinky_referee_logs", "record_fps": 30.0,
         }
         for k,v in defaults.items():
             self.declare_parameter(k,v)
@@ -94,6 +97,14 @@ class Referee(Node):
         else:
             self.create_subscription(CameraInfo,p["camera_info_topic"],self.info,qos_profile_sensor_data)
             self.create_subscription(Image,p["image_topic"],self.on_image,qos_profile_sensor_data)
+        self.recorder=None
+        self.record_index=0
+        if p["debug_log"] or p["record_video"]:
+            if p["record_fps"]<=0:
+                raise ValueError("record_fps must be positive")
+            self.recorder=DebugRecorder(p["debug_dir"],p["debug_log"],p["record_video"],
+                                        self.fps if self.cap is not None else p["record_fps"])
+            self.get_logger().info("Debug recording: "+str(self.recorder.directory))
         self.get_logger().info("Read-only referee ready. No command or TF publisher.")
 
     def info(self,msg):
@@ -197,7 +208,46 @@ class Referee(Node):
         for pub,msg in zip(self.robot_pubs,s.robots):
             pub.publish(msg)
 
+    @staticmethod
+    def track_record(tr):
+        visible=tr.visible
+        p=tr.position if visible else None
+        v=tr.velocity if visible and tr.velocity_valid else None
+        return {"id":tr.id,"visible":visible,"x":p[0] if p is not None else None,
+                "y":p[1] if p is not None else None,"vx":v[0] if v is not None else None,
+                "vy":v[1] if v is not None else None,"velocity_valid":tr.velocity_valid,
+                "heading":getattr(tr,"heading",None) if visible else None,
+                "heading_measured":getattr(tr,"heading_measured",False),
+                "angular_velocity":getattr(tr,"angular_velocity",None),
+                "team":getattr(tr,"team","unknown"),
+                "heading_confidence":getattr(tr,"heading_confidence",0.),
+                "tracking_confidence":getattr(tr,"match_confidence",0.),
+                "led_method":getattr(tr,"led_method",""),
+                "led_candidates":getattr(tr,"led_candidates",0),
+                "reacquired":getattr(tr,"reacquired",False)}
+
     def process(self,image,stamp,t):
+        if self.recorder is None:
+            return self._process(image,stamp,t)
+        start=time.perf_counter()
+        self.record_index+=1
+        record={"frame":self.record_index,"t":float(t),
+                "stamp":{"sec":stamp.sec,"nanosec":stamp.nanosec},
+                "stage":"WAIT_FOR_CALIBRATION","timings":{},"events":[]}
+        images={"raw":image} if self.recorder.record_video else {}
+        try:
+            self._process(image,stamp,t,record,images)
+        except Exception as exc:
+            record["error"]=str(exc)
+            record["stage"]="ERROR"
+            raise
+        finally:
+            record["timings"]["total_ms"]=(time.perf_counter()-start)*1000
+            self.recorder.submit(record,images)
+            if self.recorder.error:
+                self.get_logger().warning("Debug recorder: "+self.recorder.error,throttle_duration_sec=5.)
+
+    def _process(self,image,stamp,t,record=None,images=None):
         self.last_arrival=time.monotonic()
         self.stale=False
         if self.last_stamp is not None and t<=self.last_stamp:
@@ -227,7 +277,17 @@ class Referee(Node):
             self.calibration_buffer.clear()
             try:
                 self.calibrate(calibration_image)
+                if record is not None:
+                    record["calibration"]={"source":self.field.source,"K":self.field.k,
+                        "D":self.field.d,"homography":self.field.homography,
+                        "origin":self.field.origin,"size":self.field.size,
+                        "length":self.field.length,"width":self.field.width,
+                        "pixels_per_meter":self.field.ppm,"boundary_errors":self.field.boundary_errors,
+                        "goals":self.goals}
             except Exception as exc:
+                if record is not None:
+                    record["stage"]="CALIBRATION_RETRY"
+                    record["error"]=str(exc)
                 self.get_logger().warning("Calibration failed: "+str(exc),throttle_duration_sec=2.)
                 self.publish(stamp,"WAIT_FOR_CALIBRATION")
                 if self.params["show_ui"]:
@@ -237,11 +297,28 @@ class Referee(Node):
                     cv2.waitKey(1)
                 return
         f=self.field
+        tick=time.perf_counter()
         top=f.warp(image)
+        if record is not None:
+            record["stage"]="TRACKING"
+            record["timings"]["remap_ms"]=(time.perf_counter()-tick)*1000
+            if self.recorder.record_video:
+                images["rectified"]=top.copy()
+        tick=time.perf_counter()
         bs,rs=detect(top,f,self.params["ball_radius_m"])
         associate([self.ball],[f.metric(v[0]) for v in bs[:4]],t,gate=.45)
         observations=robot_observations(top,f,rs[:5],self.params["blue_led_min_light"],self.robots)
+        if record is not None:
+            record["timings"]["detect_ms"]=(time.perf_counter()-tick)*1000
+            record["observations"]=observations
+        tick=time.perf_counter()
         associate_robots(self.robots,observations,t,self.params["robot_match_gate_m"],self.params["robot_reacquire_frames"])
+        if record is not None:
+            record["timings"]["track_ms"]=(time.perf_counter()-tick)*1000
+            record["tracks"]=[self.track_record(tr) for tr in [self.ball]+self.robots]
+            for tr in self.robots:
+                if tr.reacquired:
+                    record["events"].append({"event":"REACQUIRED","goal_color":"","robot_id":tr.id})
         # A gap in observations invalidates the candidate; never infer a goal from disappearance.
         event=self.rules.update(self.ball.position if self.ball.visible else None,f,self.params["ball_radius_m"],self.goals) if self.rule_enabled else None
         if event is not None:
@@ -252,9 +329,16 @@ class Referee(Node):
             msg.event,msg.goal_color=event
             msg.ball_position.x,msg.ball_position.y=map(float,self.ball.position)
             self.event_pub.publish(msg)
+            if record is not None:
+                record["events"].append({"event":event[0],"goal_color":event[1],"robot_id":""})
         self.publish(stamp)
-        if self.params["show_ui"] or (self.params["publish_image"] and self.image_pub.get_subscription_count()>0):
+        if self.params["show_ui"] or (self.params["publish_image"] and self.image_pub.get_subscription_count()>0) or (record is not None and self.recorder.record_video):
+            tick=time.perf_counter()
             self.draw(top,stamp)
+            if record is not None:
+                record["timings"]["draw_ms"]=(time.perf_counter()-tick)*1000
+                if self.recorder.record_video:
+                    images["overlay"]=top
 
     def draw(self,top,stamp):
         f=self.field
@@ -311,7 +395,7 @@ class Referee(Node):
             cv2.putText(top,debug,(12,45),cv2.FONT_HERSHEY_SIMPLEX,.48,(255,255,255),1,cv2.LINE_AA)
             for i,tr in enumerate(self.robots):
                 status="MEASURED" if tr.heading_measured else ("PRED" if tr.heading is not None else "MISSING")
-                debug="R%d LED candidates=%d yaw=%s conf=%.2f track=%.2f"%(tr.id,tr.led_candidates,status,tr.heading_confidence,tr.match_confidence)
+                debug="R%d LED=%d %s yaw=%s conf=%.2f track=%.2f"%(tr.id,tr.led_candidates,tr.led_method,status,tr.heading_confidence,tr.match_confidence)
                 cv2.putText(top,debug,(12,65+20*i),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
         if self.params["publish_image"]:
             msg=self.bridge.cv2_to_imgmsg(top,encoding="bgr8")
@@ -378,6 +462,9 @@ class Referee(Node):
         return res
 
     def close(self):
+        if self.recorder is not None:
+            result=self.recorder.close()
+            self.get_logger().info("Debug recording finished: "+str(self.recorder.directory)+" "+str(result))
         if self.cap is not None:
             self.cap.release()
         if self.params["show_ui"]:
