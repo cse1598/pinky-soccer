@@ -309,3 +309,30 @@ def test_debug_recorder_writes_index_and_diagnostics(tmp_path):
     assert data["observations"][0]["led_rejected"]["fill"]==2
     assert (r.directory/"tracking.csv").is_file()
     assert (r.directory/"calibration_00000001.yaml").is_file()
+
+
+def test_oblique_led_not_rejected_by_wrong_body_major_axis():
+    # Elongated dark silhouette is transverse to the actual heading.
+    img=np.full((240,300,3),(70,100,70),np.uint8)
+    cv2.rectangle(img,(100,80),(190,140),(22,22,22),-1)
+    cv2.rectangle(img,(104,74),(142,84),(220,220,220),-1)
+    result=robot_observations(img,FakeField(),[(None,5400,(100,80,91,61))])
+    assert len(result)==1
+    assert result[0]["heading"] is not None
+    assert abs(result[0]["heading"]+np.pi/2)<.15
+    assert result[0]["team"]=="unknown"
+
+
+@pytest.mark.parametrize("color",[(30,220,240),(255,170,30)])
+def test_clipped_white_core_cannot_assign_team_from_small_colored_rim(color):
+    from referee_core import classify_led_pixels
+    pixels=np.full((100,3),255,np.uint8)
+    pixels[:30]=color
+    assert classify_led_pixels(pixels)=="unknown"
+
+
+def test_color_classifier_handles_partly_clipped_led():
+    from referee_core import classify_led_pixels
+    pixels=np.tile(np.array([30,220,240],np.uint8),(100,1))
+    pixels[:30]=255
+    assert classify_led_pixels(pixels)=="yellow"
