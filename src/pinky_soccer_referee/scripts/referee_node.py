@@ -33,6 +33,8 @@ class Referee(Node):
             "frame_timeout_s": .5,
             "robot_match_gate_m": .12, "robot_reacquire_frames": 2,
             "blue_led_min_light": 125, "velocity_arrow_min_mps": .035,
+            "distortion_mode": "auto", "calibration_frames": 9,
+            "calibration_max_error_px": 5.0, "debug_ui": False,
         }
         for k,v in defaults.items():
             self.declare_parameter(k,v)
@@ -44,6 +46,8 @@ class Referee(Node):
             raise ValueError("Canonical coordinates require yellow=-1, blue=+1")
         if p["robot_match_gate_m"]<=0 or p["robot_reacquire_frames"]<1 or not 0<=p["blue_led_min_light"]<=255 or p["velocity_arrow_min_mps"]<0:
             raise ValueError("Invalid robot tracking/LED parameters")
+        if p['distortion_mode'] not in ('auto','camera_info','plumb_line','none') or not 3<=p['calibration_frames']<=30 or p['calibration_max_error_px']<=0:
+            raise ValueError('Invalid calibration settings')
         self.bridge=CvBridge()
         self.field=None
         self.camera=None
@@ -52,6 +56,7 @@ class Referee(Node):
         self.ball=Track(0)
         self.robots=[RobotTrack(1),RobotTrack(2)]
         self.frames=0
+        self.calibration_buffer=[]
         self.last_arrival=None
         self.stale=True
         self.last_stamp=None
@@ -130,7 +135,8 @@ class Referee(Node):
             camera=self.camera[:2]
         if p["require_camera_info"] and camera is None:
             raise ValueError("Matching CameraInfo required")
-        field=Field(image,p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["margin_m"],camera)
+        field=Field(image,p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["margin_m"],camera,
+                    p["distortion_mode"],p["calibration_max_error_px"])
         goals=orient_goals(field,image)
         measured=True
         for color in ("yellow","blue"):
@@ -145,7 +151,7 @@ class Referee(Node):
         self.goals=goals
         # Approximate measurements are not competition-certified. Explicit opt-in.
         self.rule_enabled=bool((measured and field.source=="camera_info") or p["allow_approximate_rules"])
-        self.get_logger().info("Calibrated: "+field.source+"; goal intervals="+str(goals)+"; rules enabled="+str(self.rule_enabled))
+        self.get_logger().info("Calibrated: "+field.source+"; tape p90 px="+str(np.round(field.boundary_errors,2))+"; goal intervals="+str(goals)+"; rules enabled="+str(self.rule_enabled))
 
     @staticmethod
     def msg(tr):
@@ -153,7 +159,7 @@ class Referee(Node):
         m.id=tr.id
         m.visible=tr.visible
         m.velocity_valid=tr.velocity_valid
-        m.heading_valid=bool(tr.visible and getattr(tr,"heading",None) is not None)
+        m.heading_valid=bool(tr.visible and getattr(tr,"heading_measured",False))
         m.heading=float(tr.heading) if m.heading_valid else float("nan")
         m.angular_velocity_valid=bool(m.heading_valid and getattr(tr,"angular_velocity",None) is not None)
         m.angular_velocity=float(tr.angular_velocity) if m.angular_velocity_valid else float("nan")
@@ -208,19 +214,33 @@ class Referee(Node):
         if self.field is None:
             if self.frames < self.params["warmup_frames"]:
                 return
-            if self.frames % 10 != 0:
+            if self.frames % 3 != 0:
                 return
+            if self.calibration_buffer and self.calibration_buffer[0].shape!=image.shape:
+                self.calibration_buffer.clear()
+            self.calibration_buffer.append(image.copy())
+            if len(self.calibration_buffer)<self.params["calibration_frames"]:
+                return
+            # Median of spatially aligned fixed-camera frames suppresses moving
+            # robots and exposure fluctuations during static map initialization.
+            calibration_image=np.median(np.stack(self.calibration_buffer),axis=0).astype(np.uint8)
+            self.calibration_buffer.clear()
             try:
-                self.calibrate(image)
+                self.calibrate(calibration_image)
             except Exception as exc:
                 self.get_logger().warning("Calibration failed: "+str(exc),throttle_duration_sec=2.)
                 self.publish(stamp,"WAIT_FOR_CALIBRATION")
+                if self.params["show_ui"]:
+                    preview=image.copy()
+                    cv2.putText(preview,"CALIBRATION RETRY - see terminal",(12,30),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,230,255),2)
+                    cv2.imshow("Pinky referee | metric top view",preview)
+                    cv2.waitKey(1)
                 return
         f=self.field
         top=f.warp(image)
         bs,rs=detect(top,f,self.params["ball_radius_m"])
         associate([self.ball],[f.metric(v[0]) for v in bs[:4]],t,gate=.45)
-        observations=robot_observations(top,f,rs[:5],self.params["blue_led_min_light"])
+        observations=robot_observations(top,f,rs[:5],self.params["blue_led_min_light"],self.robots)
         associate_robots(self.robots,observations,t,self.params["robot_match_gate_m"],self.params["robot_reacquire_frames"])
         # A gap in observations invalidates the candidate; never infer a goal from disappearance.
         event=self.rules.update(self.ball.position if self.ball.visible else None,f,self.params["ball_radius_m"],self.goals) if self.rule_enabled else None
@@ -268,6 +288,8 @@ class Referee(Node):
                 label="Pinky %d | %s"%(tr.id,tr.team.upper())
                 if tr.heading is not None:
                     label+=" %.1f deg"%math.degrees(tr.heading)
+                    if not tr.heading_measured:
+                        label+=" (PRED)"
                 else:
                     label+=" | yaw ?"
                 if tr.reacquired:
@@ -284,6 +306,13 @@ class Referee(Node):
             cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,(15,15,15),3,cv2.LINE_AA)
             cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,color,1,cv2.LINE_AA)
         cv2.putText(top,self.last_state.status+" | goals entered Y:%d B:%d"%(self.rules.scores["yellow"],self.rules.scores["blue"]),(12,24),cv2.FONT_HERSHEY_SIMPLEX,.60,(255,255,255),2)
+        if self.params["debug_ui"]:
+            debug="CAL %s | tape p90 %s px"%(f.source,"/".join("%.1f"%x for x in f.boundary_errors))
+            cv2.putText(top,debug,(12,45),cv2.FONT_HERSHEY_SIMPLEX,.48,(255,255,255),1,cv2.LINE_AA)
+            for i,tr in enumerate(self.robots):
+                status="MEASURED" if tr.heading_measured else ("PRED" if tr.heading is not None else "MISSING")
+                debug="R%d LED candidates=%d yaw=%s conf=%.2f track=%.2f"%(tr.id,tr.led_candidates,status,tr.heading_confidence,tr.match_confidence)
+                cv2.putText(top,debug,(12,65+20*i),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
         if self.params["publish_image"]:
             msg=self.bridge.cv2_to_imgmsg(top,encoding="bgr8")
             msg.header.stamp=stamp
@@ -310,6 +339,7 @@ class Referee(Node):
         self.field=None
         self.goals={}
         self.frames=0
+        self.calibration_buffer=[]
         self.rule_enabled=False
         self.ball=Track(0)
         self.robots=[RobotTrack(1),RobotTrack(2)]
