@@ -1,4 +1,5 @@
 # Metric ground-plane estimate; temporary track ID, NOT team identity.
+std_msgs/Header header
 uint32 id
 bool visible
 bool velocity_valid
