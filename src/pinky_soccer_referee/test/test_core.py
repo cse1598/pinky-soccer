@@ -98,7 +98,8 @@ def test_wraparound_angular_velocity():
     a=RobotTrack(1)
     a.observe(observation(0.,heading=np.deg2rad(179.)),0.,False,.9)
     a.observe(observation(.01,heading=np.deg2rad(-179.)),.1,True,.9)
-    assert abs(a.angular_velocity-np.deg2rad(20.))<1.e-8
+    assert a.angular_velocity is not None and 0.<a.angular_velocity<np.deg2rad(30.)
+    assert abs(abs(a.heading)-np.pi)<np.deg2rad(3.)
 
 
 class FakeField:
@@ -180,3 +181,75 @@ def test_floor_tape_without_led_is_not_heading():
     cv2.rectangle(img,(100,80),(190,140),(22,22,22),-1)
     result=robot_observations(img,FakeField(),[(None,5400,(100,80,91,61))])
     assert result[0]["heading"] is None and result[0]["team"]=="unknown"
+
+
+def test_heading_dropout_is_predicted_then_invalidated():
+    a=RobotTrack(1)
+    a.observe(observation(0.,heading=np.pi/4),0.,False,.9)
+    a.observe(observation(0.,heading=np.pi/4),.033,True,.9)
+    assert a.heading_measured
+    a.observe(observation(0.,heading=None),.066,True,.9)
+    assert not a.heading_measured and a.heading is not None
+    assert abs(a.heading-np.pi/4)<.01
+    assert a.angular_velocity is None
+    for t in (.1,.2,.3):
+        a.observe(observation(0.,heading=None),t,True,.9)
+    a.observe(observation(0.,heading=None),.34,True,.9)
+    assert a.heading is None
+
+
+def test_relocation_resets_heading_and_filter():
+    a=RobotTrack(1)
+    a.observe(observation(0.,heading=np.pi/4),0.,False,.9)
+    a.observe(observation(.01,heading=np.pi/4),.033,True,.9)
+    a.observe(observation(.7,heading=None),.1,False,.9)
+    assert a.heading is None and not a.velocity_valid
+    assert np.allclose(a.position,[.7,0.])
+
+
+def test_static_kalman_filter_reduces_jitter():
+    from referee_core import ConstantVelocityFilter
+    rng=np.random.default_rng(37)
+    z=rng.normal(0,.003,(100,2))
+    f=ConstantVelocityFilter(z[0],.003,2.5)
+    filtered=np.array([f.step(v,1/30)[0] for v in z[1:]])
+    assert np.std(filtered[20:])<np.std(z[21:])
+
+
+def test_geometry_rejects_bad_rectification():
+    from referee_core import verify_rectified_boundary
+    class Rectified:
+        length=1.67
+        width=1.07
+        ppm=550.
+        def pixel(self,p):
+            return np.rint(np.array([550,350])+np.asarray(p)*[550,-550]).astype(int)
+    f=Rectified()
+    img=np.full((700,1100,3),(70,100,70),np.uint8)
+    a=f.pixel((-.835,.535)); b=f.pixel((.835,-.535))
+    cv2.rectangle(img,tuple(a),tuple(b),(220,220,220),7)
+    assert max(verify_rectified_boundary(img,f))<=5.
+    shifted=np.roll(img,15,axis=0)
+    with pytest.raises(ValueError):
+        verify_rectified_boundary(shifted,f)
+
+
+def test_goal_strip_rejects_long_color_artifact():
+    from referee_core import goal_intervals
+    class Rectified:
+        length=1.67
+        width=1.07
+        ppm=550.
+        def pixel(self,p):
+            return np.rint(np.array([600,350])+np.asarray(p)*[550,-550]).astype(int)
+        def metric(self,p):
+            return (np.asarray(p)-[600,350])*[1.,-1.]/550.
+    f=Rectified()
+    img=np.full((700,1200,3),(70,100,70),np.uint8)
+    left=f.pixel((-.835,0))[0]; right=f.pixel((.835,0))[0]
+    cv2.rectangle(img,(left-55,240),(left-8,460),(30,220,240),-1)
+    cv2.rectangle(img,(right+8,240),(right+55,460),(180,100,40),-1)
+    cv2.line(img,(right+10,150),(right+10,550),(180,100,40),2)
+    goals=goal_intervals(img,f)
+    assert goals[-1][0]=="yellow" and goals[1][0]=="blue"
+    assert .37<goals[1][2]-goals[1][1]<.43
