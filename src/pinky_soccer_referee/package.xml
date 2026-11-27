@@ -3,7 +3,7 @@
   <name>pinky_soccer_referee</name>
   <version>0.1.0</version>
   <description>Independent overhead-camera referee and ground-truth measurement prototype.</description>
-  <maintainer email="maintainer@example.invalid">Pinky Soccer contributors</maintainer>
+  <maintainer email="102153140+cse1598@users.noreply.github.com">cse</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>rosidl_default_generators</build_depend>
@@ -17,6 +17,7 @@
   <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-scipy</exec_depend>
+  <test_depend>python3-pytest</test_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
   <export><build_type>ament_cmake</build_type></export>
 </package>
