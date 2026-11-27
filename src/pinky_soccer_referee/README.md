@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.1.0 prototype)
+# Pinky Soccer Referee (v0.2.0 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -23,9 +23,11 @@ OpenCV GUI 지원이 있는 Ubuntu 데스크톱 환경에서 show_ui를 활성�
 ## 실측값과 좌표계
 
 field_length_m, field_width_m은 **흰색 외곽선 중심 간 실측 거리**이다.
-초록색 바닥 전체 규격과 혼동하지 말 것. 기본값 0은 실행 시 오류를 발생시켜
-실측값 누락을 방지한다. 예제의 1.70 x 1.10 m는 임의 테스트 값이며 실측값이 아니다.
-원점은 흰색 사각형의 기하학적 중심, +x는 탑뷰 우측, +y는 탑뷰 상단이다.
+초록색 바닥 전체 규격과 혼동하지 말 것. 사용자 지정 기본값은 1.670 x 1.070 m이다.
+이 수치는 이 패키지의 흰색 선 중심 기준으로 해석하며 실제 선 중심 치수는 별도 확인한다.
+원점은 흰색 사각형의 기하학적 중심, +x는 파란 골대 방향, +y는 탑뷰 상단이다.
+양쪽 골대 색을 초기화 때 확인하고 필요하면 전체 보정 맵과 좌표계를 180도 회전한다.
+노란 골대가 항상 왼쪽이다. 두 색이 확인되지 않으면 초기화를 재시도한다.
 기존 map TF와 자동 연결하지 않는다. 각 골대의 색은 득점 팀이 아닌 공이 들어간 골대의 색이다.
 ball_radius_m 기본값 0.02135는 기존 프로젝트 README의 42.7 mm 직경에 기반한다.
 
@@ -33,7 +35,7 @@ ball_radius_m 기본값 0.02135는 기존 프로젝트 README의 42.7 mm 직경�
 
     ros2 run pinky_soccer_referee referee_node --ros-args \
       -p video_path:=/absolute/path/realsense_20261126_224946.mp4 \
-      -p field_length_m:=1.70 -p field_width_m:=1.10 \
+      -p field_length_m:=1.670 -p field_width_m:=1.070 \
       -p show_ui:=true -p allow_approximate_rules:=true
 
 영상 재생 모드는 매체 프레임 간격으로 속도를 계산하고 ROS 수신 시각을 헤더로 사용한다.
@@ -49,7 +51,7 @@ RealSense ROS 드라이버를 별도로 실행하고 실제 토픽을 확인한�
     ros2 run pinky_soccer_referee referee_node --ros-args \
       -p image_topic:=/camera/camera/color/image_raw \
       -p camera_info_topic:=/camera/camera/color/camera_info \
-      -p field_length_m:=1.70 -p field_width_m:=1.10 \
+      -p field_length_m:=1.670 -p field_width_m:=1.070 \
       -p show_ui:=true
 
 실제 이미지 토픽명과 치수를 수정한다. 초기 30 프레임 이후 녹색 영역과 흰색 선을
@@ -71,10 +73,15 @@ RealSense ROS 드라이버를 별도로 실행하고 실제 토픽을 확인한�
 | /referee/events | pinky_soccer_referee/msg/RefereeEvent | GOAL/OUT/UNVERIFIED_EXIT, sequence, goal color |
 | /referee/top_view | sensor_msgs/msg/Image | 보정된 RGB 영상 + 상태/추적 표시 |
 
-모든 위치/속도 단위는 m, m/s. 속도는 위치차의 지수평활 추정이며 헤딩/각속도는
-미구현으로 heading_valid=false, NaN을 발행한다. visible=false이면 위치를,
-velocity_valid=false이면 속도를 사용하지 않는다. 초기 로봇 ID는 좌우 위치순이며
-가림/교차/재획득 뒤 ID가 바뀔 수 있다. 팀 고정 식별은 후속 ArUco 방식으로 구현한다.
+모든 위치/속도 단위는 m, m/s. 헤딩은 rad, 각속도는 rad/s이며 +X 기준 반시계가 양수이다.
+후방 LED 장축에 수직인 방향 중 몸체를 향하는 방향을 전방으로 사용한다.
+흰색 LED는 헤딩만, 노랑/파랑 LED는 헤딩과 팀을 추정한다. 파란 바퀴 오인식을 줄이기 위해 밝기,
+직사각형 충실도, 크기, 장축과 몸체 축의 관계, 후방 위치 및 몸체 인접 여부를 확인한다.
+불확실한 경우 heading_valid=false 및 NaN, team=unknown, team_valid=false를 발행한다.
+각속도는 연속 유효 헤딩에서만 계산한다. visible=false이면 위치를, velocity_valid=false이면 속도를 사용하지 않는다.
+로봇 ID는 임시 트랙이며 LED 팀 정보로 재연결을 보조한다. 같은 색 또는 미확인 상태에서 ID 교환 가능성이 있다.
+UI의 사다리꼴 짧은 변은 헤딩이며 중심 십자는 로봇의 영상상 기하학적 원점 추정치다.
+헤딩 미검출 시 방향 없는 박스를 표시한다. 로봇이 정지해 있으면 화살표를 그리지 않는다.
 UI 화살표는 속도 방향이며 로봇 헤딩이 아니다. 이벤트/상태는 reliable transient local QoS
 (재구독 시 과거 이벤트는 sequence와 stamp로 구분). 프레임이 끊기면 VIDEO_STALE을 발행한다.
 
@@ -109,8 +116,33 @@ UI 화살표는 속도 방향이며 로봇 헤딩이 아니다. 이벤트/상태
 
 기본적으로 두 골대 입구 범위를 실측 입력하고 CameraInfo를 사용해야 규칙을 활성화한다.
 예: yellow_goal_y_min/y_max, blue_goal_y_min/y_max (m, 경기장 원점 기준).
-yellow_goal_side, blue_goal_side는 기본 -1,+1이다. 측정 전에는
+yellow_goal_side, blue_goal_side는 정규 좌표계에서 -1,+1로 고정된다. 측정 전에는
 allow_approximate_rules:=true를 명시하여 시험용 색상 골대 검출에 기반한 판정을 활성화할 수 있다.
+
+## v0.2 추적/표시 옵션
+
+| 파라미터 | 기본값 | 설명 |
+|---|---:|---|
+| field_length_m | 1.670 | 흰 외곽선 중심 간 길이(m) |
+| field_width_m | 1.070 | 흰 외곽선 중심 간 폭(m) |
+| robot_match_gate_m | 0.12 | 예측 위치 매칭 거리 상한(m) |
+| robot_reacquire_frames | 2 | 재탐색 후보 연속 확인 프레임 수 |
+| blue_led_min_light | 125 | 파랑 LED HLS 명도 하한(0~255) |
+| velocity_arrow_min_mps | 0.035 | 속도 화살표 표시 최소 속도(m/s) |
+
+매 프레임 전체 영역에서 검출 후 거리+예측 bbox IoU로 전역 매칭한다.
+매칭 실패 시 트랙을 무효화하고 미사용 후보가 2프레임 일관되면 재초기화한다.
+재획득 프레임은 reacquired=true, velocity_valid=false로 표시하여 순간 위치 점프를
+실제 속도로 발행하지 않는다. tracking_confidence와 heading_confidence는
+휴리스틱 품질 지표이며 실제 확률이 아니다. 골대 라인 구간은 양쪽 모두 노랑으로 강조한다.
+
+**메시지 변경:** TrackedObject에 team, team_valid, angular_velocity_valid,
+heading_confidence, tracking_confidence, reacquired를 추가했다.
+이전 v0.1 메시지로 빌드한 모든 구독 노드는 새 버전으로 재빌드해야 한다.
+
+실제 카메라 영상에서 로봇의 바퀴 축 중심은 아직 실측하지 않았다.
+높이별 시차 및 실제 LED 발광 색/밝기/포화 검증도 필요하다.
+후방 LED 색/배치가 실제 기구와 일치하는지 확인한다.
 
 ## 검증 및 한계
 
@@ -123,5 +155,5 @@ allow_approximate_rules:=true를 명시하여 시험용 색상 골대 검출에 
 
 실물 시험: (1) 고정 영상 재생, (2) RealSense 실시간 영상 확인, (3) 최소 10점
 바닥 위치 오차 검증, (4) 로봇 높이에 의한 시차 보정, (5) 공 이동/가림/골대 통과/아웃
-각각 기록, (6) 실제 입력률 및 처리 지연 측정, (7) 로봇 ArUco ID 및 yaw 추가.
+각각 기록, (6) 실제 입력률 및 처리 지연 측정, (7) 흰색·노랑·파랑 LED 상태, 바퀴 오인식, 360도 회전, 들어 옮기기 검증.
 정량 검증 전에는 ground-truth **추정치**로만 사용하고 자동 경기 제어나 안전 기능에 연결하지 않는다.
