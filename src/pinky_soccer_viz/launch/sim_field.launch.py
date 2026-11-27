@@ -136,13 +136,15 @@ def setup(context):
     # ---------------------------------------------------------------- robots
     base = {'simulation': True, 'target': sim, 'field_spec': str(spec),
             'localization': lc('localization', context),
-            'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context),
+            'controller': lc('controller', context), 'path_planner': lc('path_planner', context), 'mpc_backend': lc('mpc_backend', context),
              'mpc_damping_scale': float(lc('mpc_damping_scale', context)),
              'mpc_observer_mode': lc('mpc_observer_mode', context), 'max_lin': max_lin, 'max_ang': max_ang,
             'calibration_profile': '' if profile == 'none' else profile,
             'identification': lc('identification', context),
             'wheel_feedback': True, 'headless': headless,
             'publish_debug_image': flag('publish_debug_image', context)}
+    if base['controller'] == 'lqr' and not flag('verify', context):
+        raise ValueError('LQR requires verify:=true (GoToPose only)')
     out += decision_stack(RobotConfig(
         name=name, color=color, initial=ours, verify=flag('verify', context), ui=True,
         heading_record=lc('heading_record', context),
@@ -157,7 +159,9 @@ def setup(context):
         # drive its GoToPose (two NMPCs at once) or leave it idle (its NMPC never solves).
         out += decision_stack(RobotConfig(
             name=opponent, color=other, initial=opp_pose, ui=False, groot2=False,
-            verify=flag('opponent_verify', context), **base))
+            verify=flag('opponent_verify', context),
+            **(dict(base, controller='mpc') if base['controller'] == 'lqr' and
+               not flag('opponent_verify', context) else base)))
     elif two:
         out += multi_robot.group(opponent, [Node(
             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
@@ -224,7 +228,8 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive']),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'lqr', 'reactive']),
+        DeclareLaunchArgument('path_planner', default_value='bezier', choices=['straight', 'bezier', 'quintic']),
         DeclareLaunchArgument('identification', default_value='',
                               description='validated simulator wheel response YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
