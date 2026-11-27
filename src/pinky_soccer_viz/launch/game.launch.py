@@ -39,11 +39,14 @@ def setup(context):
                          '(> 0 on the real robot; 0 = wheel limits only in simulation)')
     common = {name: arg(name) for name in
               ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
-               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'heading_record', 'initial_x', 'initial_y',
+               'controller', 'path_planner', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
                   identification=arg('identification'))
     if mode == 'real':
+        if arg('controller') == 'lqr':
+            raise ValueError('LQR comparison is simulation-only until validated')
+        common.pop('path_planner')
         filename = 'real_game.launch.py'
         profile = arg('calibration_profile')
         common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
@@ -114,8 +117,9 @@ def generate_launch_description():
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
                               description='acados GoToPose damping multiplier; 0 disables'),
         DeclareLaunchArgument('mpc_backend', default_value='acados', choices=['acados', 'slsqp']),
-        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'reactive'],
-                              description='mpc: NMPC (pinky_soccer_mpc); reactive: old P control'),
+        DeclareLaunchArgument('controller', default_value='mpc', choices=['mpc', 'lqr', 'reactive'],
+                              description='mpc: NMPC; lqr: simulation TVLQR; reactive: old P control'),
+        DeclareLaunchArgument('path_planner', default_value='bezier', choices=['straight', 'bezier', 'quintic']),
         DeclareLaunchArgument('wheel_feedback', default_value='false',
                               description='real: NMPC wheel speed feedback from /joint_states'),
         # Passed explicitly in both modes: included launches inherit this configuration, and
