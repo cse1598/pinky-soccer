@@ -518,16 +518,36 @@ def classify_led_pixels(bgr, blue_led_min_light=125):
     pixels=np.asarray(bgr,np.uint8).reshape(-1,3)
     if len(pixels)<8:
         return "unknown"
+    # Nearly white clipped cores contain no reliable team-color evidence.
+    # A saturated primary channel alone (e.g. pure blue) is not white clipping.
+    total=len(pixels)
+    clipped=(pixels.max(axis=1)>=245)&(pixels.min(axis=1)>=200)
+    pixels=pixels[~clipped]
+    if len(pixels)<max(8,.35*total):
+        return "unknown"
     h,l,s=cv2.cvtColor(pixels.reshape(-1,1,3),cv2.COLOR_BGR2HLS).reshape(-1,3).astype(float).T
     b,g,r=pixels.astype(float).T
     rg=np.minimum(r,g)
     yellow=(h>=18)&(h<=38)&(s>=145)&(l>=100)&(rg-b>=55)&(b<=.65*rg)&(np.abs(r-g)<=.35*np.maximum(r,g))
     blue=(h>=90)&(h<=135)&(s>=125)&(l>=blue_led_min_light)&(b-r>=45)&(b-g>=20)
-    if np.mean(yellow)>=.75:
+    # A small colored rim around a clipped white LED must not assign a team.
+    if np.mean(yellow)>=.75 and np.count_nonzero(yellow)>=.55*total:
         return "yellow"
-    if np.mean(blue)>=.70:
+    if np.mean(blue)>=.70 and np.count_nonzero(blue)>=.50*total:
         return "blue"
     return "unknown"
+
+
+def led_body_support(body,led,normal,major,short,long,ppm):
+    """Dark chassis occupancy on each side of the transverse LED."""
+    def support(n):
+        points=np.array([led+n*(short/2+d*ppm)+major*t*long
+                         for d in (.006,.012,.018,.025)
+                         for t in (-.35,-.18,0.,.18,.35)])
+        ix,iy=np.rint(points).astype(int).T
+        valid=(ix>=0)&(ix<body.shape[1])&(iy>=0)&(iy<body.shape[0])
+        return float(np.count_nonzero(body[iy[valid],ix[valid]]))/len(points)
+    return support(normal),support(-normal)
 
 
 def body_end_led_candidates(image,raw_mask,body,center,p,axis,aspect,ppm,prior,blue_min,debug):
@@ -538,10 +558,9 @@ def body_end_led_candidates(image,raw_mask,body,center,p,axis,aspect,ppm,prior,b
     chassis immediately inward, and sufficient evidence on the current image.
     The prior only proposes search directions, never creates measurements.
     """
-    axes=[axis,-axis]
-    if aspect<1.30:
-        perpendicular=np.array([-axis[1],axis[0]])
-        axes.extend([perpendicular,-perpendicular])
+    # A silhouette's major axis may be transverse even when elongated.
+    perpendicular=np.array([-axis[1],axis[0]])
+    axes=[axis,-axis,perpendicular,-perpendicular]
     if prior is not None:
         a=prior.heading
         axes.append(np.array([math.cos(a),-math.sin(a)]))
@@ -667,6 +686,10 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             continue
         rect=cv2.minAreaRect(c)
         center=np.array(rect[0])
+        # Keep the geometric LED search center unchanged; use a separate,
+        # robust filled-body area centroid for the published position.
+        moments=cv2.moments(c)
+        position_center=np.array([moments["m10"]/moments["m00"],moments["m01"]/moments["m00"]]) if moments["m00"]>0 else center
         box=cv2.boxPoints(rect)
         v1,v2=box[1]-box[0],box[2]-box[1]
         axis=v1 if np.linalg.norm(v1)>=np.linalg.norm(v2) else v2
@@ -736,8 +759,11 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             if np.dot(normal,delta)<0:
                 normal=-normal
             radial=float(normal@delta/distance)
-            # LED long side should span the rear, not run along the chassis.
-            if radial<.78 or (aspect>1.25 and abs(normal@axis)<.72):
+            inward,outward=led_body_support(body,led,normal,major,short,long,ppm)
+            strong=inward>=.65 and inward-outward>=.35
+            # The observed chassis major axis may be perpendicular to the LED
+            # normal. Override the old hard gate only with asymmetric body evidence.
+            if radial<.40 or ((radial<.78 or (aspect>1.25 and abs(normal@axis)<.72)) and not strong):
                 reject("axis")
                 continue
             # Check the LED lies near the rear edge of this very body, not a
@@ -746,7 +772,8 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             rear=-float(extent.min())
             longitudinal=float(normal@delta)
             lateral=abs(float(major@delta))
-            if abs(longitudinal-rear)>.032*ppm or lateral>.045*ppm:
+            tol=(.055 if strong else .032)*ppm
+            if abs(longitudinal-rear)>tol or lateral>(.065 if strong else .045)*ppm:
                 reject("end_location")
                 continue
             # Reject long floor tape running beyond the candidate ends.
@@ -762,18 +789,10 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             if all(continuation):
                 reject("tape")
                 continue
-            # Check that the inward edge is adjacent to dark body pixels.
-            probe=led+normal*(short/2+.010*ppm)
-            px,py=np.rint(probe).astype(int)
-            if not (0<=px<a.shape[1] and 0<=py<a.shape[0]):
-                reject("body_probe")
-                continue
-            rad=max(2,int(.012*ppm))
-            nearby=body[max(0,py-rad):py+rad+1,max(0,px-rad):px+rad+1]
-            if not nearby.size or np.mean(nearby>0)<.18:
+            if inward<.25:
                 reject("body_adjacency")
                 continue
-            score=.36*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.18*(1-min(abs(longitudinal-rear)/(.032*ppm),1.))
+            score=.30*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.14*(1-min(abs(longitudinal-rear)/tol,1.))+.10*inward
             # Sample the inner bar, excluding edge reflections and background.
             roi_mask=np.zeros(a.shape[:2],np.uint8)
             interior=led+(bb-led)*np.array(0.70)
@@ -824,7 +843,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
             else:
                 reject("ambiguous_or_low_score")
                 quality=0.
-        global_center=center+np.array([x0,y0])
+        global_center=position_center+np.array([x0,y0])
         result.append({"p":field.metric(global_center),
                        "bbox":np.array([x,y,w,h],float)/ppm,
                        "heading":heading,"team":team,"quality":float(quality),
@@ -832,7 +851,9 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=())
                        "led_offset":led_offset,"led_size":led_size if heading is not None else None,
                        "led_candidates":len(candidates),"led_method":method if heading is not None else "missing",
                        "led_rejected":rejected,"contour_candidates":contour_count,
-                       "led_center_px":(led+np.array([x0,y0])).tolist() if heading is not None else None})
+                       "led_center_px":(led+np.array([x0,y0])).tolist() if heading is not None else None,
+                       "body_rect_center_px":(center+np.array([x0,y0])).tolist(),
+                       "body_centroid_px":global_center.tolist()})
     return result
 
 
