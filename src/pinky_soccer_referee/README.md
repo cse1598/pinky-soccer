@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.2.2 prototype)
+# Pinky Soccer Referee (v0.2.3 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -88,9 +88,8 @@ allow_approximate_rules는 실험용 판정에만 사용한다.
       -p show_ui:=true
 
 실제 이미지 토픽명과 치수를 수정한다. 초기 30 프레임 이후 녹색 영역과 흰색 선을
-자동 검출하며, 실패하면 10 프레임 간격으로 재시도한다. CameraInfo가 있으면
-해당 해상도와 모델을 검증하고 내부 파라미터를 사용한다. 없으면 고정 중심/초점
-가정의 plumb-line 방사 왜곡 추정으로 대체한다. require_camera_info:=true로
+자동 검출하며, 실패하면 10 프레임 간격으로 재시도한다. 기본 auto 모드에서는 CameraInfo(유효한 경우), 추가 보정 없음, plumb-line 방사 왜곡 모델을 비교한다.
+초기 프레임의 중앙값 영상을 이용하며, 실제 라인 정합 오차를 검증한 모델만 사용한다. require_camera_info:=true로
 대체를 금지할 수 있다. remap 테이블은 초기화에만 계산한다. 실제 경기장 외곽과 골대까지
 남도록 초록색 외곽 + margin_m의 확장 캔버스를 사용한다. 카메라를 움직였거나
 해상도를 변경했다면 재보정한다. 카메라 움직임 자동 감지는 아직 없다.
@@ -186,6 +185,38 @@ LED의 기하학적 위치 검출과 색 판별을 분리한다. 밝기 기반 �
 그 외(흰색/off, 애매한 색)는 UNKNOWN. 팀 색은 5회 연속 확인 후 발표하고 UNKNOWN 관측 시 해제한다.
 색 변화만으로 위치 추적을 끊지 않으며, LED 검출 여부에 관계없이 동일한 몸체 중심을 사용한다.
 실물 LED 및 라인 겹침에서의 성능은 검증 필요. 메시지 타입 및 launch 인수는 v0.2.1과 동일하다.
+
+## v0.2.3 보정 및 헤딩 안정화
+
+기존 흰색 외곽선 기준 1.670 x 1.070 m, 노란 골대 좌측, 청록 외곽선, 팀별 골라인을 유지한다.
+
+- 초기 warmup 이후 3프레임마다 샘플을 수집하여 기본 9장 중앙값 영상으로 보정한다.
+- distortion_mode:=auto는 CameraInfo(지원 모델/해상도), none(추가 렌즈 보정 없음), plumb_line(직선성 추정)을 비교한다.
+- 각 변의 p90 픽셀 잔차 및 실제 보정 영상의 흰 테이프 정합을 확인한다.
+  기본 상한 5 px를 넘거나 충분한 라인이 없으면 초기화를 다시 수행한다.
+- 골대 입구는 골라인 외측 좁은 영역의 색 점유율로 측정한다.
+  자동 검출 길이 0.18~0.55 m 및 좌우 길이비 1.20 이하를 초기 가정으로 둔다.
+  실제 입구가 다르면 자동 검출 범위를 조정해야 한다. 실측값 파라미터는 유지한다.
+- LED 후보는 이전 헤딩과 후방 LED 상대 위치 주변도 탐색한다.
+- 로봇 위치/선속도와 헤딩/각속도는 소형 constant-velocity Kalman filter로 추정한다.
+  재획득 시 상태를 재초기화하며 위치 점프를 속도로 계산하지 않는다.
+- LED가 잠깐 누락되면 최대 0.25초 동안 UI에 PRED 헤딩을 표시한다.
+  예측만 있는 프레임에서는 ROS heading_valid=false, heading=NaN이며 각속도도 무효다.
+  새 측정과 예측을 구분하며, 장시간 누락 시 사각형으로 복귀한다.
+- 디버그 UI는 각 변 p90 오차, 보정 모델, LED 후보 수, 헤딩 상태 및 신뢰도를 표시한다.
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=realsense allow_approximate_rules:=true debug_ui:=true
+
+| 추가 인수 | 기본값 |
+|---|---|
+| distortion_mode | auto |
+| calibration_frames | 9 |
+| calibration_max_error_px | 5.0 |
+| debug_ui | false |
+
+비교 실험은 distortion_mode:=camera_info, distortion_mode:=plumb_line 또는 distortion_mode:=none으로
+강제할 수 있다. none도 Homography는 적용한다. 카메라 이동 후에는 recalibrate 서비스 호출.
+위 임계값은 초기 설계값이며 ROS 및 실제 LED/경기장 검증 필요. 메시지 정의는 v0.2.2와 동일하다.
 
 ## 검증 및 한계
 
