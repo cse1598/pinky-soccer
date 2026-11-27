@@ -24,19 +24,19 @@ def setup(context):
     mode = arg('mode')
     if mode not in ('real', 'gazebo', 'mujoco'):
         raise ValueError('mode must be real, gazebo or mujoco')
-    # auto: the real robot keeps the low safety caps until the user raises them; simulators
-    # drive at the wheel limits (90 % of the motor rating) but turn at most 2 rad/s: faster
+    # Real GoToPose uses only the MPC's motor/input limits (user request 2026-11-27).
+    # Simulators turn at most 2 rad/s: faster
     # spins (up to 5.4 rad/s) broke LiDAR/heading localization in MuJoCo (180 deg reseeds,
     # 2.3 m errors; none at 2 rad/s). max_ang:=0 removes the turn cap.
-    auto = {'real': ('0.08', '0.5')}.get(mode, ('0', '2.0'))
+    auto = {'real': ('0', '0')}.get(mode, ('0', '2.0'))
     lin_text = auto[0] if arg('max_lin') == 'auto' else arg('max_lin')
     ang_text = auto[1] if arg('max_ang') == 'auto' else arg('max_ang')
     max_lin, max_ang = float(lin_text), float(ang_text)
-    low = 0.0 if mode != 'real' else 1e-9
+    low = 0.0
     if not (math.isfinite(max_lin) and math.isfinite(max_ang)
             and low <= max_lin <= 0.30 and low <= max_ang <= 6.0):
         raise ValueError('Require max_lin <= 0.30 m/s and max_ang <= 6 rad/s '
-                         '(> 0 on the real robot; 0 = wheel limits only in simulation)')
+                         '(0 = MPC internal limits only)')
     common = {name: arg(name) for name in
               ('preparation', 'preparation_config', 'field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
                'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
@@ -51,6 +51,7 @@ def setup(context):
         profile = arg('calibration_profile')
         common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
         common['wheel_feedback'] = arg('wheel_feedback')
+        common['referee'] = arg('referee')
         common.update({name: arg(name) for name in (
             'allow_uncalibrated', 'approximate_hfov_deg', 'camera_yaml',
             'image_rotated_180', 'command_topic')})
@@ -79,6 +80,8 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_workspace', default_value='pinky-soccer'),
         DeclareLaunchArgument('robot_profile', default_value=''),
         DeclareLaunchArgument('mode', default_value='real', choices=['real', 'gazebo', 'mujoco']),
+        DeclareLaunchArgument('referee', default_value='true', choices=['true', 'false'],
+                              description='real: legacy world-model referee; false with overhead referee UI'),
         DeclareLaunchArgument('preparation', default_value='true'),
         DeclareLaunchArgument('preparation_config', default_value=''),
         DeclareLaunchArgument('field', default_value='hardboard', choices=['hardboard', 'rcj']),
@@ -121,9 +124,9 @@ def generate_launch_description():
         DeclareLaunchArgument('ball_offset_source', default_value='auto',
                               description='auto: selected profile/camera sibling; none: raw projection; or reviewed profile'),
         DeclareLaunchArgument('max_lin', default_value='auto',
-                              description='auto: real 0.08 m/s, simulation 0 (= wheel limits)'),
+                              description='auto: 0 (= MPC internal limits only)'),
         DeclareLaunchArgument('max_ang', default_value='auto',
-                              description='auto: real 0.5 rad/s, simulation 2.0 '
+                              description='auto: real 0 (= MPC internal limits), simulation 2.0 '
                               '(localization limit); 0 = none'),
         DeclareLaunchArgument('mpc_observer_mode', default_value='off', choices=['off','align','ndob']),
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',

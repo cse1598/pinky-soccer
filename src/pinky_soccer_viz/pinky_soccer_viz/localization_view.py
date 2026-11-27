@@ -39,6 +39,8 @@ class LocalizationView(Node):
             state = json.loads(msg.data)
             self.state = (f"{state['state']} | goals={','.join(state['learned_colors'])} | "
                           f"LED={state['led']}")
+            if not state.get('debug_enabled', False):
+                self.state += ' | DEBUG OFF: launch localization_debug:=true'
             if state.get('missing_inputs'):
                 self.state += ' | waiting='+','.join(state['missing_inputs'])
             counts = state.get('goal_pixel_counts', {})

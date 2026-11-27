@@ -160,3 +160,52 @@ def test_brake_latch_waits_until_zero_input_stop_is_inside_task_region():
     assert not result['brake'] and not result['done']
     result=c.update(.1,(0,0,.01),(0,0,.01),(0,0,0),0,.03,(0,0),True,p,can_brake=True)
     assert result['brake'] and not result['done']
+
+
+def test_settled_residual_inside_hysteresis_band_releases_brake_without_false_success():
+    c=Completion(Arrival());p=CompletionPolicy(mode='STRICT_STOP')
+    assert c.update(0,(0,0,.04),(0,0,.04),(0,0,0),0,0,(0,0),True,p)['brake']
+    # 3.44 degrees is outside success (3 deg) but inside the release band (4 deg).
+    out=c.update(.1,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
+    assert out['brake'] and not out['done']
+    out=c.update(.41,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
+    assert not out['brake'] and not out['done']
+    # Re-entry still requires the original acceptance region and full dwell.
+    assert not c.update(.5,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
+    assert c.update(.81,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
+
+
+def test_strict_stop_dwell_does_not_accumulate_outside_acceptance_region():
+    c=Completion(Arrival());p=CompletionPolicy(mode='STRICT_STOP')
+    c.update(0,(0,0,.04),(0,0,.04),(0,0,0),0,0,(0,0),True,p)
+    c.update(.2,(0,0,.06),(0,0,.06),(0,0,0),0,0,(0,0),True,p)
+    assert not c.update(.31,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
+    assert c.update(.62,(0,0,.03),(0,0,.03),(0,0,0),0,0,(0,0),True,p)['done']
+
+
+def test_fast_reachable_disc_never_bypasses_precise_braking_collision_check():
+    params=P.load('mujoco');fast=CollisionMonitor(params);precise=CollisionMonitor(params)
+    precise.fast_enabled=False;rng=np.random.default_rng(19);fast_count=0
+    for _ in range(60):
+        state=np.r_[rng.uniform(-.1,.1,2),rng.uniform(-math.pi,math.pi),rng.uniform(-4,4,4)]
+        previous=rng.uniform(-4,4,2);command=rng.uniform(-4,4,2)
+        angles=np.linspace(-math.pi,math.pi,24);radius=rng.uniform(.15,1.)
+        points=state[:2]+radius*np.column_stack((np.cos(angles),np.sin(angles)))
+        obstacles=[(state[0]+.8,state[1],.08,-rng.uniform(0,.1),0)]
+        u,diag=fast.check(state,previous,command,points,.02,obstacles=obstacles)
+        if diag.get('fast_bound'):
+            fast_count+=1
+            expected,reference=precise.check(state,previous,command,points,.02,obstacles=obstacles)
+            assert reference['state'] not in ('STOP','SLOW')
+            assert np.allclose(u,expected)
+    assert fast_count>0
+
+
+def test_retaining_plan_requires_lease_for_next_slot_not_only_current_instant():
+    b=TrajectoryBuffer(.1);r=dict(us=np.ones((8,2)))
+    b.offer(r,'goal');b.activate(1.,10.,'goal',lambda us:True)
+    assert b.retainable(1.1,10.09)
+    assert not b.retainable(1.2,10.1)  # Next ROS slot would meet the expiry boundary.
+    assert not b.retainable(1.1,10.21)  # Slower simulation has consumed the wall lease.
+    b.offer(r,'goal');b.activate(1.1,10.21,'goal',lambda us:True)
+    assert b.continuation(1.15,10.35,'goal',lambda us:True) is not None

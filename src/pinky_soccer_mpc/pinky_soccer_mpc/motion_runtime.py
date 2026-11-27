@@ -244,9 +244,17 @@ class MotionRuntime:
         if self.policy.mode in ('PASS_THROUGH','HANDOFF') and not (self.policy.next_ready and self.policy.next_target):
             self.error='continuous completion requires a ready successor contract'
         cv,cw=self.node.adapter.to_twist(*self.node.last_cmd)
-        self.oscillating=self.guard.update(now,out['distance'],out['angle'],cv,cw)
-        if self.oscillating and not out['eligible'] and self.pending_target is None:
-            self.error='near-goal command reversals without convergence or ready successor'
+        if out['brake'] or out['done']:
+            # Approach corrections must not become a failure while confirming rest.
+            # A subsequent correction starts a fresh reversal episode; the controller's
+            # existing four-second no-progress protection remains independent.
+            self.guard.reset()
+            self.oscillating=False
+        else:
+            self.oscillating=self.guard.update(now,out['distance'],out['angle'],cv,cw)
+        # Time-optimal MPC can legitimately reverse inputs during fine correction.
+        # Expose that observation, but let the existing four-second no-progress
+        # guard own failure rather than aborting before standstill can be confirmed.
         self.last_eligible=out['eligible']
         if out['prepare'] and self.pending_target is None:
             self.pending_target=self.policy.next_target
@@ -279,6 +287,7 @@ class MotionRuntime:
     def retain_direction(self,result,now,wall,goal):
         b=self.buffer
         if b.active is None or b.version!=tuple(goal) or self.pending_target is not None:return result
+        if not b.retainable(now,wall):return result
         old=np.asarray(b.result.get('xs',[]));new=np.asarray(result.get('xs',[]))
         if len(old)<3 or len(new)<3:return result
         direction=np.array(goal[:2])-np.asarray(self.node.pose[:2])

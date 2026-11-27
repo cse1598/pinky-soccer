@@ -72,7 +72,9 @@ Localization 실패/상실·서비스 거부·제어 결과 누락·이동 timeo
 
 - `start_goal_offset=-1`: 기존 킥오프 위치. 0 이상: 자기 골라인에서 경기장 안쪽으로 이격한 거리(m).
 - `start_pose=[x,y,yaw]`: 명시적 목표가 필요할 때만 설정(map m/rad). 기본/offset 방식은 상대 골대 방향을 본다.
-- `start_avoid_walls=true`, `start_avoid_opponents=true`, `start_avoid_ball=false`.
+- `start_avoid_walls=false`, `start_avoid_opponents=false`, `start_avoid_ball=false`.
+  2026-11-27 사용자 지시로 준비 이동도 기존 회피 없는 기본 MPC 경로를 사용한다.
+  독립 LiDAR 정지 보호와 watchdog는 유지하며, 회피 제약은 해당 옵션으로 명시적으로 켤 수 있다.
 - `move_timeout=60s`, `preparation_timeout=90s`와 odom 정지 문턱/유지시간 설정 가능.
 
 선택된 기존 controller/backend/속도 제한을 그대로 사용한다. 준비 이동에는 MotionResult를 제공하는

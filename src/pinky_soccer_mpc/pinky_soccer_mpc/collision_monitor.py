@@ -29,6 +29,9 @@ class CollisionMonitor:
         self.model=RampPredictor(params,.02)
         self.latency=max(latency,3*max(self.model.tau_l,self.model.tau_r))
         self.deceleration=deceleration;self.margin=margin
+        self.fast_enabled=True
+        self.footprint_radius=max(math.hypot(x,y) for x0,y0,x1,y1 in FOOTPRINT_RECTS
+                                  for x,y in ((x0,y0),(x0,y1),(x1,y0),(x1,y1)))
 
     def rollout(self,state,previous,command,hold,age):
         x=np.asarray(state,float);h=.005
@@ -67,6 +70,28 @@ class CollisionMonitor:
         uncertainty=max(0.,min(.1,uncertainty));margin=self.margin+uncertainty
         v=abs((self.model.rl*state[3]+self.model.rr*state[4])/2)
         stopping=v*(self.latency+age)+v*v/(2*self.deceleration)+margin
+        if self.fast_enabled:
+            # A circumscribed reachable disc proves clearance without choosing a path.
+            # Every wheel/profile state remains bounded by these extrema under the ramp map.
+            maxima=np.max(abs(np.array([state[3:5],state[5:7],previous,command])),axis=0)
+            bound=(self.model.rl*maxima[0]+self.model.rr*maxima[1])/2
+            motor_stop=(self.model.rl*(maxima[0]*self.model.tau_l+maxima[0]**2/(2*self.model.accel))+
+                        self.model.rr*(maxima[1]*self.model.tau_r+maxima[1]**2/(2*self.model.accel)))/2
+            stop_length=max(motor_stop,bound**2/(2*self.deceleration))
+            delay=math.ceil((self.latency+age)/.02-1e-9)*.02
+            nearest=float(np.min(np.linalg.norm(points-np.asarray(state[:2]),axis=1)))
+            def outside(hold):
+                radius=self.footprint_radius+bound*(delay+hold)+stop_length+margin
+                if nearest<=radius:return False
+                horizon=min(3.,delay+hold+max(bound/self.deceleration,
+                    float(max(maxima))/self.model.accel+3*max(self.model.tau_l,self.model.tau_r))+.5)
+                return all(math.hypot(x-state[0],y-state[1])-r-math.hypot(vx,vy)*horizon>radius
+                           for x,y,r,vx,vy in obstacles)
+            if outside(.10):
+                future=outside(.5)
+                return tuple(command),dict(state='CLEAR' if future else 'REPLAN',
+                    reason='conservative reachable disc clear',d_stop=stopping,
+                    replan=not future,fast_bound=True)
         def safe(u,hold):
             xs,times=self.rollout(state,previous,u,hold,age)
             d=clearance(xs[:,:3],points)

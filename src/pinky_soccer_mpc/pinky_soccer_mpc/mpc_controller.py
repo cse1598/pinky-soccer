@@ -336,6 +336,9 @@ class MpcController(Node):
             self.result_pub.publish(msg)
 
     def stop(self,reason,result=MotionResult.RUNNING,dist=0.,ang=0.):
+        self.motion.completion.reset()
+        self.motion.pending_target=None;self.motion.successor_prepared=False
+        self.motion.handoff_at=self.motion.handoff_wall=None
         self.send((0.,0.))
         self.report('failed' if result==MotionResult.FAILURE else 'stop',
                     reason,result,dist,ang)

@@ -92,6 +92,7 @@ class Completion:
 
     def reset(self):
         self.braking=False;self.since=None;self.done=False;self.previous_plane=None;self.passed=False
+        self.outside_since=None
         self.legacy.reset()
 
     def update(self,now,pose,raw,goal,v,w,wheels,fresh,policy,can_brake=True):
@@ -124,7 +125,15 @@ class Completion:
         if max(d,rd)>position+.005 or max(a,ra)>heading+math.radians(1):
             self.braking=False;self.since=None;self.done=False
         stopped=abs(v)<=.01 and abs(w)<=.05 and max(abs(q) for q in wheels)<=.2
-        if self.braking and stopped and fresh:
+        # A persistent residual in the hysteresis band must not latch standstill forever.
+        # Isolated noisy samples reset this timer; only settled, sustained error resumes control.
+        if self.braking and stopped and fresh and not inside:
+            if self.outside_since is None:self.outside_since=now
+            wait=self.legacy.dwell if policy.mode=='STRICT_STOP' else policy.dwell
+            if now-self.outside_since>=max(.2,wait):
+                self.braking=False;self.since=None;self.done=False;self.outside_since=None
+        else:self.outside_since=None
+        if self.braking and stopped and fresh and (policy.mode!='STRICT_STOP' or inside):
             if self.since is None:self.since=now
             dwell=self.legacy.dwell if policy.mode=='STRICT_STOP' else policy.dwell
             self.done=inside and now-self.since>=dwell
@@ -146,6 +155,12 @@ class TrajectoryBuffer:
 
     def offer(self,result,version):
         self.pending=(result,version)
+
+    def retainable(self,now,wall):
+        """Keep an old plan only with a full next-slot lease, including wall-time reserve."""
+        return (self.active is not None and 0<=now-self.origin
+                and now-self.origin+self.dt<self.max_age-1e-8
+                and 0<=wall-self.wall<=self.dt)
 
     def activate(self,now,wall,version,validate):
         pending=self.pending;self.pending=None

@@ -31,7 +31,7 @@ class MatchPreparation(Node):
             self.explicit_start = []
         self.target = start_pose(self.field, self.core.team, self.goal_offset, self.explicit_start)
         self.avoid = {k: bool(p('start_'+k, v).value) for k, v in dict(
-            avoid_walls=True, avoid_opponents=True, avoid_ball=False).items()}
+            avoid_walls=False, avoid_opponents=False, avoid_ball=False).items()}
         self.move_timeout = float(p('move_timeout', 60.).value)
         self.calibration_timeout = float(p('preparation_timeout', 90.).value)
         self.settle_sec = float(p('stop_settle_sec', .3).value)

@@ -105,8 +105,14 @@ def white_samples(image, green):
         if len(pts) < 35:
             raise ValueError("White boundary missing: " + side)
         raw = project(pts, np.linalg.inv(h))
-        _, good = robust_line(raw, threshold=7.)
-        samples.append(good)
+        # Keep curved sections for distortion validation, not just RANSAC inliers.
+        line, _ = robust_line(raw, threshold=7.)
+        near = raw[np.abs(raw @ line[:2] + line[2]) <= 14.]
+        coordinate = near[:,0] if horizontal else near[:,1]
+        full = raw[:,0] if horizontal else raw[:,1]
+        if len(near)<35 or np.ptp(coordinate)<.85*np.ptp(full):
+            raise ValueError("Incomplete white boundary: " + side)
+        samples.append(near)
     return samples
 
 
@@ -119,12 +125,12 @@ def fit_radial(samples, w, h):
         d = np.array([coef[0], coef[1], 0., 0., 0.])
         out = []
         for p in samples:
-            u = cv2.undistortPoints(p.reshape(-1, 1, 2), k, d, P=k).reshape(-1, 2)
+            u = cv2.undistortPoints(p.astype(np.float64).reshape(-1, 1, 2), k, d, P=k).reshape(-1, 2)
             v = u-u.mean(axis=0)
             _, _, axes = np.linalg.svd(v, full_matrices=False)
             out.extend((v @ axes[-1]) / math.sqrt(len(v)))
         return np.r_[out, np.asarray(coef)*2.]
-    result = least_squares(residual, [0., 0.], bounds=([-0.30,-0.30],[0.30,0.30]), loss="linear", max_nfev=60)
+    result = least_squares(residual, [0., 0.], bounds=([-0.30,-0.30],[0.30,0.30]), loss="soft_l1", f_scale=.2, max_nfev=100)
     coef = result.x if result.success and np.linalg.norm(residual(result.x)) < np.linalg.norm(residual([0.,0.])) else [0.,0.]
     return k, np.array([coef[0],coef[1],0.,0.,0.])
 
@@ -146,19 +152,104 @@ def corners_from_samples(samples, k, d):
     return order_quad(points)
 
 
+def boundary_errors(samples,k,d,h,length_px,width_px):
+    """All retained samples, including points excluded by line fitting."""
+    errors=[]
+    for i,p in enumerate(samples):
+        u=cv2.undistortPoints(p.astype(np.float64).reshape(-1,1,2),k,d,P=k)
+        uv=project(u,h)
+        axis=1 if i%2==0 else 0
+        target=(0.,length_px,width_px,0.)[i]
+        errors.append(float(np.percentile(np.abs(uv[:,axis]-target),90)))
+    return errors
+
+
+def select_geometry(samples,w,h,length_px,width_px,camera=None,mode="auto",max_error_px=5.):
+    f=float(max(w,h))
+    nominal=np.array([[f,0,(w-1)/2],[0,f,(h-1)/2],[0,0,1]],float)
+    options=[]
+    if mode in ("auto","none"):
+        options.append(("none",nominal,np.zeros(5)))
+    if mode in ("auto","plumb_line"):
+        k,d=fit_radial(samples,w,h)
+        options.append(("approximate_plumb_line",k,d))
+    if camera is not None and mode in ("auto","camera_info"):
+        options.append(("camera_info",*camera))
+    results=[]
+    for source,k,d in options:
+        try:
+            q=corners_from_samples(samples,k,d)
+            if abs(cv2.contourArea(q)) < .15*w*h:
+                continue
+            dst=np.float32([[0,0],[length_px,0],[length_px,width_px],[0,width_px]])
+            H=cv2.getPerspectiveTransform(q,dst)
+            errors=boundary_errors(samples,k,d,H,length_px,width_px)
+            if not np.isfinite(errors).all():
+                continue
+            # Worst-side error matters: don't improve top/bottom by bending a side.
+            score=max(errors)+.25*np.mean(errors)
+            results.append((score,source,k,d,H,errors))
+        except (ValueError,cv2.error,np.linalg.LinAlgError):
+            continue
+    if not results:
+        raise ValueError("No usable calibration model")
+    results.sort(key=lambda x:x[0])
+    best=results[0]
+    # Prefer factory calibration or no extra distortion if nearly equivalent.
+    for preferred in ("camera_info","none"):
+        candidates=[r for r in results if r[1]==preferred and r[0]<=best[0]+.25 and max(r[5])<=max_error_px]
+        if candidates:
+            best=candidates[0]
+            break
+    if max(best[5])>max_error_px:
+        raise ValueError("White boundary p90 error too high: "+str([(r[1],np.round(r[5],2).tolist()) for r in results]))
+    return best[1:]
+
+
+def verify_rectified_boundary(image,field,max_error_px=5.):
+    """Independent check against actual tape in the output raster."""
+    white=mask_hls(cv2.cvtColor(image,cv2.COLOR_BGR2HLS),(0,115,0),(180,255,75))
+    L,W=field.length/2,field.width/2
+    corners=np.array([field.pixel((-L,W)),field.pixel((L,W)),field.pixel((L,-W)),field.pixel((-L,-W))])
+    errors=[]
+    for i in range(4):
+        a,b=corners[i],corners[(i+1)%4]
+        direction=(b-a)/np.linalg.norm(b-a)
+        normal=np.array([-direction[1],direction[0]])
+        offsets=np.arange(-max(12,int(.045*field.ppm)),max(12,int(.045*field.ppm))+1)
+        values=[]
+        total=0
+        for t in np.linspace(.08,.92,100):
+            if i%2 and .28<t<.74:
+                continue
+            total+=1
+            p=a+t*(b-a)
+            xy=np.rint(p+offsets[:,None]*normal).astype(int)
+            if np.any(xy<0) or np.any(xy[:,0]>=white.shape[1]) or np.any(xy[:,1]>=white.shape[0]):
+                continue
+            hits=np.flatnonzero(white[xy[:,1],xy[:,0]])
+            runs=[r for r in np.split(hits,np.where(np.diff(hits)>1)[0]+1) if 2<=len(r)<=max(8,int(.035*field.ppm))]
+            if runs:
+                run=min(runs,key=lambda r:abs(np.mean(offsets[r])))
+                values.append(abs(float(np.mean(offsets[run]))))
+        if len(values)<.60*total:
+            raise ValueError("Rectified boundary missing on side "+str(i))
+        errors.append(float(np.percentile(values,90)))
+    if max(errors)>max_error_px:
+        raise ValueError("Rectified tape alignment p90: "+str(np.round(errors,2)))
+    return errors
+
+
 class Field:
-    def __init__(self, image, length, width, ppm=550., margin=.15, camera=None):
+    def __init__(self, image, length, width, ppm=550., margin=.15, camera=None, distortion_mode="auto", max_error_px=5.):
         if min(length,width,ppm,margin) <= 0:
             raise ValueError("Measured white-line dimensions and scale required")
         self.length, self.width, self.ppm = length, width, ppm
         h,w = image.shape[:2]
         green = green_quad(image)
         samples = white_samples(image, green)
-        self.k, self.d = camera if camera is not None else fit_radial(samples,w,h)
-        self.source = "camera_info" if camera is not None else "approximate_plumb_line"
-        q = corners_from_samples(samples, self.k, self.d)
-        # First construct a metric map centered on the white rectangle.
-        self.homography = cv2.getPerspectiveTransform(q, np.float32([[0,0],[length*ppm,0],[length*ppm,width*ppm],[0,width*ppm]]))
+        self.source,self.k,self.d,self.homography,self.sample_errors=select_geometry(
+            samples,w,h,length*ppm,width*ppm,camera,distortion_mode,max_error_px)
         # Preserve the physical mat and goals beyond the white lines. Keep a safety margin.
         g = cv2.undistortPoints(green.reshape(-1,1,2),self.k,self.d,P=self.k).reshape(-1,2)
         outer = project(g, self.homography)
@@ -183,6 +274,17 @@ class Field:
         distorted,_ = cv2.projectPoints(rays,np.zeros(3),np.zeros(3),self.k,self.d)
         maps = distorted.reshape(self.size[1],self.size[0],2).astype(np.float32)
         self.map1,self.map2 = cv2.convertMaps(maps[:,:,0],maps[:,:,1],cv2.CV_16SC2)
+        self.boundary_errors=verify_rectified_boundary(self.warp(image),self,max_error_px)
+
+    def rotate_180(self):
+        """Rotate the entire rectified canvas, not merely the display."""
+        w,h=self.size
+        flip=np.array([[-1,0,w-1],[0,-1,h-1],[0,0,1]],float)
+        self.homography=flip @ self.homography
+        self.origin=np.array([w-1,h-1])-self.origin
+        self.roi=cv2.flip(self.roi,-1)
+        self.map1=cv2.flip(self.map1,-1)
+        self.map2=cv2.flip(self.map2,-1)
 
     def warp(self,image):
         return cv2.remap(image,self.map1,self.map2,cv2.INTER_LINEAR)
@@ -211,7 +313,18 @@ def blobs(mask, area_min, area_max, circularity=0.):
     return sorted(result,key=lambda x:x[1],reverse=True)
 
 
-def detect(image, field, ball_radius):
+def black_robot_mask(image, max_channel=65, max_spread=20):
+    """Neutral dark RGB pixels; max/min are invariant to OpenCV's BGR order."""
+    if not 0 <= max_channel <= 255 or not 0 <= max_spread <= 255:
+        raise ValueError('Black body channel/spread thresholds must be in [0, 255]')
+    b, g, r = cv2.split(image)
+    maximum = cv2.max(cv2.max(b, g), r)
+    minimum = cv2.min(cv2.min(b, g), r)
+    return (cv2.inRange(maximum, 0, int(max_channel))
+            & cv2.inRange(cv2.subtract(maximum, minimum), 0, int(max_spread)))
+
+
+def detect(image, field, ball_radius, *, black_max_channel=65, black_max_spread=20):
     hls = cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
     ball = mask_hls(hls,(0,95,145),(10,255,255)) | mask_hls(hls,(170,95,145),(180,255,255))
     # Expand the mat ROI to include the goal mouths.
@@ -219,30 +332,65 @@ def detect(image, field, ball_radius):
     ball &= roi
     expected = np.pi*(ball_radius*field.ppm)**2
     bs = blobs(ball,expected*.20,expected*4.,.45)
-    dark = mask_hls(hls,(0,0,0),(180,62,255)) & field.roi
+    dark = black_robot_mask(image, black_max_channel, black_max_spread) & field.roi
     dark = cv2.morphologyEx(dark,cv2.MORPH_CLOSE,np.ones((7,7),np.uint8))
     rs = blobs(dark,.0025*field.ppm**2,.045*field.ppm**2)
     return bs,rs
 
 
 def goal_intervals(image,field):
-    hls = cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
-    masks = {"yellow":mask_hls(hls,(12,100,105),(40,255,255)),
-             "blue":mask_hls(hls,(98,45,65),(125,210,255))}
-    output = {}
-    for color,mask in masks.items():
-        # The field x axis is image-right; goal colors are expected in their observed end zones.
-        for center,area,(x,y,w,h) in blobs(mask,.003*field.ppm**2,.3*field.ppm**2):
-            pos = field.metric(center)
-            if abs(pos[0]) < field.length*.40 or h < w*1.4:
+    """Measure dominant colored mouth in an exterior strip, not a full bbox."""
+    hls=cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
+    masks={"yellow":mask_hls(hls,(12,100,105),(40,255,255)),
+           "blue":mask_hls(hls,(98,45,65),(125,210,255))}
+    output={}
+    ppm=field.ppm
+    for side in (-1,1):
+        x0=int(field.pixel((side*field.length/2,0))[0])
+        xa,xb=sorted((x0+side*int(.006*ppm),x0+side*int(.125*ppm)))
+        xa,xb=max(0,xa),min(image.shape[1],xb)
+        if xb-xa<5:
+            continue
+        ya=max(0,int(field.pixel((0,field.width*.36))[1]))
+        yb=min(image.shape[0],int(field.pixel((0,-field.width*.36))[1]))
+        candidates=[]
+        for color,mask in masks.items():
+            strip=mask[ya:yb,xa:xb]
+            if strip.size==0:
                 continue
-            ys = [field.metric((x,y))[1],field.metric((x,y+h))[1]]
-            side = -1 if pos[0]<0 else 1
-            if side in output:
+            profile=np.count_nonzero(strip,axis=1).astype(np.float32)
+            profile=cv2.GaussianBlur(profile.reshape(-1,1),(1,5),0).ravel()
+            peak=float(profile.max())
+            if peak<max(4,.15*(xb-xa)):
                 continue
-            output[side] = (color,min(ys),max(ys))
-            break
+            rows=np.flatnonzero(profile>=max(4,.45*peak))
+            for run in np.split(rows,np.where(np.diff(rows)>1)[0]+1):
+                if not .18*ppm<=len(run)<=.55*ppm:
+                    continue
+                lo=field.metric((x0,ya+run[-1]))[1]
+                hi=field.metric((x0,ya+run[0]))[1]
+                score=float(np.sum(profile[run]))
+                candidates.append((score,color,lo,hi))
+        if candidates:
+            _,color,lo,hi=max(candidates)
+            output[side]=(color,float(lo),float(hi))
+    if len(output)==2:
+        a,b=output[-1],output[1]
+        # Both goals have the same nominal construction; reject, don't invent a length.
+        if max(a[2]-a[1],b[2]-b[1])>1.20*min(a[2]-a[1],b[2]-b[1]):
+            raise ValueError("Goal mouth lengths disagree: "+str(output))
     return output
+
+
+def orient_goals(field,image):
+    """Require both different goal colors to establish the global frame."""
+    goals=goal_intervals(field.warp(image),field)
+    if set(goals)!= {-1,1} or {v[0] for v in goals.values()}!={"yellow","blue"}:
+        raise ValueError("Cannot orient field: both opposite goal colors required")
+    if goals[-1][0]=="blue":
+        field.rotate_180()
+        goals={-side:(color,-hi,-lo) for side,(color,lo,hi) in goals.items()}
+    return goals
 
 
 class Track:
@@ -363,3 +511,694 @@ class Rules:
             self.count=0
         self.previous=np.array(p)
         return None
+
+
+def wrap_angle(a):
+    return math.atan2(math.sin(a),math.cos(a))
+
+
+def iou_box(a,b):
+    x,y,w,h=a
+    X,Y,W,H=b
+    inter=max(0.,min(x+w,X+W)-max(x,X))*max(0.,min(y+h,Y+H)-max(y,Y))
+    return inter/max(w*h+W*H-inter,1.e-9)
+
+
+def classify_led_pixels(bgr, blue_led_min_light=125):
+    """Classify ONLY the interior of the already selected LED bar."""
+    pixels=np.asarray(bgr,np.uint8).reshape(-1,3)
+    if len(pixels)<8:
+        return "unknown"
+    # Nearly white clipped cores contain no reliable team-color evidence.
+    # A saturated primary channel alone (e.g. pure blue) is not white clipping.
+    total=len(pixels)
+    clipped=(pixels.max(axis=1)>=245)&(pixels.min(axis=1)>=200)
+    pixels=pixels[~clipped]
+    if len(pixels)<max(8,.35*total):
+        return "unknown"
+    h,l,s=cv2.cvtColor(pixels.reshape(-1,1,3),cv2.COLOR_BGR2HLS).reshape(-1,3).astype(float).T
+    b,g,r=pixels.astype(float).T
+    rg=np.minimum(r,g)
+    yellow=(h>=18)&(h<=38)&(s>=145)&(l>=100)&(rg-b>=55)&(b<=.65*rg)&(np.abs(r-g)<=.35*np.maximum(r,g))
+    blue=(h>=90)&(h<=135)&(s>=125)&(l>=blue_led_min_light)&(b-r>=45)&(b-g>=20)
+    # A small colored rim around a clipped white LED must not assign a team.
+    if np.mean(yellow)>=.75 and np.count_nonzero(yellow)>=.55*total:
+        return "yellow"
+    if np.mean(blue)>=.70 and np.count_nonzero(blue)>=.50*total:
+        return "blue"
+    return "unknown"
+
+
+def led_body_support(body,led,normal,major,short,long,ppm):
+    """Dark chassis occupancy on each side of the transverse LED."""
+    def support(n):
+        points=np.array([led+n*(short/2+d*ppm)+major*t*long
+                         for d in (.006,.012,.018,.025)
+                         for t in (-.35,-.18,0.,.18,.35)])
+        ix,iy=np.rint(points).astype(int).T
+        valid=(ix>=0)&(ix<body.shape[1])&(iy>=0)&(iy<body.shape[0])
+        return float(np.count_nonzero(body[iy[valid],ix[valid]]))/len(points)
+    return support(normal),support(-normal)
+
+
+def body_end_led_candidates(image,raw_mask,body,center,p,axis,aspect,ppm,prior,blue_min,debug):
+    """Sample in chassis coordinates rather than requiring an isolated contour.
+
+    Search both ends of the long axis (also the short axis for near-square
+    silhouettes). A bright transverse strip must have finite endpoints, dark
+    chassis immediately inward, and sufficient evidence on the current image.
+    The prior only proposes search directions, never creates measurements.
+    """
+    # A silhouette's major axis may be transverse even when elongated.
+    perpendicular=np.array([-axis[1],axis[0]])
+    axes=[axis,-axis,perpendicular,-perpendicular]
+    if prior is not None:
+        a=prior.heading
+        axes.append(np.array([math.cos(a),-math.sin(a)]))
+    candidates=[]
+    bright=raw_mask.astype(np.float32)/255.
+    dark=body.astype(np.float32)/255.
+    def sample(src,normal,tangent,depth,lateral):
+        xx=center[0]+normal[0]*depth+tangent[0]*lateral
+        yy=center[1]+normal[1]*depth+tangent[1]*lateral
+        return cv2.remap(src,xx.astype(np.float32),yy.astype(np.float32),cv2.INTER_LINEAR,
+                         borderMode=cv2.BORDER_CONSTANT,borderValue=0)
+    for base in axes:
+        for offset in (-12.,0.,12.):
+            a=math.atan2(base[1],base[0])+math.radians(offset)
+            normal=np.array([math.cos(a),math.sin(a)])
+            tangent=np.array([-normal[1],normal[0]])
+            axial=(p-center)@normal
+            lateral=(p-center)@tangent
+            rear=float(np.percentile(axial,2))
+            half=float((np.percentile(lateral,98)-np.percentile(lateral,2))/2)
+            if not .025*ppm<half<.15*ppm:
+                continue
+            # Body-relative patch, extending beyond the expected bar ends.
+            xs=np.arange(math.floor(-half-.035*ppm),math.ceil(half+.035*ppm)+1,dtype=float)
+            ys=np.arange(math.floor(rear-.028*ppm),math.ceil(rear+.022*ppm)+1,dtype=float)
+            X,Y=np.meshgrid(xs,ys)
+            patch=sample(bright,normal,tangent,Y,X)
+            inner=abs(xs)<=.68*half
+            if inner.sum()<5:
+                continue
+            profile=np.mean(patch[:,inner],axis=1)
+            rows=np.flatnonzero(profile>=.60)
+            runs=[r for r in np.split(rows,np.where(np.diff(rows)>1)[0]+1) if len(r)]
+            for run in runs:
+                if not max(2,.004*ppm)<=len(run)<=.038*ppm:
+                    debug["end_thickness"]=debug.get("end_thickness",0)+1
+                    continue
+                # Detect the real lateral extent on the selected strip.
+                coverage=np.mean(patch[run],axis=0)
+                cols=np.flatnonzero(coverage>=.55)
+                segments=[r for r in np.split(cols,np.where(np.diff(cols)>1)[0]+1) if len(r)]
+                segments=[r for r in segments if abs(float(np.mean(xs[r])))<.026*ppm]
+                if not segments:
+                    debug["end_span"]=debug.get("end_span",0)+1
+                    continue
+                seg=max(segments,key=len)
+                long=len(seg); short=len(run)
+                if not .028*ppm<=long<=min(.135*ppm,1.85*half) or long/short<1.7:
+                    debug["end_span"]=debug.get("end_span",0)+1
+                    continue
+                # A tape crossing the patch usually continues past the body
+                # on both ends; an actual LED has two finite endpoints.
+                if seg[0]<=1 or seg[-1]>=len(xs)-2:
+                    debug["end_tape"]=debug.get("end_tape",0)+1
+                    continue
+                d=float(np.mean(ys[run])); l=float(np.mean(xs[seg]))
+                if abs(d-rear)>.024*ppm:
+                    debug["end_offset"]=debug.get("end_offset",0)+1
+                    continue
+                probe_x,probe_y=np.meshgrid(xs[seg],np.arange(ys[run[-1]]+2,ys[run[-1]]+max(4,int(.020*ppm))))
+                inward=float(np.mean(sample(dark,normal,tangent,probe_y,probe_x)))
+                if inward<.28:
+                    debug["end_body"]=debug.get("end_body",0)+1
+                    continue
+                occupancy=float(np.mean(patch[np.ix_(run,seg)]))
+                if occupancy<.62:
+                    debug["end_fill"]=debug.get("end_fill",0)+1
+                    continue
+                led=center+d*normal+l*tangent
+                # Reject unrelated line fragments that extend on both sides in
+                # the original ROI, not merely inside the clipped patch.
+                ext=[]
+                for sign in (-1,1):
+                    test=led+sign*tangent*(long/2+np.array([.006,.014,.024])*ppm)[:,None]
+                    xy=np.rint(test).astype(int)
+                    valid=(xy[:,0]>=0)&(xy[:,0]<raw_mask.shape[1])&(xy[:,1]>=0)&(xy[:,1]<raw_mask.shape[0])
+                    ext.append(bool(valid.all() and np.mean(raw_mask[xy[:,1],xy[:,0]]>0)>.65))
+                if all(ext):
+                    debug["end_tape"]=debug.get("end_tape",0)+1
+                    continue
+                corners=np.array([led+u*normal*short*.35+v*tangent*long*.35
+                                  for u,v in ((-1,-1),(1,-1),(1,1),(-1,1))])
+                region=np.zeros(raw_mask.shape,np.uint8)
+                cv2.fillConvexPoly(region,np.rint(corners).astype(np.int32),255)
+                color=classify_led_pixels(image[region>0],blue_min)
+                score=.40*occupancy+.30*min(inward/.65,1.)+.20*min(long/(1.35*half),1.)+.10*(1-min(abs(d-rear)/(.024*ppm),1.))
+                if prior is not None:
+                    angle=math.atan2(-normal[1],normal[0])
+                    score+=.06*max(0.,1-abs(wrap_angle(angle-prior.heading))/math.radians(40))
+                if score>=.68:
+                    candidates.append((min(score,1.),color,normal,led,(short/ppm,long/ppm)))
+                else:
+                    debug["end_score"]=debug.get("end_score",0)+1
+    return candidates
+
+
+def robot_body_observations(image, field, robot_blobs, *,
+                            black_max_channel=65, black_max_spread=20, tracks=(), stamp=None):
+    """Body centroid only. No LED/color/heading detection is executed."""
+    result = []
+    ppm = field.ppm
+    for _, area, (x, y, w, h) in robot_blobs:
+        if not (.045*ppm <= min(w, h) <= .28*ppm and max(w, h) <= .32*ppm):
+            continue
+        pad = max(8, int(.045*ppm))
+        x0, y0 = max(0, x-pad), max(0, y-pad)
+        x1, y1 = min(image.shape[1], x+w+pad), min(image.shape[0], y+h+pad)
+        body = black_robot_mask(image[y0:y1, x0:x1], black_max_channel, black_max_spread)
+        body = cv2.morphologyEx(body, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        cs = contours(body)
+        if not cs:
+            continue
+        c = max(cs, key=cv2.contourArea)
+        if len(c.reshape(-1, 2)) < 4:
+            continue
+        rect = cv2.minAreaRect(c)
+        moments = cv2.moments(c)
+        center = (np.array([moments['m10']/moments['m00'], moments['m01']/moments['m00']])
+                  if moments['m00'] > 0 else np.array(rect[0]))
+        center += np.array([x0, y0])
+        result.append(dict(p=field.metric(center), bbox=np.array([x, y, w, h], float)/ppm,
+            heading=None, team='unknown', quality=0.,
+            length=float(max(rect[1])/ppm), width=float(min(rect[1])/ppm),
+            led_offset=None, led_size=None, led_candidates=0, led_method='disabled',
+            led_rejected={}, contour_candidates=0, led_center_px=None,
+            body_rect_center_px=(np.array(rect[0])+[x0, y0]).tolist(),
+            body_centroid_px=center.tolist()))
+    # Global acquisition keeps its original area limits. Once acquired, a small
+    # surviving body fragment may still measure the same robot inside its ROI.
+    # Never use this fallback to acquire a new robot elsewhere in the field.
+    recent = [tr for tr in tracks if stamp is not None and tr.position is not None
+              and tr.stamp is not None and tr.position_filter is not None
+              and 0 < stamp-tr.stamp < .30]
+    for tr in recent:
+        dt = stamp-tr.stamp
+        velocity = np.asarray(tr.velocity, float)
+        speed = np.linalg.norm(velocity)
+        if speed > .35:
+            velocity = velocity*(.35/speed)  # Association prediction only, not a drive cap.
+        predicted = np.asarray(tr.position)+velocity*dt
+        gate = min(.12, .03+.35*dt)
+        if any(np.linalg.norm(o['p']-predicted) <= gate for o in result):
+            continue
+        center = field.pixel(predicted)
+        half = round((.10+.35*dt)*ppm)
+        x0, y0 = max(0, int(center[0])-half), max(0, int(center[1])-half)
+        x1, y1 = min(image.shape[1], int(center[0])+half), min(image.shape[0], int(center[1])+half)
+        if x1 <= x0 or y1 <= y0:
+            continue
+        body = black_robot_mask(image[y0:y1, x0:x1], black_max_channel, black_max_spread)
+        body = cv2.morphologyEx(body, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        support = np.zeros_like(body)
+        for c in contours(body):
+            moments = cv2.moments(c)
+            if moments['m00'] < max(16., .0002*ppm**2):
+                continue
+            point = field.metric(np.array([moments['m10']/moments['m00'],
+                                            moments['m01']/moments['m00']])+[x0, y0])
+            distance = np.linalg.norm(point-predicted)
+            if distance > .07:
+                continue
+            if any(other is not tr and np.linalg.norm(point-other.position) < distance
+                   for other in recent):
+                continue
+            cv2.drawContours(support, [c], -1, 255, -1)
+        moments = cv2.moments(support, binaryImage=True)
+        if moments['m00'] < .00065*ppm**2:
+            continue
+        center = np.array([moments['m10']/moments['m00'], moments['m01']/moments['m00']])+[x0, y0]
+        point = field.metric(center)
+        if (np.linalg.norm(point-predicted) > gate or
+                any(np.linalg.norm(point-o['p']) < .045 for o in result)):
+            continue
+        x, y, w, h = cv2.boundingRect(support)
+        result.append(dict(p=point, bbox=np.array([x+x0, y+y0, w, h], float)/ppm,
+            heading=None, team='unknown', quality=0., length=tr.length, width=tr.width,
+            led_offset=None, led_size=None, led_candidates=0, led_method='disabled',
+            led_rejected={}, contour_candidates=0, led_center_px=None,
+            body_rect_center_px=center.tolist(), body_centroid_px=center.tolist()))
+    return result
+
+
+def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=(),
+                       *,black_max_channel=65,black_max_spread=20):
+    """Detect the rear transverse LED inside each dark body ROI.
+
+    Detect bar geometry independently of team color, then classify interior.
+    Body support, end geometry and tape continuation checks reject clutter.
+    White/off and ambiguous colors remain UNKNOWN.
+    """
+    hls=cv2.cvtColor(image,cv2.COLOR_BGR2HLS)
+    result=[]
+    ppm=field.ppm
+    for _,area,(x,y,w,h) in robot_blobs:
+        if not (.045*ppm<=min(w,h)<=.28*ppm and max(w,h)<=.32*ppm):
+            continue
+        pad=max(8,int(.045*ppm))
+        x0,y0=max(0,x-pad),max(0,y-pad)
+        x1,y1=min(image.shape[1],x+w+pad),min(image.shape[0],y+h+pad)
+        a=hls[y0:y1,x0:x1]
+        rgb=image[y0:y1,x0:x1]
+        body=black_robot_mask(rgb,black_max_channel,black_max_spread)
+        body=cv2.morphologyEx(body,cv2.MORPH_CLOSE,np.ones((7,7),np.uint8))
+        cs=contours(body)
+        if not cs:
+            continue
+        c=max(cs,key=cv2.contourArea)
+        p=c.reshape(-1,2).astype(float)
+        if len(p)<4:
+            continue
+        rect=cv2.minAreaRect(c)
+        center=np.array(rect[0])
+        # Keep the geometric LED search center unchanged; use a separate,
+        # robust filled-body area centroid for the published position.
+        moments=cv2.moments(c)
+        position_center=np.array([moments["m10"]/moments["m00"],moments["m01"]/moments["m00"]]) if moments["m00"]>0 else center
+        box=cv2.boxPoints(rect)
+        v1,v2=box[1]-box[0],box[2]-box[1]
+        axis=v1 if np.linalg.norm(v1)>=np.linalg.norm(v2) else v2
+        axis=axis/max(np.linalg.norm(axis),1.e-9)
+        aspect=max(rect[1])/max(min(rect[1]),1.e-9)
+        position=field.metric(center+np.array([x0,y0]))
+        nearby_tracks=[tr for tr in tracks if tr.visible and tr.heading is not None and tr.position is not None and np.linalg.norm(tr.position-position)<.08]
+        prior=min(nearby_tracks,key=lambda tr:np.linalg.norm(tr.position-position)) if nearby_tracks else None
+        # Same geometry search for white/off, yellow, and blue.
+        raw_mask=np.where((a[:,:,1]>=105)|((rgb.max(axis=2)>=155)&(a[:,:,1]>=75)),255,0).astype(np.uint8)
+        # Keep only near the detected chassis; this clips unrelated floor lines.
+        chassis=np.zeros(a.shape[:2],np.uint8)
+        cv2.drawContours(chassis,[c],-1,255,-1)
+        radius=max(3,int(.025*ppm))
+        support=cv2.dilate(chassis,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2*radius+1,2*radius+1)))
+        mask=cv2.morphologyEx(raw_mask & support,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
+        candidates=[]
+        rejected={}
+        def reject(reason):
+            rejected[reason]=rejected.get(reason,0)+1
+        # Also search a local window around the last measured LED relative to
+        # the current chassis, so tape joined to the LED in the global mask
+        # cannot remove the short rear bar from the candidate set.
+        candidate_masks=[mask]
+        if prior is not None and prior.led_offset is not None and prior.led_size is not None:
+            angle=prior.heading
+            forward=np.array([math.cos(angle),-math.sin(angle)])
+            across=np.array([-forward[1],forward[0]])
+            off=prior.led_offset
+            predicted=center+ppm*(off[0]*forward+off[1]*across)
+            half_short,half_long=np.asarray(prior.led_size)*ppm/2+np.array([.010,.010])*ppm
+            window=np.array([predicted+u*forward*half_short+v*across*half_long
+                             for u,v in ((-1,-1),(1,-1),(1,1),(-1,1))])
+            local=np.zeros_like(mask)
+            cv2.fillConvexPoly(local,np.rint(window).astype(np.int32),255)
+            candidate_masks.append(mask & local)
+        all_contours=[cc for cm in candidate_masks for cc in contours(cm)]
+        for cc in all_contours:
+            ar=cv2.contourArea(cc)
+            xx,yy,ww,hh=cv2.boundingRect(cc)
+            if xx<=0 or yy<=0 or xx+ww>=a.shape[1] or yy+hh>=a.shape[0]:
+                reject("roi_boundary")
+                continue
+            if not .000055*ppm**2<=ar<=.003*ppm**2:
+                reject("area")
+                continue
+            rr=cv2.minAreaRect(cc)
+            short,long=sorted(rr[1])
+            if not .034*ppm<=long<=.13*ppm or short<.006*ppm or not 2.0<=long/short<=8.0:
+                reject("dimensions")
+                continue
+            fill=ar/max(short*long,1.)
+            if fill<.55:
+                reject("fill")
+                continue
+            bb=cv2.boxPoints(rr)
+            z1,z2=bb[1]-bb[0],bb[2]-bb[1]
+            major=z1 if np.linalg.norm(z1)>=np.linalg.norm(z2) else z2
+            major=major/np.linalg.norm(major)
+            normal=np.array([-major[1],major[0]])
+            led=np.array(rr[0])
+            delta=center-led
+            distance=np.linalg.norm(delta)
+            if not .025*ppm<=distance<=.14*ppm:
+                reject("distance")
+                continue
+            if np.dot(normal,delta)<0:
+                normal=-normal
+            radial=float(normal@delta/distance)
+            inward,outward=led_body_support(body,led,normal,major,short,long,ppm)
+            strong=inward>=.65 and inward-outward>=.35
+            # The observed chassis major axis may be perpendicular to the LED
+            # normal. Override the old hard gate only with asymmetric body evidence.
+            if radial<.40 or ((radial<.78 or (aspect>1.25 and abs(normal@axis)<.72)) and not strong):
+                reject("axis")
+                continue
+            # Check the LED lies near the rear edge of this very body, not a
+            # separate piece of white tape or a nearby goal.
+            extent=(p-center)@normal
+            rear=-float(extent.min())
+            longitudinal=float(normal@delta)
+            lateral=abs(float(major@delta))
+            tol=(.055 if strong else .032)*ppm
+            if abs(longitudinal-rear)>tol or lateral>(.065 if strong else .045)*ppm:
+                reject("end_location")
+                continue
+            # Reject long floor tape running beyond the candidate ends.
+            # A single visible continuation can occur when the robot overlaps a line.
+            continuation=[]
+            for sign in (-1,1):
+                hits=[]
+                for dpx in (.006*ppm,.012*ppm,.020*ppm):
+                    pt=led+sign*major*(long/2+dpx)
+                    ix,iy=np.rint(pt).astype(int)
+                    hits.append(bool(raw_mask[iy,ix]) if 0<=ix<a.shape[1] and 0<=iy<a.shape[0] else True)
+                continuation.append(np.mean(hits)>.65)
+            if all(continuation):
+                reject("tape")
+                continue
+            if inward<.25:
+                reject("body_adjacency")
+                continue
+            score=.30*radial+.24*fill+.22*min(long/(.065*ppm),1.)+.14*(1-min(abs(longitudinal-rear)/tol,1.))+.10*inward
+            # Sample the inner bar, excluding edge reflections and background.
+            roi_mask=np.zeros(a.shape[:2],np.uint8)
+            interior=led+(bb-led)*np.array(0.70)
+            cv2.fillConvexPoly(roi_mask,np.rint(interior).astype(np.int32),255)
+            color=classify_led_pixels(rgb[roi_mask>0],blue_led_min_light)
+            angle=math.atan2(-normal[1],normal[0])
+            if prior is not None:
+                score+=.08*max(0.,1-abs(wrap_angle(angle-prior.heading))/math.radians(40))
+            candidates.append((min(score,1.),color,normal,led,(short/ppm,long/ppm)))
+        def ambiguous(items):
+            if not items:
+                return True
+            best=max(items,key=lambda z:z[0])
+            return best[0]<.62 or any(q>best[0]-.07 and np.dot(best[2],n)<.85 for q,_,n,_,_size in items)
+        method="contour"
+        contour_count=len(candidates)
+        if ambiguous(candidates):
+            fallback=body_end_led_candidates(rgb,raw_mask,body,center,p,axis,aspect,ppm,prior,blue_led_min_light,rejected)
+            if fallback:
+                # Do not combine conflicting modes into a false confident result.
+                candidates=fallback
+                method="body_end"
+        candidates.sort(key=lambda z:z[0],reverse=True)
+        heading=None
+        team="unknown"
+        quality=0.
+        led_offset=None
+        led_size=None
+        length_m=max(rect[1])/ppm
+        width_m=min(rect[1])/ppm
+        if candidates:
+            quality,color,normal,led,led_size=candidates[0]
+            # Do not manufacture a direction if two plausible bars disagree.
+            conflict=any(s>quality-.07 and (np.dot(normal,n)<.85)
+                         for s,col,n,_,_size in candidates[1:])
+            if quality>=.62 and not conflict:
+                heading=math.atan2(-normal[1],normal[0])
+                team=color if color in ("yellow","blue") else "unknown"
+                side=np.array([-normal[1],normal[0]])
+                led_offset=np.array([(led-center)@normal,(led-center)@side])/ppm
+                aa=p@normal
+                bb=p@side
+                lo,hi=np.percentile(aa,[1,99])
+                blo,bhi=np.percentile(bb,[1,99])
+                # Keep body center independent of LED detection success.
+                length_m=(hi-lo)/ppm
+                width_m=(bhi-blo)/ppm
+            else:
+                reject("ambiguous_or_low_score")
+                quality=0.
+        global_center=position_center+np.array([x0,y0])
+        result.append({"p":field.metric(global_center),
+                       "bbox":np.array([x,y,w,h],float)/ppm,
+                       "heading":heading,"team":team,"quality":float(quality),
+                       "length":float(length_m),"width":float(width_m),
+                       "led_offset":led_offset,"led_size":led_size if heading is not None else None,
+                       "led_candidates":len(candidates),"led_method":method if heading is not None else "missing",
+                       "led_rejected":rejected,"contour_candidates":contour_count,
+                       "led_center_px":(led+np.array([x0,y0])).tolist() if heading is not None else None,
+                       "body_rect_center_px":(center+np.array([x0,y0])).tolist(),
+                       "body_centroid_px":global_center.tolist()})
+    return result
+
+
+class ConstantVelocityFilter:
+    """Small linear Kalman filter; independent position/velocity axes."""
+    def __init__(self,z,sigma,accel):
+        z=np.atleast_1d(np.asarray(z,float))
+        self.n=len(z)
+        self.x=np.r_[z,np.zeros(self.n)]
+        self.P=np.diag(np.r_[np.full(self.n,sigma**2),np.full(self.n,1.)])
+        self.sigma=sigma
+        self.accel=accel
+
+    def step(self,z,dt):
+        n=self.n
+        I=np.eye(n)
+        F=np.block([[I,dt*I],[np.zeros((n,n)),I]])
+        G=np.vstack([.5*dt**2*I,dt*I])
+        self.x=F@self.x
+        self.P=F@self.P@F.T+G@G.T*self.accel**2
+        if z is not None:
+            H=np.hstack([I,np.zeros((n,n))])
+            R=I*self.sigma**2
+            S=H@self.P@H.T+R
+            K=np.linalg.solve(S,H@self.P).T
+            self.x+=K@(np.atleast_1d(z)-H@self.x)
+            A=np.eye(2*n)-K@H
+            self.P=A@self.P@A.T+K@R@K.T
+        return self.x[:n].copy(),self.x[n:].copy()
+
+
+class RobotTrack(Track):
+    def __init__(self,ident,position_sigma=.003):
+        super().__init__(ident)
+        if not math.isfinite(position_sigma) or position_sigma <= 0:
+            raise ValueError('Robot position measurement sigma must be positive')
+        self.position_sigma=position_sigma
+        self.team="unknown"
+        self.identity_team="unknown"
+        self.color_candidate="unknown"
+        self.color_count=0
+        self.heading=None
+        self.heading_confidence=0.
+        self.heading_measured=False
+        self.heading_stamp=None
+        self.heading_filter=None
+        self.position_filter=None
+        self.led_offset=None
+        self.led_size=None
+        self.led_candidates=0
+        self.led_method="missing"
+        self.angular_velocity=None
+        self.bbox=None
+        self.length=.16
+        self.width=.12
+        self.pending=None
+        self.pending_count=0
+        self.reacquired=False
+        self.match_confidence=0.
+
+    def observe(self,obs,t,continuous,confidence):
+        dt=t-self.stamp if self.stamp is not None else 0.
+        had_position=self.position is not None
+        continuous=bool(continuous and .001<dt<.30)
+        if not continuous:
+            self.visible=False
+            self.position_filter=None
+            self.heading_filter=None
+            self.heading_stamp=None
+            self.heading=None
+            self.led_offset=None
+            self.led_size=None
+        super().update(obs["p"],t)
+        if self.position_filter is None:
+            self.position_filter=ConstantVelocityFilter(obs["p"],self.position_sigma,2.5)
+            self.velocity_valid=False
+        else:
+            self.position,self.velocity=self.position_filter.step(obs["p"],dt)
+        old_measured=self.heading_measured and continuous
+        self.heading_measured=False
+        self.angular_velocity=None
+        measurement=obs["heading"]
+        # Reject sudden implausible flips during continuous tracking. If the
+        # direction truly changed, the hold expires and a new measurement starts.
+        if measurement is not None and self.heading is not None and continuous:
+            if abs(wrap_angle(measurement-self.heading))>math.radians(65):
+                measurement=None
+        if measurement is not None:
+            if self.heading_filter is None:
+                self.heading_filter=ConstantVelocityFilter([measurement],math.radians(2.5),12.)
+                self.heading=wrap_angle(measurement)
+            else:
+                z=self.heading_filter.x[0]+wrap_angle(measurement-self.heading_filter.x[0])
+                angle,omega=self.heading_filter.step([z],dt)
+                self.heading=wrap_angle(float(angle[0]))
+                if old_measured and self.velocity_valid:
+                    self.angular_velocity=float(omega[0])
+            self.heading_stamp=t
+            self.heading_measured=True
+            self.heading_confidence=obs["quality"]
+            self.led_offset=obs.get("led_offset")
+            self.led_size=obs.get("led_size")
+        elif continuous and self.heading_filter is not None and self.heading_stamp is not None and t-self.heading_stamp<=.25:
+            angle,_=self.heading_filter.step(None,dt)
+            self.heading=wrap_angle(float(angle[0]))
+            self.heading_confidence*=.85
+        else:
+            self.heading=None
+            self.heading_filter=None
+            self.heading_stamp=None
+            self.heading_confidence=0.
+            self.led_offset=None
+            self.led_size=None
+        self.led_candidates=obs.get("led_candidates",0)
+        self.led_method=obs.get("led_method","missing") if self.heading_measured else "missing"
+        observed=obs["team"] if self.heading_measured else "unknown"
+        if observed=="unknown":
+            self.color_candidate="unknown"
+            self.color_count=0
+            self.team="unknown"
+            self.identity_team="unknown"
+        else:
+            self.color_count=self.color_count+1 if observed==self.color_candidate and continuous else 1
+            self.color_candidate=observed
+            self.team=observed if self.color_count>=5 else "unknown"
+            self.identity_team=self.team
+        self.bbox=obs["bbox"]
+        if self.heading_measured or self.heading is None:
+            self.length=obs["length"]
+            self.width=obs["width"]
+        self.reacquired=bool(had_position and not continuous)
+        self.match_confidence=confidence
+        self.pending=None
+        self.pending_count=0
+
+    def miss(self):
+        super().miss()
+        self.heading=None
+        self.heading_measured=False
+        self.heading_stamp=None
+        self.heading_filter=None
+        # Keep the last measured filter state across short gaps. Reacquisition
+        # after a long gap still calls observe(..., continuous=False), resetting it.
+        self.led_offset=None
+        self.led_size=None
+        self.led_method="missing"
+        self.led_candidates=0
+        self.heading_confidence=0.
+        self.angular_velocity=None
+        self.team="unknown"
+        self.color_candidate="unknown"
+        self.color_count=0
+        self.reacquired=False
+        self.match_confidence=0.
+
+
+def associate_robots(tracks,observations,t,gate=.12,reacquire_frames=2):
+    """Predict + IoU + global assignment, then full-frame reacquisition.
+
+    Detector runs globally each frame. Unmatched candidates must persist at a
+    consistent location before reinitializing a lost track. No velocity is
+    computed across a relocation. IDs remain provisional without colored LEDs.
+    """
+    def compatible(tr,o):
+        return True  # color may change; never block position tracking on one LED sample
+    obs=list(observations)
+    known=[tr for tr in tracks if tr.position is not None and tr.stamp is not None
+           and (tr.visible or tr.position_filter is not None) and .001<t-tr.stamp<.3]
+    def cost(tr,o):
+        if not compatible(tr,o):
+            return float("inf")
+        dt=min(t-tr.stamp,.15)
+        delta=tr.velocity*dt if tr.velocity_valid or tr.position_filter is not None else np.zeros(2)
+        if np.linalg.norm(delta) > .35*dt:
+            delta=delta*(.35*dt/np.linalg.norm(delta))
+        distance=np.linalg.norm(o["p"]-(tr.position+delta))
+        if distance>min(gate,.03+.35*dt):
+            return float("inf")
+        pred=tr.bbox.copy()
+        pred[:2]+=delta*np.array([1.,-1.])
+        overlap=iou_box(pred,o["bbox"])
+        mismatch=tr.identity_team!="unknown" and o["team"]!="unknown" and tr.identity_team!=o["team"]
+        value=.72*distance/gate+.28*(1-overlap)+(.10 if mismatch else 0.)
+        return value if value<=.85 else float("inf")
+    best=None
+    for n in range(min(len(known),len(obs)),-1,-1):
+        for subset in itertools.combinations(known,n):
+            for ids in itertools.permutations(range(len(obs)),n):
+                costs=[cost(tr,obs[j]) for tr,j in zip(subset,ids)]
+                if not all(math.isfinite(c) for c in costs):
+                    continue
+                if best is None or sum(costs)<best[0]:
+                    best=(sum(costs),list(zip(subset,ids,costs)))
+        if best is not None:
+            break
+    matched=set()
+    used=set()
+    for tr,j,c in best[1] if best else []:
+        tr.observe(obs[j],t,True,max(0.,1-c))
+        matched.add(tr)
+        used.add(j)
+    lost=[tr for tr in tracks if tr not in matched]
+    free=[j for j in range(len(obs)) if j not in used]
+    for tr in lost:
+        tr.miss()
+    # Match remaining observations to lost IDs by known team, then by
+    # pending candidate proximity. If both IDs are anonymous, identity after
+    # relocation is inherently uncertain, so left-to-right is only a fallback.
+    for tr in sorted(lost,key=lambda z:(z.identity_team=="unknown",z.id)):
+        candidates=[j for j in free if compatible(tr,obs[j])]
+        if tr.position_filter is not None and tr.stamp is not None and 0 < t-tr.stamp < .3:
+            dt=min(t-tr.stamp,.15)
+            delta=np.asarray(tr.velocity)*dt
+            if np.linalg.norm(delta) > .35*dt:
+                delta=delta*(.35*dt/np.linalg.norm(delta))
+            predicted=np.asarray(tr.position)+delta
+            candidates=[j for j in candidates
+                        if np.linalg.norm(obs[j]['p']-predicted) <= min(gate,.03+.35*dt)]
+        if not candidates:
+            tr.pending=None
+            tr.pending_count=0
+            continue
+        def rank(j):
+            o=obs[j]
+            team_penalty=0 if tr.identity_team!="unknown" and o["team"]==tr.identity_team else 1
+            distance=np.linalg.norm(o["p"]-tr.pending["p"]) if tr.pending is not None else (np.linalg.norm(o["p"]-tr.position) if tr.position is not None else o["p"][0])
+            return team_penalty,distance
+        j=min(candidates,key=rank)
+        free.remove(j)
+        o=obs[j]
+        consistent=(tr.pending is not None and
+                    np.linalg.norm(o["p"]-tr.pending["p"])<=gate and
+                    (tr.pending["team"]=="unknown" or o["team"]=="unknown" or tr.pending["team"]==o["team"]))
+        tr.pending_count=tr.pending_count+1 if consistent else 1
+        tr.pending=o
+        if tr.pending_count>=max(1,reacquire_frames):
+            tr.observe(o,t,False,.5)
+
+
+def trapezoid_points(track,field):
+    """Short edge faces the measured heading; no direction arrow needed."""
+    theta=track.heading
+    e=np.array([math.cos(theta),math.sin(theta)])
+    n=np.array([-e[1],e[0]])
+    c=track.position
+    half=max(.025,track.length/2)+.005
+    rear=max(.025,track.width/2)+.005
+    front=.66*rear
+    return np.array([field.pixel(c+half*e-front*n),field.pixel(c+half*e+front*n),
+                     field.pixel(c-half*e+rear*n),field.pixel(c-half*e-rear*n)],np.int32)

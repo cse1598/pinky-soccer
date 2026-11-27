@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ROS 2 Jazzy overhead referee. Does not command robots or publish map TF."""
+"""ROS 2 Jazzy overhead referee with optional preparation-service UI controls."""
 import math
 import time
 import cv2
@@ -12,7 +12,13 @@ from std_srvs.srv import Trigger
 from cv_bridge import CvBridge
 from pinky_soccer_referee.msg import TrackedObject, RefereeState, RefereeEvent
 from pinky_soccer_referee.srv import GetState
-from referee_core import Field, Track, Rules, detect, goal_intervals, associate
+from referee_recorder import DebugRecorder
+from referee_controls import MatchControls
+from referee_core import (Field, Track, RobotTrack, Rules, detect, orient_goals,
+                          associate, robot_body_observations, associate_robots)
+
+
+ROBOT_DISPLAY_DIAMETER_M = .10
 
 
 class Referee(Node):
@@ -22,7 +28,7 @@ class Referee(Node):
             "image_topic": "/camera/camera/color/image_raw",
             "camera_info_topic": "/camera/camera/color/camera_info",
             "video_path": "", "show_ui": False, "publish_image": True,
-            "field_length_m": 0., "field_width_m": 0.,
+            "field_length_m": 1.670, "field_width_m": 1.070,
             "pixels_per_meter": 550., "margin_m": .15,
             "ball_radius_m": .02135, "warmup_frames": 30,
             "require_camera_info": False, "allow_approximate_rules": False,
@@ -30,23 +36,43 @@ class Referee(Node):
             "blue_goal_y_min": 0., "blue_goal_y_max": 0.,
             "yellow_goal_side": -1, "blue_goal_side": 1,
             "frame_timeout_s": .5,
+            "robot_match_gate_m": .12, "robot_reacquire_frames": 2,
+            "blue_led_min_light": 125, "velocity_arrow_min_mps": .035,
+            "distortion_mode": "auto", "calibration_frames": 9,
+            "calibration_max_error_px": 5.0, "debug_ui": False,
+            "debug_log": False, "record_video": False,
+            "debug_dir": "~/pinky_referee_logs", "record_fps": 30.0,
+            "match_controls": False, "robot_namespaces": "",
+            "robot_black_max_channel": 65, "robot_black_max_spread": 20,
+            "robot_position_sigma_m": .008,
         }
         for k,v in defaults.items():
             self.declare_parameter(k,v)
         self.params = {k:self.get_parameter(k).value for k in defaults}
         p=self.params
+        if not (0 <= p['robot_black_max_channel'] <= 255
+                and 0 <= p['robot_black_max_spread'] <= 255):
+            raise ValueError('Black body channel/spread thresholds must be in [0, 255]')
+        self.controls = MatchControls(self, p['robot_namespaces']) if p['match_controls'] else None
+        self.ui_frame = None
+        self.ui_window = False
         if min(p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["ball_radius_m"],p["margin_m"],p["frame_timeout_s"]) <= 0:
             raise ValueError("Set positive measured white-line field_length_m and field_width_m; see README")
-        if p["yellow_goal_side"] not in (-1,1) or p["blue_goal_side"] != -p["yellow_goal_side"]:
-            raise ValueError("Goal sides must be opposite and each +/-1")
+        if p["yellow_goal_side"] != -1 or p["blue_goal_side"] != 1:
+            raise ValueError("Canonical coordinates require yellow=-1, blue=+1")
+        if p["robot_match_gate_m"]<=0 or p["robot_reacquire_frames"]<1 or not 0<=p["blue_led_min_light"]<=255 or p["velocity_arrow_min_mps"]<0:
+            raise ValueError("Invalid robot tracking/LED parameters")
+        if p['distortion_mode'] not in ('auto','camera_info','plumb_line','none') or not 3<=p['calibration_frames']<=30 or p['calibration_max_error_px']<=0:
+            raise ValueError('Invalid calibration settings')
         self.bridge=CvBridge()
         self.field=None
         self.camera=None
         self.goals={}
         self.rules=Rules()
         self.ball=Track(0)
-        self.robots=[Track(1),Track(2)]
+        self.robots=[RobotTrack(i,p['robot_position_sigma_m']) for i in (1,2)]
         self.frames=0
+        self.calibration_buffer=[]
         self.last_arrival=None
         self.stale=True
         self.last_stamp=None
@@ -84,7 +110,16 @@ class Referee(Node):
         else:
             self.create_subscription(CameraInfo,p["camera_info_topic"],self.info,qos_profile_sensor_data)
             self.create_subscription(Image,p["image_topic"],self.on_image,qos_profile_sensor_data)
-        self.get_logger().info("Read-only referee ready. No command or TF publisher.")
+        self.recorder=None
+        self.record_index=0
+        if p["debug_log"] or p["record_video"]:
+            if p["record_fps"]<=0:
+                raise ValueError("record_fps must be positive")
+            self.recorder=DebugRecorder(p["debug_dir"],p["debug_log"],p["record_video"],
+                                        self.fps if self.cap is not None else p["record_fps"])
+            self.get_logger().info("Debug recording: "+str(self.recorder.directory))
+        self.get_logger().info("Referee ready. No velocity or TF publisher. Match service controls: "
+                               +str(bool(self.controls)))
 
     def info(self,msg):
         k=np.array(msg.k,dtype=float).reshape(3,3)
@@ -125,9 +160,9 @@ class Referee(Node):
             camera=self.camera[:2]
         if p["require_camera_info"] and camera is None:
             raise ValueError("Matching CameraInfo required")
-        field=Field(image,p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["margin_m"],camera)
-        top=field.warp(image)
-        goals=goal_intervals(top,field)
+        field=Field(image,p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["margin_m"],camera,
+                    p["distortion_mode"],p["calibration_max_error_px"])
+        goals=orient_goals(field,image)
         measured=True
         for color in ("yellow","blue"):
             lo=p[color+"_goal_y_min"]; hi=p[color+"_goal_y_max"]
@@ -141,7 +176,7 @@ class Referee(Node):
         self.goals=goals
         # Approximate measurements are not competition-certified. Explicit opt-in.
         self.rule_enabled=bool((measured and field.source=="camera_info") or p["allow_approximate_rules"])
-        self.get_logger().info("Calibrated: "+field.source+"; goal intervals="+str(goals)+"; rules enabled="+str(self.rule_enabled))
+        self.get_logger().info("Calibrated: "+field.source+"; tape p90 px="+str(np.round(field.boundary_errors,2))+"; goal intervals="+str(goals)+"; rules enabled="+str(self.rule_enabled))
 
     @staticmethod
     def msg(tr):
@@ -149,9 +184,15 @@ class Referee(Node):
         m.id=tr.id
         m.visible=tr.visible
         m.velocity_valid=tr.velocity_valid
-        m.heading_valid=False
-        m.heading=float("nan")
-        m.angular_velocity=float("nan")
+        m.heading_valid=bool(tr.visible and getattr(tr,"heading_measured",False))
+        m.heading=float(tr.heading) if m.heading_valid else float("nan")
+        m.angular_velocity_valid=bool(m.heading_valid and getattr(tr,"angular_velocity",None) is not None)
+        m.angular_velocity=float(tr.angular_velocity) if m.angular_velocity_valid else float("nan")
+        m.team=getattr(tr,"team","unknown") if tr.visible else "unknown"
+        m.team_valid=bool(tr.visible and m.team in ("yellow","blue"))
+        m.heading_confidence=float(getattr(tr,"heading_confidence",0.)) if m.heading_valid else 0.
+        m.tracking_confidence=float(getattr(tr,"match_confidence",0.)) if tr.visible else 0.
+        m.reacquired=bool(tr.visible and getattr(tr,"reacquired",False))
         m.position.x,m.position.y=(map(float,tr.position) if tr.visible and tr.position is not None else (float("nan"),float("nan")))
         m.position.z=0.
         m.velocity.x,m.velocity.y=(map(float,tr.velocity) if tr.velocity_valid else (float("nan"),float("nan")))
@@ -181,7 +222,46 @@ class Referee(Node):
         for pub,msg in zip(self.robot_pubs,s.robots):
             pub.publish(msg)
 
+    @staticmethod
+    def track_record(tr):
+        visible=tr.visible
+        p=tr.position if visible else None
+        v=tr.velocity if visible and tr.velocity_valid else None
+        return {"id":tr.id,"visible":visible,"x":p[0] if p is not None else None,
+                "y":p[1] if p is not None else None,"vx":v[0] if v is not None else None,
+                "vy":v[1] if v is not None else None,"velocity_valid":tr.velocity_valid,
+                "heading":getattr(tr,"heading",None) if visible else None,
+                "heading_measured":getattr(tr,"heading_measured",False),
+                "angular_velocity":getattr(tr,"angular_velocity",None),
+                "team":getattr(tr,"team","unknown"),
+                "heading_confidence":getattr(tr,"heading_confidence",0.),
+                "tracking_confidence":getattr(tr,"match_confidence",0.),
+                "led_method":getattr(tr,"led_method",""),
+                "led_candidates":getattr(tr,"led_candidates",0),
+                "reacquired":getattr(tr,"reacquired",False)}
+
     def process(self,image,stamp,t):
+        if self.recorder is None:
+            return self._process(image,stamp,t)
+        start=time.perf_counter()
+        self.record_index+=1
+        record={"frame":self.record_index,"t":float(t),
+                "stamp":{"sec":stamp.sec,"nanosec":stamp.nanosec},
+                "stage":"WAIT_FOR_CALIBRATION","timings":{},"events":[]}
+        images={"raw":image} if self.recorder.record_video else {}
+        try:
+            self._process(image,stamp,t,record,images)
+        except Exception as exc:
+            record["error"]=str(exc)
+            record["stage"]="ERROR"
+            raise
+        finally:
+            record["timings"]["total_ms"]=(time.perf_counter()-start)*1000
+            self.recorder.submit(record,images)
+            if self.recorder.error:
+                self.get_logger().warning("Debug recorder: "+self.recorder.error,throttle_duration_sec=5.)
+
+    def _process(self,image,stamp,t,record=None,images=None):
         self.last_arrival=time.monotonic()
         self.stale=False
         if self.last_stamp is not None and t<=self.last_stamp:
@@ -198,19 +278,62 @@ class Referee(Node):
         if self.field is None:
             if self.frames < self.params["warmup_frames"]:
                 return
-            if self.frames % 10 != 0:
+            if self.frames % 3 != 0:
                 return
+            if self.calibration_buffer and self.calibration_buffer[0].shape!=image.shape:
+                self.calibration_buffer.clear()
+            self.calibration_buffer.append(image.copy())
+            if len(self.calibration_buffer)<self.params["calibration_frames"]:
+                return
+            # Median of spatially aligned fixed-camera frames suppresses moving
+            # robots and exposure fluctuations during static map initialization.
+            calibration_image=np.median(np.stack(self.calibration_buffer),axis=0).astype(np.uint8)
+            self.calibration_buffer.clear()
             try:
-                self.calibrate(image)
+                self.calibrate(calibration_image)
+                if record is not None:
+                    record["calibration"]={"source":self.field.source,"K":self.field.k,
+                        "D":self.field.d,"homography":self.field.homography,
+                        "origin":self.field.origin,"size":self.field.size,
+                        "length":self.field.length,"width":self.field.width,
+                        "pixels_per_meter":self.field.ppm,"boundary_errors":self.field.boundary_errors,
+                        "goals":self.goals}
             except Exception as exc:
+                if record is not None:
+                    record["stage"]="CALIBRATION_RETRY"
+                    record["error"]=str(exc)
                 self.get_logger().warning("Calibration failed: "+str(exc),throttle_duration_sec=2.)
                 self.publish(stamp,"WAIT_FOR_CALIBRATION")
+                if self.params["show_ui"]:
+                    preview=image.copy()
+                    cv2.putText(preview,"CALIBRATION RETRY - see terminal",(12,30),cv2.FONT_HERSHEY_SIMPLEX,.65,(0,230,255),2)
+                    self.show_frame(preview)
                 return
         f=self.field
+        tick=time.perf_counter()
         top=f.warp(image)
-        bs,rs=detect(top,f,self.params["ball_radius_m"])
+        if record is not None:
+            record["stage"]="TRACKING"
+            record["timings"]["remap_ms"]=(time.perf_counter()-tick)*1000
+            if self.recorder.record_video:
+                images["rectified"]=top.copy()
+        tick=time.perf_counter()
+        black_options = dict(black_max_channel=self.params['robot_black_max_channel'],
+                             black_max_spread=self.params['robot_black_max_spread'])
+        bs,rs=detect(top,f,self.params["ball_radius_m"],**black_options)
         associate([self.ball],[f.metric(v[0]) for v in bs[:4]],t,gate=.45)
-        associate(self.robots,[f.metric(v[0]) for v in rs[:5]],t)
+        observations=robot_body_observations(top,f,rs[:5],tracks=self.robots,stamp=t,**black_options)
+        if record is not None:
+            record["timings"]["detect_ms"]=(time.perf_counter()-tick)*1000
+            record["observations"]=observations
+        tick=time.perf_counter()
+        associate_robots(self.robots,observations,t,self.params["robot_match_gate_m"],self.params["robot_reacquire_frames"])
+        if record is not None:
+            record["timings"]["track_ms"]=(time.perf_counter()-tick)*1000
+            record["tracks"]=[self.track_record(tr) for tr in [self.ball]+self.robots]
+            for tr in self.robots:
+                if tr.reacquired:
+                    record["events"].append({"event":"REACQUIRED","goal_color":"","robot_id":tr.id})
         # A gap in observations invalidates the candidate; never infer a goal from disappearance.
         event=self.rules.update(self.ball.position if self.ball.visible else None,f,self.params["ball_radius_m"],self.goals) if self.rule_enabled else None
         if event is not None:
@@ -221,41 +344,95 @@ class Referee(Node):
             msg.event,msg.goal_color=event
             msg.ball_position.x,msg.ball_position.y=map(float,self.ball.position)
             self.event_pub.publish(msg)
+            if record is not None:
+                record["events"].append({"event":event[0],"goal_color":event[1],"robot_id":""})
         self.publish(stamp)
-        if self.params["show_ui"] or (self.params["publish_image"] and self.image_pub.get_subscription_count()>0):
+        if self.params["show_ui"] or (self.params["publish_image"] and self.image_pub.get_subscription_count()>0) or (record is not None and self.recorder.record_video):
+            tick=time.perf_counter()
             self.draw(top,stamp)
+            if record is not None:
+                record["timings"]["draw_ms"]=(time.perf_counter()-tick)*1000
+                if self.recorder.record_video:
+                    images["overlay"]=top
 
     def draw(self,top,stamp):
         f=self.field
         l,w=f.length/2,f.width/2
-        cv2.rectangle(top,tuple(f.pixel((-l,w))),tuple(f.pixel((l,-w))),(255,255,0),2)
-        cv2.drawMarker(top,tuple(f.pixel((0.,0.))),(255,255,255),cv2.MARKER_CROSS,14,2)
-        for side,(color,lo,hi) in self.goals.items():
-            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),
-                     (0,230,255) if color=="yellow" else (255,110,0),5)
+        cv2.rectangle(top,tuple(f.pixel((-l,w))),tuple(f.pixel((l,-w))),(255,255,0),2,cv2.LINE_AA)
+        origin=f.pixel((0.,0.))
+        cv2.drawMarker(top,tuple(origin),(255,255,255),cv2.MARKER_CROSS,16,2,cv2.LINE_AA)
+        cv2.putText(top,"(0, 0)",tuple(origin+np.array([9,17])),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
+        for side,(goal_color,lo,hi) in self.goals.items():
+            # Match each goal-line segment to its goal color.
+            label_color=(0,230,255) if goal_color=="yellow" else (255,140,0)
+            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),label_color,4,cv2.LINE_AA)
+            label_pos=f.pixel((side*l,(lo+hi)/2))
+            offset=np.array([8,-12]) if side<0 else np.array([-90,-12])
+            cv2.putText(top,goal_color.upper()+" GOAL",tuple(label_pos+offset),cv2.FONT_HERSHEY_SIMPLEX,.45,label_color,1,cv2.LINE_AA)
         for tr in [self.ball]+self.robots:
             if not tr.visible:
                 continue
             center=f.pixel(tr.position)
-            color=(0,130,255) if tr.id==0 else (0,255,70)
-            cv2.circle(top,tuple(center),7,color,2)
+            if tr.id==0:
+                color=(0,130,255)
+                cv2.circle(top,tuple(center),max(3,round(self.params["ball_radius_m"]*f.ppm)),color,2,cv2.LINE_AA)
+                label="Ball"
+            else:
+                color=(0,255,70)
+                radius=max(1,round(.5*ROBOT_DISPLAY_DIAMETER_M*f.ppm))
+                cv2.circle(top,tuple(center),radius,color,2,cv2.LINE_AA)
+                label="Pinky %d"%tr.id
+            if tr.id==0:
+                cv2.drawMarker(top,tuple(center),color,cv2.MARKER_CROSS,10,2,cv2.LINE_AA)
+            else:
+                cv2.circle(top,tuple(center),3,color,-1,cv2.LINE_AA)
+            speed=float(np.linalg.norm(tr.velocity)) if tr.velocity_valid else 0.
+            if tr.velocity_valid and speed>self.params["velocity_arrow_min_mps"]:
+                cv2.arrowedLine(top,tuple(center),tuple(f.pixel(tr.position+.30*tr.velocity)),color,2,cv2.LINE_AA,tipLength=.23)
+            label+=" %.3f,%.3f m"%tuple(tr.position)
             if tr.velocity_valid:
-                cv2.arrowedLine(top,tuple(center),tuple(f.pixel(tr.position+.30*tr.velocity)),color,2)
-            label=("Ball" if tr.id==0 else "Track "+str(tr.id))+" %.3f,%.3f m"%tuple(tr.position)
-            if tr.velocity_valid:
-                label+=" %.2f m/s"%np.linalg.norm(tr.velocity)
-            cv2.putText(top,label,tuple(center+np.array([9,-9])),cv2.FONT_HERSHEY_SIMPLEX,.45,color,1,cv2.LINE_AA)
+                label+=" %.2f m/s"%speed
+            (tw,th),_=cv2.getTextSize(label,cv2.FONT_HERSHEY_SIMPLEX,.43,1)
+            text_pos=(int(np.clip(center[0]+9,2,max(2,top.shape[1]-tw-3))),int(np.clip(center[1]-max(22,int(.09*f.ppm)),th+3,top.shape[0]-3)))
+            cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,(15,15,15),3,cv2.LINE_AA)
+            cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,color,1,cv2.LINE_AA)
         cv2.putText(top,self.last_state.status+" | goals entered Y:%d B:%d"%(self.rules.scores["yellow"],self.rules.scores["blue"]),(12,24),cv2.FONT_HERSHEY_SIMPLEX,.60,(255,255,255),2)
+        if self.params["debug_ui"]:
+            debug="CAL %s | tape p90 %s px"%(f.source,"/".join("%.1f"%x for x in f.boundary_errors))
+            cv2.putText(top,debug,(12,45),cv2.FONT_HERSHEY_SIMPLEX,.48,(255,255,255),1,cv2.LINE_AA)
+            for i,tr in enumerate(self.robots):
+                debug="R%d position/velocity track=%.2f"%(tr.id,tr.match_confidence)
+                cv2.putText(top,debug,(12,65+20*i),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
         if self.params["publish_image"]:
             msg=self.bridge.cv2_to_imgmsg(top,encoding="bgr8")
             msg.header.stamp=stamp
             msg.header.frame_id="referee_field"
             self.image_pub.publish(msg)
         if self.params["show_ui"]:
-            cv2.imshow("Pinky referee | metric top view",top)
-            cv2.waitKey(1)
+            self.show_frame(top)
+
+    def show_frame(self, frame=None):
+        if not self.params['show_ui']:
+            return
+        if frame is not None:
+            self.ui_frame = frame.copy()
+        image = self.ui_frame if self.ui_frame is not None else np.zeros((480, 960, 3), np.uint8)
+        if self.controls:
+            image = self.controls.render(image)
+        title = 'Pinky referee | metric top view'
+        if not self.ui_window:
+            cv2.namedWindow(title, cv2.WINDOW_AUTOSIZE)
+            if self.controls:
+                cv2.setMouseCallback(title, self.controls.mouse)
+            self.ui_window = True
+        cv2.imshow(title, image)
+        key = cv2.waitKey(1) & 255
+        if self.controls:
+            self.controls.key(key)
 
     def watchdog(self):
+        # Controls remain available before calibration and when overhead frames stop.
+        self.show_frame()
         if self.last_arrival is None or self.stale:
             return
         if time.monotonic()-self.last_arrival>self.params["frame_timeout_s"]:
@@ -272,9 +449,10 @@ class Referee(Node):
         self.field=None
         self.goals={}
         self.frames=0
+        self.calibration_buffer=[]
         self.rule_enabled=False
         self.ball=Track(0)
-        self.robots=[Track(1),Track(2)]
+        self.robots=[RobotTrack(i,self.params['robot_position_sigma_m']) for i in (1,2)]
         self.rules.reset()
 
     def get_state(self,req,res):
@@ -310,6 +488,9 @@ class Referee(Node):
         return res
 
     def close(self):
+        if self.recorder is not None:
+            result=self.recorder.close()
+            self.get_logger().info("Debug recording finished: "+str(self.recorder.directory)+" "+str(result))
         if self.cap is not None:
             self.cap.release()
         if self.params["show_ui"]:

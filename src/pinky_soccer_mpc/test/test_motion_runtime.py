@@ -124,3 +124,36 @@ def test_pose_recovery_drops_pre_correction_scan_cache():
     motion.on_world(world(1.,.04),.04)
     motion.scan=object();motion.on_world(world(1.,.06),.06)
     assert motion.filter.valid and motion.scan is None and motion.pending_scan is None
+
+
+def test_stale_feedback_stop_discards_completion_dwell_and_prepared_transfer():
+    from pinky_soccer_mpc.mpc_controller import MpcController
+    motion=runtime();policy=CompletionPolicy(mode='STRICT_STOP')
+    motion.completion.update(0,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)
+    motion.pending_target=(.2,0,0);motion.successor_prepared=True;motion.handoff_at=.1
+    sent=[];n=NS(motion=motion,send=lambda u:sent.append(u),report=lambda *a,**k:None)
+    MpcController.stop(n,'stale wheel feedback')
+    assert sent==[(0.,0.)] and motion.completion.since is None
+    assert motion.pending_target is None and not motion.successor_prepared and motion.handoff_at is None
+    assert not motion.completion.update(.5,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)['done']
+    assert motion.completion.update(.81,(0,0,0),(0,0,0),(0,0,0),0,0,(0,0),True,policy)['done']
+
+
+@pytest.mark.parametrize('inside',[True,False])
+def test_approach_reversals_do_not_fail_a_braking_completion(inside):
+    motion=runtime();n=motion.node
+    n.pose=(.005,0.,.01) if inside else (.03,0.,.1)
+    n.omega=(0.,0.);n.ref=(0.,0.);n.last_cmd=(0.,0.)
+    n.adapter=NS(to_twist=lambda *u:(0.,0.))
+    motion.raw=n.pose;motion.policy=CompletionPolicy(mode='STRICT_STOP')
+    motion.monitor=NS(rollout=lambda *args:(np.array([[0.]*7]),None))
+    motion.pending_target=None;motion.error=None
+    motion.guard.best=0.;motion.guard.improved=0.
+    motion.guard.reversals.extend([.1,.2,.3,.4])
+    out=motion.arrival(1.5,(0.,0.,0.),0.,0.,True)
+    assert out['brake']==inside
+    assert motion.oscillating is not inside
+    if inside:
+        assert motion.error is None and not motion.guard.reversals
+    else:
+        assert motion.error is None  # Report reversals; do not preempt the original stall guard.

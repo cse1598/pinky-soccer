@@ -452,6 +452,8 @@ class RectangleLocalization(Node):
         return response
 
     def tick(self):
+        # Display-only output can be toggled live without restarting localization.
+        self.debug = bool(self.get_parameter('debug_enabled').value)
         now = time.monotonic()
         links = dict(imu=now-self.imu_received < .5,
                      lidar_outer_walls=now-self.fit_received < .5,

@@ -17,7 +17,7 @@ class PreparationView(Node):
         self.status = {}
         self.received = -float('inf')
         self.message = ''
-        self.clients = {k: self.create_client(Trigger, 'preparation/'+k)
+        self.action_clients = {k: self.create_client(Trigger, 'preparation/'+k)
                         for k in ('prepare', 'start', 'stop', 'retry')}
         self.team_client = self.create_client(SetBool, 'preparation/set_team')
         self.create_subscription(String, 'preparation/status', self.receive,
@@ -31,7 +31,7 @@ class PreparationView(Node):
             pass
 
     def call(self, action, team=None):
-        client = self.team_client if team else self.clients[action]
+        client = self.team_client if team else self.action_clients[action]
         if not client.service_is_ready():
             self.message = '상태 관리자 연결 대기'
             return

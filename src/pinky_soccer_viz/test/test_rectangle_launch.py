@@ -56,3 +56,20 @@ def test_direct_real_default_and_simulator_default():
     assert dict(main.setup(ctx)[0].launch_arguments)['localization'] == 'rectangle'
     assert context(module('real_game.launch.py')).launch_configurations['localization'] == 'rectangle'
     assert context(module('sim_field.launch.py')).launch_configurations['localization'] == 'rectangle'
+
+
+def test_real_mpc_defaults_to_internal_limits_and_accepts_explicit_zero():
+    main=module('game.launch.py');ctx=context(main)
+    for value in ('auto','0'):
+        ctx.launch_configurations.update(mode='real',max_lin=value,max_ang=value)
+        args=dict(main.setup(ctx)[0].launch_arguments)
+        assert float(args['max_lin'])==float(args['max_ang'])==0.
+    direct=module('real_game.launch.py');ctx=context(direct)
+    assert ctx.launch_configurations['max_lin']==ctx.launch_configurations['max_ang']=='0'
+    direct.setup(ctx)  # Direct launch also accepts zero, rather than rejecting it.
+
+
+def test_overhead_referee_can_disable_legacy_real_referee():
+    main=module('game.launch.py');ctx=context(main)
+    ctx.launch_configurations.update(mode='real',referee='false')
+    assert dict(main.setup(ctx)[0].launch_arguments)['referee']=='false'

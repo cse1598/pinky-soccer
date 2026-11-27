@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>pinky_soccer_referee</name>
-  <version>0.1.0</version>
+  <version>0.2.5</version>
   <description>Independent overhead-camera referee and ground-truth measurement prototype.</description>
   <maintainer email="102153140+cse1598@users.noreply.github.com">cse</maintainer>
   <license>Apache-2.0</license>
@@ -13,6 +13,10 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- realsense2_camera is optional, required only for mode:=realsense. -->
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-numpy</exec_depend>

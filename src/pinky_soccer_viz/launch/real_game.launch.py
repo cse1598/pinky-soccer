@@ -39,8 +39,9 @@ def setup(context):
     name = multi_robot.check_name(arg('robot_name'))
     max_lin, max_ang = number('max_lin'), number('max_ang')
     hfov = number('approximate_hfov_deg')
-    if not (0 < max_lin <= 0.30 and 0 < max_ang <= 6.0):
-        raise ValueError('Require 0 < max_lin <= 0.30 m/s and 0 < max_ang <= 6 rad/s')
+    if not (0 <= max_lin <= 0.30 and 0 <= max_ang <= 6.0):
+        raise ValueError('Require 0 <= max_lin <= 0.30 m/s and 0 <= max_ang <= 6 rad/s; '
+                         '0 uses MPC internal limits only')
     if not 1 < hfov < 179:
         raise ValueError('approximate_hfov_deg must be between 1 and 179')
     default = multi_robot.kickoff_pose(color, False)
@@ -123,8 +124,8 @@ def generate_launch_description():
                               'opponent goal)'),
         DeclareLaunchArgument('initial_y', default_value='auto'),
         DeclareLaunchArgument('initial_yaw', default_value='auto'),
-        DeclareLaunchArgument('max_lin', default_value='0.08'),
-        DeclareLaunchArgument('max_ang', default_value='0.5'),
+        DeclareLaunchArgument('max_lin', default_value='0'),
+        DeclareLaunchArgument('max_ang', default_value='0'),
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('localization', default_value='rectangle',
                               choices=['rectangle', 'lidar', 'odom_only']),
