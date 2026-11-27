@@ -1,4 +1,4 @@
-# Pinky Soccer Referee (v0.2.0 prototype)
+# Pinky Soccer Referee (v0.2.1 prototype)
 
 상부 RealSense RGB 카메라용 독립 ROS 2 Jazzy 패키지. 기존 로봇의
 제어, world model, BT, MPC, TF, odometry를 수정하지 않으며 /cmd_vel을 발행하지 않는다.
@@ -31,7 +31,40 @@ field_length_m, field_width_m은 **흰색 외곽선 중심 간 실측 거리**�
 기존 map TF와 자동 연결하지 않는다. 각 골대의 색은 득점 팀이 아닌 공이 들어간 골대의 색이다.
 ball_radius_m 기본값 0.02135는 기존 프로젝트 README의 42.7 mm 직경에 기반한다.
 
-## 영상 재생으로 먼저 테스트
+## 통합 launch (권장)
+
+RealSense ROS 드라이버는 RealSense 모드에서만 별도로 설치되어 있어야 한다.
+
+    sudo apt install ros-jazzy-realsense2-camera
+
+카메라와 심판 노드를 한 번에 실행 (기존 별도 카메라 노드는 먼저 종료):
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=realsense
+
+실험용 골/아웃 판정까지 활성화:
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=realsense allow_approximate_rules:=true
+
+카메라는 RGB만 활성화한다. 기본 color_profile은 1280x720x30이며 장비에서
+지원되는 프로파일로 변경할 수 있다. camera_namespace와 camera_name은 기본 camera이며
+변경하면 심판 구독 토픽도 자동으로 일치한다. 여러 카메라가 있으면 serial_no로 선택할 수 있다
+(설치된 RealSense wrapper의 serial_no 형식에 맞게 입력). show_ui 기본 true,
+allow_approximate_rules 기본 false. 치수 기본값은 1.670 x 1.070 m이다.
+모든 launch 옵션 확인:
+
+    ros2 launch pinky_soccer_referee referee.launch.py --show-args
+
+MP4 영상만 실행 (카메라 드라이버 불필요):
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=video video_path:=/absolute/path/video.mp4
+
+기존에 실행 중인 카메라 토픽을 사용:
+
+    ros2 launch pinky_soccer_referee referee.launch.py mode:=topic image_topic:=/camera/camera/color/image_raw camera_info_topic:=/camera/camera/color/camera_info
+
+mode:=topic은 카메라를 추가로 실행하지 않는다. 모드별 launch 실물 실행 검증은 아직 필요하다.
+
+## 영상 재생으로 먼저 테스트 (직접 실행)
 
     ros2 run pinky_soccer_referee referee_node --ros-args \
       -p video_path:=/absolute/path/realsense_20261126_224946.mp4 \
@@ -42,9 +75,9 @@ ball_radius_m 기본값 0.02135는 기존 프로젝트 README의 42.7 mm 직경�
 종료 시 watchdog이 객체 상태를 stale로 갱신한다. 실제 검증에는 측정한 치수를 넣어야 한다.
 allow_approximate_rules는 실험용 판정에만 사용한다.
 
-## RealSense 실시간 모드
+## RealSense 실시간 모드 (직접 실행)
 
-RealSense ROS 드라이버를 별도로 실행하고 실제 토픽을 확인한다.
+통합 launch 대신 수동 실행하려면 RealSense ROS 드라이버를 별도로 실행하고 실제 토픽을 확인한다.
 
     ros2 topic list | grep -E 'image_raw|camera_info'
 
