@@ -530,7 +530,7 @@ def classify_led_pixels(bgr, blue_led_min_light=125):
     return "unknown"
 
 
-def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
+def robot_observations(image,field,robot_blobs,blue_led_min_light=125,tracks=()):
     """Detect the rear transverse LED inside each dark body ROI.
 
     Detect bar geometry independently of team color, then classify interior.
@@ -543,7 +543,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
     for _,area,(x,y,w,h) in robot_blobs:
         if not (.045*ppm<=min(w,h)<=.28*ppm and max(w,h)<=.32*ppm):
             continue
-        pad=max(5,int(.024*ppm))
+        pad=max(8,int(.045*ppm))
         x0,y0=max(0,x-pad),max(0,y-pad)
         x1,y1=min(image.shape[1],x+w+pad),min(image.shape[0],y+h+pad)
         a=hls[y0:y1,x0:x1]
@@ -564,6 +564,9 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         axis=v1 if np.linalg.norm(v1)>=np.linalg.norm(v2) else v2
         axis=axis/max(np.linalg.norm(axis),1.e-9)
         aspect=max(rect[1])/max(min(rect[1]),1.e-9)
+        position=field.metric(center+np.array([x0,y0]))
+        nearby_tracks=[tr for tr in tracks if tr.visible and tr.heading is not None and tr.position is not None and np.linalg.norm(tr.position-position)<.08]
+        prior=min(nearby_tracks,key=lambda tr:np.linalg.norm(tr.position-position)) if nearby_tracks else None
         # Same geometry search for white/off, yellow, and blue.
         raw_mask=np.where((a[:,:,1]>=105)|((rgb.max(axis=2)>=155)&(a[:,:,1]>=75)),255,0).astype(np.uint8)
         # Keep only near the detected chassis; this clips unrelated floor lines.
@@ -573,7 +576,24 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         support=cv2.dilate(chassis,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2*radius+1,2*radius+1)))
         mask=cv2.morphologyEx(raw_mask & support,cv2.MORPH_OPEN,np.ones((3,3),np.uint8))
         candidates=[]
-        for cc in contours(mask):
+        # Also search a local window around the last measured LED relative to
+        # the current chassis, so tape joined to the LED in the global mask
+        # cannot remove the short rear bar from the candidate set.
+        candidate_masks=[mask]
+        if prior is not None and prior.led_offset is not None and prior.led_size is not None:
+            angle=prior.heading
+            forward=np.array([math.cos(angle),-math.sin(angle)])
+            across=np.array([-forward[1],forward[0]])
+            off=prior.led_offset
+            predicted=center+ppm*(off[0]*forward+off[1]*across)
+            half_short,half_long=np.asarray(prior.led_size)*ppm/2+np.array([.010,.010])*ppm
+            window=np.array([predicted+u*forward*half_short+v*across*half_long
+                             for u,v in ((-1,-1),(1,-1),(1,1),(-1,1))])
+            local=np.zeros_like(mask)
+            cv2.fillConvexPoly(local,np.rint(window).astype(np.int32),255)
+            candidate_masks.append(mask & local)
+        all_contours=[cc for cm in candidate_masks for cc in contours(cm)]
+        for cc in all_contours:
             ar=cv2.contourArea(cc)
             xx,yy,ww,hh=cv2.boundingRect(cc)
             if xx<=0 or yy<=0 or xx+ww>=a.shape[1] or yy+hh>=a.shape[0]:
@@ -585,7 +605,7 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
             if not .034*ppm<=long<=.13*ppm or short<.006*ppm or not 2.0<=long/short<=8.0:
                 continue
             fill=ar/max(short*long,1.)
-            if fill<.67:
+            if fill<.55:
                 continue
             bb=cv2.boxPoints(rr)
             z1,z2=bb[1]-bb[0],bb[2]-bb[1]
@@ -638,22 +658,28 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
             interior=led+(bb-led)*np.array(0.70)
             cv2.fillConvexPoly(roi_mask,np.rint(interior).astype(np.int32),255)
             color=classify_led_pixels(rgb[roi_mask>0],blue_led_min_light)
-            candidates.append((score,color,normal,led))
+            angle=math.atan2(-normal[1],normal[0])
+            if prior is not None:
+                score+=.08*max(0.,1-abs(wrap_angle(angle-prior.heading))/math.radians(40))
+            candidates.append((min(score,1.),color,normal,led,(short/ppm,long/ppm)))
         candidates.sort(key=lambda z:z[0],reverse=True)
         heading=None
         team="unknown"
         quality=0.
+        led_offset=None
+        led_size=None
         length_m=max(rect[1])/ppm
         width_m=min(rect[1])/ppm
         if candidates:
-            quality,color,normal,led=candidates[0]
+            quality,color,normal,led,led_size=candidates[0]
             # Do not manufacture a direction if two plausible bars disagree.
             conflict=any(s>quality-.07 and (np.dot(normal,n)<.85)
-                         for s,col,n,_ in candidates[1:])
-            if quality>=.67 and not conflict:
+                         for s,col,n,_,_size in candidates[1:])
+            if quality>=.62 and not conflict:
                 heading=math.atan2(-normal[1],normal[0])
                 team=color if color in ("yellow","blue") else "unknown"
                 side=np.array([-normal[1],normal[0]])
+                led_offset=np.array([(led-center)@normal,(led-center)@side])/ppm
                 aa=p@normal
                 bb=p@side
                 lo,hi=np.percentile(aa,[1,99])
@@ -667,8 +693,38 @@ def robot_observations(image,field,robot_blobs,blue_led_min_light=125):
         result.append({"p":field.metric(global_center),
                        "bbox":np.array([x,y,w,h],float)/ppm,
                        "heading":heading,"team":team,"quality":float(quality),
-                       "length":float(length_m),"width":float(width_m)})
+                       "length":float(length_m),"width":float(width_m),
+                       "led_offset":led_offset,"led_size":led_size if heading is not None else None,
+                       "led_candidates":len(candidates)})
     return result
+
+
+class ConstantVelocityFilter:
+    """Small linear Kalman filter; independent position/velocity axes."""
+    def __init__(self,z,sigma,accel):
+        z=np.atleast_1d(np.asarray(z,float))
+        self.n=len(z)
+        self.x=np.r_[z,np.zeros(self.n)]
+        self.P=np.diag(np.r_[np.full(self.n,sigma**2),np.full(self.n,1.)])
+        self.sigma=sigma
+        self.accel=accel
+
+    def step(self,z,dt):
+        n=self.n
+        I=np.eye(n)
+        F=np.block([[I,dt*I],[np.zeros((n,n)),I]])
+        G=np.vstack([.5*dt**2*I,dt*I])
+        self.x=F@self.x
+        self.P=F@self.P@F.T+G@G.T*self.accel**2
+        if z is not None:
+            H=np.hstack([I,np.zeros((n,n))])
+            R=I*self.sigma**2
+            S=H@self.P@H.T+R
+            K=np.linalg.solve(S,H@self.P).T
+            self.x+=K@(np.atleast_1d(z)-H@self.x)
+            A=np.eye(2*n)-K@H
+            self.P=A@self.P@A.T+K@R@K.T
+        return self.x[:n].copy(),self.x[n:].copy()
 
 
 class RobotTrack(Track):
@@ -680,6 +736,13 @@ class RobotTrack(Track):
         self.color_count=0
         self.heading=None
         self.heading_confidence=0.
+        self.heading_measured=False
+        self.heading_stamp=None
+        self.heading_filter=None
+        self.position_filter=None
+        self.led_offset=None
+        self.led_size=None
+        self.led_candidates=0
         self.angular_velocity=None
         self.bbox=None
         self.length=.16
@@ -690,17 +753,60 @@ class RobotTrack(Track):
         self.match_confidence=0.
 
     def observe(self,obs,t,continuous,confidence):
-        old_heading=self.heading
         dt=t-self.stamp if self.stamp is not None else 0.
         had_position=self.position is not None
+        continuous=bool(continuous and .001<dt<.30)
         if not continuous:
             self.visible=False
+            self.position_filter=None
+            self.heading_filter=None
+            self.heading_stamp=None
+            self.heading=None
+            self.led_offset=None
+            self.led_size=None
         super().update(obs["p"],t)
-        self.heading=obs["heading"]
-        self.heading_confidence=obs["quality"] if self.heading is not None else 0.
-        self.angular_velocity=(wrap_angle(self.heading-old_heading)/dt
-            if continuous and self.velocity_valid and self.heading is not None and old_heading is not None and .001<dt<.30 else None)
-        observed=obs["team"]
+        if self.position_filter is None:
+            self.position_filter=ConstantVelocityFilter(obs["p"],.003,2.5)
+            self.velocity_valid=False
+        else:
+            self.position,self.velocity=self.position_filter.step(obs["p"],dt)
+        old_measured=self.heading_measured and continuous
+        self.heading_measured=False
+        self.angular_velocity=None
+        measurement=obs["heading"]
+        # Reject sudden implausible flips during continuous tracking. If the
+        # direction truly changed, the hold expires and a new measurement starts.
+        if measurement is not None and self.heading is not None and continuous:
+            if abs(wrap_angle(measurement-self.heading))>math.radians(65):
+                measurement=None
+        if measurement is not None:
+            if self.heading_filter is None:
+                self.heading_filter=ConstantVelocityFilter([measurement],math.radians(2.5),12.)
+                self.heading=wrap_angle(measurement)
+            else:
+                z=self.heading_filter.x[0]+wrap_angle(measurement-self.heading_filter.x[0])
+                angle,omega=self.heading_filter.step([z],dt)
+                self.heading=wrap_angle(float(angle[0]))
+                if old_measured and self.velocity_valid:
+                    self.angular_velocity=float(omega[0])
+            self.heading_stamp=t
+            self.heading_measured=True
+            self.heading_confidence=obs["quality"]
+            self.led_offset=obs.get("led_offset")
+            self.led_size=obs.get("led_size")
+        elif continuous and self.heading_filter is not None and self.heading_stamp is not None and t-self.heading_stamp<=.25:
+            angle,_=self.heading_filter.step(None,dt)
+            self.heading=wrap_angle(float(angle[0]))
+            self.heading_confidence*=.85
+        else:
+            self.heading=None
+            self.heading_filter=None
+            self.heading_stamp=None
+            self.heading_confidence=0.
+            self.led_offset=None
+            self.led_size=None
+        self.led_candidates=obs.get("led_candidates",0)
+        observed=obs["team"] if self.heading_measured else "unknown"
         if observed=="unknown":
             self.color_candidate="unknown"
             self.color_count=0
@@ -712,8 +818,9 @@ class RobotTrack(Track):
             self.team=observed if self.color_count>=5 else "unknown"
             self.identity_team=self.team
         self.bbox=obs["bbox"]
-        self.length=obs["length"]
-        self.width=obs["width"]
+        if self.heading_measured or self.heading is None:
+            self.length=obs["length"]
+            self.width=obs["width"]
         self.reacquired=bool(had_position and not continuous)
         self.match_confidence=confidence
         self.pending=None
@@ -722,6 +829,12 @@ class RobotTrack(Track):
     def miss(self):
         super().miss()
         self.heading=None
+        self.heading_measured=False
+        self.heading_stamp=None
+        self.heading_filter=None
+        self.position_filter=None
+        self.led_offset=None
+        self.led_size=None
         self.heading_confidence=0.
         self.angular_velocity=None
         self.team="unknown"
