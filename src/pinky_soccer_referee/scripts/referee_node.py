@@ -12,7 +12,8 @@ from std_srvs.srv import Trigger
 from cv_bridge import CvBridge
 from pinky_soccer_referee.msg import TrackedObject, RefereeState, RefereeEvent
 from pinky_soccer_referee.srv import GetState
-from referee_core import Field, Track, Rules, detect, goal_intervals, associate
+from referee_core import (Field, Track, RobotTrack, Rules, detect, orient_goals,
+                          associate, robot_observations, associate_robots, trapezoid_points)
 
 
 class Referee(Node):
@@ -22,7 +23,7 @@ class Referee(Node):
             "image_topic": "/camera/camera/color/image_raw",
             "camera_info_topic": "/camera/camera/color/camera_info",
             "video_path": "", "show_ui": False, "publish_image": True,
-            "field_length_m": 0., "field_width_m": 0.,
+            "field_length_m": 1.670, "field_width_m": 1.070,
             "pixels_per_meter": 550., "margin_m": .15,
             "ball_radius_m": .02135, "warmup_frames": 30,
             "require_camera_info": False, "allow_approximate_rules": False,
@@ -30,6 +31,8 @@ class Referee(Node):
             "blue_goal_y_min": 0., "blue_goal_y_max": 0.,
             "yellow_goal_side": -1, "blue_goal_side": 1,
             "frame_timeout_s": .5,
+            "robot_match_gate_m": .12, "robot_reacquire_frames": 2,
+            "blue_led_min_light": 125, "velocity_arrow_min_mps": .035,
         }
         for k,v in defaults.items():
             self.declare_parameter(k,v)
@@ -37,15 +40,17 @@ class Referee(Node):
         p=self.params
         if min(p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["ball_radius_m"],p["margin_m"],p["frame_timeout_s"]) <= 0:
             raise ValueError("Set positive measured white-line field_length_m and field_width_m; see README")
-        if p["yellow_goal_side"] not in (-1,1) or p["blue_goal_side"] != -p["yellow_goal_side"]:
-            raise ValueError("Goal sides must be opposite and each +/-1")
+        if p["yellow_goal_side"] != -1 or p["blue_goal_side"] != 1:
+            raise ValueError("Canonical coordinates require yellow=-1, blue=+1")
+        if p["robot_match_gate_m"]<=0 or p["robot_reacquire_frames"]<1 or not 0<=p["blue_led_min_light"]<=255 or p["velocity_arrow_min_mps"]<0:
+            raise ValueError("Invalid robot tracking/LED parameters")
         self.bridge=CvBridge()
         self.field=None
         self.camera=None
         self.goals={}
         self.rules=Rules()
         self.ball=Track(0)
-        self.robots=[Track(1),Track(2)]
+        self.robots=[RobotTrack(1),RobotTrack(2)]
         self.frames=0
         self.last_arrival=None
         self.stale=True
@@ -126,8 +131,7 @@ class Referee(Node):
         if p["require_camera_info"] and camera is None:
             raise ValueError("Matching CameraInfo required")
         field=Field(image,p["field_length_m"],p["field_width_m"],p["pixels_per_meter"],p["margin_m"],camera)
-        top=field.warp(image)
-        goals=goal_intervals(top,field)
+        goals=orient_goals(field,image)
         measured=True
         for color in ("yellow","blue"):
             lo=p[color+"_goal_y_min"]; hi=p[color+"_goal_y_max"]
@@ -149,9 +153,15 @@ class Referee(Node):
         m.id=tr.id
         m.visible=tr.visible
         m.velocity_valid=tr.velocity_valid
-        m.heading_valid=False
-        m.heading=float("nan")
-        m.angular_velocity=float("nan")
+        m.heading_valid=bool(tr.visible and getattr(tr,"heading",None) is not None)
+        m.heading=float(tr.heading) if m.heading_valid else float("nan")
+        m.angular_velocity_valid=bool(m.heading_valid and getattr(tr,"angular_velocity",None) is not None)
+        m.angular_velocity=float(tr.angular_velocity) if m.angular_velocity_valid else float("nan")
+        m.team=getattr(tr,"team","unknown") if tr.visible else "unknown"
+        m.team_valid=bool(tr.visible and m.team in ("yellow","blue"))
+        m.heading_confidence=float(getattr(tr,"heading_confidence",0.)) if m.heading_valid else 0.
+        m.tracking_confidence=float(getattr(tr,"match_confidence",0.)) if tr.visible else 0.
+        m.reacquired=bool(tr.visible and getattr(tr,"reacquired",False))
         m.position.x,m.position.y=(map(float,tr.position) if tr.visible and tr.position is not None else (float("nan"),float("nan")))
         m.position.z=0.
         m.velocity.x,m.velocity.y=(map(float,tr.velocity) if tr.velocity_valid else (float("nan"),float("nan")))
@@ -210,7 +220,8 @@ class Referee(Node):
         top=f.warp(image)
         bs,rs=detect(top,f,self.params["ball_radius_m"])
         associate([self.ball],[f.metric(v[0]) for v in bs[:4]],t,gate=.45)
-        associate(self.robots,[f.metric(v[0]) for v in rs[:5]],t)
+        observations=robot_observations(top,f,rs[:5],self.params["blue_led_min_light"])
+        associate_robots(self.robots,observations,t,self.params["robot_match_gate_m"],self.params["robot_reacquire_frames"])
         # A gap in observations invalidates the candidate; never infer a goal from disappearance.
         event=self.rules.update(self.ball.position if self.ball.visible else None,f,self.params["ball_radius_m"],self.goals) if self.rule_enabled else None
         if event is not None:
@@ -228,23 +239,51 @@ class Referee(Node):
     def draw(self,top,stamp):
         f=self.field
         l,w=f.length/2,f.width/2
-        cv2.rectangle(top,tuple(f.pixel((-l,w))),tuple(f.pixel((l,-w))),(255,255,0),2)
-        cv2.drawMarker(top,tuple(f.pixel((0.,0.))),(255,255,255),cv2.MARKER_CROSS,14,2)
-        for side,(color,lo,hi) in self.goals.items():
-            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),
-                     (0,230,255) if color=="yellow" else (255,110,0),5)
+        cv2.rectangle(top,tuple(f.pixel((-l,w))),tuple(f.pixel((l,-w))),(255,255,0),2,cv2.LINE_AA)
+        origin=f.pixel((0.,0.))
+        cv2.drawMarker(top,tuple(origin),(255,255,255),cv2.MARKER_CROSS,16,2,cv2.LINE_AA)
+        cv2.putText(top,"(0, 0)",tuple(origin+np.array([9,17])),cv2.FONT_HERSHEY_SIMPLEX,.45,(255,255,255),1,cv2.LINE_AA)
+        for side,(goal_color,lo,hi) in self.goals.items():
+            # Both goal-line segments are highlighted yellow; the goal label
+            # and actual RGB goal retain their respective team colors.
+            cv2.line(top,tuple(f.pixel((side*l,lo))),tuple(f.pixel((side*l,hi))),(0,230,255),4,cv2.LINE_AA)
+            label_pos=f.pixel((side*l,(lo+hi)/2))
+            label_color=(0,230,255) if goal_color=="yellow" else (255,140,0)
+            offset=np.array([8,-12]) if side<0 else np.array([-90,-12])
+            cv2.putText(top,goal_color.upper()+" GOAL",tuple(label_pos+offset),cv2.FONT_HERSHEY_SIMPLEX,.45,label_color,1,cv2.LINE_AA)
         for tr in [self.ball]+self.robots:
             if not tr.visible:
                 continue
             center=f.pixel(tr.position)
-            color=(0,130,255) if tr.id==0 else (0,255,70)
-            cv2.circle(top,tuple(center),7,color,2)
+            if tr.id==0:
+                color=(0,130,255)
+                cv2.circle(top,tuple(center),max(3,round(self.params["ball_radius_m"]*f.ppm)),color,2,cv2.LINE_AA)
+                label="Ball"
+            else:
+                color={"yellow":(0,230,255),"blue":(255,140,0),"unknown":(0,255,70)}[tr.team]
+                if tr.heading is not None:
+                    cv2.polylines(top,[trapezoid_points(tr,f)],True,color,2,cv2.LINE_AA)
+                elif tr.bbox is not None:
+                    x,y,bw,bh=np.rint(tr.bbox*f.ppm).astype(int)
+                    cv2.rectangle(top,(x,y),(x+bw,y+bh),color,1,cv2.LINE_AA)
+                label="Pinky %d | %s"%(tr.id,tr.team.upper())
+                if tr.heading is not None:
+                    label+=" %.1f deg"%math.degrees(tr.heading)
+                else:
+                    label+=" | yaw ?"
+                if tr.reacquired:
+                    label+=" | REACQUIRED"
+            cv2.drawMarker(top,tuple(center),color,cv2.MARKER_CROSS,10,2,cv2.LINE_AA)
+            speed=float(np.linalg.norm(tr.velocity)) if tr.velocity_valid else 0.
+            if tr.velocity_valid and speed>self.params["velocity_arrow_min_mps"]:
+                cv2.arrowedLine(top,tuple(center),tuple(f.pixel(tr.position+.30*tr.velocity)),color,2,cv2.LINE_AA,tipLength=.23)
+            label+=" %.3f,%.3f m"%tuple(tr.position)
             if tr.velocity_valid:
-                cv2.arrowedLine(top,tuple(center),tuple(f.pixel(tr.position+.30*tr.velocity)),color,2)
-            label=("Ball" if tr.id==0 else "Track "+str(tr.id))+" %.3f,%.3f m"%tuple(tr.position)
-            if tr.velocity_valid:
-                label+=" %.2f m/s"%np.linalg.norm(tr.velocity)
-            cv2.putText(top,label,tuple(center+np.array([9,-9])),cv2.FONT_HERSHEY_SIMPLEX,.45,color,1,cv2.LINE_AA)
+                label+=" %.2f m/s"%speed
+            (tw,th),_=cv2.getTextSize(label,cv2.FONT_HERSHEY_SIMPLEX,.43,1)
+            text_pos=(int(np.clip(center[0]+9,2,max(2,top.shape[1]-tw-3))),int(np.clip(center[1]-max(22,int(.09*f.ppm)),th+3,top.shape[0]-3)))
+            cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,(15,15,15),3,cv2.LINE_AA)
+            cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,color,1,cv2.LINE_AA)
         cv2.putText(top,self.last_state.status+" | goals entered Y:%d B:%d"%(self.rules.scores["yellow"],self.rules.scores["blue"]),(12,24),cv2.FONT_HERSHEY_SIMPLEX,.60,(255,255,255),2)
         if self.params["publish_image"]:
             msg=self.bridge.cv2_to_imgmsg(top,encoding="bgr8")
@@ -274,7 +313,7 @@ class Referee(Node):
         self.frames=0
         self.rule_enabled=False
         self.ball=Track(0)
-        self.robots=[Track(1),Track(2)]
+        self.robots=[RobotTrack(1),RobotTrack(2)]
         self.rules.reset()
 
     def get_state(self,req,res):
