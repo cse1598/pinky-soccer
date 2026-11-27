@@ -1,5 +1,47 @@
 # Pinky Pro NMPC — Phase 1
 
+## PART B 공통 제어 정책 적용 (2026-11-27)
+
+현재 통합 MuJoCo/실물 GoToPose는 공통 추정 연속성·완료 정책·검증된 active/pending 입력 전환과
+raw LiDAR 제동 monitor를 사용합니다. Gazebo는 기존 동작을 유지합니다. 실물 주행은 미검증입니다.
+기본 `STRICT_STOP`은 기존2 cm/3°·정지0.3 s 기준을 유지하면서 목표 영역 내 정지 예측을 확인해 제동합니다.
+BT `completion_mode=LEGACY`로 기존 경로를 비교하고, PRACTICAL_STOP/PASS_THROUGH/HANDOFF를
+행동별로 선택할 수 있습니다. 인계는 다음 궤적의 실제 준비·검증과 다음 목표 일치를 요구합니다.
+재사용 가능한 정책·파라미터·실행 예시는 [PART B 구현 기록](../../docs/CONTROL_PART_B.md)을 참고하세요.
+단독 `mpc_controller`의 `motion_management` 기본값은 false이며 통합 `robot_stack`에서 활성화합니다.
+MPC 비용·물리 모델·한계·주기·watchdog는 변경하지 않았습니다.
+
+## 현재 제어 개선 작업 (2026-11-27)
+
+최신 코드 구조·기준선·MuJoCo 반복 시험은 [Phase 0/1 보고서](../../docs/CONTROL_PHASE0_PHASE1.md)를 따릅니다.
+아래 절에는 과거 구현 이력이 함께 남아 있습니다. 현재 기본 GoToPose는 9상태 ramp 기반 acados이며,
+일반 행동의 PoseMpc/SLSQP와 구분합니다. 가중치·주기·안전·완료 조건은 이번 단계에서 바꾸지 않았습니다.
+
+`ros2 param set /mpc_controller timing_trace true`로 기존 `/mpc/status` JSON에
+goal별 slot/missed 계수, 예정/실제 activation 시각, 취소된 worker의 실행·대기·pickup 시간을 추가합니다.
+기본은 false이며 진단 출력만 선택합니다. 카운터는 최신 수신 시점까지의 값이고 최근 job/slot만 유지합니다.
+기존 sticky flag 메시지 수를 slot 수로 세지 않습니다. Gazebo 업데이트 및 실물 검증은 보류 상태입니다.
+
+## 실물 모터 시정수 적용 (2026-11-26)
+
+`target:=real`의 `identification` 빈 값/`auto`는 이 프로젝트의 `pinky-pro` 실측 스냅샷
+`config/real_motor_response.yaml`을 적용합니다. 좌 τ=0.0903191863 s, 우 τ=0.0889452365 s입니다.
+기존 ramp 74.9 rad/s²를 고정해 맞춘 **유효 시정수**이며 독립적인 모터 고유 시정수나 통신 지연은 아닙니다.
+실물 48회 중 사전에 분리한 37회로 적합·11회로 검증했습니다. 검증 속도 RMSE는
+0.25170→0.13674 rad/s, 실물 폐루프 GoToPose 개선 여부는 재주행으로 확인해야 합니다.
+가속도까지 함께 맞춘 값은 반복 편차가 커 적용하지 않았습니다.
+
+시뮬레이션의 빈 값/`auto`는 기존 파라미터를 그대로 유지합니다. `identification:=none`으로
+실물도 원래 τ=0.05 s로 복원하고, 명시 파일은 새 `mpc_motor_response_schema: 1`만 받습니다.
+다른 로봇은 해당 로봇의 보정 파일을 지정하거나 `none`을 사용하세요. 이 실측은 모든 Pinky의 공통 상수가 아닙니다.
+속도/가속도 명령 한계·가중치·안전 정지·주기·지연 보상은 변경하지 않습니다.
+시정수는 worker·scalar replay·symbolic/acados·observer에 같은 `params`로 전달되고 솔버 캐시는 새 해시를 사용합니다.
+기동 로그와 `/mpc/status.motor_response`의 SHA256/좌우 τ로 적용 여부를 확인할 수 있습니다.
+기존 실행 중 노드는 재시작해야 하며, 빌드/분석 도구만 실행해 로봇을 주행시키지는 않습니다.
+측정 근거와 적용/복원 명령은 [실물 응답 보정 기록](../../docs/GOTOPOSE_MOTOR_RESPONSE.md)을 참고하세요.
+
+아래는 단계별 개발 이력입니다. 현재 실물 시정수 적용 정책은 위 설명을 따릅니다.
+
 Only GoToPose is under active skill verification. The BT submits a BehaviorGoal
 with a unique goal_id and waits for the matching MotionResult. The controller
 owns arrival, failure and cancellation. No separate P alignment or BT pose
@@ -211,3 +253,5 @@ Keep the real robot in off mode until validated at low speeds.
 OPENBLAS_NUM_THREADS=1 python -m pytest -v -s src/pinky_soccer_mpc/test/test_delay_observer.py src/pinky_soccer_mpc/test/test_damping.py src/pinky_soccer_mpc/test/test_scheduled_input.py src/pinky_soccer_mpc/test/test_acados_time_optimal.py
 OPENBLAS_NUM_THREADS=1 ros2 launch pinky_soccer_viz game.launch.py mode:=mujoco controller:=mpc mpc_backend:=acados mpc_damping_scale:=0.0 mpc_observer_mode:=ndob verify:=true
 ```
+
+상대 표시용 단일 추적과 일반 장애물은 분리합니다. 공통 World Model의 `world_model/obstacles`(기존 WorldModel 타입)가 최근 수신되면 미확정 전체 LiDAR 군집을 기존 회피 snapshot에 전달하며, 기존 producer에서는 `world_model` 입력을 유지합니다. 이번 연결로 solver·안전 반경·비용·제약·주기는 바뀌지 않습니다. [상대 추적 및 검증](../../docs/OPPONENT_TRACKING.md).

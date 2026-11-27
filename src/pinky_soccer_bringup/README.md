@@ -275,3 +275,5 @@ CycloneDDS의 [정적 peer 발견 설정](https://cyclonedds.io/docs/cyclonedds/
 TF를 `/yellow/tf`·`/yellow/tf_static`으로 분리합니다(프레임 이름은 그대로). 두 대의 토픽이 겹치지 않습니다.
 PC 경기 launch에도 같은 이름을 줍니다(`game.launch.py robot_name:=yellow team:=Y`). 공식 드라이버들은 상대
 토픽 이름을 써서 함께 옮겨집니다. 비우면 예전과 같습니다.
+
+통합 경기 준비 실행에서는 robot.launch가 자체 `ensure_led` 래퍼로 기존 set_led/set_lamp를 재사용하거나 공식 pinky_led 서버를 시작합니다. 새 bringup 전달/빌드가 필요하며 PC에서는 하드웨어 LED 서버를 실행하지 않습니다. [전체 실행·미검증 사항](../../docs/MATCH_PREPARATION.md).

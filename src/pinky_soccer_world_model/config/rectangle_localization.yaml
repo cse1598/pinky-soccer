@@ -1,0 +1,29 @@
+/**/rectangle_localization:
+  ros__parameters:
+    # Common real/simulation algorithm. +X blue, -X yellow; explicit Trigger start.
+    fit_rate_hz: 10.0
+    fit_tolerance_m: 0.025
+    fit_minimum_per_wall: 12
+    fit_max_residual_m: 0.018
+    coast_timeout_s: 0.8
+    reinitialize_timeout_s: 3.0
+    calibration_turn_rate: 0.3
+    calibration_timeout: 60.0
+    goal_angle_tolerance_rad: 0.035
+    goal_settle_s: 0.5
+    goal_view_timeout_s: 2.5
+    imu_jump_limit_rad: 0.25
+    imu_jump_confirmations: 3
+    tracking.max_position_innovation_m: 0.12
+    tracking.max_yaw_innovation_rad: 0.25
+    tracking.imu_match_limit_rad: 0.5
+    tracking.imu_drift_gain: 0.02
+    debug_enabled: false
+    hls.yellow_low: [24, 85, 180]
+    hls.yellow_high: [35, 180, 255]
+    hls.blue_low: [96, 30, 135]
+    hls.blue_high: [115, 130, 255]
+    hls.minimum_pixels: 500
+    hls.area_ratio: 3.0
+    hls.confirmations: 3
+    hls.crop_top: 130

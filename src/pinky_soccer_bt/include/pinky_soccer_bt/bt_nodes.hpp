@@ -17,6 +17,7 @@
 #include <pinky_soccer_msgs/msg/tracked_object.hpp>
 #include <pinky_soccer_msgs/msg/world_model.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include "pinky_soccer_bt/soccer_logic.hpp"
 
@@ -82,6 +83,8 @@ public:
                       const BT::RosNodeParams& params);
   static BT::PortsList providedPorts();
   bool setMessage(BehaviorGoal& msg) override;
+private:
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr policy_pub_;
 };
 
 // ---- conditions ------------------------------------------------------------------
@@ -260,6 +263,7 @@ private:
   bool avoid_walls_{false};
   bool avoid_opponents_{false};
   bool avoid_ball_{false};
+  std::string completion_mode_;
   std::chrono::steady_clock::time_point started_{};
 };
 

@@ -1,0 +1,133 @@
+mpc_motor_response_schema: 1
+target: real
+environment: real
+robot_id: pinky-pro
+approved_for_mpc: true
+authorization: 2026-11-26 user requested measured motor time constants in actual MPC
+model: fixed_ramp_first_order_no_delay
+units:
+  tau_left: s
+  tau_right: s
+  fixed_profile_accel: rad/s^2
+fixed_profile_accel: 74.9
+parameters:
+  tau_left: 0.09031918634164283
+  tau_right: 0.08894523651011192
+parameter_status:
+  tau_left: estimated
+  tau_right: estimated
+interpretation: Effective time constants with the existing 74.9 rad/s^2 ramp fixed;
+  not isolated motor lag or a transport-delay estimate.
+calibration_project: ros_20261123_195718_b5b380
+project_revision: 428
+timeline: robot_clock
+input: motor diagnostics serial-write completion
+feedback: motor diagnostics read midpoint, Present Velocity
+identification_experiments:
+- 9c5103eddfe9405eaa0e8079a21209aa
+- 0ee845e6008643a691e5be1fb37eb895
+- a6b3d4f0d20344419cf5fd078c2955af
+- 4c6230ee63b44087b5675e2bb6ec68f6
+- 8aa3d13db88a481693e54f952a0e42ee
+- a2c61c058d354670832a56c27a8d2bae
+- a7abab4191ae497e989d05b1d400b23e
+- dc84b2ab5ba3406da23a2cd99a64193c
+- 8696bd50e29a48d99c5e3f44801d98f7
+- 942344e143954347a801470cd3f3ffac
+- 8fc2708079f54978b30680c88789b8ea
+- a979e910661e4293808f3643bfffe9f0
+- 937a3115385d452593f9b6470b89e2b2
+- ad1d1956a03e461da2a697f6cb7d2886
+- ced7edb5b5bb436d888e63052da81619
+- d43d15873894471a84541af608eb43da
+- 7e4716d632d5493299fab755dcb49efb
+- f4e45faf9b2d4653af0fe13b65eaef2d
+- 8ec0d86213044ea1b6fb738ef4448519
+- 8809d5e2a6ef4316a4c74fc9e77308fd
+- 605f19ddeb3a4f33839cf260725495ff
+- a4c8ab0c7eb64f40bbc6523cee7c0420
+- 45ece5b0e79e43b5a66bd07ee71fe6f2
+- 554abf93e2974a7d8da690502a38da67
+- b38d1ea4c1224a5e87a2dd94bf414e30
+- 1db4578af3af44ab8e45fd412906c0ab
+- 169dee6b8fb84828a06d631d77dd87f1
+- db896159547440cea0768d6211c089cf
+- 73d8a514a88a46e48bbb449670536859
+- b589e3b6317741d9be42b6ee312c30b7
+- bd6612aa686d453fbc8eb6afaefc725a
+- 000b0c55f929459ba7ddad79e678dbf2
+- 7fcdd90589a64ce4a2800f7d61f7d7db
+- fc7e4e3e7abb4449a7ff12792b2c9cd5
+- d913e23fe69c4ec7bb7d9c950f5c1c65
+- 6f1ef384d80147e1a791b013b0698eed
+- 8453b87685be4c47a32c4f74c1a78d99
+validation_experiments:
+- cabd56c85aac44e0b07d1b2a86916db9
+- 4fee0f028ab1481489ebc2175dbb8274
+- d32bf39c39cf49d986387794d65b895a
+- b7f56f29ff654f10bd99c5ce581a84d9
+- 5f6476762d574646bc7bf82edaf9940e
+- cf8630c3bcf246d997687ddd9fab8855
+- 496333a22bcf431cb09f80d790ad4ba9
+- 72f0014518b241e28586aa9de687918f
+- 31b48e30397f43009751c340c927ddc9
+- c5d1bdfc2b41469197376271886a0385
+- 5995fa9a56cb4adb80e80a8d1df49fb8
+validation:
+  held_out: true
+  split: Per kind, every fourth active completed experiment reserved before fitting;
+    original purpose labels unchanged
+  rmse_rad_s: 0.13673772694495787
+  baseline_rmse_rad_s: 0.2517027001397467
+  scope: Mean per-wheel velocity RMSE over 11 held-out runs; not online GoToPose performance
+  horizon_wheel_angle_error_rad:
+    0.1s: 0.006039970818655074
+    0.25s: 0.01353924291080568
+    0.5s: 0.025260526044419987
+    1s: 0.050791633435875824
+    2s: 0.10842667597723218
+  baseline_horizon_wheel_angle_error_rad:
+    0.1s: 0.00451993498306686
+    0.25s: 0.010070927021842346
+    0.5s: 0.018200915595838738
+    1s: 0.03616965200808703
+    2s: 0.07592224755230896
+robustness:
+  tau_left:
+    n: 37
+    mean: 0.09643782914339387
+    relative_std: 0.1123758700591249
+    min: 0.08716874974274523
+    max: 0.13481146866165591
+    bootstrap_ci95:
+    - 0.09007992002207306
+    - 0.09296783847868495
+  tau_right:
+    n: 37
+    mean: 0.09315238843301292
+    relative_std: 0.09508076041285159
+    min: 0.08689740584541596
+    max: 0.13120477903175684
+    bootstrap_ci95:
+    - 0.08840578010987984
+    - 0.09028836872693025
+amplitude_split:
+  small:
+    tau_left: 0.09538744780602841
+    tau_right: 0.0941221535170646
+  large:
+    tau_left: 0.08918834302728522
+    tau_right: 0.08806440527603691
+provenance:
+  manifest_sha256: 8e652138a684d158c501a193c18d2ad3593d13a34906da75422a44c22b8bc22e
+  fit_report_sha256: bfa37905d2c182f83754d39f69f31d959c2c586f6e4759b9ece5d421b764b344
+  identification_module_sha256: 50bb94bc8f0d9a6cf3a7e4bdde5f818272bba85a4954a48e020a2a43120ef6b0
+  bootstrap_draws: 10
+  bootstrap_seed: 0
+limitations:
+- No explicit transport delay or deadzone/friction model was fitted.
+- Jointly fitted acceleration and tau were unstable; acceleration is intentionally
+  unchanged.
+- Short-horizon integrated angle errors did not improve; real closed-loop GoToPose
+  must be remeasured.
+- Snapshot is for pinky-pro on the recorded yoga mat, not a universal motor constant.

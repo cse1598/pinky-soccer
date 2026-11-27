@@ -131,3 +131,19 @@ def test_closed_loop_keeps_margin(solvers, walls, kind, start, goal, circle):
     done, worst = closed_loop(p, m, start, goal, snap)
     assert done
     assert worst >= snap.config.margin - 2e-3      # plant replay, 5 sub-samples per step
+
+
+def test_unconfirmed_obstacles_have_independent_input_and_legacy_fallback():
+    from pinky_soccer_mpc.mpc_controller import MpcController
+    import time
+    # Constructor-free input selection: no solver execution or safety parameter changes.
+    node = MpcController.__new__(MpcController)
+    node.world_msg = object()
+    node.obstacle_world = None
+    node.obstacle_world_received = None
+    assert node.avoidance_world() is node.world_msg
+    raw = object()
+    node.on_obstacle_world(raw)
+    assert node.avoidance_world() is raw
+    node.obstacle_world_received = time.monotonic()-1
+    assert node.avoidance_world() is node.world_msg

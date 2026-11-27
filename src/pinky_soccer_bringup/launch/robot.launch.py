@@ -90,6 +90,7 @@ def generate_launch_description():
         DeclareLaunchArgument('screen_tilt_deg', default_value='-25'),
         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/ttyAMA0'),
         DeclareLaunchArgument('bumper_enabled', default_value='true'),
+        DeclareLaunchArgument('led_enabled', default_value='true'),
         DeclareLaunchArgument('bumper_params_file', default_value=PathJoinSubstitution(
             [soccer_description, 'config', 'bumper_v1_params.yaml'])),
         *sensor_arguments(),
@@ -158,6 +159,8 @@ def generate_launch_description():
                  condition=hardware),
             Node(package='pinky_soccer_bringup', executable='time_sync_status',
                  condition=hardware),
+            Node(package='pinky_soccer_bringup', executable='ensure_led',
+                 condition=IfCondition(AndSubstitution(lc('hardware'), lc('led_enabled')))),
             Node(package='pinky_soccer_bringup', executable='latency_echo',
                  condition=hardware),
             # ADC and pinkylib.Battery share I2C 0x08: only one process may select/read channels.

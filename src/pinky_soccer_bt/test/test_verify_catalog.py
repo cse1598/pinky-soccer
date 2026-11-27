@@ -64,7 +64,17 @@ def test_action_ports_and_defaults(models, catalog, tree):
         assert model['kind'] == 'Action'
         settable = {k for k in model['ports'] if k not in WORLD}
         options = {o['name'] for o in item.get('options', [])}
-        assert {p['name'] for p in item['ports']} | options == settable, item['id']
+        controller_ports = item.get('controller_ports', {})
+        assert {p['name'] for p in item['ports']} | options | set(controller_ports) == settable, item['id']
+        for name, default in controller_ports.items():
+            actual = model['ports'][name]
+            if isinstance(default, bool):
+                assert actual == str(default).lower()
+            elif isinstance(default, str):
+                assert actual == default
+            else:
+                # BT's model XML rounds numeric defaults to six decimal places.
+                assert float(actual) == pytest.approx(default, abs=5e-7)
         for option in item.get('options', []):
             assert option['default'] is False, (item['id'], option['name'])
             assert model['ports'][option['name']] in ('false', None), option['name']

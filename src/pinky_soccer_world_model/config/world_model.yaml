@@ -24,3 +24,17 @@ world_model_node:
     opponents.min_points: 3
     opponents.max_size: 0.30        # [m]
     opponents.hold_sec: 1.0         # [s] keep as ESTIMATED after the last scan hit
+    # Single opponent only. Legacy unconfirmed clusters still feed MPC separately.
+    opponents.min_size: 0.015       # [m] measured span, not robot diameter
+    opponents.self_radius: 0.08     # [m] sensor-near self returns; validate mounting
+    opponents.max_beam_gap: 3       # at most two missing/removed beams
+    opponents.max_adaptive_gap: 0.09
+    opponents.confirm_hits: 3
+    opponents.confirm_window: 5
+    opponents.alpha: 0.6
+    opponents.beta: 0.06
+    opponents.tf_wait_sec: 0.3      # nonblocking queue, measurement-time TF only
+    opponents.max_speed: 0.6        # [m/s] association bound, not MPC speed constraint
+    opponents.association_slack: 0.08
+    opponents.velocity_deadband: 0.015
+    opponents.observed_sec: 0.3

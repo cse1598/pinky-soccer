@@ -62,8 +62,9 @@ BALL_SDF = """<?xml version="1.0"?>
       <visual name="visual">
         <geometry><sphere><radius>{radius}</radius></sphere></geometry>
         <material>
-          <!-- Photo-based vivid orange approximation; fluorescence is not simulated. -->
-          <ambient>1 0.30 0 1</ambient><diffuse>1 0.30 0 1</diffuse>
+          <!-- User-measured onboard-camera RGB (230, 57, 4); no fluorescence. -->
+          <ambient>0.9019607843 0.2235294118 0.01568627451 1</ambient>
+          <diffuse>0.9019607843 0.2235294118 0.01568627451 1</diffuse>
           <specular>0.5 0.5 0.5 1</specular><shininess>64</shininess>
         </material>
       </visual>
@@ -142,6 +143,14 @@ def setup_robot(context):
     for ns, model, pose, sensors in robots(context):
         urdf = robot_xml(context, sensors)
         directory = Path(tempfile.mkdtemp(prefix='pinky-material-robot-'))
+        # Replace the official hard-coded green breathing visual plugin, not its driver.
+        import xml.etree.ElementTree as ET
+        visual_tree = ET.fromstring(urdf)
+        for parent in visual_tree.iter():
+            for child in list(parent):
+                if child.tag == 'plugin' and child.get('name') == 'pinky_gz_sim::LampControlPlugin':
+                    parent.remove(child)
+        urdf = ET.tostring(visual_tree, encoding='unicode')
         path = directory/'robot.urdf'
         path.write_text(urdf)          # ROS description: plain (topics are a gz matter)
         gz_path = directory/'robot_gz.urdf'
@@ -149,7 +158,9 @@ def setup_robot(context):
         converted = subprocess.run(['gz', 'sdf', '-p', str(gz_path)],
                                    capture_output=True, text=True, check=True)
         sdf = directory/'robot.sdf'
-        sdf.write_text(materials.configure_gazebo_robot(converted.stdout, urdf, cfg))
+        from pinky_soccer_sim.led_visual import gazebo_lamp_materials
+        sdf.write_text(gazebo_lamp_materials(
+            materials.configure_gazebo_robot(converted.stdout, urdf, cfg)))
         if ns:
             entries, shared = multi_robot.namespace_bridge_config(bridge_entries, ns)
             bridge_file = directory/'bridge.yaml'
@@ -165,6 +176,10 @@ def setup_robot(context):
             bridge_file = directory/'bridge.yaml'
             bridge_file.write_text(yaml.safe_dump(bridge_entries))
         nodes = [
+            Node(package='pinky_soccer_sim', executable='led_visual',
+                 parameters=[{'use_sim_time': True,
+                              'model_name': model or ET.parse(sdf).getroot().find('model').get('name'),
+                              'world_name': ET.parse(lc('soccer_world').perform(context)).getroot().find('world').get('name')}]),
             Node(package='robot_state_publisher', executable='robot_state_publisher',
                  name='robot_state_publisher',
                  parameters=[{'robot_description': urdf, 'use_sim_time': True}]),

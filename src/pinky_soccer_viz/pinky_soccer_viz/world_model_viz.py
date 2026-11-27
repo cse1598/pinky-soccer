@@ -133,6 +133,7 @@ class WorldModelViz(Node):
     def __init__(self):
         super().__init__('world_model_viz')
         p = self.declare_parameter
+        self.opponent_arrows = style.arrow_parameters(p)
         self.field = Field.from_file(p('field_spec', '').value or None,
                                      p('our_goal_color', 'yellow').value)
         self.hfov = math.radians(p('camera_hfov_deg', 60.0).value)
@@ -224,10 +225,17 @@ class WorldModelViz(Node):
             if o.state == LOST:
                 continue
             alpha = style.SOLID_ALPHA if o.state == OBSERVED else style.FAINT_ALPHA
-            box = f.make('opponents', Marker.CUBE, color('opponent', alpha),
+            box = f.make('opponents', Marker.CYLINDER, color('opponent', alpha),
                          (style.OPPONENT_SIZE, style.OPPONENT_SIZE, 0.08))
             box.pose.position = pt(o.pose.x, o.pose.y, 0.04)
             out.markers.append(box)
+            vector = style.opponent_velocity(o, **self.opponent_arrows)
+            if vector is not None:
+                arrow = f.make('opponent_velocity', Marker.ARROW,
+                               color('opponent_velocity', alpha), (.008, .02, .025))
+                arrow.points = [pt(o.pose.x, o.pose.y, .09),
+                                pt(o.pose.x+vector[0], o.pose.y+vector[1], .09)]
+                out.markers.append(arrow)
             if o.state == ESTIMATED:
                 age = max(0.0, now - (o.last_seen.sec + o.last_seen.nanosec * 1e-9))
                 text = f.make('opponents', Marker.TEXT_VIEW_FACING, color('opponent'),

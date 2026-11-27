@@ -1,0 +1,9 @@
+/**/rectangle_localization:
+  ros__parameters:
+    # Renderer-only override, NOT a new algorithm or a real-camera calibration.
+    # Unmodified PNGs/ROI statistics: docs/validation/sim_colors_20261127.
+    # MuJoCo S: yellow~142, blue~104; Gazebo yellow L~82. The requested
+    # real-camera bounds reject these shaded renders. Keep H, upper bounds,
+    # pixel minimum/ratio/streak/crop identical to the common defaults.
+    hls.yellow_low: [24, 60, 100]
+    hls.blue_low: [96, 20, 80]

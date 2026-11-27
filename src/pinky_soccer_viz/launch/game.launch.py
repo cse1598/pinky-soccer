@@ -38,13 +38,16 @@ def setup(context):
         raise ValueError('Require max_lin <= 0.30 m/s and max_ang <= 6 rad/s '
                          '(> 0 on the real robot; 0 = wheel limits only in simulation)')
     common = {name: arg(name) for name in
-              ('field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
-               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'heading_record', 'initial_x', 'initial_y',
+              ('preparation', 'preparation_config', 'field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
+               'controller', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
-                  identification=arg('identification'))
+                  identification=arg('identification'), ball_offset_source=arg('ball_offset_source'))
+    if common['localization'] == 'auto':
+        common['localization'] = 'lidar' if arg('controller') == 'nav2' else 'rectangle'
     if mode == 'real':
         filename = 'real_game.launch.py'
+        common.update({k: arg(k) for k in ('robot_host','robot_workspace','robot_profile')})
         profile = arg('calibration_profile')
         common['calibration_profile'] = '' if profile in ('auto', 'none') else profile
         common['wheel_feedback'] = arg('wheel_feedback')
@@ -72,7 +75,12 @@ def setup(context):
 def generate_launch_description():
     """Every mode starts paused; no game start publisher is launched here."""
     return LaunchDescription([
+        DeclareLaunchArgument('robot_host', default_value=''),
+        DeclareLaunchArgument('robot_workspace', default_value='pinky-soccer'),
+        DeclareLaunchArgument('robot_profile', default_value=''),
         DeclareLaunchArgument('mode', default_value='real', choices=['real', 'gazebo', 'mujoco']),
+        DeclareLaunchArgument('preparation', default_value='true'),
+        DeclareLaunchArgument('preparation_config', default_value=''),
         DeclareLaunchArgument('field', default_value='hardboard', choices=['hardboard', 'rcj']),
         DeclareLaunchArgument('our_goal_color', default_value='yellow',
                               choices=['yellow', 'blue']),
@@ -103,8 +111,15 @@ def generate_launch_description():
         DeclareLaunchArgument('verify', default_value='false', choices=['true', 'false'],
                               description='Behaviour verification mode: verifier window, '
                               'bt_node runs only requested behaviours'),
-        DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
+        DeclareLaunchArgument('localization', default_value='auto',
+                              choices=['auto', 'rectangle', 'lidar', 'odom_only'],
+                              description='auto: common sensor-only rectangle startup in every environment'),
+        DeclareLaunchArgument('localization_config', default_value='auto',
+                              description='auto: measured simulator HLS override; none: common requested HLS'),
+        DeclareLaunchArgument('localization_debug', default_value='false'),
         DeclareLaunchArgument('heading_record', default_value=''),
+        DeclareLaunchArgument('ball_offset_source', default_value='auto',
+                              description='auto: selected profile/camera sibling; none: raw projection; or reviewed profile'),
         DeclareLaunchArgument('max_lin', default_value='auto',
                               description='auto: real 0.08 m/s, simulation 0 (= wheel limits)'),
         DeclareLaunchArgument('max_ang', default_value='auto',
@@ -121,7 +136,8 @@ def generate_launch_description():
         # Passed explicitly in both modes: included launches inherit this configuration, and
         # an empty value here once switched off the simulators' own calibration profiles.
         DeclareLaunchArgument('identification', default_value='',
-                              description='validated target-specific wheel response YAML'),
+                              description='real: empty/auto uses pinky-pro measured tau; none restores '
+                              'baseline; or fixed-ramp response YAML. Simulation empty is unchanged'),
         DeclareLaunchArgument('calibration_profile', default_value='auto',
                               description='auto: simulators use their own odometry profile, '
                               'real none; or a profile.yaml path; none disables'),

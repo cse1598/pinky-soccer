@@ -29,6 +29,9 @@ from .scheduled_input import ScheduledInput
 from .delay_observer import DelayObserver,FORECAST_TAU
 from . import collision_geometry
 from . import obstacle_snapshot
+from .response_calibration import apply_response
+from .timing_trace import TimingTrace
+from .motion_runtime import MotionRuntime
 
 
 class MpcController(Node):
@@ -38,9 +41,8 @@ class MpcController(Node):
         target=p('target','real').value
         profile=p('calibration_profile','').value
         identification=p('identification','').value
-        if identification:
-            raise ValueError('Legacy identification not validated for phase-1 model')
         self.params=dyn_params.load(target,profile=profile or None)
+        self.params,self.response_calibration=apply_response(self.params,identification)
         if self.params.m('delay') > 0.:
             raise ValueError('Phase-1 predictor does not compensate transport delay')
         self.max_lin=float(p('max_lin',0.).value)
@@ -142,6 +144,10 @@ class MpcController(Node):
         self.failed_reason=None
         self.feedback_age=None
         self.diag={}
+        self.timing_trace=TimingTrace()
+        p('timing_trace',False)  # Optional JSON diagnostics, dynamically enabled by test recorder.
+        self.future_goal_id=None
+        self.future_due=None
         self.progress_time=None
         self.progress_best=None
         self.executor_pool=ThreadPoolExecutor(max_workers=1)
@@ -151,15 +157,34 @@ class MpcController(Node):
         self.result_pub=self.create_publisher(MotionResult,'motion/result',10)
         self.create_subscription(BehaviorGoal,'behavior_goal',self.on_goal,10)
         self.create_subscription(WorldModel,'world_model',self.on_world,10)
+        self.obstacle_world = None
+        self.obstacle_world_received = None
+        self.create_subscription(WorldModel,'world_model/obstacles',self.on_obstacle_world,10)
         if self.wheel_feedback:
             self.create_subscription(JointState,'joint_states',self.on_joints,qos_profile_sensor_data)
         self.create_timer(1/self.command_rate,self.tick)
         self.get_logger().info(f'Fixed-step time-optimal NMPC {target}/{self.time_backend}: {self.rate:g} Hz solve, '
                                f'{self.command_rate:g} Hz command; up to {self.time_mpc.max_steps} stages; '
                                f'{self.mpc.wmax*30/math.pi:.1f} RPM')
+        if self.response_calibration['applied']:
+            self.get_logger().info('Real motor response: '+json.dumps(self.response_calibration))
+        self.motion=MotionRuntime(self)
 
     def on_goal(self,msg):
         self.goal,self.goal_time=msg,time.monotonic()
+
+    def on_obstacle_world(self,msg):
+        """Unconfirmed scan obstacles: independent of the displayed single opponent."""
+        self.obstacle_world = msg
+        self.obstacle_world_received = time.monotonic()
+
+    def avoidance_world(self):
+        """Legacy producers remain compatible; use fresh candidate stream when present."""
+        if (getattr(self, 'obstacle_world', None) is not None
+                and self.obstacle_world_received is not None
+                and time.monotonic()-self.obstacle_world_received <= .5):
+            return self.obstacle_world
+        return self.world_msg
 
     def on_world(self,msg):
         self.world_msg=msg
@@ -172,6 +197,10 @@ class MpcController(Node):
         self.world_v=math.hypot(s.velocity.x,s.velocity.y)
         self.pose_valid=(s.state!=s.LOST and s.confidence>0 and
                          all(math.isfinite(v) for v in (*self.pose,self.world_v)))
+        self.motion.on_world(msg,self.pose_receipt_sim)
+        if self.motion.active:
+            if self.motion.filter.pose is not None:self.pose=tuple(self.motion.filter.pose)
+            self.pose_valid=self.pose_valid and self.motion.filter.valid
 
     def on_joints(self,msg):
         try:
@@ -199,6 +228,7 @@ class MpcController(Node):
         return v,w
 
     def send(self,u):
+        u=self.motion.safety(u)
         self.last_cmd=tuple(float(q) for q in u)
         v,w=self.adapter.to_twist(*self.last_cmd)
         msg=Twist()
@@ -217,6 +247,9 @@ class MpcController(Node):
         self.schedule.clear()
         self.active_predicted=None
         self.active_solve_id=None
+        if hasattr(self,'motion'):
+            self.motion.buffer.clear();self.motion.successor_prepared=False
+            self.motion.handoff_at=self.motion.handoff_wall=None
 
     def job(self,*args,**kwargs):
         # Diagnostics only: when the single worker actually started this solve.
@@ -256,8 +289,12 @@ class MpcController(Node):
         return solver.solve(x,goal,v,w,forward_only=forward)
 
     def report(self,state,reason='',result=MotionResult.RUNNING,dist=0.,ang=0.,**extra):
+        motion_state=self.motion.state(reason,dist,ang)
         gid=int(self.goal.goal_id) if self.goal is not None else 0
         data=dict(self.diag)
+        if motion_state is not None:data['motion_state']=motion_state
+        if self.get_parameter('timing_trace').value:
+            data['timing_trace']=self.timing_trace.snapshot()
         data.update(extra)
         data.update(state=state,reason=reason,goal_id=str(gid),
                     wheel_l=float(self.omega[0]),wheel_r=float(self.omega[1]),
@@ -269,6 +306,9 @@ class MpcController(Node):
                         self.goal is not None and self.goal.action=='GoToPose' else 'slsqp'))
         data['command_state_age_sim_s'] = (self.last_tick-self.last_solution_input_sim
             if state=='track' and self.last_solution_input_sim is not None else None)
+        if self.response_calibration['applied']:
+            data['motor_response'] = dict(sha256=self.response_calibration['sha256'],
+                tau_left_s=self.params.m('tau_left'),tau_right_s=self.params.m('tau_right'))
         data['command_state_age_wall_s'] = (time.monotonic()-self.last_solution_input_wall
             if state=='track' and self.last_solution_input_wall is not None else None)
         data['active_solve_id']=self.active_solve_id if state=='track' else None
@@ -324,6 +364,7 @@ class MpcController(Node):
         feedback=self.feedback_age is not None and self.feedback_age<.2
         if feedback:
             self.omega=self.measured
+        self.motion.predict(now)
         if self.observer_mode!='off' and feedback:
             estimate=self.observer.current(now)
             if estimate is not None:
@@ -347,6 +388,8 @@ class MpcController(Node):
             except Exception as exc:
                 res={'ok':False,'status':-1,'ms':(wall-submitted)*1000,
                      'message':str(exc),'residuals':[]}
+            self.timing_trace.completed(completed_id,self.future_goal_id,generation,self.generation,
+                submitted,submitted_sim,self.future_due,res,wall)
             if generation==self.generation:
                 activation_diag={k:v for k,v in self.diag.items() if k.startswith('activation_') or k=='prediction_lead_sim_s'}
                 self.diag={k:res.get(k) for k in ('status','ms','direction','residuals',
@@ -398,18 +441,21 @@ class MpcController(Node):
             bool(self.goal.avoid_ball)) if is_pose else obstacle_snapshot.AvoidanceOptions()
         key=(self.goal.action,int(self.goal.goal_id),avoid)
         if key!=self.key:
+            adopted=self.motion.select(goal,now) if self.motion.enabled else False
+            adopted=adopted and avoid==self.avoid
             self.avoid=avoid
             self.key=key
-            self.invalidate()
+            if not adopted:self.invalidate()
             self.arrival.reset()
             self.diag={}
             self.failures=0
             self.failed_reason=None
             self.progress_time=now
             self.progress_best=None
-            self.tracking=False
+            self.tracking=adopted
             self.init_start=now
             self.init_missed=0
+            self.timing_trace.goal(self.goal.goal_id)
         if not self.pose_valid or not all(math.isfinite(v) for v in goal):
             self.arrival.reset()
             self.invalidate()
@@ -438,7 +484,15 @@ class MpcController(Node):
         w_actual=(self.mpc.rr*r-self.mpc.rl*l)/self.mpc.b
         inside,done,dist,ang=self.arrival.update(now,self.pose,goal,
                  max(abs(v_actual),self.world_v),w_actual,self.omega,feedback)
-        if is_pose and inside and self.arrival.since is not None:
+        brake=inside and self.arrival.since is not None
+        if self.motion.active:
+            completion=self.motion.arrival(now,goal,max(abs(v_actual),self.world_v),w_actual,feedback)
+            brake,done,dist,ang=(completion[k] for k in ('brake','done','distance','angle'))
+            if self.motion.error:
+                self.failed_reason=self.motion.error
+                self.invalidate()
+                return self.stop(self.motion.error,MotionResult.FAILURE,dist,ang)
+        if is_pose and brake:
             # Braking to zero is not a P alignment controller; if we drift out,
             # tracking resumes immediately with the same NMPC.
             if (self.last_solution is not None or self.schedule.due is not None or
@@ -465,7 +519,7 @@ class MpcController(Node):
                     self.failures+=1
             return self.stop('solver deadline')
         if is_pose and self.time_backend=='acados':
-            return self.scheduled_tick(now,wall,goal,dist,ang,elapsed)
+            return self.scheduled_tick(now,wall,self.motion.target(goal) if self.motion.active else goal,dist,ang,elapsed)
         if self.future is None and now+1e-8>=self.next_solve:
             v,w=self.caps()
             x=(*self.pose,*self.omega,*self.last_cmd)
@@ -473,6 +527,8 @@ class MpcController(Node):
             self.future_wall=wall
             self.future_sim=now
             self.future_scheduled=False
+            self.future_goal_id=self.goal.goal_id
+            self.future_due=None
             self.future_predicted=None
             self.solve_id+=1
             self.future=self.executor_pool.submit(self.job,self.generation,x,goal,v,w,
@@ -486,6 +542,9 @@ class MpcController(Node):
 
     def scheduled_tick(self,now,wall,goal,dist,ang,elapsed):
         """Pipeline exactly one 100 ms stage; optimize the next activation state."""
+        scheduled_due=self.schedule.due
+        had_offer=self.schedule.ready is not None
+        was_tracking=self.tracking
         due,result,jitter=self.schedule.take(now)
         if due:
             self.diag['activation_jitter_sim_s']=float(jitter)
@@ -494,12 +553,26 @@ class MpcController(Node):
                 if self.avoid.any and not self.activation_safe(res):
                     # Latest obstacles collide with this plan: brake for this slot.
                     result=None
+                if result is not None and self.motion.active:
+                    if self.motion.pending_target is not None and not res.get('terminal_feasible'):
+                        result=None
+                    if self.motion.pending_target is not None and self.motion.policy.mode=='HANDOFF' and not self.motion.last_eligible:
+                        result=None
+                if result is not None and self.motion.active:
+                    res=dict(res,source_solve_id=solve_id)
+                    res=self.motion.retain_direction(res,now,wall,goal)
+                    self.diag['trajectory_retained_for_hysteresis']=bool(res.get('_retain_active'))
+                    if not res.get('_retain_active'):
+                        self.motion.buffer.offer(res,tuple(goal))
+                        terminal=tuple(goal) if self.motion.pending_target is not None else None
+                        if self.motion.buffer.activate(now,wall,tuple(goal),lambda us:self.motion.validate(us,terminal)) is None:
+                            result=None
             if result is not None:
                 if not self.tracking:
                     self.tracking=True
                     self.diag['activation_first_s']=now-self.init_start
                     self.diag['init_missed']=self.init_missed
-                self.active_solve_id=solve_id
+                self.active_solve_id=res.get('source_solve_id',solve_id)
                 self.last_solution=tuple(res['u'])
                 self.last_solution_sim=now
                 self.last_solution_wall=wall
@@ -520,6 +593,7 @@ class MpcController(Node):
                     activation_aligned_wheel_error_rad_s=(float(np.max(np.abs(self.aligned_wheels[:2]-predicted[3:5])))
                         if self.aligned_wheels is not None else None))
                 self.publish_path(res['xs'])
+                if self.motion.active:self.motion.activated(now,goal)
             else:
                 # No valid solution for this interval: brake, not an old first input.
                 self.last_solution=None
@@ -536,6 +610,14 @@ class MpcController(Node):
                 # Invalidate a late worker so it cannot fill a subsequent slot.
                 self.generation+=1
             self.diag['activation_missed']=result is None
+            self.timing_trace.activation(now,scheduled_due,jitter,result is not None,
+                had_offer,was_tracking,self.solve_id if self.future is not None else None,wall)
+        if self.motion.active and due and self.last_solution is None:
+            continuation=self.motion.buffer.continuation(now,wall,self.motion.buffer.version,self.motion.validate)
+            if continuation is not None:
+                self.last_solution=continuation
+                self.active_solve_id=self.motion.buffer.result.get('source_solve_id')
+                self.diag['active_trajectory_continuation']=True
         if not self.tracking and now-self.init_start>self.init_timeout:
             self.failed_reason=(f'no optimized first command within {self.init_timeout:g} s '
                                 f'({self.init_missed} slots missed while initializing)')
@@ -546,13 +628,20 @@ class MpcController(Node):
             self.invalidate()
             return self.stop(self.failed_reason,MotionResult.FAILURE,dist,ang)
         command=self.last_solution if self.last_solution is not None else (0.,0.)
+        if self.motion.active and self.motion.buffer.active is not None:
+            # The predictor assumes this stage is held until its scheduled boundary.
+            # Do not advance the old plan on a different clock phase between slots.
+            b=self.motion.buffer
+            if now-b.origin>b.max_age or wall-b.wall>b.max_age:
+                self.last_solution=None;command=(0.,0.)
+                self.invalidate()
         # Send before snapshotting prediction: this is the known held command.
         v,w=self.send(command)
         if self.schedule.due is None and self.future is None:
             vb,wb=self.caps()
             physical=np.asarray((*self.pose,*self.omega,*self.ref),float)
             disturbance=np.zeros(2)
-            applied=command
+            applied=self.last_cmd
             if self.observer_mode!='off':
                 if self.aligned_wheels is not None:
                     physical[3:7]=self.aligned_wheels
@@ -565,11 +654,13 @@ class MpcController(Node):
             # A bounded transient forecast avoids imposing a constant nonzero
             # disturbance at the stop equilibrium for the entire long horizon.
             forecast=disturbance*math.exp(-self.dt/FORECAST_TAU)
-            state=np.r_[predicted,command]
+            state=np.r_[predicted,self.last_cmd]
             self.schedule.begin(now)
             self.future_generation=self.generation
             self.future_wall=wall
             self.future_sim=now
+            self.future_goal_id=self.goal.goal_id
+            self.future_due=self.schedule.due
             self.future_scheduled=True
             self.future_predicted=predicted
             self.solve_id+=1
@@ -580,14 +671,16 @@ class MpcController(Node):
             self.diag['prediction_lead_sim_s']=self.dt
         valid=self.last_solution is not None
         self.report('track' if valid else ('waiting' if self.tracking else 'initializing'),
+                    'handoff_ready' if self.motion.active and self.motion.handoff_at is not None else
                     'scheduled optimized input' if valid else 'waiting for scheduled solution',
+                    result=MotionResult.SUCCESS if self.motion.active and self.motion.handoff_at is not None else MotionResult.RUNNING,
                     dist=dist,ang=ang,v=v,w=w,period_s=elapsed,tracking=self.tracking,
                     init_missed=self.init_missed)
 
     # ------------------------------------------------------------------ avoidance
     def avoid_snapshot(self,now):
         return obstacle_snapshot.take(self.avoid,self.avoid_config,self.avoid_field,
-                                      self.world_msg,now)
+                                      self.avoidance_world(),now)
 
     def avoidance_precheck(self,goal):
         """Reasons an avoidance request cannot run (None: it can)."""

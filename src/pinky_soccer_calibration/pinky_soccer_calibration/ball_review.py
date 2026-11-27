@@ -62,6 +62,11 @@ def gameplay_settings(path=None):
     if not 0 <= detector['min_circularity'] <= 1 or params.friction_tau <= 0:
         raise ValueError('원형도/마찰 필터 설정을 확인하세요.')
     detector['ranges'] = [(tuple(flat[i:i+3]), tuple(flat[i+3:i+6])) for i in range(0, len(flat), 6)]
+    hls = detector.get('hls_ranges', [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99])
+    if not hls or len(hls) % 6:
+        raise ValueError('HLS 범위는 H,L,S 하한/상한 6개씩 입력해야 합니다.')
+    detector['hls_ranges_parsed'] = [(tuple(hls[i:i+3]), tuple(hls[i+3:i+6]))
+                                   for i in range(0, len(hls), 6)]
     for key, default in BLOB_SHAPE_DEFAULTS.items():
         detector[key] = float(detector.get(key, default))
         if not 0 <= detector[key] <= 1:
@@ -124,7 +129,8 @@ class GameplayReview:
         shape = {key: settings.get(key, value) for key, value in BLOB_SHAPE_DEFAULTS.items()}
         options = {key: settings.get(key, value) for key, value in ROBUST_DEFAULTS.items()}
         self.visual = BallImageDetector(
-            settings['ranges'], settings['min_area_px'], settings['min_circularity'], shape, options)
+            settings['ranges'], settings['min_area_px'], settings['min_circularity'], shape, options,
+            hls_ranges=settings.get('hls_ranges_parsed'))
         self.reset()
 
     def reset(self):
@@ -143,6 +149,9 @@ class GameplayReview:
         observation = self.visual.detect(frame, observed_at, frame_key)
         blob = observation.blob
         report = {'blob': list(blob) if blob else None, 'point': None, 'tracking': None,
+                  'bearing_valid': observation.bearing_valid,
+                  'circle_valid': observation.distance_valid,
+                  'bearing_uv': observation.bearing_uv,
                   'visual_confidence': observation.confidence,
                   'visible_arc_fraction': observation.arc_fraction,
                   'partial_outline': observation.partial,
@@ -159,7 +168,9 @@ class GameplayReview:
         report['intrinsics_available'] = k is not None
         calibration = 'none' if k is None else ('approximate' if is_approximate else 'calibrated')
         preview = annotate_ball(frame, blob, calibration, observation)
-        report['reason'] = '주황색 공 후보 미검출' if blob is None else '미터 좌표 계산 대기'
+        report['reason'] = ('원호 신뢰도 부족 · 방향 픽셀만 유효' if observation.bearing_valid
+                            and blob is None else ('주황색 공 후보 미검출' if blob is None
+                                                  else '미터 좌표 계산 대기'))
         cam = lookup(cfg['floor_frame'], header.frame_id, header.stamp)
         output = lookup(cfg['output_frame'], cfg['floor_frame'], None)
         summary = external_mount if external_mount is not None else (
@@ -178,6 +189,7 @@ class GameplayReview:
                 report['mount_source'] = '장착 보정값 오류: '+str(error)
         point = project_ball(blob, frame.shape, k, d, cam, output, cfg['ball_radius'],
                              cfg['max_range'], rotated)
+        report['range_valid'] = point is not None
         if blob is not None:
             if k is None:
                 report['reason'] = '내부 보정/미보정 추정 설정 확인'

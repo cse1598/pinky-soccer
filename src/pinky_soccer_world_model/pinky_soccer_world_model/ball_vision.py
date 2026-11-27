@@ -33,6 +33,10 @@ def annotate_ball(frame, blob, calibration='calibrated', observation=None):
         cv2.putText(preview, 'OUTSIDE SEARCH AREA', (8, max(60, top-8)),
                     cv2.FONT_HERSHEY_SIMPLEX, .45, (255, 200, 0), 1, cv2.LINE_AA)
     status = 'NO BALL'
+    if blob is None and observation is not None and observation.bearing_valid:
+        center = tuple(round(v) for v in observation.bearing_uv)
+        cv2.drawMarker(preview, center, (0, 210, 255), cv2.MARKER_TILTED_CROSS, 12, 1)
+        status = 'BEARING ONLY: radius/centre fit insufficient for metric output'
     if blob is not None:
         u, v, radius, _ = blob
         center = (round(u), round(v))

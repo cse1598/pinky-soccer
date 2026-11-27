@@ -6,10 +6,12 @@ Self pose
                            then also broadcasts map -> odom (static) so TF users agree.
 Ball      : /ball_detection (PointStamped) -> map -> BallFilter (Kalman + friction).
 Search    : SearchGrid lowered inside the camera field of view when nothing is seen.
-Opponents : /scan points inside the walls, clustered (basic; tracking is TODO).
+Opponents : /scan points inside the walls, clustered, confirmed and alpha-beta tracked (one opponent).
 Game      : /game/playing (std_msgs/Bool).
 """
 
+from collections import deque
+import json
 import math
 import time
 
@@ -23,15 +25,16 @@ from pinky_soccer_world_model.ball_filter import BallFilter, BallFilterParams, L
 from pinky_soccer_world_model.geometry import compose2d, inverse2d, quat_from_yaw, yaw_from_quat
 from pinky_soccer_world_model.geometry import wrap
 from pinky_soccer_world_model.msgs import tracked, world_model
-from pinky_soccer_world_model.opponents import cluster_opponents, scan_points
+from pinky_soccer_world_model.opponents import (
+    SingleOpponentTracker, cluster_opponents, indexed_candidates, scan_points)
 from pinky_soccer_world_model.search_grid import SearchGrid
 import rclpy
 from rclpy.duration import Duration
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import DurabilityPolicy, QoSProfile, qos_profile_sensor_data
 from rclpy.time import Time
 from sensor_msgs.msg import CameraInfo, LaserScan
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 from tf2_ros import Buffer, StaticTransformBroadcaster, TransformException, TransformListener
 
 
@@ -83,6 +86,16 @@ class WorldModelNode(Node):
                         'max_size': p('opponents.max_size', 0.30).value}
         self.opp_hold = p('opponents.hold_sec', 1.0).value
         self.opponents, self.opp_time = [], None
+        self.opponent_tracker = SingleOpponentTracker(
+            hold_sec=self.opp_hold, **{k: p('opponents.'+k, v).value for k, v in dict(
+                alpha=.6, beta=.06, observed_sec=.3, confirm_hits=3, confirm_window=5,
+                max_speed=.6, association_slack=.08, velocity_deadband=.015).items()})
+        self.opp_extra = {k: p('opponents.'+k, v).value for k, v in dict(
+            min_size=.015, self_radius=.08, max_beam_gap=3, max_adaptive_gap=.09).items()}
+        self.opp_map_alignment = None
+        self.opp_pending = deque(maxlen=5)
+        self.opp_tf_wait = p('opponents.tf_wait_sec', .3).value
+        self.opp_processed = self.opp_expired = 0
 
         self.pose = None            # (x, y, theta) map
         self.pose_source_stamp = None
@@ -98,7 +111,12 @@ class WorldModelNode(Node):
             if self.odom_offset is not None:
                 self.static.sendTransform(self.map_to_odom())
         self.pub = self.create_publisher(WorldModel, 'world_model', 10)
+        # Existing unconfirmed clusters remain available for collision avoidance.
+        self.obstacle_pub = self.create_publisher(WorldModel, 'world_model/obstacles', 10)
+        self.opponent_status_pub = self.create_publisher(String, 'opponents/status', 5)
         self.create_subscription(Odometry, 'odom', self.on_odom, 20)
+        self.create_subscription(String, 'preparation/team', self.on_team,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.create_subscription(PointStamped, 'ball_detection', self.on_ball, 10)
         self.create_subscription(CameraInfo, 'camera/camera_info', self.on_info,
                                  qos_profile_sensor_data)
@@ -126,6 +144,10 @@ class WorldModelNode(Node):
         (t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z,
          t.transform.rotation.w) = q
         return t
+
+    def on_team(self, msg):
+        if not self.playing and msg.data in ('yellow', 'blue'):
+            self.field = Field(self.field.spec, msg.data)
 
     def on_playing(self, msg):
         """Latest game start/stop."""
@@ -185,21 +207,81 @@ class WorldModelNode(Node):
                          float(np.hypot(local[0], local[1])))
         self.grid.observe(np.zeros_like(self.grid.p, bool), 0.0, world[:2])
 
+    def scan_transform(self, target, source, stamp):
+        """Require measurement-time TF: latest fallback would invent map velocity."""
+        if stamp.sec == 0 and stamp.nanosec == 0:
+            return None
+        try:
+            tf = self.tf.lookup_transform(target, source, Time.from_msg(stamp),
+                                           timeout=Duration(seconds=0.0))
+            return transform_matrix(tf)
+        except TransformException:
+            return None
+
     def on_scan(self, msg):
-        """Opponent candidates from wall-free LiDAR clusters."""
+        """Same scan feeds legacy avoidance candidates and one confirmed opponent."""
         if not self.opp_enabled:
             return
-        rt = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
-        if rt is None:
-            return
+        self.opp_pending.append(msg)
+        self.process_opponent_scans()
+
+    def process_opponent_scans(self):
+        """Retry delayed TF without blocking callbacks or replacing measurement time."""
+        while self.opp_pending:
+            msg = self.opp_pending[0]
+            stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+            last = self.opponent_tracker.last_scan
+            if stamp <= 0 or (last is not None and stamp <= last):
+                self.opp_pending.popleft()
+                continue
+            rt = self.scan_transform(self.map_frame, msg.header.frame_id, msg.header.stamp)
+            if rt is None:
+                if self.now()-stamp <= self.opp_tf_wait:
+                    break
+                self.opp_expired += 1
+                self.opp_pending.popleft()
+                continue
+            self.opp_pending.popleft()
+            self.process_opponent_scan(msg, rt)
+
+    def process_opponent_scan(self, msg, rt):
+        start = time.perf_counter()
+        stamp = msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+        alignment = self.scan_transform(self.map_frame, self.odom_frame, msg.header.stamp)
+        if alignment is not None:
+            ar, at = alignment
+            pose = (float(at[0]), float(at[1]), math.atan2(ar[1, 0], ar[0, 0]))
+            previous = self.opp_map_alignment
+            if previous is not None and (math.hypot(pose[0]-previous[0], pose[1]-previous[1])
+                                         > .15 or abs(wrap(pose[2]-previous[2])) > .35):
+                self.opponent_tracker.reset()
+                self.opponents, self.opp_time = [], None
+            self.opp_map_alignment = pose
         R, t = rt
         pts = scan_points(msg.ranges, msg.angle_min, msg.angle_increment,
                           msg.range_min, msg.range_max)
-        if len(pts) == 0:
-            return
         world = (R[:2, :2] @ pts.T).T + t[:2]
-        self.opponents = cluster_opponents(world, self.field.inner_walls, **self.opp_cfg)
-        self.opp_time = self.now()
+        # Preserve the pre-existing candidate geometry/radii for MPC, without confirmation.
+        legacy = cluster_opponents(world, self.field.inner_walls, **self.opp_cfg)
+        if self.opp_time is None or stamp > self.opp_time:
+            self.opponents, self.opp_time = legacy, stamp
+        structures = [o.rect for o in self.field.obstacles_seen_at(float(t[2]))
+                      if 'roof' not in o.name]
+        candidates = indexed_candidates(
+            msg.ranges, msg.angle_min, msg.angle_increment, msg.range_min, msg.range_max,
+            R, t, self.field.inner_walls, structures, **self.opp_cfg, **self.opp_extra)
+        self.opponent_tracker.update(candidates, stamp)
+        self.opp_processed += 1
+        if self.opponent_status_pub.get_subscription_count():
+            self.opponent_status_pub.publish(String(data=json.dumps(dict(
+                stamp=stamp, processed=self.opp_processed, expired_tf=self.opp_expired,
+                pickup_age_s=self.now()-stamp,
+                legacy_count=len(legacy), candidate_count=len(candidates),
+                candidates=[dict(x=c.x, y=c.y, size=c.size, points=c.count)
+                            for c in candidates],
+                confirmed=self.opponent_tracker.sample(stamp) is not None,
+                velocity_valid=self.opponent_tracker.velocity_valid,
+                processing_ms=1000*(time.perf_counter()-start)))))
 
     # ------------------------------------------------------------------ output
     def on_localization_pose(self, msg):
@@ -225,16 +307,23 @@ class WorldModelNode(Node):
             self.ball = BallFilter(self.ball.p, self.field.inner_walls, self.ball_radius)
             self.grid.p.fill(self.grid.prior)
             self.opponents, self.opp_time = [], None
+            self.opponent_tracker.reset()
         self.pose = pose
         self.pose_source_stamp=self.last_lookup_stamp
 
     def tick(self):
         """Predict, update the search grid and publish."""
         now = self.now()
+        if self.last_tick is not None and now < self.last_tick:
+            self.opponent_tracker.reset()
+            self.opponents, self.opp_time = [], None
+            self.opp_map_alignment = None
+            self.opp_pending.clear()
         dt = 0.0 if self.last_tick is None else max(0.0, now - self.last_tick)
         self.last_tick = now
         if self.localization == 'tf':
             self.update_pose_from_tf()
+        self.process_opponent_scans()
         if self.pose is None:
             self.get_logger().warn('Waiting for self pose', throttle_duration_sec=5.0)
             return
@@ -262,13 +351,22 @@ class WorldModelNode(Node):
                            state=TrackedObject.LOST, confidence=0.0)
 
         opponents = []
-        if self.opp_time is not None and now - self.opp_time <= self.opp_hold:
-            fresh = now - self.opp_time <= 0.3
+        sample = self.opponent_tracker.sample(now) if self.opp_enabled else None
+        if sample is not None:
+            x, y = sample['position']
+            v = sample['variance']
+            opponents.append(tracked(
+                'opp_0', (x, y, 0.), sample['velocity'],
+                [v, 0, 0, 0, v, 0, 0, 0, 10.], sample['state'],
+                sample['last_seen'], sample['confidence']))
+        obstacles = []
+        if self.opp_time is not None and 0 <= now-self.opp_time <= self.opp_hold:
             for i, (ox, oy, _) in enumerate(self.opponents):
-                opponents.append(tracked(
-                    f'opp_{i}', (ox, oy, 0.0), cov=[0.01, 0, 0, 0, 0.01, 0, 0, 0, 10.0],
-                    state=TrackedObject.OBSERVED if fresh else TrackedObject.ESTIMATED,
-                    last_seen=self.opp_time, confidence=1.0 if fresh else 0.5))
+                obstacles.append(tracked(
+                    f'candidate_{i}', (ox, oy, 0.),
+                    cov=[.01, 0, 0, 0, .01, 0, 0, 0, 10.],
+                    state=TrackedObject.OBSERVED if now-self.opp_time <= .3
+                    else TrackedObject.ESTIMATED, last_seen=self.opp_time))
 
         me = tracked('self', self.pose, self.velocity, self.pose_cov, TrackedObject.OBSERVED,
                      self.pose_source_stamp or 0., 1.0)
@@ -284,6 +382,9 @@ class WorldModelNode(Node):
                 me.state, me.confidence = TrackedObject.ESTIMATED, 0.0
         self.pub.publish(world_model(self.get_clock().now().to_msg(), self.field, me, ball,
                                      opponents, self.playing and odom_fresh, self.grid))
+        self.obstacle_pub.publish(world_model(self.get_clock().now().to_msg(), self.field,
+                                              me, ball, obstacles,
+                                              self.playing and odom_fresh))
 
 
 def main(args=None):

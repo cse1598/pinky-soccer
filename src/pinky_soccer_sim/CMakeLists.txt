@@ -14,6 +14,7 @@ set_target_properties(pinky_foam_contact PROPERTIES INSTALL_RPATH "$ORIGIN")
 install(TARGETS pinky_contact_kernel pinky_foam_contact LIBRARY DESTINATION lib)
 
 ament_python_install_package(${PROJECT_NAME})
+install(PROGRAMS ${PROJECT_NAME}/led_visual.py DESTINATION lib/${PROJECT_NAME} RENAME led_visual)
 install(FILES FIELD.md HARDBOARD_FIELD.md MATERIALS.md SENSOR_NOISE.md DESTINATION share/${PROJECT_NAME})
 
 install(

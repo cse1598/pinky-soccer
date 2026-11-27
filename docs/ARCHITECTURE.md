@@ -14,7 +14,7 @@
 ```
 1. 관측   /camera/image_raw · /scan · /odom · /imu_raw · /us_sensor/range   (기존 센서 계약)
           ball_detector → /ball_detection (PointStamped, base_link)
-2. 추정   AMCL(경기장 지도) + goal_heading(골색/지자기 대칭 후보 확인) + world_model_node
+2. 추정   rectangle_localization(외벽·초기 HLS·IMU·odom) + world_model_node
             → /world_model    (pinky_soccer_msgs/WorldModel, map, ~30 Hz)
 3. 판단   bt_node (BehaviorTree.CPP v4 + BehaviorTree.ROS2)
             → /behavior_goal  (pinky_soccer_msgs/BehaviorGoal, 10–20 Hz)
@@ -53,7 +53,7 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 | `/odom` | `nav_msgs/Odometry` | 센서 계층 | `odom → base_footprint`, TF도 발행 |
 | `/imu_raw` | `sensor_msgs/Imu` | 센서 계층 | `imu_enabled:=true`일 때만. rad/s |
 | `/us_sensor/range` | `sensor_msgs/Range` | 센서 계층 | `adc_enabled:=true`일 때만 |
-| `/cmd_vel` | `geometry_msgs/Twist` | mpc_controller (또는 reactive_controller) | watchdog 입력 |
+| `/cmd_vel` | `geometry_msgs/Twist` | 기본 준비 게이트(내부 MPC/reactive 명령 전달) | watchdog 입력 |
 | `/mpc/predicted_path`, `/mpc/status` | `nav_msgs/Path`, `std_msgs/String`(JSON) | mpc_controller | NMPC 예측 궤적·진단 |
 | `/ball_detection` | `geometry_msgs/PointStamped` | ball_detector | `base_link`, 공 중심 |
 | `/world_model` | `pinky_soccer_msgs/WorldModel` | world_model_node / fake_world_model | `map` |
@@ -76,15 +76,51 @@ UI       world_model_viz     → /world_model/markers (MarkerArray, RViz2)
 `BallFilter`를 재사용합니다. JPEG·CameraInfo·실행 TF로 검토하며 판단 입력이나 주행 명령을 새로 발행하지 않습니다.
 미보정 HFOV 가정과 실제 내부 보정 출처를 구분하고, map/odom이 없으면 움직이는 base_link에서 필터를 돌리지 않습니다.
 
+공 검출은 공통 HLS/원호 피팅이며 하단 ROI 좌표를 원본 영상으로 복원한다. 기존 중심 광선/공 반경
+평면 투영 함수는 유지한다. 선택한 human_verified 공 XY 보정은 base_link 축으로 투영 후 한 번만
+적용한다. UI 비교는 raw 관측에 한 번 적용하며 기존 K/D·장착·보정 원본을 수정하지 않는다.
+손/얼굴 전용 분류는 사용자 요청으로 범위 밖이다. `docs/BALL_HLS_DISTANCE.md` 참조.
+
 `calibration_ui -webcam`은 시작 옵션 전용 로컬 리허설입니다. DDS/로봇 구독·주행 발행 없이 같은
 기록/보정 함수를 사용하며, 웹캠 전용 rehearsal 프로젝트로 분리합니다. 측정한 바닥 높이/기울기로 정의한
 고정 `webcam_floor`에서 공 거리/필터를 검토하며 이를 로봇 TF·odom으로 발행하거나 적용하지 않습니다.
 
+상대 인식은 측정시각 TF/외벽·고정구조 제거/인덱스 연속 군집 평균점과 단일 Alpha-Beta 추적이다.
+`world_model.opponents`는 최대1대이며 theta는 실제 방위각이 아니다. UI 원은 고정 외곽 크기,
+화살표는 이동 속도 벡터다. 미확정 일반 군집은 별도 `world_model/obstacles`(기존 WorldModel 타입)로
+MPC의 기존 snapshot에 전달하여 상대 확정 조건과 회피 입력을 분리한다. 비용/충돌 반경/제약은 유지한다.
+`opponents/status`는 구독 시 생성하는 진단이다. 상세·미검증 사항은 [OPPONENT_TRACKING.md](OPPONENT_TRACKING.md).
+
+기본 rectangle launch의 최종 명령/경기 허용/LED는 `match_preparation`이 소유한다.
+`preparation/prepare`→기존 보정→기존 GoToPose/MotionResult→odom 정지 확인→READY→별도 시작이다.
+BT 출력은 `preparation/strategy_goal`로 받아 PLAYING에서만 기존 behavior_goal로 전달한다.
+localizer LED는 끄고 보정 출력/50Hz 제어 명령을 최종 준비 게이트로 통과시킨다. World Model과 심판은
+승인된 preparation/playing을 본다. 기존 /game/playing은 시작/중지 요청으로 호환한다.
+알고리즘/제어 수식/전략 XML/공식 서브모듈은 보존한다. [운영·검증·배포](MATCH_PREPARATION.md).
+
+PART B 공통 정책은 현재 `mpc_controller`의 GoToPose 경로에 연결된다. 제어용 연속 pose와 원본
+map pose를 구분하고, 독립 완료 정책/Active-Pending buffer/raw LiDAR 제동 monitor를 사용한다.
+MuJoCo·실물 통합은 활성, Gazebo는 기존 경로다. BT의 선택적 `motion/policy`(String JSON, goal_id 결합)와
+기존 `mpc/status.motion_state`로 완료 모드/최신 종료 상태를 전달한다. 기존 typed 메시지는 유지한다.
+검증된 다음 GoToPose의 실제 인수에서만 STOP을 생략하며, 만료/취소/실패는 정지한다.
+solver 비용·제약·물리·주기·watchdog는 유지한다. 신규 제어기는 공통 정책과 timed-trajectory adapter를
+연결해야 한다. [PART B 구현/검증과 미검증 범위](CONTROL_PART_B.md).
+
 ## 좌표계
+
+- 공통 시작 기본(`localization:=rectangle`, 실물·MuJoCo·Gazebo): 같은 PC `rectangle_localization`이
+  외벽 두 후보를 유지하고 최소각 골대를 조준·정지 후 HLS 한 색으로 IMU 양축을 계산한다. 완료 후 map→odom 단독 발행,
+  `localization/pose`를 월드 모델의 기존 TF 모드에 전달한다. 이 경로에 AMCL/goal_heading을 중복 실행하지 않는다.
+  시작은 센서 수신만 하며 `localization/calibrate` Trigger/R 신호 뒤 PC gate가 보정 회전을 소유한다.
+  완료 후 골대 영상처리를 끄고 LiDAR·IMU·odom으로 추적하며 MPC 50 Hz 명령을 준비 게이트까지 전달한다. 최종 이동 허용·팀 LED는 준비 상태 관리자가 결정한다.
+  단기 가림은 제한된 odom 예측, 장기 상실은 명시적 재초기화로 처리한다. 원본 scan·MPC solver/안전/주기는 유지한다.
+  LED는 기존 로봇 `set_led`/`set_lamp` 서비스만 사용한다. 상세는 `pinky_soccer_world_model/STARTUP_LOCALIZATION.md`.
+  `game.launch.py localization:=auto`는 세 환경 rectangle, 명시 lidar/odom_only는 기존 경로다.
+  Nav2 비교 옵션은 기존 lidar를 유지한다. Ground Truth는 평가·UI만 사용하며 공통 추정 입력이 아니다.
 
 - `map` = 경기장 좌표계: 원점 경기장 중앙, 바닥 상단 z=0, **+X 파랑 골대 / −X 노랑 골대**, 단위 m·rad.
 - 시뮬레이터 `world` 원점 = 경기장 중앙 = `map` 원점.
-- TF: `map → odom`(AMCL 또는 world_model_node의 odom_only 모드) `→ base_footprint → base_link → … → front_camera_optical_frame`. game launch 기본 `localization:=lidar`에서는 AMCL만 map→odom을 발행한다. 센서 전용 launch에는 map이 없다.
+- TF: `map → odom`(선택 localizer 또는 world_model_node의 odom_only 모드) `→ base_footprint → base_link → … → front_camera_optical_frame`. `localization:=lidar`에서는 AMCL만 map→odom을 발행한다. 센서 전용 launch에는 map이 없다.
 - 공격 방향은 `our_goal_color`(yellow|blue) 파라미터로 정한다. 기본값 `yellow`(−X 수비, +X 공격). 코드에서 "+X = 상대 골대"로 가정하지 않는다.
 - 경기장 치수·골대 위치는 `pinky_soccer_field`로만 읽는다 (원본 `rcj_field.yaml`). 코드에 하드코딩하지 않는다.
 - 제2 경기장 원본은 같은 위치의 `hardboard_field.yaml`(내부 1820×1220mm·외벽 200mm). 시뮬레이션·통합 판단/표시 launch는 `field:=rcj|hardboard`로 선택하고, 월드 모델·두 UI의 `field_spec`을 같은 YAML로 맞춘다. 기본 경기장과 원본 위치는 유지한다.

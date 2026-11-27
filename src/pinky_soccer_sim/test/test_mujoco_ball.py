@@ -66,7 +66,7 @@ def test_measured_diameter_matches_gazebo_and_perception(tmp_path):
     assert parse_args([])[0].ball_radius == pytest.approx(radius)
     material = scene.find("asset/material[@name='soccer_ball_material']")
     rgba = [float(v) for v in material.get('rgba').split()]
-    assert rgba == pytest.approx([1, .30, 0, 1])
+    assert rgba == pytest.approx([230/255, 57/255, 4/255, 1])
     path = Path(__file__).parents[1]/'launch/gazebo_soccer.launch.py'
     spec = importlib.util.spec_from_file_location('ball_sdf_launch', path)
     module = importlib.util.module_from_spec(spec)

@@ -26,14 +26,22 @@ ROS 2 robot soccer project using Pinky Pro
 
 ## 진행 현황 (2026-11-23)
 
+2026-11-27 [PART B 공통 제어 정책](docs/CONTROL_PART_B.md): 추정 연속성·행동별 완료/인계·
+active/pending 전환과 raw LiDAR 안전 감시를 기존 GoToPose에 연결했습니다. MuJoCo 우선 검증이며 실물은 미검증입니다.
+
+이전 단계의 이동 제어 분석은 [Phase 0/1 기준선 기록](docs/CONTROL_PHASE0_PHASE1.md)을 참고하세요.
+MuJoCo 우선 검증, Gazebo 업데이트는 보류합니다. 기존 dirty 기준선과 기본 주행 데이터를 보존하고
+activation 누락/취소 worker 진단을 추가했습니다. 기본 이동 안정화와 신규 다중 제어기 개발은 진행 중입니다.
+
 - **올인원 보정 UI:** 프로젝트 생성/저장/재열기, 측정 기록·사진 추가/분류/삭제·재계산,
   내부/바닥 보드/바퀴 등 보정과 센서 모니터·경기 알고리즘 기반 공 검토를 제공합니다.
   JPEG 미리보기와 원본 한 프레임 서비스 촬영을 분리했고 `-webcam` 로컬 리허설도 지원합니다.
   [보정 실행·측정 안내](src/pinky_soccer_calibration/ROS_UI.md)
 - **경기 실행·인식:** 실물/Gazebo/MuJoCo 공통 실행, RViz와 원본/공 표시/마스크 창,
-  조명·부분 가림에 대응하는 단일 공 검출을 연결했습니다.
+  공통 HLS·원호 피팅 공 검출과 기존 거리/캘리브레이션 보존을 연결했습니다.
+  [거리 보존·보정 적용 검증](docs/BALL_HLS_DISTANCE.md)
   [경기 실행](src/pinky_soccer_viz/GAMEPLAY.md)
-- **자기 위치:** LiDAR 지도·AMCL에 골대 색/지자기 방향 확인을 보조로 연결했습니다.
+- **자기 위치:** 실물·MuJoCo·Gazebo가 같은 직사각 외벽·초기 HLS·IMU·odom 경로를 사용합니다. 기존 AMCL은 선택 경로로 보존합니다.
   실내 자기 간섭과 실제 장착·시간 동기화 검증은 남아 있습니다.
   [위치 추정](src/pinky_soccer_world_model/LOCALIZATION.md)
 - **경기장·물성:** 제2 경기장(내부1820×1220mm/외벽200mm)·5mm 골대 판 제작 도면,
@@ -109,3 +117,19 @@ CSV includes rolling RTF, clock Hz/age/state, simulation time and wall elapsed
 from the first recorded sample. The summary reports the RTF over recorded samples.
 Real robot runs leave those columns empty. These are observer-side measurements;
 DDS delivery jitter or dropped messages can affect the displayed clock rate.
+
+### 실물 GoToPose 오프라인 진단
+
+실물 경기의 새 기본 시작 단계는 [직사각 외곽·골색·IMU 자기위치 보정](src/pinky_soccer_world_model/STARTUP_LOCALIZATION.md)입니다.
+런치/연결 후 데이터만 수신하다가 `localization/calibrate` 신호 또는 보정 창의 R을 받아
+초록 점멸/저속 회전으로 양 골대 기준을 저장하고 완료되면 팀 LED와 MPC 명령 통과로 전환합니다.
+PC 코드만 변경하며 로봇은 기존 센서/LED 서비스를 사용합니다. 세 환경 기본은 같은 rectangle이며, [통합 검증과 Gazebo 구동 제한](docs/LIGHTWEIGHT_LOCALIZATION.md)을 확인하세요.
+
+전진·감속 반복을 조사하는 읽기 전용 ROS bag 분석기는
+`scripts/analyze_gotopose_bag.py`입니다. 속도 명령·watchdog 출력·원시/병합 바퀴 피드백·MPC 시간·위치 추정을
+같은 수신 시간축으로 그립니다. 수집 명령과 해석 한계는 [진단 절차](docs/GOTOPOSE_DIAGNOSTICS.md)를 참고하세요.
+제어기 설정·가중치·안전 정지·주기를 변경하거나 주행 명령을 발행하지 않습니다.
+
+상대 인식·단일 추적·고정 원/속도 화살표의 실행과 검증은 [OPPONENT_TRACKING.md](docs/OPPONENT_TRACKING.md)를 참고하세요.
+
+기본 경기 운영은 [준비→보정→팀 시작 위치→READY→경기 시작](docs/MATCH_PREPARATION.md)입니다. 실물·MuJoCo·Gazebo 공통 상태 관리자와 LED를 사용합니다.

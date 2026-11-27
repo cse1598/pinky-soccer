@@ -78,6 +78,7 @@ class VerifierNode(Node):
     def __init__(self):
         super().__init__('behavior_verifier')
         p = self.declare_parameter
+        self.opponent_arrows = style.arrow_parameters(p)
         bt_share = get_package_share_directory('pinky_soccer_bt')
         self.catalog_path = p('catalog', os.path.join(bt_share, 'config',
                                                       'verify_catalog.yaml')).value
@@ -1105,12 +1106,13 @@ class VerifierApp:
             if opp.state == 2:
                 continue
             x, y, th = pose_of(opp)
-            half = style.OPPONENT_SIZE / 2
             dash = None if opp.state == 0 else (3, 2)
-            mp.polyline([(x - half, y - half), (x + half, y - half), (x + half, y + half),
-                         (x - half, y + half), (x - half, y - half)], fill=COLORS['opponent'],
-                        width=2, dash=dash)
-            mp.arrow((x, y, th), 0.1, COLORS['opponent'], dash=dash)
+            mp.circle(x, y, style.OPPONENT_RADIUS, outline=COLORS['opponent'],
+                      width=2, dash=dash)
+            vector = style.opponent_velocity(opp, **self.node.opponent_arrows)
+            if vector is not None:
+                mp.arrow((x, y, math.atan2(vector[1], vector[0])),
+                         math.hypot(*vector), '#ffe633', dash=dash)
             if cov:
                 mp.ellipse((x, y), opp.covariance, COLORS['opponent'])
         b = wm.ball
@@ -1142,7 +1144,8 @@ class VerifierApp:
         if 'self' in truth:
             mp.arrow(truth['self'], 0.13, COLORS['truth_self'], width=2)
         if 'opponent' in truth:
-            mp.arrow(truth['opponent'], 0.13, COLORS['truth_opp'], width=2)
+            mp.circle(*truth['opponent'][:2], style.OPPONENT_RADIUS,
+                      outline=COLORS['truth_opp'], width=2)
 
 
 def main(args=None):

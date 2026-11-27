@@ -1,4 +1,4 @@
-"""Detect the orange golf ball by HSV colour and publish its centre on the floor.
+"""Detect the orange golf ball by HLS arcs and reuse the original floor projection.
 
 Input  /camera/image_raw (BEST_EFFORT), /camera/camera_info
 Output /ball_detection (geometry_msgs/PointStamped, frame base_link, image stamp)
@@ -9,6 +9,7 @@ A YOLO detector can replace this node later by publishing the same topic.
 """
 
 from pathlib import Path
+import json
 from urllib.parse import unquote, urlparse
 
 from cv_bridge import CvBridge
@@ -24,8 +25,35 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
 from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import String
 from tf2_ros import Buffer, TransformException, TransformListener
 import yaml
+
+from .ball_offset import apply_ball_offset, load_ball_offset
+
+
+def observation_status(node, observation, header, point=None):
+    """Keep bearing evidence separate from a valid metric observation."""
+    publisher = getattr(node, 'status_pub', None)
+    if publisher is not None:
+        horizontal = None
+        if observation.bearing_uv is not None:
+            u = observation.bearing_uv[0]
+            width = observation.mask.shape[1]
+            u = width-1-u if getattr(node, 'rotated', False) else u
+            horizontal = u-(width-1)/2
+        publisher.publish(String(data=json.dumps(dict(
+            stamp=header.stamp.sec+header.stamp.nanosec/1e9,
+            image_frame=header.frame_id, bearing_valid=observation.bearing_valid,
+            bearing_uv=observation.bearing_uv, circle_valid=observation.distance_valid,
+            bearing_horizontal_px=horizontal, bearing_positive='image_right_after_rotation',
+            bearing_source='fitted_center' if observation.blob else 'visible_arc_centroid',
+            range_valid=point is not None, blob=observation.blob,
+            confidence=observation.confidence, arc_fraction=observation.arc_fraction,
+            radius_uncertainty_px=observation.radius_uncertainty_px,
+            fit_error_px=observation.fit_error_px, roi_top=observation.roi_top,
+            offset_xy_m=list(getattr(node, 'offset_xy', (0., 0.))),
+            offset_frame='base_link', offset_source=getattr(node, 'offset_source', 'none')))))
 
 
 def load_camera_yaml(path, _seen=None):
@@ -61,7 +89,7 @@ def transform_matrix(tf):
 
 
 class BallDetector(Node):
-    """HSV ball detector (YOLO-replaceable by keeping the output topic)."""
+    """Shared HLS detector with the existing metric PointStamped contract."""
 
     def __init__(self):
         super().__init__('ball_detector')
@@ -72,6 +100,10 @@ class BallDetector(Node):
             raise ValueError('hsv_ranges must hold groups of 6 numbers')
         self.ranges = [(tuple(flat[i:i + 3]), tuple(flat[i + 3:i + 6]))
                        for i in range(0, len(flat), 6)]
+        hls = list(p('hls_ranges', [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99]).value)
+        if not hls or len(hls) % 6:
+            raise ValueError('hls_ranges must hold groups of six H,L,S bounds')
+        self.hls_ranges = [(tuple(hls[i:i+3]), tuple(hls[i+3:i+6])) for i in range(0, len(hls), 6)]
         self.min_area = p('min_area_px', 12.0).value
         self.min_circularity = p('min_circularity', .72).value
         self.shape = {key: float(p(key, value).value)
@@ -81,12 +113,18 @@ class BallDetector(Node):
         self.robust_options = {key: float(p(key, value).value)
                                for key, value in ROBUST_DEFAULTS.items()}
         self.visual = BallImageDetector(
-            self.ranges, self.min_area, self.min_circularity, self.shape, self.robust_options)
+            self.ranges, self.min_area, self.min_circularity, self.shape, self.robust_options,
+            hls_ranges=self.hls_ranges)
         self.max_range = p('max_range', 2.5).value
         self.rotated = p('image_rotated_180', False).value
         self.floor_frame = p('floor_frame', 'base_footprint').value
         self.output_frame = p('output_frame', 'base_link').value
         camera_yaml = p('camera_yaml', '').value
+        self.offset_xy, self.offset_source = load_ball_offset(
+            p('ball_offset_source', '').value or camera_yaml,
+            simulation=bool(self.get_parameter('use_sim_time').value))
+        self.get_logger().info(f'Ball XY correction {self.offset_xy.tolist()} m in base_link; '
+                               f'source: {self.offset_source}')
         self.K = self.D = None
         self.allow_uncalibrated = p('allow_uncalibrated', False).value
         self.approximate_hfov = float(p('approximate_hfov_deg', 66.0).value)
@@ -104,6 +142,7 @@ class BallDetector(Node):
         self.tf = Buffer()
         self.listener = TransformListener(self.tf, self)
         self.pub = self.create_publisher(PointStamped, 'ball_detection', 10)
+        self.status_pub = self.create_publisher(String, 'ball_detection/status', qos_profile_sensor_data)
         self.debug_pub = (self.create_publisher(Image, 'ball_detection/debug_image',
                                                 qos_profile_sensor_data)
                           if p('publish_debug_image', False).value else None)
@@ -169,6 +208,7 @@ class BallDetector(Node):
                 debug_mask.header = msg.header
                 self.mask_pub.publish(debug_mask)
         if blob is None or self.K is None:
+            observation_status(self, observation, msg.header)
             return
         try:
             cam = self.tf.lookup_transform(self.floor_frame, msg.header.frame_id,
@@ -181,11 +221,23 @@ class BallDetector(Node):
                 out = self.tf.lookup_transform(self.output_frame, self.floor_frame, Time())
             except TransformException as exc:
                 self.get_logger().warn(f'No camera TF: {exc}', throttle_duration_sec=5.0)
+                observation_status(self, observation, msg.header)
                 return
         point = project_ball(blob, frame.shape, self.K, self.D, transform_matrix(cam),
                              transform_matrix(out), self.radius, self.max_range, self.rotated)
         if point is None:
+            observation_status(self, observation, msg.header)
             return
+        offset = getattr(self, 'offset_xy', (0., 0.))
+        rotation = None
+        if np.any(np.asarray(offset) != 0) and self.output_frame != 'base_link':
+            try:
+                rotation, _ = transform_matrix(self.tf.lookup_transform(self.output_frame, 'base_link', Time()))
+            except TransformException:
+                observation_status(self, observation, msg.header)
+                return
+        point = apply_ball_offset(point, offset, rotation)
+        observation_status(self, observation, msg.header, point)
         detection = PointStamped()
         detection.header.stamp = msg.header.stamp
         detection.header.frame_id = self.output_frame

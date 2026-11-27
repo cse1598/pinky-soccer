@@ -134,8 +134,12 @@ def setup(context):
                             'models': models, 'topics': topics}]))
 
     # ---------------------------------------------------------------- robots
-    base = {'simulation': True, 'target': sim, 'field_spec': str(spec),
+    base = {'preparation': flag('preparation', context),
+            'preparation_config': lc('preparation_config', context), 'simulation': True, 'target': sim, 'field_spec': str(spec),
             'localization': lc('localization', context),
+            'localization_config': lc('localization_config', context),
+            'ball_offset_source': lc('ball_offset_source', context),
+            'localization_debug': flag('localization_debug', context),
             'controller': lc('controller', context), 'mpc_backend': lc('mpc_backend', context),
              'mpc_damping_scale': float(lc('mpc_damping_scale', context)),
              'mpc_observer_mode': lc('mpc_observer_mode', context), 'max_lin': max_lin, 'max_ang': max_ang,
@@ -165,6 +169,8 @@ def setup(context):
             package='pinky_soccer_viz', executable='obstacle_driver', name='obstacle_driver',
             output='screen', parameters=[{
                 'use_sim_time': True, 'mode': mode,
+                'enable_topic': multi_robot.topic(name, 'preparation/playing')
+                    if base['preparation'] and base['localization'] == 'rectangle' else '',
                 'speed': float(lc('opponent_speed', context)),
                 'travel': float(lc('opponent_travel', context)),
                 'pose_topic': multi_robot.topic(opponent, 'ground_truth')}])])
@@ -173,6 +179,9 @@ def setup(context):
     out.append(Node(package='pinky_soccer_viz', executable='game_referee', name='game_referee',
                     output='screen', parameters=[{
                         'use_sim_time': True, 'field_spec': str(spec), 'source': 'truth',
+                        'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
+                            if base['preparation'] and base['localization'] == 'rectangle'
+                            else '/game/playing',
                         'reset_ball': True}]))
     return out
 
@@ -181,6 +190,8 @@ def generate_launch_description():
     auto = 'auto'
     return LaunchDescription([
         DeclareLaunchArgument('simulator', default_value='mujoco', description='mujoco|gazebo'),
+        DeclareLaunchArgument('preparation', default_value='true'),
+        DeclareLaunchArgument('preparation_config', default_value=''),
         DeclareLaunchArgument('field', default_value='rcj', choices=['rcj', 'hardboard']),
         DeclareLaunchArgument('robots', default_value='1', choices=['1', '2']),
         DeclareLaunchArgument('robot_name', default_value='',
@@ -207,8 +218,11 @@ def generate_launch_description():
         DeclareLaunchArgument('use_gpu', default_value='auto',
                               choices=['auto', 'true', 'false', 'nvidia', 'system']),
         DeclareLaunchArgument('headless', default_value='false'),
-        DeclareLaunchArgument('localization', default_value='lidar',
-                              choices=['lidar', 'odom_only']),
+        DeclareLaunchArgument('localization', default_value='rectangle',
+                              choices=['lidar', 'rectangle', 'odom_only']),
+        DeclareLaunchArgument('localization_config', default_value='auto'),
+        DeclareLaunchArgument('localization_debug', default_value='false'),
+        DeclareLaunchArgument('ball_offset_source', default_value='auto'),
         DeclareLaunchArgument('heading_record', default_value=''),
         DeclareLaunchArgument('initial_x', default_value=auto,
                               description='our start = kickoff pose (auto: own half, 0.4 m '

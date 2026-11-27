@@ -1,6 +1,10 @@
 # LiDAR·골대 색·지자기로 경기장 위치 추정
 
-`game.launch.py`의 기본 `localization:=lidar`는 세 환경에서 같은 구성을 사용합니다.
+2026-11-27: 실물·MuJoCo·Gazebo 기본은 같은 [직사각 외곽·HLS·IMU 시작 보정](STARTUP_LOCALIZATION.md)이다.
+`game.launch.py localization:=auto`는 세 환경에서 rectangle을 선택한다(Nav2 비교 옵션은 기존 lidar).
+아래는 명시적 `localization:=lidar`의 AMCL 경로 설명이다. 이번 시작 보정 추가는 PC 코드만 변경하며 로봇 소스 교체는 필요 없다.
+
+`game.launch.py`의 명시적 `localization:=lidar`는 세 환경에서 같은 구성을 사용합니다.
 기존 방식은 `localization:=odom_only`로 선택할 수 있습니다. AMCL은 경기장
 YAML에서 생성한 지도와 `/scan`을 비교하고, 바퀴 odom TF로 스캔 사이 움직임을
 예측합니다. `map → odom`은 AMCL만, `odom → base_footprint`는 기존 드라이버만

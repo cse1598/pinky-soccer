@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped
 from pinky_soccer_field.field_geometry import Field
 from pinky_soccer_msgs.msg import BehaviorGoal, WorldModel
 from pinky_soccer_viz.topview import TopView
+from pinky_soccer_viz import style
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -30,7 +31,7 @@ class WorldModelTopView(Node):
         p = self.declare_parameter
         field = Field.from_file(p('field_spec', '').value or None,
                                 p('our_goal_color', 'yellow').value)
-        self.view = TopView(field, p('px_per_m', 200.0).value)
+        self.view = TopView(field, p('px_per_m', 200.0).value, style.arrow_parameters(p))
         self.show_truth = p('show_ground_truth', True).value
         self.hfov = math.radians(p('camera_hfov_deg', 60.0).value)
         self.fov_range = p('fov_range', 1.5).value

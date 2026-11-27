@@ -47,15 +47,37 @@ def setup(context):
     initial = tuple(default[i] if arg(k) == 'auto' else number(k)
                     for i, k in enumerate(('initial_x', 'initial_y', 'initial_yaw')))
     nodes = multi_robot.dds_environment() + [LogInfo(
-        msg=f'REAL ROBOT {name or "(no namespace)"} team {color}: starts paused. Place robot at '
-        'its kickoff pose BEFORE launch. Publish /game/playing=true to move; false to stop.')]
+        msg=f'REAL ROBOT {name or "(no namespace)"} team {color}: starts paused. '+
+        ('Receive sensors until preparation/prepare (Trigger) or R; '
+         'calibrate, GoToPose to team start, then wait READY. preparation/stop stops motion. '
+         if arg('localization') == 'rectangle' else
+         'Place robot at its kickoff pose BEFORE launch. ')+
+        'preparation/start (or /game/playing=true) is accepted after READY; preparation/stop stops.')]
+    if arg('robot_host'):
+        if arg('robot_host') == 'local':
+            from launch.actions import IncludeLaunchDescription
+            from launch.launch_description_sources import PythonLaunchDescriptionSource
+            from pinky_soccer_viz.robot_stack import share
+            nodes.append(IncludeLaunchDescription(PythonLaunchDescriptionSource(
+                share('pinky_soccer_bringup', 'launch', 'robot.launch.py')),
+                launch_arguments={'robot_name': name, 'imu_enabled': 'true',
+                                  'led_enabled': 'true', 'calibration_profile': arg('robot_profile')}.items()))
+        else:
+            nodes.append(Node(package='pinky_soccer_viz', executable='remote_robot',
+                name='remote_robot', output='screen', arguments=['--host', arg('robot_host'),
+                    '--workspace', arg('robot_workspace'), '--name', name,
+                    '--profile', arg('robot_profile')]))
     nodes += decision_stack(RobotConfig(
+        preparation=flag('preparation'), preparation_config=arg('preparation_config'),
         name=name, color=color, initial=initial, simulation=False, target='real',
         field_spec=str(field_spec), localization=arg('localization'),
+        localization_config=arg('localization_config'),
+        localization_debug=flag('localization_debug'),
         controller=arg('controller'), mpc_backend=arg('mpc_backend'),
         mpc_damping_scale=float(arg('mpc_damping_scale')),
         mpc_observer_mode=arg('mpc_observer_mode'), max_lin=max_lin, max_ang=max_ang,
         calibration_profile=arg('calibration_profile'),
+        ball_offset_source=arg('ball_offset_source'),
         identification=arg('identification'),
         wheel_feedback=flag('wheel_feedback'), verify=flag('verify'), ui=True,
         headless=flag('headless'), groot2=False, heading_record=arg('heading_record'),
@@ -71,14 +93,21 @@ def setup(context):
                           name='game_referee', output='screen', parameters=[{
                               'use_sim_time': False, 'field_spec': str(field_spec),
                               'source': 'world_model', 'reset_ball': False,
+                              'playing_input_topic': multi_robot.topic(name, 'preparation/playing')
+                                  if flag('preparation') and arg('localization') == 'rectangle' else '/game/playing',
                               'world_model_topics': [multi_robot.topic(name, 'world_model')]}]))
     return nodes
 
 
 def generate_launch_description():
-    """Never launch a simulator, sensor driver or automatic start command."""
+    """No simulator/sensor drivers; rectangle startup owns the initial slow spin."""
     return LaunchDescription([
+        DeclareLaunchArgument('preparation', default_value='true'),
+        DeclareLaunchArgument('preparation_config', default_value=''),
         DeclareLaunchArgument('field', default_value='hardboard', choices=['rcj', 'hardboard']),
+        DeclareLaunchArgument('robot_host', default_value='', description='SSH user@host; local for on-robot stack; empty for existing external bringup'),
+        DeclareLaunchArgument('robot_workspace', default_value='pinky-soccer'),
+        DeclareLaunchArgument('robot_profile', default_value=''),
         DeclareLaunchArgument('robot_name', default_value='',
                               description='namespace; must match the robot bringup'),
         DeclareLaunchArgument('team', default_value='', choices=['', 'Y', 'B'],
@@ -97,7 +126,11 @@ def generate_launch_description():
         DeclareLaunchArgument('max_lin', default_value='0.08'),
         DeclareLaunchArgument('max_ang', default_value='0.5'),
         DeclareLaunchArgument('headless', default_value='false'),
-        DeclareLaunchArgument('localization', default_value='lidar', choices=['lidar', 'odom_only']),
+        DeclareLaunchArgument('localization', default_value='rectangle',
+                              choices=['rectangle', 'lidar', 'odom_only']),
+        DeclareLaunchArgument('localization_config', default_value='auto'),
+        DeclareLaunchArgument('localization_debug', default_value='false'),
+        DeclareLaunchArgument('ball_offset_source', default_value='auto'),
         DeclareLaunchArgument('heading_record', default_value=''),
         DeclareLaunchArgument('mpc_observer_mode', default_value='off', choices=['off','align','ndob']),
         DeclareLaunchArgument('mpc_damping_scale', default_value='0.0',
@@ -108,7 +141,8 @@ def generate_launch_description():
                               description='NMPC uses /joint_states wheel speeds (needs the '
                               'right wheel sign -1 confirmed; open-loop estimate otherwise)'),
         DeclareLaunchArgument('identification', default_value='',
-                              description='validated real robot wheel response YAML'),
+                              description='empty/auto: pinky-pro measured tau; none: original tau; '
+                              'or mpc_motor_response_schema YAML'),
         DeclareLaunchArgument('calibration_profile', default_value='',
                               description='robot profile.yaml for the NMPC model (empty: '
                               'official defaults, marked unmeasured)'),

@@ -15,8 +15,9 @@ import yaml
 GREEN = (0.035, 0.35, 0.075, 1)
 BLACK = (0.025, 0.025, 0.025, 1)
 WHITE = (0.95, 0.95, 0.95, 1)
-BLUE = (0.08, 0.3, 0.95, 1)
-YELLOW = (1, 0.85, 0.04, 1)
+# Mean onboard-camera RGB supplied by the user (2026-11-27).
+BLUE = (5/255, 75/255, 134/255, 1)
+YELLOW = (237/255, 229/255, 4/255, 1)
 
 
 def vector(values):

@@ -1,5 +1,7 @@
 # 실물·Gazebo·MuJoCo 경기 실행
 
+현재 기본 rectangle 경기는 [경기 준비·LED 절차](../../docs/MATCH_PREPARATION.md)를 먼저 수행합니다. 준비 신호와 경기 시작은 분리되며 READY 전에는 시작이 차단됩니다. 실물 robot_host 통합 실행에는 새 자체 bringup 배포가 필요합니다.
+
 세 환경 모두 `game.launch.py` 실행 → RViz 경기장 모니터 → 시작 신호 → 자동 플레이 순서입니다.
 
 기본 `headless:=false`이면 **RViz와 카메라 창이 함께 열립니다.** 카메라 창은

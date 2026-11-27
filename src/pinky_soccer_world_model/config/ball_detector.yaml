@@ -1,27 +1,33 @@
-# HSV ball detector. All thresholds are ASSUMPTIONS (sim ball rgba 1 0.30 0); measure on the
-# real orange golf ball under the venue lighting and update.
+# Shared HLS/arc detector. K/D, physical radius and mounting remain unchanged.
 ball_detector:
   ros__parameters:
     ball_radius: 0.02135           # user-measured diameter 42.7 mm
     # Groups of 6: [h_lo, s_lo, v_lo, h_hi, s_hi, v_hi], OpenCV HSV (H 0..180). Assumption.
-    hsv_ranges: [3, 160, 70, 19, 255, 255]  # seed hue; recovery relaxes S/V and balances white
+    hsv_ranges: [3, 160, 70, 19, 255, 255]  # legacy setting accepted; active mask is HLS below
+    # Active HLS bounds: H 0..180, L/S 0..255. Includes dim/simulation orange;
+    # old hsv_ranges stays loadable for archived settings, not used for masking.
+    hls_ranges: [3, 15, 100, 19, 220, 255, 3, 65, 60, 19, 160, 99]
     min_area_px: 12.0               # assumption
-    # Strict compact-contour proposals; partial-arc proposals use the options below.
+    # Legacy compact-shape settings stay loadable; min_color_fraction also guards arc fill.
     min_circularity: 0.72
     min_circle_fill: 0.72           # contour area / enclosing circle area; square ~=0.64
     min_axis_ratio: 0.75            # min bbox side / max side
     min_color_fraction: 0.55        # orange pixels within circle; tolerate logo/highlights
     max_radial_error: 0.15          # outline-to-circle RMS / radius
-    # Below: independent visible-arc recovery even when colour merges with a table.
+    # Current visible-arc support. No image gradients/Hough/CLAHE/white balance.
     min_arc_fraction: 0.42          # supported circular edge directions, not visible area
-    min_seed_fraction: 0.10         # remaining orange identity evidence
-    min_explained_fraction: 0.42    # orange/shadow/highlight support inside recovered circle
+    min_seed_fraction: 0.10         # legacy setting retained for archived YAMLs
+    min_explained_fraction: 0.42    # legacy setting retained for archived YAMLs
     min_detection_confidence: 0.48  # heuristic score, NOT a calibrated probability
     visual_memory_s: 0.7           # association only; absent evidence still returns NO BALL
-    detection_top_fraction: 0.3333333333333333  # ignore upper third; 0 = full frame
+    detection_top_fraction: 0.2708333333333333  # y>=130 at 640x480; UV restored before projection
+    min_bearing_arc_fraction: 0.16  # shorter arcs may produce pixels only, never metric output
+    max_radius_uncertainty: 0.08    # relative one-sigma LS radius limit (plus >=42% arc support)
+    min_contiguous_arc_fraction: 0.25
     max_range: 2.5                  # [m] reject hits farther than the field diagonal
     image_rotated_180: false        # real camera: verify orientation (see MEMORY open question)
     camera_yaml: ""                 # optional camera YAML or calibration profile.yaml; else camera_info
+    ball_offset_source: ""          # reviewed profile; else camera_yaml/sibling profile; no implicit project
     publish_debug_image: false      # pixel preview also works without intrinsics or TF
     allow_uncalibrated: false       # explicit TEST ONLY opt-in; never a measured calibration
     approximate_hfov_deg: 66.0      # ASSUMPTION: official sim HFOV 1.1519 rad, not measured

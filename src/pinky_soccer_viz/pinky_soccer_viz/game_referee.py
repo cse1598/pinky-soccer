@@ -65,7 +65,8 @@ class GameReferee(Node):
         self.goal_pub = self.create_publisher(String, '/game/goal', 10)
         self.score_pub = self.create_publisher(String, '/game/score', latched)
         self.ball_pub = self.create_publisher(Point, '/sim/set_ball', 10)
-        self.create_subscription(Bool, '/game/playing', self.on_playing, 10)
+        self.create_subscription(Bool, p('playing_input_topic', '/game/playing').value,
+                                 self.on_playing, 10)
         if self.source == 'truth':
             self.create_subscription(PoseStamped, p('ball_truth_topic',
                                                     '/sim/ball_ground_truth').value,

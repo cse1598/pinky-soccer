@@ -20,6 +20,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 
 MODES = ('static', 'lateral', 'longitudinal')
 
@@ -92,6 +93,11 @@ class ObstacleDriver(Node):
             raise ValueError(f'mode must be one of {MODES}')
         self.shuttle = Shuttle(p('speed', 0.10).value, p('travel', 0.4).value)
         self.odom = None
+        enable_topic = p('enable_topic', '').value
+        self.enabled = not bool(enable_topic)
+        if enable_topic:
+            self.create_subscription(Bool, enable_topic,
+                lambda msg: setattr(self, 'enabled', msg.data), 10)
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
         pose_topic = p('pose_topic', '').value
         if pose_topic:
@@ -114,7 +120,7 @@ class ObstacleDriver(Node):
     def tick(self):
         """Publish the obstacle command."""
         cmd = Twist()
-        if self.mode != 'static' and self.odom is not None:
+        if self.enabled and self.mode != 'static' and self.odom is not None:
             if self.shuttle.start is None:
                 self.shuttle.begin(*self.odom)
             cmd.linear.x = self.shuttle.command(self.odom[0], self.odom[1])

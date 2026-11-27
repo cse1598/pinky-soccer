@@ -187,8 +187,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.08 0.3 0.95 1</ambient>
-            <diffuse>0.08 0.3 0.95 1</diffuse>
+            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
+            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -216,8 +216,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.08 0.3 0.95 1</ambient>
-            <diffuse>0.08 0.3 0.95 1</diffuse>
+            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
+            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -245,8 +245,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.08 0.3 0.95 1</ambient>
-            <diffuse>0.08 0.3 0.95 1</diffuse>
+            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
+            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -274,8 +274,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.08 0.3 0.95 1</ambient>
-            <diffuse>0.08 0.3 0.95 1</diffuse>
+            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
+            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -287,8 +287,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.08 0.3 0.95 1</ambient>
-            <diffuse>0.08 0.3 0.95 1</diffuse>
+            <ambient>0.01960784314 0.2941176471 0.5254901961 1</ambient>
+            <diffuse>0.01960784314 0.2941176471 0.5254901961 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -316,8 +316,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>1 0.85 0.04 1</ambient>
-            <diffuse>1 0.85 0.04 1</diffuse>
+            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
+            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -345,8 +345,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>1 0.85 0.04 1</ambient>
-            <diffuse>1 0.85 0.04 1</diffuse>
+            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
+            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -374,8 +374,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>1 0.85 0.04 1</ambient>
-            <diffuse>1 0.85 0.04 1</diffuse>
+            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
+            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -403,8 +403,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>1 0.85 0.04 1</ambient>
-            <diffuse>1 0.85 0.04 1</diffuse>
+            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
+            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>
@@ -416,8 +416,8 @@
             </box>
           </geometry>
           <material>
-            <ambient>1 0.85 0.04 1</ambient>
-            <diffuse>1 0.85 0.04 1</diffuse>
+            <ambient>0.9294117647 0.8980392157 0.01568627451 1</ambient>
+            <diffuse>0.9294117647 0.8980392157 0.01568627451 1</diffuse>
             <specular>0 0 0 1</specular>
           </material>
         </visual>

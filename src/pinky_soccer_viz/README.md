@@ -1,7 +1,13 @@
 # pinky_soccer_viz
 
+실물·MuJoCo·Gazebo에서 같은 [직사각 외곽·HLS·IMU 자기위치 보정](../pinky_soccer_world_model/STARTUP_LOCALIZATION.md)을 사용합니다.
+런치 후 정지/센서 수신 상태에서 준비 창 또는 `preparation/prepare`로 보정을 요청합니다.
+초록 점멸은 시작 위치 이동까지 유지하고, 도착/정지 후 READY에서 팀 LED로 바뀝니다.
+경기는 별도 시작 신호가 필요합니다. [실행·LED·검증](../../docs/MATCH_PREPARATION.md). S=정지/R=준비·재시도. `localization_debug:=true`로 외벽·제외점·HLS 마스크를 확인합니다.
+기존 AMCL은 명시적 `localization:=lidar` 및 기존 Nav2 비교에서 유지합니다.
+
 실물·Gazebo·MuJoCo 경기 launch는 기본 RViz와 `game_camera_view`를 함께 엽니다.
-카메라 창은 원본/실제 공 검출 표시/HSV 마스크를 동기화해 보여주고 수신 중단도 표시합니다.
+카메라 창은 원본/실제 공 검출 표시/HLS 마스크를 동기화해 보여주고 수신 중단도 표시합니다.
 `headless:=true`이면 GUI를 열지 않습니다. 자세한 사용법은 [GAMEPLAY.md](GAMEPLAY.md).
 
 세 환경 공통 실행은 [GAMEPLAY.md](GAMEPLAY.md)를 참고합니다.
@@ -50,7 +56,7 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 | `our_goal_color` | `yellow` | |
 | `snapshot_dir`, `snapshot_period` | 빈 값, 0 | 탑뷰 PNG 저장(초 주기) |
 
-`sim_field.launch.py`는 `pinky_soccer_sim`의 launch를 include하고 `field` 선택을 전달합니다. 그 위에 `ball_detector`, 기본 LiDAR AMCL·골색/지자기 방향 확인, `world_model_node`(TF), `bt_node`, `reactive_controller`, UI를 띄웁니다. `localization:=odom_only`로 기존 방식을 선택할 수 있습니다. 월드 모델과 두 UI의 `field_spec`도 선택한 YAML로 맞춥니다. [위치 추정](../pinky_soccer_world_model/LOCALIZATION.md)·[제2 경기장 제작 치수](../pinky_soccer_sim/HARDBOARD_FIELD.md)를 참고하세요.
+`sim_field.launch.py`는 시뮬 센서 launch와 `field` 선택을 전달하고, 공통 rectangle Localization·기존 공 인식·World Model·BT·제어·UI를 연결합니다. `localization:=lidar|odom_only`로 이전 경로를 선택할 수 있습니다. 월드 모델과 UI도 같은 `field_spec`을 사용합니다. [시작 절차](../pinky_soccer_world_model/STARTUP_LOCALIZATION.md)·[제2 경기장 치수](../pinky_soccer_sim/HARDBOARD_FIELD.md)를 참고하세요.
 
 ## UI 표시 규칙 (두 UI 공통, `style.py`)
 
@@ -58,7 +64,7 @@ ros2 topic pub --once /game/playing std_msgs/msg/Bool "{data: true}"
 |---|---|---|---|
 | 나 | 실선 로봇 + 방향 화살표 | 위치 공분산 타원 추가 | — |
 | 공 | 진한 원 | 흐린 원 + 공분산 타원(2σ) | 마지막 위치에 X |
-| 상대 | 진한 박스 | 흐린 박스 + 마지막 관측 후 경과 시간 | 숨김 |
+| 상대 | 고정 외곽 크기 원 + 속도 비례 화살표 | 흐린/점선 원 + 경과 시간·속도 화살표 | 숨김 |
 
 추가: 경기장(`pinky_soccer_field`: 외벽, 흰 선, 노랑/파랑 골대, 페널티 구역, 중앙 원, 중립점), 카메라 시야 부채꼴(`camera_info`의 K로 계산, 없으면 60° 가정), 공 예측 궤적(현재 속도로 1.5초, 점선), `ball_search_grid` 히트맵, `/behavior_goal`의 target(자홍 +)과 `planned_path`, 현재 branch/action. 시뮬레이터 실제 위치(`/ground_truth` 로봇, `/sim/ball_ground_truth` 공)는 회색 점으로 겹칩니다 (`show_ground_truth`, 평가용, 판단 입력 아님).
 
@@ -93,3 +99,5 @@ ros2 run pinky_soccer_viz soccer_trial --ros-args -p use_sim_time:=true -p timeo
 - RViz2·rqt 실행 및 OpenGL 초기화, 히트맵 마커 사용 후 indexed texture 셰이더 오류 해소를 확인했습니다. 실제 경기 중 표시의 현장 시각 검증은 필요합니다.
 - 페널티 구역의 둥근 모서리는 사각형으로 그립니다.
 - 히트맵은 경기장 선 위에도 반투명으로 덮입니다.
+
+상대 원의 반지름은 기존 Pinky 외곽 정의에서 계산하며 군집 크기로 바뀌지 않습니다. 화살표는 `pose.theta`가 아닌 `(velocity.x, velocity.y)`이며 정지 시 숨깁니다. 세 UI의 `opponents.velocity_arrow_{scale,min_speed,max_length}` 기본값은 `0.5,0.02,0.35`입니다. [공통 추적·검증](../../docs/OPPONENT_TRACKING.md).

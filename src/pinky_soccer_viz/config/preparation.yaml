@@ -1,0 +1,13 @@
+/**/match_preparation:
+  ros__parameters:
+    # -1: existing team kickoff pose (+/-0.4m). >=0: metres inward from own goal line.
+    start_goal_offset: -1.0
+    # Optional start_pose: [x, y, yaw], map metres/radians. Default faces the opponent.
+    start_avoid_walls: true
+    start_avoid_opponents: true
+    start_avoid_ball: false
+    preparation_timeout: 90.0
+    move_timeout: 60.0
+    stop_settle_sec: 0.3
+    stop_linear_mps: 0.01
+    stop_angular_rps: 0.05

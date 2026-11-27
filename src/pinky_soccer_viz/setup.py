@@ -14,6 +14,7 @@ setup(
                                    'GAMEPLAY.md', 'VERIFY.md']),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
         ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
+        ('share/' + package_name + '/config', glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,8 +25,12 @@ setup(
     extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
+            'match_preparation = pinky_soccer_viz.match_preparation:main',
+            'preparation_view = pinky_soccer_viz.preparation_view:main',
+            'remote_robot = pinky_soccer_viz.remote_robot:main',
             'world_model_viz = pinky_soccer_viz.world_model_viz:main',
             'game_camera_view = pinky_soccer_viz.game_camera_view:main',
+            'localization_view = pinky_soccer_viz.localization_view:main',
             'world_model_topview = pinky_soccer_viz.world_model_topview:main',
             'mujoco_eval_bridge = pinky_soccer_viz.mujoco_eval_bridge:main',
             'soccer_trial = pinky_soccer_viz.soccer_trial:main',

@@ -19,8 +19,9 @@ def stamp_sec(t):
 class TopView:
     """Draws the field once and overlays the dynamic world state each frame."""
 
-    def __init__(self, field, px_per_m=200.0):
+    def __init__(self, field, px_per_m=200.0, opponent_arrows=None):
         self.field = field
+        self.opponent_arrows = opponent_arrows or {}
         self.s = px_per_m
         walls = field.inner_walls
         t = field.spec['wall_thickness']
@@ -158,18 +159,20 @@ class TopView:
     def _draw_opponent(self, img, obj, now):
         if obj.state == LOST:
             return
-        half = style.OPPONENT_SIZE / 2
-        a, b = self.px(obj.pose.x - half, obj.pose.y + half), \
-            self.px(obj.pose.x + half, obj.pose.y - half)
-        if obj.state == OBSERVED:
-            cv2.rectangle(img, a, b, bgr('opponent'), -1)
-        else:
-            overlay = img.copy()
-            cv2.rectangle(overlay, a, b, bgr('opponent'), -1)
-            self._blend(img, overlay, style.FAINT_ALPHA)
-            age = max(0.0, now - stamp_sec(obj.last_seen))
-            cv2.putText(img, f'{age:.1f}s', (a[0], a[1] - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                        bgr('opponent'), 1, cv2.LINE_AA)
+        centre = self.px(obj.pose.x, obj.pose.y)
+        radius = self.m(style.OPPONENT_RADIUS)
+        overlay = img.copy()
+        cv2.circle(overlay, centre, radius, bgr('opponent'), -1, cv2.LINE_AA)
+        self._blend(img, overlay, 1. if obj.state == OBSERVED else style.FAINT_ALPHA)
+        vector = style.opponent_velocity(obj, **self.opponent_arrows)
+        if vector is not None:
+            tip = self.px(obj.pose.x+vector[0], obj.pose.y+vector[1])
+            cv2.arrowedLine(img, centre, tip, bgr('opponent_velocity'), 2,
+                            cv2.LINE_AA, tipLength=.25)
+        if obj.state != OBSERVED:
+            age = max(0.0, now-stamp_sec(obj.last_seen))
+            cv2.putText(img, f'{age:.1f}s', (centre[0], centre[1]-radius-3),
+                        cv2.FONT_HERSHEY_SIMPLEX, .4, bgr('opponent'), 1, cv2.LINE_AA)
 
     def _draw_goal(self, img, goal):
         if goal.mode == 2:      # STOP

@@ -4,12 +4,13 @@
 |----------|--------------------------|-----------------------------------|-------------------|
 | self     | solid robot + arrow      | + covariance ellipse              | -                 |
 | ball     | solid circle             | faint circle + covariance ellipse | X at last pose    |
-| opponent | solid box                | faint box + seconds since seen    | hidden            |
+| opponent | solid circle + velocity  | faint circle + seconds since seen    | hidden            |
 """
 
 import math
 
 import numpy as np
+from pinky_soccer_mpc.collision_geometry import FOOTPRINT_RECTS
 
 OBSERVED, ESTIMATED, LOST = 0, 1, 2
 STATE_NAMES = {OBSERVED: 'OBSERVED', ESTIMATED: 'ESTIMATED', LOST: 'LOST'}
@@ -24,6 +25,7 @@ COLORS = {
     'self': (0.10, 0.80, 0.95),
     'ball': (1.00, 0.30, 0.00),
     'opponent': (0.85, 0.15, 0.15),
+    'opponent_velocity': (1.0, 0.9, 0.2),
     'fov': (1.00, 1.00, 0.60),
     'target': (0.90, 0.10, 0.90),
     'path': (0.90, 0.40, 0.90),
@@ -34,7 +36,28 @@ SOLID_ALPHA, FAINT_ALPHA = 1.0, 0.35
 ELLIPSE_SIGMA = 2.0          # covariance ellipses are drawn at 2 sigma
 PREDICTION_SEC = 1.5         # ball prediction horizon (constant velocity, dotted)
 ROBOT_RADIUS = 0.06          # [m] drawing only
-OPPONENT_SIZE = 0.12         # [m] drawing only
+# Existing collision geometry documents Pinky chassis/wheels/bumper extents.
+# This is a UI envelope around the observed surface mean, NOT an MPC safety radius.
+OPPONENT_RADIUS = max(math.hypot(x, y) for x0, y0, x1, y1 in FOOTPRINT_RECTS
+                      for x in (x0, x1) for y in (y0, y1))
+OPPONENT_SIZE = 2*OPPONENT_RADIUS  # compatibility for display consumers
+
+
+def arrow_parameters(declare):
+    """Shared ROS display settings; length [m] = scale [s] * speed [m/s]."""
+    return {key: declare('opponents.velocity_arrow_'+key, value).value
+            for key, value in dict(scale=.5, min_speed=.02, max_length=.35).items()}
+
+
+def opponent_velocity(obj, scale=.5, min_speed=.02, max_length=.35):
+    """Map displacement vector for the movement arrow, independent of pose.theta."""
+    v = np.array((obj.velocity.x, obj.velocity.y), float)
+    speed = float(np.linalg.norm(v))
+    if (obj.state == LOST or obj.confidence <= 0 or not np.isfinite(speed)
+            or speed < min_speed or speed == 0 or scale <= 0 or max_length <= 0):
+        return None
+    return v*(min(scale*speed, max_length)/speed)
+
 
 
 def bgr(name, scale=1.0):

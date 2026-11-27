@@ -110,8 +110,9 @@ std::string nodeXml(const BT::BehaviorTreeFactory& factory, const NodeCall& call
     }
     given.insert(name);
     const bool boolean = ports.at(name).type() == typeid(bool);
+    const bool text = ports.at(name).type() == typeid(std::string);
     xml += " " + name + "=\"" +
-           (boolean ? boolLiteral(name, value) : numberLiteral(name, value)) + "\"";
+           (boolean ? boolLiteral(name, value) : text ? escape(value) : numberLiteral(name, value)) + "\"";
   }
   for(const auto& [name, info] : ports)
   {

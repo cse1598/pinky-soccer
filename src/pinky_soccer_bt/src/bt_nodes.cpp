@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <atomic>
+#include <set>
+#include <behaviortree_cpp/contrib/json.hpp>
 
 namespace pinky_soccer_bt
 {
@@ -131,7 +133,7 @@ NodeStatus ReadGameState::onTick(const std::shared_ptr<std_msgs::msg::Bool>& las
 PublishBehaviorGoal::PublishBehaviorGoal(const std::string& name, const BT::NodeConfig& conf,
                                          const BT::RosNodeParams& params)
   : BT::RosTopicPubNode<BehaviorGoal>(name, conf, params)
-{}
+{ policy_pub_ = node_->create_publisher<std_msgs::msg::String>("motion/policy", 10); }
 
 PortsList PublishBehaviorGoal::providedPorts()
 {
@@ -148,6 +150,11 @@ bool PublishBehaviorGoal::setMessage(BehaviorGoal& msg)
   msg = goal;
   msg.header.stamp = node_->now();
   msg.header.frame_id = "map";
+  std::string policy;
+  if(goal.action == "GoToPose" && config().blackboard->get("@motion_policy", policy))
+  {
+    std_msgs::msg::String message; message.data = policy; policy_pub_->publish(message);
+  }
   return true;
 }
 
@@ -423,7 +430,15 @@ PortsList GoToPose::providedPorts()
           // Optional NMPC collision constraints; all false = the unchanged GoToPose.
           InputPort<bool>("avoid_walls", false, "Keep the footprint off walls and goals"),
           InputPort<bool>("avoid_opponents", false, "Keep clear of tracked opponents"),
-          InputPort<bool>("avoid_ball", false, "Keep clear of the ball")};
+          InputPort<bool>("avoid_ball", false, "Keep clear of the ball"),
+          InputPort<std::string>("completion_mode", "DEFAULT", "DEFAULT/LEGACY/STRICT_STOP/PRACTICAL_STOP/PASS_THROUGH/HANDOFF"),
+          InputPort<double>("task_position", 0.02, "Task position acceptance [m]"),
+          InputPort<double>("task_heading", 0.05235987755982989, "Task heading acceptance [rad]"),
+          InputPort<double>("task_dwell", 0.1, "PRACTICAL_STOP standstill duration [s]"),
+          InputPort<bool>("next_ready", false, "Successor contract available; controller must prepare its safe trajectory"),
+          InputPort<double>("next_x", 0.0, "Successor map X [m]"),
+          InputPort<double>("next_y", 0.0, "Successor map Y [m]"),
+          InputPort<double>("next_theta", 0.0, "Successor map heading [rad]")};
 }
 
 NodeStatus GoToPose::onStart()
@@ -436,6 +451,15 @@ NodeStatus GoToPose::onStart()
   avoid_walls_ = input<bool>("avoid_walls");
   avoid_opponents_ = input<bool>("avoid_opponents");
   avoid_ball_ = input<bool>("avoid_ball");
+  completion_mode_ = input<std::string>("completion_mode");
+  const std::set<std::string> modes{"DEFAULT", "LEGACY", "STRICT_STOP", "PRACTICAL_STOP", "PASS_THROUGH", "HANDOFF"};
+  if(!modes.count(completion_mode_)) throw BT::RuntimeError("invalid completion_mode");
+  nlohmann::json policy{{"goal_id", std::to_string(goal_id_)}, {"mode", completion_mode_},
+      {"position", input<double>("task_position")}, {"heading", input<double>("task_heading")},
+      {"dwell", input<double>("task_dwell")}, {"next_ready", input<bool>("next_ready")}};
+  if(input<bool>("next_ready")) policy["next_target"] =
+      {input<double>("next_x"), input<double>("next_y"), input<double>("next_theta")};
+  config().blackboard->set("@motion_policy", policy.dump());
   started_ = std::chrono::steady_clock::now();
   return update();
 }
@@ -467,7 +491,9 @@ NodeStatus GoToPose::update()
   {
     if(report.result.state == MotionResult::SUCCESS)
     {
-      setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
+      if(report.result.reason != "handoff_ready" ||
+         (completion_mode_ != "PASS_THROUGH" && completion_mode_ != "HANDOFF"))
+        setGoal(BehaviorGoal::STOP, Pose2{}, 0.0);
       return NodeStatus::SUCCESS;
     }
     if(report.result.state == MotionResult::FAILURE)

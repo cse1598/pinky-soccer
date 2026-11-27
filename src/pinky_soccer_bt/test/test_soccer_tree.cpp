@@ -265,3 +265,24 @@ TEST_F(TreeTest, KickoffReturnsToStartPose)
   }
   EXPECT_EQ(g.action, "StopRobot");   // paused without kickoff: stop in place
 }
+
+TEST_F(TreeTest, HandoffSuccessDoesNotInsertStopButExplicitHaltStillStops)
+{
+  factory_.registerBehaviorTreeFromText(buildVerifyXml(factory_, "HandoffGoTo",
+      {"GoToPose", {{"x", "0.1"}, {"y", "0"}, {"completion_mode", "HANDOFF"},
+       {"next_ready", "true"}, {"next_x", "0.3"}}}, "/world_model"));
+  auto tree = factory_.createTree("HandoffGoTo", bb_);
+  auto g = decideWith(tree, world(0, 0, 0, 0.3, 0, TrackedObject::LOST, false));
+  MotionResult result; result.goal_id = g.goal_id; result.state = MotionResult::SUCCESS;
+  result.reason = "handoff_ready";
+  bb_->set("motion_result", ReceivedMotionResult{result, std::chrono::steady_clock::now()});
+  EXPECT_EQ(tree.tickOnce(), BT::NodeStatus::SUCCESS);
+  ASSERT_TRUE(bb_->get("goal", g));
+  EXPECT_EQ(g.mode, BehaviorGoal::NAVIGATE);
+  // An explicitly canceled running request retains the original stop behavior.
+  tree.haltTree();
+  bb_->set("motion_result", ReceivedMotionResult{});
+  tree.tickOnce();tree.haltTree();
+  ASSERT_TRUE(bb_->get("goal", g));
+  EXPECT_EQ(g.mode, BehaviorGoal::STOP);
+}

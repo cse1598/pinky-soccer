@@ -44,14 +44,14 @@ def add_ball(scene_path, x=0.3, y=0.0, radius=0.02135, mass=0.0459, name=BALL_NA
         raise ValueError(f'{scene_path} has no <worldbody>')
     if worldbody.find(f"body[@name='{name}']") is not None:
         raise ValueError(f'{scene_path} already has a body named {name}')
-    # Approximate the photographed glossy fluorescent-orange product in RGB;
-    # this is not a measured spectral/UV fluorescence material model.
+    # User-measured onboard-camera RGB (230, 57, 4); fluorescence is not simulated.
     asset = tree.getroot().find('asset')
     if asset is None:
         asset = ET.Element('asset')
         tree.getroot().insert(0, asset)
     material = f'{name}_material'
-    ET.SubElement(asset, 'material', name=material, rgba='1 0.30 0 1',
+    ET.SubElement(asset, 'material', name=material,
+                  rgba='0.9019607843 0.2235294118 0.01568627451 1',
                   specular='0.5', shininess='0.55')
     # Appended last: pinky_mujoco Physics reads the robot pose from qpos[0:7], so the
     # robot's free joint must stay first.
@@ -187,6 +187,12 @@ def main(args=None):
             bridge, options.opponent_name, options.opponent_sensors,
             load_config(options.sensor_config) if options.sensor_config else None,
             options.imu_enabled, options.adc_enabled, camera_only=options.opponent_camera)
+    from pinky_soccer_sim.led_visual import install_mujoco_led, led_materials
+    build_before_led = bridge.build_model
+    def build_led(*args, **kwargs):
+        return led_materials(build_before_led(*args, **kwargs))
+    bridge.build_model = build_led
+    install_mujoco_led(bridge, options.opponent_name)
     install_callback_drain(bridge)
     bridge.main(rest)
 

@@ -88,6 +88,11 @@ int main(int argc, char** argv)
   pinky_soccer_bt::setKickoffPose(blackboard, kickoff[0], kickoff[1], kickoff[2]);
   blackboard->set("goal", pinky_soccer_bt::makeGoal("STOP", "Init", BehaviorGoal::STOP,
                                                     pinky_soccer_bt::Pose2{}, 0.0));
+  auto preparation_pose = node->create_subscription<geometry_msgs::msg::Pose2D>(
+      "preparation/start_pose", rclcpp::QoS(1).transient_local(),
+      [blackboard](geometry_msgs::msg::Pose2D::SharedPtr msg) {
+        pinky_soccer_bt::setKickoffPose(blackboard, msg->x, msg->y, msg->theta);
+      });
   auto tree = factory.createTree("Main", blackboard);
   auto publish_tree = factory.createTree("PublishGoal", blackboard);
 
