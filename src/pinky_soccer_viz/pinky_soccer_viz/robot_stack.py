@@ -66,6 +66,7 @@ class RobotConfig:
     field_spec: str = ''
     localization: str = 'lidar'
     controller: str = 'mpc'
+    path_planner: str = 'bezier'
     mpc_backend: str = 'acados'
     mpc_damping_scale: float = 0.0
     mpc_observer_mode: str = 'off'
@@ -111,8 +112,18 @@ def controller_node(cfg):
                         'wheel_feedback': cfg.wheel_feedback,
                         # GoToPose avoid_walls uses the same field as the world model.
                         'field_spec': cfg.field_spec}])
+    if cfg.controller == 'lqr':
+        if not cfg.simulation or not cfg.verify:
+            raise ValueError('LQR requires simulation and verify mode')
+        return Node(package='pinky_soccer_viz', executable='path_lqr_controller',
+                    name='path_lqr_controller', output='screen',
+                    remappings=[('cmd_vel', cfg.command_topic)], parameters=[{
+                        'use_sim_time': cfg.simulation, 'target': cfg.target,
+                        'calibration_profile': cfg.calibration_profile,
+                        'path_planner': cfg.path_planner,
+                        'max_lin': cfg.max_lin, 'max_ang': cfg.max_ang}])
     if cfg.controller != 'reactive':
-        raise ValueError('controller must be mpc or reactive')
+        raise ValueError('controller must be mpc, lqr or reactive')
     return Node(package='pinky_soccer', executable='reactive_controller',
                 name='reactive_controller', output='screen',
                 remappings=[('cmd_vel', cfg.command_topic)],
