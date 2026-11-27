@@ -111,9 +111,12 @@ class Referee(Node):
             self.get_logger().warning("Image conversion failed: "+str(exc),throttle_duration_sec=2.)
             return
         t=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+        stamp=msg.header.stamp
         if t==0:
-            t=self.get_clock().now().nanoseconds*1e-9
-        self.process(image,msg.header.stamp,t)
+            now=self.get_clock().now()
+            t=now.nanoseconds*1e-9
+            stamp=now.to_msg()
+        self.process(image,stamp,t)
 
     def calibrate(self,image):
         p=self.params
@@ -169,6 +172,9 @@ class Referee(Node):
         s.blue_goal_entries=self.rules.scores["blue"]
         s.ball=self.msg(self.ball)
         s.robots=[self.msg(tr) for tr in self.robots]
+        s.ball.header=s.header
+        for obj in s.robots:
+            obj.header=s.header
         self.last_state=s
         self.state_pub.publish(s)
         self.ball_pub.publish(s.ball)
