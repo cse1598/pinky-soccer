@@ -393,3 +393,16 @@ Pinky Pro 공식 LED 서비스로 발광 밝기를 수동 시험할 수 있다.
 바닥 위치 오차 검증, (4) 로봇 높이에 의한 시차 보정, (5) 공 이동/가림/골대 통과/아웃
 각각 기록, (6) 실제 입력률 및 처리 지연 측정, (7) 흰색·노랑·파랑 LED 상태, 바퀴 오인식, 360도 회전, 들어 옮기기 검증.
 정량 검증 전에는 ground-truth **추정치**로만 사용하고 자동 경기 제어나 안전 기능에 연결하지 않는다.
+
+2026-11-28: 상단 `SCORE Yellow / Blue`는 팀 득점이다. 파란 골대 진입은
+Yellow 득점, 노란 골대 진입은 Blue 득점이다. ROS `yellow_goal_entries` /
+`blue_goal_entries`는 기존처럼 각 색상 골대에 들어간 횟수를 유지한다.
+
+2026-11-28 준비 버튼: PREPARE/RETRY는 상태·서비스 조건으로 회색 비활성화하지
+않고, 클릭할 때 로봇별 연결 대기/준비 중/READY 이유를 표시한다. PREPARE는
+IDLE/ERROR/STOPPED/RECOVERING 대상만 요청하고, READY 대상 재준비는 RETRY를
+사용한다. 이미 CALIBRATING/MOVING_TO_START인 대상은 중복 요청하지 않는다.
+경기 중에는 STOP 후 준비한다. START는 모든 지정 로봇의 fresh READY/유효 위치
+조건을 유지한다. robot_namespaces가 비었고 전역 준비 서비스가 없으면 Yellow/Blue
+경기 서비스를 자동 연결한다. 단일 이름 로봇은 robot_namespaces:=yellow처럼 명시한다.
+이 변경은 사용자 요청으로 빌드만 반영했으며 UI 동작 시험은 수행하지 않았다.

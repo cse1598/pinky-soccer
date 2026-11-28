@@ -58,6 +58,7 @@ class MatchPreparation(Node):
         self.odom_speed = (math.inf, math.inf)
         self.stopped_since = None
         self.entered = time.monotonic()
+        self.recovery_entered = None
         self.goal_id = 0
         self.motion_received = -math.inf
         self.command_received = -math.inf
@@ -80,6 +81,7 @@ class MatchPreparation(Node):
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.status_pub = self.create_publisher(String, 'preparation/status', latched)
         self.playing_pub = self.create_publisher(Bool, 'preparation/playing', latched)
+        self.recovery_pub = self.create_publisher(Bool, 'localization/recovery', latched)
         self.global_playing_pub = self.create_publisher(Bool, '/game/playing', 10)
         self.team_pub = self.create_publisher(String, 'preparation/team', latched)
         self.start_pub = self.create_publisher(Pose2D, 'preparation/start_pose', latched)
@@ -137,6 +139,7 @@ class MatchPreparation(Node):
         result = self.core.prepare()
         if result[0]:
             self.entered = time.monotonic()
+            self.recovery_entered = None
             self.previous_record = self.loc.get('records')
             self.loc = {}
             self.calibration_ack = False
@@ -159,6 +162,7 @@ class MatchPreparation(Node):
         age = self.get_clock().now().nanoseconds/1e9-msg.header.stamp.sec-msg.header.stamp.nanosec/1e9
         action = self.referee_gate.event(msg.sequence, msg.event,
             -.05 <= age < 1. and self.core.prepared and (self.core.state == 'PLAYING' or
+                (self.core.state == 'RECOVERING' and self.core.resume_state == 'PLAYING') or
                 (self.core.state == 'STOPPED' and self.referee_now() <= self.referee_pause_until)))
         if action:
             self.stop()
@@ -187,6 +191,7 @@ class MatchPreparation(Node):
         return result
 
     def stop(self, announce=True):
+        self.recovery_entered = None
         self.referee_pause_until = -math.inf
         if self.referee_reset is not None:
             self.referee_reset.cancel()
@@ -216,8 +221,8 @@ class MatchPreparation(Node):
             ok, reason = self.start(announce=False)
             if not ok:
                 self.get_logger().warn(reason, throttle_duration_sec=2.)
-        elif self.core.state in ('CALIBRATING', 'MOVING_TO_START', 'PLAYING'):
-            was_playing = self.core.state == 'PLAYING'
+        elif self.core.state in ('CALIBRATING', 'MOVING_TO_START', 'PLAYING', 'RECOVERING'):
+            was_playing = self.core.state == 'PLAYING' or self.core.resume_state == 'PLAYING'
             self.stop(announce=False)
             if was_playing:
                 self.referee_pause_until = self.referee_now()+.5
@@ -360,9 +365,16 @@ class MatchPreparation(Node):
                         self.global_playing_pub.publish(Bool(data=True))
                     elif not ok:
                         self.core.reason = reason
-            if self.core.state in ('PLAYING', 'MOVING_TO_START') and not self.referee_gate.fresh(self.referee_now()):
+            if self.core.state in ('PLAYING', 'MOVING_TO_START', 'RECOVERING') and not self.referee_gate.fresh(self.referee_now()):
                 self.stop()
                 self.core.reason = 'Referee disconnected or invalid'
+        if self.core.state == 'RECOVERING' and self.localization_valid():
+            # Pause the preparation movement deadline while the pose is invalid.
+            if self.recovery_entered is not None:
+                self.entered += now-self.recovery_entered
+            self.recovery_entered = None
+            self.core.localization_restored()
+            self.motion_received = now
         state = self.core.state
         if state == 'CALIBRATING':
             if not self.calibrate_sent and self.calibrate_client.service_is_ready():
@@ -382,7 +394,10 @@ class MatchPreparation(Node):
                 self.fail('Preparation calibration timeout')
         elif state in ('MOVING_TO_START', 'READY', 'PLAYING'):
             if not self.localization_valid():
-                self.fail('Localization lost or status stale')
+                self.recovery_entered = now
+                self.core.localization_lost()
+                self.command_pub.publish(Twist())
+                self.publish_stop_goal()
             elif state == 'MOVING_TO_START':
                 if now-self.entered > self.move_timeout:
                     self.fail('GoToPose / stop confirmation timeout')
@@ -405,6 +420,7 @@ class MatchPreparation(Node):
                 self.core.state == 'MOVING_TO_START' and not self.core.arrived):
             self.publish_stop_goal()
         self.playing_pub.publish(Bool(data=self.core.state == 'PLAYING'))
+        self.recovery_pub.publish(Bool(data=self.core.state == 'RECOVERING'))
         led_started = time.perf_counter()
         self.update_led(now)
         self.led_cost_ms.append(1000*(time.perf_counter()-led_started))

@@ -20,7 +20,7 @@ from pinky_soccer_field.field_geometry import Field
 from pinky_soccer_mpc.collision_geometry import FOOTPRINT_RECTS, footprint_polygons
 from pinky_soccer_mpc.response_calibration import apply_response
 from pinky_soccer_msgs.msg import BehaviorGoal, MotionResult, WorldModel
-from .attack_motion import Follower, Grid, wrap, contact_speed_limit
+from .attack_motion import Follower, Grid, wrap, contact_speed_limit, reverse_for_waypoint
 
 
 class AttackController(Node):
@@ -40,8 +40,8 @@ class AttackController(Node):
         self.follower = Follower(self.params, self.position_tol, self.heading_tol)
         self.path_mpc = None
         if bool(p('path_mpc_approach', False).value):
-            if target != 'mujoco':
-                raise ValueError('path_mpc approach is experimental and MuJoCo only')
+            if target not in ('mujoco', 'real'):
+                raise ValueError('path_mpc approach is experimental and supports MuJoCo/real only')
             from .path_mpc_approach import PathMpcApproach
             self.path_mpc = PathMpcApproach(self.params, self.field, self.margin,
                 float(p('path_mpc_max_lin', 0.).value), float(p('path_mpc_max_ang', 2.).value))
@@ -59,6 +59,7 @@ class AttackController(Node):
         self.last_tick = None
         self.entered = None
         self.travel_reverse = None
+        self.escape_leg = False
         self.finished = False
         self.failed = None
         self.progress_pose = None
@@ -66,6 +67,11 @@ class AttackController(Node):
         self.stuck_since = None
         self.recovery_until = 0.
         self.recovery_command = None
+        self.recovery_backoff_m = float(p('recovery_backoff_m', .10).value)
+        if not math.isfinite(self.recovery_backoff_m) or self.recovery_backoff_m <= 0:
+            raise ValueError('recovery_backoff_m must be positive')
+        self.recovery_travel = 0.
+        self.recovery_reverse_failed = False
         self.recovery_attempts = 0
         self.block_reason = ''
         self.last_progress_warning = -math.inf
@@ -109,11 +115,15 @@ class AttackController(Node):
 
     def report(self, state, reason, result=MotionResult.RUNNING):
         self.status.publish(String(data=json.dumps(dict(state=state, reason=reason,
-            backend='geometric_path', phase=self.follower.phase,
+            backend=('path_mpc' if self.path_mpc is not None and self.goal is not None
+                     and self.goal.action == 'GoBehindBall' and not self.escape_leg
+                     and state != 'recover' else 'geometric_path'),
+            strategy='path_mpc' if self.path_mpc is not None else 'legacy', phase=self.follower.phase,
             goal_id=str(self.goal.goal_id) if self.goal else '0',
             action=self.goal.action if self.goal else '',
             stalled_s=max(0., self.now()-self.progress_at) if self.progress_pose is not None else 0.,
             recovery_attempts=self.recovery_attempts, block_reason=self.block_reason,
+            recovery_travel_m=self.recovery_travel, recovery_backoff_m=self.recovery_backoff_m,
             processing_ms=1000*(time.perf_counter()-self.tick_started),
             scan_age_s=self.now()-self.scan_cache_stamp if self.scan_cache is not None else None))))
         if self.goal and self.goal.goal_id:
@@ -193,6 +203,18 @@ class AttackController(Node):
             self.path_mpc.reset()
         now = self.now()
         self.block_reason = reason
+        reverse = (self.recovery_command is not None and self.recovery_command[0] < 0
+                   and abs(self.recovery_command[1]) < 1e-6)
+        if reverse and now < self.recovery_until:
+            measured_v = (self.params.m('left_radius')*self.wheels[0]+
+                          self.params.m('right_radius')*self.wheels[1])/2
+            self.recovery_travel = getattr(self, 'recovery_travel', 0.)+max(0.,-measured_v)*dt
+            if self.recovery_travel >= getattr(self, 'recovery_backoff_m', .10):
+                self.recovery_until = 0.
+                self.recovery_command = None
+                self.progress_at, self.progress_pose = now, np.asarray(pose).copy()
+                self.recovery_reverse_failed = False
+                return self.stop('reverse recovery distance reached; replanning')
         # Progress during an active escape is its intended effect. Do not apply
         # the *entry* stall threshold again and cancel it after the first 8 mm.
         if now-self.progress_at < 1. and now >= self.recovery_until:
@@ -203,6 +225,9 @@ class AttackController(Node):
             self.get_logger().warning('No motion progress >=1s: '+reason+
                 '; recovery attempt '+str(self.recovery_attempts+1))
         if now >= self.recovery_until:
+            if reverse:
+                # A rear escape that made insufficient progress gets an alternative.
+                self.recovery_reverse_failed = True
             self.recovery_attempts += 1
             # Independent escape motion: do not require a route to the ball.
             # Alternate turn preference after an unsuccessful escape.
@@ -211,6 +236,8 @@ class AttackController(Node):
             choices = []
             previous = self.follower.previous.copy()
             for v,w in candidates:
+                if v < 0 and abs(w) < 1e-6 and getattr(self, 'recovery_reverse_failed', False):
+                    continue
                 self.follower.previous = previous.copy()
                 u = self.follower.wheel_command(v,w,.5)
                 if self.safe(pose,u,points):
@@ -226,18 +253,25 @@ class AttackController(Node):
                         displacement = np.linalg.norm(x[:2]-pose[:2])
                         # Escape is judged by increased free space, not just motion.
                         score = 2*clear + displacement - .05*np.linalg.norm(x[:2])
-                        choices.append((score, (v,w)))
+                        preferred = v < 0 and abs(w) < 1e-6 and not getattr(self, 'recovery_reverse_failed', False)
+                        choices.append((preferred, score, (v,w)))
             self.follower.previous = previous
             if not choices:
                 self.recovery_until = now+.1
                 self.recovery_command = None
             else:
-                self.recovery_command = max(choices,key=lambda x:x[0])[1]
-                self.recovery_until = now+.6
+                self.recovery_command = max(choices,key=lambda x:(x[0],x[1]))[2]
+                backing = self.recovery_command[0] < 0 and abs(self.recovery_command[1]) < 1e-6
+                self.recovery_travel = 0.
+                self.recovery_until = now+(2. if backing else .6)
+                if not backing:
+                    self.recovery_reverse_failed = False
         if self.recovery_command is None:
             return self.stop(reason+'; no physically clear escape')
         command = self.follower.wheel_command(*self.recovery_command,dt)
         if not self.safe(pose,command,points):
+            if reverse or (self.recovery_command[0] < 0 and abs(self.recovery_command[1]) < 1e-6):
+                self.recovery_reverse_failed = True
             self.recovery_until = 0.
             return self.stop(reason+'; escape blocked, selecting another')
         self.send(command)
@@ -295,6 +329,9 @@ class AttackController(Node):
             self.key = None
             self.progress_pose = None
             self.recovery_until = 0.
+            self.recovery_command = None
+            self.recovery_travel = 0.
+            self.recovery_reverse_failed = False
             return self.stop('stopped or no fresh goal')
         key = (g.action, g.goal_id)
         if key != self.key:
@@ -303,10 +340,14 @@ class AttackController(Node):
             if self.progress_pose is None or g.goal_id:
                 self.progress_pose = None
                 self.recovery_until = 0.
+                self.recovery_command = None
+                self.recovery_travel = 0.
+                self.recovery_reverse_failed = False
             self.key, self.entered = key, now
             self.follower.reset(); self.path = []; self.path_target = None
             self.finished, self.failed = False, None
             self.travel_reverse = None
+            self.escape_leg = False
         if self.failed:
             return self.stop(self.failed, True)
         if self.finished:
@@ -340,7 +381,7 @@ class AttackController(Node):
         if now < self.recovery_until and self.recovery_command is not None:
             return self.recover(pose,points,dt,self.block_reason)
         mpc_approach = self.path_mpc is not None and g.action == 'GoBehindBall'
-        if now-self.progress_at >= (3. if mpc_approach else 1.) and (self.follower.phase == 'TRAVEL' or not g.goal_id):
+        if now-self.progress_at >= 1. and (self.follower.phase == 'TRAVEL' or not g.goal_id):
             return self.recover(pose,points,dt,self.block_reason or 'motion command without progress')
         if g.action == 'AlignToBall':
             command = self.follower.command(pose,target,target[:2],self.wheels,now,dt)
@@ -394,6 +435,9 @@ class AttackController(Node):
                 self.follower.previous = previous
             if self.follower.phase == 'TRAVEL' and (not self.path or changed or
                     (wall-self.planned_at > .2 and not grid.line(pose[:2], self.path[min(1,len(self.path)-1)]))):
+                if self.escape_leg:
+                    self.travel_reverse = None
+                self.escape_leg = False
                 self.path = grid.plan(pose[:2], target[:2])
                 if not self.path and not grid.clear(pose[:2]):
                     # A disc can overestimate the narrow front near a goal. Leave
@@ -401,12 +445,16 @@ class AttackController(Node):
                     # remains authoritative for this first, straight escape leg.
                     axis = np.array([math.cos(pose[2]), math.sin(pose[2])])
                     escapes = [pose[:2]+direction*distance*axis
-                        for distance in (.08, .16, .24) for direction in (-1., 1.)]
+                        for distance in (.10, .20, .30) for direction in (-1., 1.)]
                     escapes.sort(key=lambda q:np.linalg.norm(q-pose[:2])+np.linalg.norm(q-target[:2]))
                     for escape in escapes:
                         route = grid.plan(escape, target[:2])
                         if route:
                             self.path = [pose[:2].copy(), *route]
+                            self.escape_leg = True
+                            self.travel_reverse = reverse_for_waypoint(pose, escape, True)
+                            if self.path_mpc is not None:
+                                self.path_mpc.reset()
                             break
                 self.path_target, self.planned_at = target.copy(), wall
                 self.publish_path()
@@ -414,11 +462,13 @@ class AttackController(Node):
                 return self.recover(pose,points,dt,'no collision-free path; start_clear='+str(grid.clear(pose[:2]))+' target_clear='+str(grid.clear(target[:2])))
             while len(self.path)>2 and np.linalg.norm(pose[:2]-self.path[1]) < .055:
                 self.path.pop(0)
+                if self.escape_leg:
+                    self.escape_leg = False
+                    self.travel_reverse = None
             waypoint = self.path[min(1, len(self.path)-1)] if self.path else target[:2]
             if self.travel_reverse is None:
-                bearing = math.atan2(waypoint[1]-pose[1], waypoint[0]-pose[0])
                 self.travel_reverse = (g.action == 'Backoff' or
-                    (bool(g.goal_id) and abs(wrap(bearing-pose[2])) > math.pi/2))
+                    reverse_for_waypoint(pose, waypoint, bool(g.goal_id)))
             self.block_reason = ''
             speed_cap = g.max_speed
             if g.action in ('PushBall','GoBehindBall') and self.world.ball.state != self.world.ball.LOST:
@@ -426,6 +476,9 @@ class AttackController(Node):
                 maximum = min(self.params.m('left_radius'),self.params.m('right_radius'))*self.params.wheel_cmd_max()
                 impact_limit = contact_speed_limit(pose,(b.pose.x,b.pose.y),(b.velocity.x,b.velocity.y),maximum)
                 speed_cap = min(speed_cap,impact_limit) if speed_cap>0 else impact_limit
+            # The approach optimizer is forward-only. A backward clearance leg
+            # belongs to the existing escape controller, then returns to MPC.
+            mpc_approach = mpc_approach and not self.escape_leg
             if mpc_approach:
                 route = [pose[:2].copy(), *self.path[1:]] if self.path else []
                 if len(route) < 2 or not grid.line(route[0], route[1]):

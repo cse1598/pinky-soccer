@@ -18,3 +18,14 @@ def test_goal_clears_rally_deadline_before_return_to_start():
     # The latched old event must not clear a newer rally's timer.
     module.Match.event(trial,SimpleNamespace(sequence=1,event='GOAL',goal_color='blue'))
     assert trial.play_started==100.
+
+
+def test_third_score_requires_its_late_event_before_saving_success():
+    path=Path(__file__).resolve().parents[3]/'scripts/verify_attack_match.py'
+    spec=importlib.util.spec_from_file_location('attack_trial_score',path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    ref=SimpleNamespace(yellow_goal_entries=0,blue_goal_entries=3)
+    events=[(1.,'GOAL','blue'),(2.,'GOAL','blue')]
+    assert not module.score_events_match(ref,events)
+    events.append((3.,'GOAL','blue'))
+    assert module.score_events_match(ref,events)

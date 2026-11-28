@@ -500,7 +500,7 @@ class WorldModelNode(Node):
                 present=referee_ball.state == TrackedObject.OBSERVED and .03<forward<.16 and abs(lateral)<.07)
         contact['input_mode'] = self.ball_input
         contact['metric_source'] = self.ball_source
-        contact['present'] = contact['present'] and 0 <= now-contact['stamp'] < .35
+        contact['present'] = bool(contact['present'] and 0 <= now-contact['stamp'] < .35)
         self.contact_pub.publish(String(data=json.dumps(contact)))
         if referee_ball is None and self.ball_input != 'hybrid':
             self.ball.predict(now)

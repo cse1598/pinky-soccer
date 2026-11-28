@@ -336,3 +336,19 @@ def test_color_classifier_handles_partly_clipped_led():
     pixels=np.tile(np.array([30,220,240],np.uint8),(100,1))
     pixels[:30]=255
     assert classify_led_pixels(pixels)=="yellow"
+
+
+def test_displayed_team_score_uses_the_opposite_goal():
+    r=Rules()
+    for color,sign,expected in [('blue',1,{'yellow':1,'blue':0}),
+                               ('blue',1,{'yellow':2,'blue':0}),
+                               ('yellow',-1,{'yellow':2,'blue':1})]:
+        r.reset()
+        r.update([0,0],FIELD,R,GOALS)
+        r.update([sign*1.05,0],FIELD,R,GOALS)
+        r.update([sign*1.06,0],FIELD,R,GOALS)
+        assert r.update([sign*1.07,0],FIELD,R,GOALS)==('GOAL',color)
+        assert r.team_scores==expected
+    assert r.scores=={'yellow':1,'blue':2}  # Existing goal-entry interface unchanged.
+    r.scores={'yellow':0,'blue':0}
+    assert r.team_scores=={'yellow':0,'blue':0}

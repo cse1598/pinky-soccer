@@ -57,7 +57,11 @@ def test_stale_session_late_result_and_stop_confirmation(node):
     assert node.start()[0]
     node.loc_received = time.monotonic()-2
     node.tick()
-    assert node.core.state == 'ERROR' and not node.core.prepared
+    assert node.core.state == 'RECOVERING' and node.core.prepared
+    assert not node.core.command_allowed
+    localized(node)
+    node.tick()
+    assert node.core.state == 'PLAYING'
 
 
 def test_motion_failure_never_ready(node):
@@ -115,3 +119,38 @@ def test_team_change_requires_stop_and_invalidates_ready(node):
     assert reply.success and node.core.team == 'blue'
     assert node.core.state == 'IDLE' and not node.core.prepared
     assert node.target[0] > 0
+
+
+@pytest.mark.parametrize('stop_globally', [False, True])
+def test_stop_cancels_localization_recovery_and_late_restore(node, stop_globally):
+    localized(node)
+    node.core.state, node.core.prepared = 'PLAYING', True
+    node.loc_received = time.monotonic()-2
+    node.tick()
+    assert node.core.state == 'RECOVERING'
+    assert node.core.led == ((0, 96, 0), True)
+    if stop_globally:
+        node.on_playing(Bool(data=False))
+    else:
+        node.stop()
+    localized(node)
+    node.tick()
+    assert node.core.state == 'STOPPED' and node.core.resume_state is None
+
+
+def test_move_waits_for_pose_without_consuming_move_deadline(node):
+    node.core.state = 'MOVING_TO_START'
+    node.goal_id = 123
+    node.entered = time.monotonic()-10
+    node.tick()
+    assert node.core.state == 'RECOVERING'
+    node.recovery_entered -= 120
+    node.entered -= 120
+    node.tick()
+    assert node.core.state == 'RECOVERING'  # waiting itself is not a timeout
+    node.on_result(MotionResult(goal_id=123, state=MotionResult.SUCCESS))
+    assert not node.core.arrived  # late pre-pause result is ignored
+    localized(node)
+    node.tick()
+    assert node.core.state == 'MOVING_TO_START' and not node.core.arrived
+    assert time.monotonic()-node.entered < 11

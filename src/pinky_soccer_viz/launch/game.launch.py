@@ -41,7 +41,7 @@ def setup(context):
                          '(0 = MPC internal limits only)')
     common = {name: arg(name) for name in
               ('preparation', 'preparation_config', 'field', 'our_goal_color', 'team', 'robot_name', 'headless', 'verify',
-               'controller', 'strategy', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'heading_record', 'initial_x', 'initial_y',
+               'controller', 'strategy', 'mpc_backend', 'mpc_damping_scale', 'mpc_observer_mode', 'localization', 'localization_config', 'localization_debug', 'localization_heading_source', 'heading_record', 'initial_x', 'initial_y',
                'initial_yaw')}
     common.update(max_lin=str(max_lin), max_ang=str(max_ang),
                   identification=arg('identification'), ball_offset_source=arg('ball_offset_source'))
@@ -121,6 +121,8 @@ def generate_launch_description():
         DeclareLaunchArgument('localization_config', default_value='auto',
                               description='auto: measured simulator HLS override; none: common requested HLS'),
         DeclareLaunchArgument('localization_debug', default_value='false'),
+        DeclareLaunchArgument('localization_heading_source', default_value='auto',
+                              choices=['auto', 'odom', 'imu']),
         DeclareLaunchArgument('heading_record', default_value=''),
         DeclareLaunchArgument('ball_offset_source', default_value='auto',
                               description='auto: selected profile/camera sibling; none: raw projection; or reviewed profile'),

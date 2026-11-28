@@ -337,7 +337,10 @@ PortsList AttackBall::providedPorts()
 {
   return {InputPort<TrackedObject>("ball"), InputPort<TrackedObject>("pose"),
           InputPort<Point>("opp_goal"), InputPort<bool>("planner_approach", false, "Let path planner choose the detour"), InputPort<double>("blind_distance", 0.22, "Max unobserved push distance [m]"),
-          InputPort<double>("blind_seconds", 1.25, "Max unobserved push time [s]"), InputPort<double>("backup_distance", 0.16, "Camera reacquisition backup [m]")};
+          InputPort<double>("blind_seconds", 1.25, "Max unobserved push time [s]"), InputPort<double>("backup_distance", 0.16, "Camera reacquisition backup [m]"),
+          InputPort<double>("approach_offset_m", .13, "Behind-ball approach offset [m]"),
+          InputPort<double>("orbit_clearance_m", .14, "Legacy side waypoint offset [m]"),
+          InputPort<double>("recovery_clearance_m", .14, "Stagnant-ball flank offset [m]")};
 }
 
 NodeStatus AttackBall::update()
@@ -366,7 +369,8 @@ NodeStatus AttackBall::update()
       const double dx=goal.x-ball.x,dy=goal.y-ball.y,n=std::max(.01,std::hypot(dx,dy));
       const double ux=dx/n,uy=dy/n;
       const double side = ux*(p.y-ball.y)-uy*(p.x-ball.x) >= 0. ? -1. : 1.;
-      flank_ = {ball.x-.12*ux-.18*side*uy, ball.y-.12*uy+.18*side*ux,std::atan2(uy,ux)};
+      const double lateral = input<double>("recovery_clearance_m");
+      flank_ = {ball.x-.12*ux-lateral*side*uy, ball.y-.12*uy+lateral*side*ux,std::atan2(uy,ux)};
       flank_until_ = now+2.5; stage_ = 3;
     }
   }
@@ -431,10 +435,11 @@ NodeStatus AttackBall::update()
   }
   else
   {
-    // Shorten the behind offset near our end wall. A fixed 15 cm offset
+    // Shorten the behind offset near our end wall. A fixed approach offset
     // can make the side waypoint reachable but its behind condition impossible.
+    const double requested_offset = input<double>("approach_offset_m");
     const double offset = ball.x*goal.x < 0. ?
-        std::min(.15,std::max(.055,std::abs(goal.x)-std::abs(ball.x)-.02)) : .15;
+        std::min(requested_offset,std::max(.055,std::abs(goal.x)-std::abs(ball.x)-.02)) : requested_offset;
     const double norm = std::max(.01,std::hypot(goal.x-ball.x,goal.y-ball.y));
     const double ux=(goal.x-ball.x)/norm,uy=(goal.y-ball.y)/norm;
     const double along=(p.x-ball.x)*ux+(p.y-ball.y)*uy;
@@ -447,7 +452,8 @@ NodeStatus AttackBall::update()
       approach_side_ = cross >= 0. ? 1 : -1;
     auto approach = behindBallPose(ball,goal,offset);
     if(approach_orbit_ && !input<bool>("planner_approach"))
-    { approach.x -= .20*approach_side_*uy; approach.y += .20*approach_side_*ux; }
+    { const double lateral = input<double>("orbit_clearance_m");
+      approach.x -= lateral*approach_side_*uy; approach.y += lateral*approach_side_*ux; }
     if(std::abs(ball.y)>.25 && (approach.y-ball.y)*ball.y>0.)
       approach.y = 2*ball.y-approach.y;
     emit("GoBehindBall", approach);

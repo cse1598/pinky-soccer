@@ -453,6 +453,10 @@ class Rules:
         self.sequence=0
         self.scores={"yellow":0,"blue":0}
         self.reset()
+    @property
+    def team_scores(self):
+        """Goal-entry counters are conceded goals; the opposite team scores."""
+        return {"yellow":self.scores["blue"],"blue":self.scores["yellow"]}
     def reset(self):
         self.armed=False
         self.status="WAIT_FOR_BALL"

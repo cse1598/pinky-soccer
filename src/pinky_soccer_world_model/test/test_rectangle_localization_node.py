@@ -19,10 +19,11 @@ from pinky_soccer_world_model.geometry import compose2d, inverse2d, wrap
 
 
 @pytest.fixture
-def node(tmp_path, monkeypatch):
+def node(tmp_path, monkeypatch, request):
     monkeypatch.setenv('ROS_LOG_DIR', str(tmp_path/'logs'))
     rclpy.init(args=['--ros-args', '-p', 'heading_record:='+str(tmp_path/'heading.yaml'),
-                     '-p', 'led_enabled:=false'], domain_id=187)
+                     '-p', 'led_enabled:=false',
+                     '-p', 'heading_source:='+getattr(request, 'param', 'imu')], domain_id=187)
     node = module.RectangleLocalization()
     clock = SimpleNamespace(t=1000.)
     monkeypatch.setattr(module, 'time', SimpleNamespace(monotonic=lambda: clock.t,
@@ -49,9 +50,11 @@ def feed(node, clock, theta, gyro=0., goal=True, dt=.2):
     imu.header.stamp, imu.header.frame_id = stamp, 'imu'
     imu.orientation.z, imu.orientation.w = math.sin((theta+.42)/2), math.cos((theta+.42)/2)
     imu.angular_velocity.z = gyro
-    node.on_imu(imu)
+    if node.heading_source == 'imu':
+        node.on_imu(imu)
     odom = Odometry()
     odom.header.stamp = stamp
+    odom.twist.twist.angular.z = gyro
     odom_pose = compose2d(inverse2d((.3, .1, .7)), pose)
     odom.pose.pose.position.x, odom.pose.pose.position.y = odom_pose[:2]
     odom.pose.pose.orientation.z, odom.pose.pose.orientation.w = math.sin(odom_pose[2]/2), math.cos(odom_pose[2]/2)
@@ -269,3 +272,55 @@ def test_scan_schedule_uses_sensor_time_despite_wall_arrival_jitter(node, monkey
     # 99 ms wall arrivals used to skip alternating 100 ms source slots.
     assert n.fit_attempts == 12
     assert n.fit_successes == 12
+
+
+@pytest.mark.parametrize('node', ['odom'], indirect=True)
+@pytest.mark.parametrize('color', ['yellow', 'blue'])
+def test_odom_heading_initializes_without_imu_and_tracks_wrap(node, color):
+    n, clock = node
+    n.recalibrate(Trigger.Request(), Trigger.Response())
+    ends = n.field.goal_back(color)
+    theta = math.atan2(-.1, (ends[0][0]+ends[1][0])/2-.2)
+    for _ in range(12):
+        feed(n, clock, theta)
+    assert n.ready and not n.imus and n.last_imu is None
+    assert n.initializer.anchors[color]['observed']
+    assert n.initializer.anchors[color]['heading_source'] == 'odom'
+    assert np.allclose(n.map_odom, (.3, .1, .7), atol=.02)
+    import yaml
+    saved = yaml.safe_load((n.root/'heading_reference.yaml').read_text())
+    assert saved['heading_source'] == 'odom' and saved['imu_map_offset_rad'] is None
+    for i in range(1, 9):
+        yaw = wrap(theta-i*.04)
+        feed(n, clock, yaw, gyro=-.2, goal=False)
+        assert n.ready
+        assert abs(wrap(n.current_pose[2]-yaw)) < .03
+    # Unrelated/invalid IMU packets cannot invalidate an odometry reference.
+    n.on_imu(Imu())
+    assert n.ready and not n.gate.aborted
+    clock.t += .6
+    n.tick()
+    assert not n.ready  # Wheel odometry is still required.
+
+
+@pytest.mark.parametrize('node', ['odom'], indirect=True)
+def test_automatic_recovery_reuses_goal_reference_after_wall_dropout(node):
+    n, clock = node
+    n.recalibrate(Trigger.Request(), Trigger.Response())
+    goal = n.field.goal_back('blue')
+    theta = math.atan2(-.1, (goal[0][0]+goal[1][0])/2-.2)
+    for _ in range(12):
+        feed(n, clock, theta)
+    assert n.ready
+    reference = n.initializer.initial_pose
+    clock.t += 4.
+    n.tick()
+    assert not n.ready and n.tracker.requires_reinitialization
+    n.recovery_requested = True
+    feed(n, clock, theta, goal=False)
+    assert not n.ready
+    feed(n, clock, theta, goal=False)
+    assert not n.ready
+    feed(n, clock, theta, goal=False)
+    assert n.ready and n.initializer.initial_pose == reference
+    assert not n.tracker.requires_reinitialization

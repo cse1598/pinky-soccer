@@ -160,3 +160,32 @@ def test_measured_renderer_override_on_saved_original_camera_frames(engine, colo
     for _ in range(3):
         result = detector.detect(image)
     assert result['color'] == color
+
+
+def test_odom_drift_is_corrected_by_walls_without_a_fixed_absolute_heading():
+    tracker = RectangleTracker(heading_source='odom')
+    pose = (.1, -.2, 3.12)
+    tracker.seed(pose, (0., 0., 1.2), 1.2, 0.)
+    for i in range(1, 121):
+        odom_yaw = wrap(1.2+.04*i)
+        tracker.predict((0., 0., odom_yaw), odom_yaw, i*.1)
+        assert tracker.correct((mirrored(pose), pose), odom_yaw, i*.1)
+        assert abs(wrap(tracker.pose[2]-pose[2])) < 1e-12
+        assert abs(wrap(tracker.offset-(odom_yaw-pose[2]))) < 1e-12
+
+
+def test_tracking_recovery_requires_three_new_plausible_fits():
+    tracker = RectangleTracker(heading_source='odom')
+    pose = (.1, -.2, .2)
+    candidates = (mirrored(pose), pose)
+    tracker.seed(pose, (0., 0., .4), .4, 0.)
+    assert not tracker.validity(4.)[0]
+    assert not tracker.correct(candidates, .4, 4.)
+    assert not tracker.try_recover(candidates, .4, 4.)
+    assert not tracker.try_recover(candidates, .4, 4.)  # repeated timestamp
+    wrong = (.8, .4, .2)
+    assert not tracker.try_recover((wrong, mirrored(wrong)), .4, 4.1)
+    assert not tracker.try_recover(candidates, .4, 4.2)
+    assert not tracker.try_recover(candidates, .4, 4.3)
+    assert tracker.try_recover(candidates, .4, 4.4)
+    assert tracker.validity(4.4)[0] and tracker.pose == pose

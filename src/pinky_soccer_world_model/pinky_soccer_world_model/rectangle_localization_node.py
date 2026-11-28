@@ -41,6 +41,9 @@ class RectangleLocalization(Node):
     def __init__(self):
         super().__init__('rectangle_localization')
         p = self.declare_parameter
+        self.heading_source = p('heading_source', 'imu').value
+        if self.heading_source not in ('imu', 'odom'):
+            raise ValueError('heading_source must be imu or odom')
         self.field = Field.from_file(p('field_spec', '').value or None)
         wall = self.field.inner_walls
         self.length, self.width = wall.width, wall.height
@@ -135,6 +138,7 @@ class RectangleLocalization(Node):
         self.last_status = -math.inf
         self.state = 'WAITING_FOR_CALIBRATION'
         self.calibration_requested = False
+        self.recovery_requested = False
         self.ready = False
         self.map_odom = None
         self.saved_raw = self.saved_complete = False
@@ -153,12 +157,15 @@ class RectangleLocalization(Node):
         self.goal_image = self.create_publisher(Image, 'localization/goal_image', qos_profile_sensor_data)
         self.command = self.create_publisher(Twist, 'cmd_vel', 10)
         self.create_subscription(LaserScan, 'scan', self.on_scan, qos_profile_sensor_data)
-        self.create_subscription(Imu, 'imu_raw', self.on_imu, qos_profile_sensor_data)
+        if self.heading_source == 'imu':
+            self.create_subscription(Imu, 'imu_raw', self.on_imu, qos_profile_sensor_data)
         self.create_subscription(Odometry, 'odom', self.on_odom, qos_profile_sensor_data)
         self.create_subscription(CameraInfo, 'camera/camera_info', self.on_info, qos_profile_sensor_data)
         self.create_subscription(CompressedImage, 'camera/image_raw/compressed', self.on_image,
                                  qos_profile_sensor_data)
         self.create_subscription(Twist, 'localization/controller_cmd_vel', self.on_command, 10)
+        self.create_subscription(Bool, 'localization/recovery',
+            lambda msg: setattr(self, 'recovery_requested', bool(msg.data)), qos)
         self.create_service(Trigger, 'localization/abort', self.abort)
         self.create_service(Trigger, 'localization/calibrate', self.recalibrate)
         self.create_service(Trigger, 'localization/recalibrate', self.recalibrate)
@@ -178,10 +185,26 @@ class RectangleLocalization(Node):
 
     def new_initializer(self):
         return GoalInitializer(self.length, self.turn_rate, self.angle_tolerance,
-                               self.settle, self.view_timeout)
+                               self.settle, self.view_timeout, heading_source=self.heading_source)
 
     def new_tracker(self):
-        return RectangleTracker(self.coast, self.reinitialize_after, **self.tracking_parameters)
+        return RectangleTracker(self.coast, self.reinitialize_after,
+                                heading_source=self.heading_source, **self.tracking_parameters)
+
+    def heading_at(self, stamp):
+        if self.heading_source == 'odom':
+            sample = self.nearest(self.odoms, stamp)
+            return (sample[0], sample[1][2]) if sample else None
+        return self.nearest(self.imus, stamp)
+
+    def latest_heading(self):
+        if self.heading_source == 'odom':
+            return (self.odoms[-1][0], self.odoms[-1][1][2]) if self.odoms else None
+        return self.last_imu
+
+    def heading_fresh(self):
+        received = self.odom_received if self.heading_source == 'odom' else self.imu_received
+        return time.monotonic()-received < .5
 
     def transform(self, source):
         if source in self.static_transforms:
@@ -207,10 +230,21 @@ class RectangleLocalization(Node):
         r = quat_to_matrix(q.x, q.y, q.z, q.w)
         pose = (t.x, t.y, math.atan2(r[1, 0], r[0, 0]))
         if all(math.isfinite(v) for v in pose):
+            if self.odoms and seconds(msg.header) <= self.odoms[-1][0]:
+                return
+            if self.heading_source == 'odom':
+                speed = msg.twist.twist.angular.z
+                if not math.isfinite(speed):
+                    return
+                if self.odoms and self.seek_started is not None and not self.gate.ever_ready:
+                    self.rotation += abs(wrap(pose[2]-self.odoms[-1][1][2]))
+                self.angular_speed = float(speed)
             self.odoms.append((seconds(msg.header), pose))
             self.odom_received = time.monotonic()
 
     def on_imu(self, msg):
+        if self.heading_source != 'imu':
+            return
         stamp = seconds(msg.header)
         q = msg.orientation
         if (not all(math.isfinite(v) for v in (q.x, q.y, q.z, q.w, msg.angular_velocity.x,
@@ -289,12 +323,12 @@ class RectangleLocalization(Node):
         xyz = np.c_[finite_ranges*np.cos(angles), finite_ranges*np.sin(angles), np.zeros(len(ranges))]
         xyz[~valid] = np.nan
         points = (xyz @ transform[:3, :3].T+transform[:3, 3])[:, :2]
-        imu = self.nearest(self.imus, stamp)
+        imu = self.heading_at(stamp)
         if imu is None:
             return
         prior = self.prior_yaw
         if prior is not None and self.fits:
-            prior = wrap(prior+wrap(imu[1]-self.fits[-1]['imu_yaw']))
+            prior = wrap(prior+wrap(imu[1]-self.fits[-1]['heading_yaw']))
         started = time.perf_counter()
         fit = fit_rectangle(points, self.length, self.width, tolerance=self.fit_tolerance,
                             minimum=self.fit_minimum, prior_yaw=prior)
@@ -318,11 +352,14 @@ class RectangleLocalization(Node):
             if odom is None or self.tracker.predict(odom[1], imu[1], stamp) is None:
                 return
             if not self.tracker.correct(fit.hypotheses, imu[1], stamp):
-                return
+                if (not self.recovery_requested or self.gate.aborted or
+                        not self.tracker.requires_reinitialization or
+                        not self.tracker.try_recover(fit.hypotheses, imu[1], stamp)):
+                    return
         self.fit_accepted = True
         self.fit_successes += 1
         self.fit_received = time.monotonic()
-        self.fits.append(dict(stamp=stamp, fit=fit, imu_yaw=imu[1], points=points,
+        self.fits.append(dict(stamp=stamp, fit=fit, heading_yaw=imu[1], points=points,
                               angles=angles, ranges=ranges))
         if self.debug:
             filtered = deepcopy(msg)
@@ -361,7 +398,7 @@ class RectangleLocalization(Node):
             self.camera_yaw = math.atan2(forward[1], forward[0])
             self.camera_xy = tuple(camera[:2, 3])
             self.camera_geometry_ready = True
-            imu = self.nearest(self.imus, stamp)
+            imu = self.heading_at(stamp)
             item = min(self.fits, key=lambda f: abs(f['stamp']-stamp)) if self.fits else None
             if not imu or item is None or abs(item['stamp']-stamp) > .15:
                 return
@@ -386,7 +423,7 @@ class RectangleLocalization(Node):
                 annotated.header = msg.header
                 self.goal_image.publish(annotated)
             if result['color']:
-                pose = (*item['fit'].pose[:2], wrap(item['fit'].pose[2]+imu[1]-item['imu_yaw']))
+                pose = (*item['fit'].pose[:2], wrap(item['fit'].pose[2]+imu[1]-item['heading_yaw']))
                 chosen = self.initializer.identify(pose, result['color'], imu[1], stamp)
                 odom = self.nearest(self.odoms, stamp)
                 if chosen is not None and odom is not None:
@@ -406,7 +443,7 @@ class RectangleLocalization(Node):
         self.last_controller = time.monotonic()
         if (self.ready and time.monotonic()-self.fit_received < self.coast and
                 time.monotonic()-self.odom_received < .5 and
-                time.monotonic()-self.imu_received < .5 and not self.gate.aborted):
+                self.heading_fresh() and not self.gate.aborted):
             if all(math.isfinite(v) for vector in (msg.linear, msg.angular)
                    for v in (vector.x, vector.y, vector.z)):
                 self.command.publish(msg)  # preserve each 50 Hz controller sample; no resampling
@@ -455,11 +492,12 @@ class RectangleLocalization(Node):
         # Display-only output can be toggled live without restarting localization.
         self.debug = bool(self.get_parameter('debug_enabled').value)
         now = time.monotonic()
-        links = dict(imu=now-self.imu_received < .5,
-                     lidar_outer_walls=now-self.fit_received < .5,
+        links = dict(lidar_outer_walls=now-self.fit_received < .5,
                      odom=now-self.odom_received < .5,
                      camera_intrinsics_tf=now-self.image_received < .5)
-        sensors = links['imu'] and links['lidar_outer_walls'] and links['odom']
+        if self.heading_source == 'imu':
+            links['imu'] = self.heading_fresh()
+        sensors = self.heading_fresh() and links['lidar_outer_walls'] and links['odom']
         connected = sensors and links['camera_intrinsics_tf']
         if not self.calibration_requested:
             self.state = 'WAITING_FOR_CALIBRATION'
@@ -476,11 +514,11 @@ class RectangleLocalization(Node):
             self.state = 'ABORTED'
         elif self.tracker.pose is not None:
             odom = self.odoms[-1] if self.odoms else None
-            imu = self.nearest(self.imus, odom[0]) if odom else None
+            imu = self.heading_at(odom[0]) if odom else None
             stamp = self.get_clock().now().nanoseconds*1e-9
             valid, state, confidence = self.tracker.validity(stamp)
             self.state, self.confidence = state, confidence
-            if valid and links['imu'] and links['odom'] and odom and imu:
+            if valid and self.heading_fresh() and links['odom'] and odom and imu:
                 delta = compose2d(inverse2d(self.tracker.odom), odom[1])
                 pose = compose2d(self.tracker.pose, delta)
                 pose = (*pose[:2], wrap(self.tracker.pose[2]+wrap(imu[1]-self.tracker.imu)))
@@ -505,7 +543,7 @@ class RectangleLocalization(Node):
         elif self.fits:
             item = self.fits[-1]
             pose = (*item['fit'].pose[:2], wrap(item['fit'].pose[2]+
-                                              self.last_imu[1]-item['imu_yaw']))
+                                              self.latest_heading()[1]-item['heading_yaw']))
             previous = self.initializer.state
             w = self.initializer.step(pose, now, self.camera_xy,
                                       self.camera_yaw, self.angular_speed)
@@ -531,7 +569,9 @@ class RectangleLocalization(Node):
     def save_reference(self, pose, stamp):
         (self.root/'heading_reference.yaml').write_text(yaml.safe_dump(dict(
             field_spec=self.field.spec, team=self.team, references=self.initializer.anchors,
-            imu_map_offset_rad=self.tracker.offset, imu_session_only=True,
+            heading_source=self.heading_source, heading_map_offset_rad=self.tracker.offset,
+            imu_map_offset_rad=self.tracker.offset if self.heading_source == 'imu' else None,
+            imu_session_only=self.heading_source == 'imu',
             angle_unit='rad', imu_frame=self.imu_frame,
             camera_intrinsics_source=self.camera_source, camera_yaw_rad=self.camera_yaw,
             image_rotated_180=self.rotated, namespace=self.get_namespace(),
@@ -546,12 +586,15 @@ class RectangleLocalization(Node):
                 self._reported_state = self.state
             self.ready_pub.publish(Bool(data=self.ready))
             self.status.publish(String(data=json.dumps(dict(
-                source='rectangle_lidar_goal_imu', state=self.state, ready=self.ready,
+                source='rectangle_lidar_goal_'+self.heading_source,
+                heading_source=self.heading_source, state=self.state, ready=self.ready,
                 stamp=self.get_clock().now().nanoseconds*1e-9,
                 calibration_requested=self.calibration_requested,
                 team=self.team, learned_colors=[c for c, ref in self.initializer.anchors.items()
                                                 if ref['observed']],
                 initialization_complete=self.gate.ever_ready,
+                recovery_requested=self.recovery_requested,
+                recovery_fit_streak=self.tracker.recovery_streak,
                 valid=self.ready, confidence=self.confidence,
                 hypotheses=[list(p) for p in self.fits[-1]['fit'].hypotheses] if self.fits else [],
                 pose=list(self.current_pose) if self.current_pose else None,
@@ -564,7 +607,8 @@ class RectangleLocalization(Node):
                 goal_centers=[[-self.length/2, 0.], [self.length/2, 0.]],
                 target_error_rad=getattr(self.initializer, 'error', None),
                 goal_pixel_counts=self.goal_counts, goal_streak=self.detector.streak,
-                imu_map_offset_rad=self.tracker.offset,
+                heading_map_offset_rad=self.tracker.offset,
+                imu_map_offset_rad=self.tracker.offset if self.heading_source == 'imu' else None,
                 fit_accepted=self.fit_accepted, rejected_fits=self.tracker.rejected,
                 fit_attempts=self.fit_attempts, fit_successes=self.fit_successes,
                 fit_source_hz=((self.fit_attempts-1)/(self.last_fit_stamp-self.first_scan_stamp)
@@ -579,8 +623,12 @@ class RectangleLocalization(Node):
                                 and (k != 'camera_intrinsics_tf' or not self.gate.ever_ready)],
                 led=self.led_state, records=str(self.root), rotation_rad=self.rotation,
                 imu_yaw_deg=math.degrees(self.last_imu[1]) if self.last_imu else None,
+                heading_yaw_deg=math.degrees(self.latest_heading()[1]) if self.latest_heading() else None,
                 goal_axis_imu_deg={color: math.degrees(ref['goal_axis_imu_yaw'])
-                                   for color, ref in self.initializer.anchors.items()},
+                                   for color, ref in self.initializer.anchors.items()
+                                   if 'goal_axis_imu_yaw' in ref},
+                goal_axis_heading_deg={color: math.degrees(ref.get('goal_axis_heading_yaw',
+                    ref.get('goal_axis_imu_yaw'))) for color, ref in self.initializer.anchors.items()},
                 sensors=links,
                 fit_residual_m=self.fits[-1]['fit'].residual if self.fits else None))))
             self.last_status = now

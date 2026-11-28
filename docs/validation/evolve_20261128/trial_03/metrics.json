@@ -1,0 +1,48 @@
+{
+  "yellow": {
+    "command_time": {
+      "command_s": 172.29000000099998,
+      "turn_in_place_s": 34.41999999999998,
+      "reverse_s": 61.059999999999995,
+      "zero_command_s": 6.439999999999991
+    },
+    "processing_ms": {
+      "mean": 9.105695611758529,
+      "p95": 16.4346019992081,
+      "maximum": 106.87860200050636
+    },
+    "actions": {
+      "GoBehindBall": 4406,
+      "PushBall": 2506,
+      "AlignToBall": 1036,
+      "Backoff": 486,
+      "PreparationStop": 8,
+      "StopRobot": 1,
+      "CarryBall": 160
+    },
+    "path_publications": 559
+  },
+  "blue": {
+    "command_time": {
+      "command_s": 172.280000001,
+      "turn_in_place_s": 41.340000000000025,
+      "reverse_s": 31.030000000000015,
+      "zero_command_s": 3.750000000000017
+    },
+    "processing_ms": {
+      "mean": 8.698595121938084,
+      "p95": 15.935876999719767,
+      "maximum": 90.40126800027792
+    },
+    "actions": {
+      "GoBehindBall": 3156,
+      "PushBall": 3585,
+      "Backoff": 291,
+      "AlignToBall": 1396,
+      "CarryBall": 177,
+      "PreparationStop": 10,
+      "StopRobot": 3
+    },
+    "path_publications": 456
+  }
+}

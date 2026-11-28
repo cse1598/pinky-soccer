@@ -69,6 +69,7 @@ class RobotConfig:
     localization: str = 'rectangle'
     localization_config: str = 'auto'
     localization_debug: bool = False
+    localization_heading_source: str = 'auto'
     controller: str = 'mpc'
     attack_strategy: str = 'legacy'
     mpc_backend: str = 'acados'
@@ -143,8 +144,8 @@ def decision_stack(cfg):
     """Return the launch actions of one robot's decision stack."""
     if cfg.attack_strategy not in ('legacy', 'path_mpc'):
         raise ValueError('Unknown attack strategy')
-    if cfg.attack_strategy == 'path_mpc' and (cfg.controller != 'attack' or cfg.target != 'mujoco' or cfg.verify or cfg.bt_tree_file):
-        raise ValueError('path_mpc strategy is experimental: attack controller, MuJoCo, game BT only')
+    if cfg.attack_strategy == 'path_mpc' and (cfg.controller != 'attack' or cfg.target not in ('mujoco', 'real') or cfg.verify or cfg.bt_tree_file):
+        raise ValueError('path_mpc strategy is experimental: attack controller, MuJoCo/real, game BT only')
     clock = {'use_sim_time': cfg.simulation}
     team = {'our_goal_color': cfg.color, 'field_spec': cfg.field_spec}
     wm = share('pinky_soccer_world_model', 'config')
@@ -174,6 +175,8 @@ def decision_stack(cfg):
         nodes.append(Node(package='pinky_soccer_world_model', executable='rectangle_localization',
             name='rectangle_localization', output='screen',
             remappings=[('cmd_vel', 'preparation/localized_cmd_vel' if preparation else cfg.command_topic)], parameters=[*localization_params, clock, team, {
+                'heading_source': (('imu' if cfg.simulation else 'odom')
+                    if cfg.localization_heading_source == 'auto' else cfg.localization_heading_source),
                 'heading_record': cfg.heading_record,
                 'debug_enabled': cfg.localization_debug,
                 'led_enabled': not cfg.simulation and not preparation,

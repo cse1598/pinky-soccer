@@ -1,0 +1,12 @@
+{
+  "yellow": {
+    "far_approach_s": 2.0699999999999994,
+    "far_pivot_s": 0.0,
+    "far_zero_s": 0.0
+  },
+  "blue": {
+    "far_approach_s": 2.219999999999991,
+    "far_pivot_s": 0.12000000000000455,
+    "far_zero_s": 0.0899999999999892
+  }
+}

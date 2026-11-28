@@ -26,7 +26,7 @@ def allowed(action, statuses, now, pending=False):
                    and s.get('referee_start_allowed', True) and not s.get('start_pending', False)
                    for s, _ in statuses)
     if action in ('prepare', 'retry'):
-        return all(s.get('state') in ('IDLE', 'ERROR', 'STOPPED', 'READY') for s, _ in statuses)
+        return all(s.get('state') in ('IDLE', 'ERROR', 'STOPPED', 'READY', 'RECOVERING') for s, _ in statuses)
     return False
 
 
@@ -41,9 +41,11 @@ class MatchControls:
 
         self.node = node
         self.names = robot_namespaces(namespaces)
+        self.auto_names = self.names == ['']
         self.status = {}
         self.pending = {}
         self.message = 'Waiting for robot preparation/status'
+        self.feedback = {}
         self.buttons = []
         self.stop_requested = False
         self.last_stop = -float('inf')
@@ -51,18 +53,44 @@ class MatchControls:
         self.action_clients = {}
         self.subscriptions = []
         for name in self.names:
-            prefix = ('/'+name if name else '')+'/preparation/'
-            self.action_clients[name] = {a: node.create_client(Trigger, prefix+a) for a in self.ACTIONS}
-            self.subscriptions.append(node.create_subscription(
-                String, prefix+'status', lambda msg, name=name: self.receive(name, msg),
-                QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)))
+            self.connect(name)
         self.timer = node.create_timer(.2, self.poll)
+
+    def connect(self, name):
+        from rclpy.qos import DurabilityPolicy, QoSProfile
+        from std_msgs.msg import String
+        from std_srvs.srv import Trigger
+        prefix = ('/'+name if name else '')+'/preparation/'
+        self.action_clients[name] = {a: self.node.create_client(Trigger, prefix+a) for a in self.ACTIONS}
+        self.subscriptions.append(self.node.create_subscription(
+            String, prefix+'status', lambda msg, name=name: self.receive(name, msg),
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)))
+
+    def discover_names(self):
+        if not self.auto_names:
+            return
+        if self.action_clients['']['prepare'].service_is_ready():
+            return  # Existing single robot without a namespace.
+        services = {name for name, _ in self.node.get_service_names_and_types()}
+        found = [name for name in ('yellow', 'blue') if '/'+name+'/preparation/prepare' in services]
+        if not found:
+            return
+        for name in ('yellow', 'blue'):
+            if name not in self.action_clients:
+                self.connect(name)
+        # Auto mode is the canonical two-team match. A named single robot can
+        # explicitly set robot_namespaces:=yellow (or blue).
+        self.names = ['yellow', 'blue']
+        self.auto_names = False
 
     def receive(self, name, msg):
         try:
             status = json.loads(msg.data)
             if isinstance(status, dict):
+                old_phase = self.status.get(name, ({}, 0.))[0].get('state')
                 self.status[name] = status, time.monotonic()
+                if status.get('state') != old_phase:
+                    self.feedback.pop(name, None)
                 if (self.message == 'Waiting for robot preparation/status'
                         and all(n in self.status for n in self.names)):
                     self.message = 'Robot connected: PREPARE -> READY -> START'
@@ -70,12 +98,49 @@ class MatchControls:
             pass
 
     def enabled(self, action):
+        if action in ('prepare', 'retry'):
+            return True  # The click explains unavailable/busy robots instead of going dead.
         states = [self.status.get(n, ({}, -float('inf'))) for n in self.names]
         return (allowed(action, states, time.monotonic(), bool(self.pending))
                 and all(self.action_clients[n][action].service_is_ready() for n in self.names))
 
     def request(self, action):
         if action not in self.ACTIONS:
+            return
+        if action in ('prepare', 'retry'):
+            self.discover_names()
+            if self.pending:
+                self.message = 'Request pending: '+', '.join((n or 'root')+'/'+a for n,a in self.pending)
+                return
+            now = time.monotonic()
+            if any(self.status.get(n, ({}, -float('inf')))[0].get('state') == 'PLAYING'
+                   and now-self.status[n][1] <= 1.5 for n in self.names):
+                self.message = 'Game is playing: STOP [S] before preparing again'
+                return
+            messages = []
+            for name in self.names:
+                label = name or 'root'
+                status, seen = self.status.get(name, ({}, -float('inf')))
+                client = self.action_clients[name][action]
+                if not client.service_is_ready():
+                    messages.append(label+': waiting for /'+name.strip('/')+('/' if name else '')+'preparation/'+action)
+                elif now-seen > 1.5:
+                    messages.append(label+': preparation/status not received or stale')
+                elif status.get('state') in ('CALIBRATING', 'MOVING_TO_START'):
+                    messages.append(label+': preparation already running')
+                elif action == 'prepare' and status.get('state') == 'READY':
+                    messages.append(label+': already READY; use RETRY to prepare again')
+                elif status.get('state') in ('IDLE', 'ERROR', 'STOPPED', 'READY', 'RECOVERING'):
+                    try:
+                        self.pending[(name, action)] = client.call_async(self.request_type()), now
+                        self.stop_requested = False
+                        messages.append(label+': '+action+' requested')
+                    except Exception as exc:
+                        messages.append(label+': '+str(exc))
+                else:
+                    messages.append(label+': cannot prepare from '+str(status.get('state')))
+                self.feedback[name] = messages[-1].removeprefix(label+': ')
+            self.message = ' | '.join(messages)
             return
         if action == 'stop':
             self.stop_requested = True
@@ -104,6 +169,7 @@ class MatchControls:
                     return
 
     def poll(self):
+        self.discover_names()
         failed = False
         for key, (future, sent) in list(self.pending.items()):
             name, action = key
@@ -116,7 +182,9 @@ class MatchControls:
                     raise TimeoutError('service response timeout')
                 response = future.result()
                 self.message = (name or 'root')+': '+response.message
-                failed |= not response.success and action != 'stop'
+                self.feedback[name] = response.message
+                busy = action in ('prepare', 'retry') and 'already running' in response.message.lower()
+                failed |= not response.success and action != 'stop' and not busy
             except Exception as exc:
                 self.message = (name or 'root')+': '+str(exc)
                 failed |= action != 'stop'
@@ -165,7 +233,8 @@ class MatchControls:
             led = s.get('led', {})
             line = '%s: %s | team=%s ready=%s | LED=%s%s | %s' % (
                 name or 'root', phase, s.get('team', '?'), s.get('ready', False),
-                led.get('color', '?'), ' blink' if led.get('blink') else '', s.get('reason', ''))
+                led.get('color', '?'), ' blink' if led.get('blink') else '',
+                self.feedback.get(name) or s.get('reason', ''))
             self.text(output, line, height+58+24*i)
         self.text(output, self.message, output.shape[0]-8)
         return output

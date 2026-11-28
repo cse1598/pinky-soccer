@@ -9,8 +9,13 @@ from rclpy.qos import QoSProfile,DurabilityPolicy
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from pinky_soccer_referee.msg import RefereeState,RefereeEvent
-from pinky_soccer_msgs.msg import WorldModel
-from geometry_msgs.msg import PoseStamped
+from pinky_soccer_msgs.msg import WorldModel,BehaviorGoal
+from geometry_msgs.msg import PoseStamped,Twist
+from nav_msgs.msg import Path as RosPath
+
+def score_events_match(ref,events):
+ return (sum(e=='GOAL' and c=='yellow' for _,e,c in events)==ref.yellow_goal_entries and
+         sum(e=='GOAL' and c=='blue' for _,e,c in events)==ref.blue_goal_entries)
 
 class Match(Node):
  def __init__(self,out):
@@ -26,6 +31,9 @@ class Match(Node):
    for action in ('prepare','start','stop'):self.service_clients[name,action]=self.create_client(Trigger,f'/{name}/preparation/{action}')
    self.create_subscription(PoseStamped,f'/{name}/ground_truth',lambda m,n=name:self.log(n+'/truth',[m.pose.position.x,m.pose.position.y]),10)
    self.create_subscription(WorldModel,f'/{name}/world_model',lambda m,n=name:self.world(n,m),10)
+   self.create_subscription(BehaviorGoal,f'/{name}/behavior_goal',lambda m,n=name:self.log(n+'/goal',dict(action=m.action,target=[m.target.x,m.target.y,m.target.theta])),10)
+   self.create_subscription(Twist,f'/{name}/cmd_vel',lambda m,n=name:self.log(n+'/command',[m.linear.x,m.angular.z]),10)
+   self.create_subscription(RosPath,f'/{name}/motion/path',lambda m,n=name:self.log(n+'/path',[[p.pose.position.x,p.pose.position.y] for p in m.poses]),10)
   self.create_subscription(RefereeState,'/referee/state',self.referee,q)
   self.create_subscription(RefereeEvent,'/referee/events',self.event,q)
  def world(self,name,m):
@@ -87,11 +95,15 @@ class Match(Node):
   end=time.monotonic()+45
   while (len(self.states)<2 or not self.ref or not self.ref.calibrated) and time.monotonic()<end:self.spin()
   if not self.call('prepare'):return 'prepare rejected'
-  started=time.monotonic();center_since=None;lastprint=0.;self.play_started=None
+  started=time.monotonic();center_since=None;lastprint=0.;self.play_started=None;score_pending=None
   while time.monotonic()-started<limit:
    self.spin(.03);now=self.now()
    if any(s['state']=='ERROR' for s in self.states.values()):return 'robot ERROR: '+json.dumps(self.states)
-   if self.ref and max(self.ref.yellow_goal_entries,self.ref.blue_goal_entries)>=3:return 'SUCCESS'
+   if self.ref and max(self.ref.yellow_goal_entries,self.ref.blue_goal_entries)>=3:
+    if score_events_match(self.ref,self.events):return 'SUCCESS'
+    score_pending=time.monotonic() if score_pending is None else score_pending
+    if time.monotonic()-score_pending>2.:return 'FAIL: referee score/event mismatch'
+    continue
    waiting=len(self.states)==2 and all(s['state'] in ('READY','STOPPED') and s.get('referee_start_allowed') for s in self.states.values())
    if waiting:
     center_since=now if center_since is None else center_since
@@ -109,8 +121,16 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--output',required=True);p.add_argument('--limit',type=float,default=240);a=p.parse_args()
  if os.environ.get('ROS_DOMAIN_ID')!='193':raise SystemExit('test domain 193 only')
  out=Path(a.output);out.mkdir(parents=True,exist_ok=True);rclpy.init();n=Match(out/'topics.jsonl')
+ result='FAIL: interrupted'
  try:
-  result=n.play(a.limit);print('RESULT',result,flush=True)
+  result=n.play(a.limit)
+ except KeyboardInterrupt:
+  result='FAIL: interrupted by operator'
+ finally:
+  # STOP spins the executor while waiting for both replies, draining the final
+  # GOAL event that can arrive just after its updated RefereeState score.
+  n.call('stop')
   (out/'result.json').write_text(json.dumps(dict(result=result,score_version=2,events=n.events,starts=n.starts,scores=[n.ref.yellow_goal_entries,n.ref.blue_goal_entries] if n.ref else None,reward=n.reward),ensure_ascii=False,indent=2))
- finally:n.call('stop');n.file.close();n.destroy_node();rclpy.shutdown()
+  print('RESULT',result,flush=True)
+  n.file.close();n.destroy_node();rclpy.shutdown()
 if __name__=='__main__':main()

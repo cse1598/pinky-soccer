@@ -76,7 +76,7 @@ def test_static_margin_escape_keeps_physical_clearance_and_rejects_approach():
     from pinky_soccer_viz.attack_controller import AttackController
     field=Field.from_file('src/pinky_soccer_sim/config/hardboard_field.yaml')
     p,_=apply_response(load('real'))
-    n=SimpleNamespace(field=field,params=p,margin=.015,wheels=np.zeros(2),
+    n=SimpleNamespace(field=field,params=p,margin=.015,wheels=np.zeros(2),path_mpc=None,
                       profile=np.zeros(2),follower=SimpleNamespace(previous=np.zeros(2)))
     n.static_clearance=lambda pose:AttackController.static_clearance(n,pose)
     n.point_clearance=lambda pose,points:AttackController.point_clearance(n,pose,points)
@@ -107,7 +107,7 @@ def test_active_escape_continues_after_it_has_started_making_progress():
     from types import SimpleNamespace
     from pinky_soccer_viz.attack_controller import AttackController
     p,_=apply_response(load('real'));sent=[];reports=[]
-    n=SimpleNamespace(now=lambda:2.,progress_at=1.95,recovery_until=2.5,
+    n=SimpleNamespace(now=lambda:2.,progress_at=1.95,recovery_until=2.5,path_mpc=None,
         recovery_command=(-.12,0.),block_reason='',last_progress_warning=2.,
         follower=Follower(p),params=p,wheels=np.zeros(2),profile=np.zeros(2),
         safe=lambda *args:True,send=sent.append,report=lambda *args:reports.append(args),
@@ -115,3 +115,53 @@ def test_active_escape_continues_after_it_has_started_making_progress():
     AttackController.recover(n,np.zeros(3),np.empty((0,2)),.02,'blocked route')
     assert len(sent)==1 and np.all(sent[0]<0.)
     assert reports[-1][0]=='recover'
+
+
+@pytest.mark.parametrize('sign', [-1., 1.])
+def test_blocked_start_escape_backs_out_without_turning(sign):
+    from pinky_soccer_viz.attack_motion import reverse_for_waypoint
+    p, _ = apply_response(load('real'))
+    pose = np.array([sign*.763, 0., 0. if sign > 0 else math.pi])
+    escape = np.array([sign*.523, 0.])
+    target = np.array([sign*.616, .277, 0.])
+    # This is the first leg of the goal-mouth escape observed in match two.
+    reverse = reverse_for_waypoint(pose, escape, True)
+    assert reverse
+    follower = Follower(p)
+    command = follower.command(pose, target, escape, [0., 0.], 0., reverse=reverse)
+    assert command[0] < 0 and command[1] < 0
+    assert abs(command[0]-command[1]) < 1e-9
+    # Normal tactical approaches still use the existing forward-only policy.
+    assert not reverse_for_waypoint(pose, escape, False)
+
+def test_path_recovery_prefers_ten_cm_reverse_then_replans():
+    from types import SimpleNamespace
+    from pinky_soccer_viz.attack_controller import AttackController
+    p, _ = apply_response(load('real'))
+    sent, stopped = [], []
+    clock = [2.]
+    n = SimpleNamespace(now=lambda: clock[0], path_mpc=None, progress_at=0.,
+        recovery_until=0., recovery_command=None, recovery_attempts=0,
+        recovery_travel=0., recovery_backoff_m=.1, recovery_reverse_failed=False,
+        block_reason='', last_progress_warning=2., world=SimpleNamespace(our_goal_color='yellow'),
+        follower=Follower(p), params=p, margin=.015, wheels=np.zeros(2), profile=np.zeros(2),
+        static_clearance=lambda pose: .3, point_clearance=lambda pose, points: .3,
+        safe=lambda *args: True, send=sent.append, report=lambda *args: None,
+        stop=stopped.append, get_logger=lambda: SimpleNamespace(warning=lambda *args: None))
+    AttackController.recover(n, np.zeros(3), np.empty((0,2)), .02, 'no path')
+    assert n.recovery_command == (-.12, 0.) and np.all(sent[-1] < 0.)
+    n.wheels = np.array([-.12/p.m('left_radius'), -.12/p.m('right_radius')])
+    for _ in range(45):
+        clock[0] += .02
+        AttackController.recover(n, np.zeros(3), np.empty((0,2)), .02, 'no path')
+        if stopped:
+            break
+    assert stopped == ['reverse recovery distance reached; replanning']
+    assert .1 <= n.recovery_travel < .103
+    assert n.recovery_until == 0 and n.recovery_command is None
+    # An unsuccessful rear attempt must select a different motion next time.
+    n.recovery_command = (-.12, 0.)
+    n.recovery_until = clock[0]-.1
+    n.progress_at = clock[0]-2.
+    AttackController.recover(n, np.zeros(3), np.empty((0,2)), .02, 'rear escape stalled')
+    assert n.recovery_command != (-.12, 0.)

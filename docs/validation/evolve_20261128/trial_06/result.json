@@ -1,0 +1,52 @@
+{
+  "result": "SUCCESS",
+  "score_version": 2,
+  "events": [
+    [
+      29.020000000000003,
+      "GOAL",
+      "blue"
+    ],
+    [
+      57.42,
+      "GOAL",
+      "blue"
+    ],
+    [
+      87.92,
+      "GOAL",
+      "blue"
+    ]
+  ],
+  "starts": 3,
+  "scores": [
+    0,
+    3
+  ],
+  "reward": {
+    "yellow": {
+      "total": 289.8577488326757,
+      "stationary_s": 0.0,
+      "far_ball_s": 0.0,
+      "distance_m": 5.370502334644304,
+      "recoveries": 0,
+      "goals": 3,
+      "conceded": 0,
+      "outs": 0,
+      "playing_s": 63.26,
+      "stagnant_ball_s": 0.6300000000000026
+    },
+    "blue": {
+      "total": -365.18596384585214,
+      "stationary_s": 0.4599999999999973,
+      "far_ball_s": 0.0,
+      "distance_m": 5.795927691696775,
+      "recoveries": 2,
+      "goals": 0,
+      "conceded": 3,
+      "outs": 0,
+      "playing_s": 63.23,
+      "stagnant_ball_s": 48.169999999999995
+    }
+  }
+}

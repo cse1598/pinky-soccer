@@ -1,0 +1,194 @@
+[
+  {
+    "trial": "trial_01",
+    "result": "FAIL: wall time limit",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -147.7599363590287,
+        "stationary_s": 2.569999999999979,
+        "far_ball_s": 0.0,
+        "distance_m": 8.845872718046403,
+        "recoveries": 13,
+        "goals": 1,
+        "conceded": 1,
+        "outs": 1,
+        "playing_s": 115.03999999999999,
+        "stagnant_ball_s": 81.53999999999999
+      },
+      "blue": {
+        "total": -132.46444884638373,
+        "stationary_s": 1.9199999999999875,
+        "far_ball_s": 0.0,
+        "distance_m": 8.388897692769852,
+        "recoveries": 12,
+        "goals": 1,
+        "conceded": 1,
+        "outs": 1,
+        "playing_s": 115.07,
+        "stagnant_ball_s": 71.59
+      }
+    },
+    "quality_total": -280.22438520541243
+  },
+  {
+    "trial": "trial_02",
+    "result": "FAIL: no completed rally within 75 simulation seconds",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 83.99720387644341,
+        "stationary_s": 0.490000000000002,
+        "far_ball_s": 0.0,
+        "distance_m": 11.56159224489665,
+        "recoveries": 2,
+        "goals": 2,
+        "conceded": 0,
+        "outs": 1,
+        "playing_s": 146.11000000099997,
+        "stagnant_ball_s": 78.14000000099998
+      },
+      "blue": {
+        "total": -365.4774469233637,
+        "stationary_s": 0.970000000000006,
+        "far_ball_s": 0.0,
+        "distance_m": 12.404893844534731,
+        "recoveries": 4,
+        "goals": 0,
+        "conceded": 2,
+        "outs": 1,
+        "playing_s": 146.11000000099997,
+        "stagnant_ball_s": 119.30000000099999
+      }
+    },
+    "quality_total": -281.4802430469203
+  },
+  {
+    "trial": "trial_03",
+    "result": "FAIL: manual restart; no further goal for over 130 simulation seconds with repeated exits",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": -281.12740340052267,
+        "stationary_s": 0.2400000000000091,
+        "far_ball_s": 0.0,
+        "distance_m": 13.974806800814244,
+        "recoveries": 2,
+        "goals": 0,
+        "conceded": 1,
+        "outs": 2,
+        "playing_s": 172.25000000099996,
+        "stagnant_ball_s": 129.72
+      },
+      "blue": {
+        "total": -45.82287133902974,
+        "stationary_s": 0.27000000000001023,
+        "far_ball_s": 0.0,
+        "distance_m": 13.417742677859888,
+        "recoveries": 2,
+        "goals": 1,
+        "conceded": 0,
+        "outs": 2,
+        "playing_s": 172.27000000099997,
+        "stagnant_ball_s": 96.19999999999999
+      }
+    },
+    "quality_total": -326.9502747395524
+  },
+  {
+    "trial": "trial_04",
+    "result": "SUCCESS",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 216.11050055537294,
+        "stationary_s": 0.9399999999999977,
+        "far_ball_s": 0.0,
+        "distance_m": 8.552998889258,
+        "recoveries": 6,
+        "goals": 3,
+        "conceded": 0,
+        "outs": 1,
+        "playing_s": 106.21000000000001,
+        "stagnant_ball_s": 40.33000000000002
+      },
+      "blue": {
+        "total": -410.14136118967247,
+        "stationary_s": 1.480000000000011,
+        "far_ball_s": 0.0,
+        "distance_m": 8.89872237934491,
+        "recoveries": 7,
+        "goals": 0,
+        "conceded": 3,
+        "outs": 1,
+        "playing_s": 106.21000000000001,
+        "stagnant_ball_s": 60.470000000000034
+      }
+    },
+    "quality_total": -194.03086063429953
+  },
+  {
+    "trial": "trial_05",
+    "result": "SUCCESS",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 106.33080239858246,
+        "stationary_s": 0.27000000000001023,
+        "far_ball_s": 0.0,
+        "distance_m": 12.59639520262859,
+        "recoveries": 3,
+        "goals": 3,
+        "conceded": 1,
+        "outs": 1,
+        "playing_s": 145.380000001,
+        "stagnant_ball_s": 52.200000000000024
+      },
+      "blue": {
+        "total": -349.6363004255352,
+        "stationary_s": 1.0800000000000125,
+        "far_ball_s": 0.0,
+        "distance_m": 12.564600850837811,
+        "recoveries": 5,
+        "goals": 1,
+        "conceded": 3,
+        "outs": 1,
+        "playing_s": 145.410000001,
+        "stagnant_ball_s": 100.09000000000003
+      }
+    },
+    "quality_total": -243.3054980269527
+  },
+  {
+    "trial": "trial_06",
+    "result": "SUCCESS",
+    "score_version": 2,
+    "reward": {
+      "yellow": {
+        "total": 289.8577488326757,
+        "stationary_s": 0.0,
+        "far_ball_s": 0.0,
+        "distance_m": 5.370502334644304,
+        "recoveries": 0,
+        "goals": 3,
+        "conceded": 0,
+        "outs": 0,
+        "playing_s": 63.169999999999995,
+        "stagnant_ball_s": 0.6300000000000026
+      },
+      "blue": {
+        "total": -365.18596384585214,
+        "stationary_s": 0.4599999999999973,
+        "far_ball_s": 0.0,
+        "distance_m": 5.795927691696775,
+        "recoveries": 2,
+        "goals": 0,
+        "conceded": 3,
+        "outs": 0,
+        "playing_s": 63.14000000000001,
+        "stagnant_ball_s": 48.169999999999995
+      }
+    },
+    "quality_total": -75.32821501317642
+  }
+]

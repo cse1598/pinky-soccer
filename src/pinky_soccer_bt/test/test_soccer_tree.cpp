@@ -377,3 +377,33 @@ TEST_F(TreeTest, AttackAlignsInPlaceWhenAlreadyBehindBall)
   w.self.pose.theta=.1;bb_->set("attack_pose",w.self);bb_->set("world_stamp",1.1);
   probe.tickOnce();EXPECT_EQ(bb_->get<BehaviorGoal>("goal").action,"PushBall");
 }
+
+TEST_F(TreeTest, CompactAttackApproachRetainsMirrorAndPlannerPolicy)
+{
+  for(const bool planner : {false,true})
+  {
+    for(const double sign : {-1.,1.})
+    {
+      const std::string xml = std::string(R"(<root BTCPP_format="4" main_tree_to_execute="ProbeAttack">
+        <BehaviorTree ID="ProbeAttack"><AttackBall ball="{attack_ball}" pose="{attack_pose}"
+        opp_goal="{attack_goal}" planner_approach=")")+(planner ? "true" : "false")+
+        R"("/></BehaviorTree></root>)";
+      auto probe = factory_.createTreeFromText(xml, bb_);
+      auto w = world(sign*.10,sign*.01,0.,0.,0.);
+      geometry_msgs::msg::Point goal;goal.x=sign*.83;
+      bb_->set("attack_pose",w.self);bb_->set("attack_ball",w.ball);
+      bb_->set("attack_goal",goal);bb_->set("world_stamp",1.);
+      probe.tickOnce();
+      auto g=bb_->get<BehaviorGoal>("goal");
+      EXPECT_EQ(g.action,"GoBehindBall");
+      EXPECT_NEAR(g.target.x,-sign*.13,1e-6);
+      EXPECT_NEAR(g.target.y,planner ? 0. : sign*.14,1e-6);
+      // After prolonged no ball progress, use the smaller opposite-side flank.
+      bb_->set("world_stamp",10.);probe.tickOnce();
+      g=bb_->get<BehaviorGoal>("goal");
+      EXPECT_EQ(g.action,"GoBehindBall");
+      EXPECT_NEAR(g.target.x,-sign*.12,1e-6);
+      EXPECT_NEAR(g.target.y,-sign*.14,1e-6);
+    }
+  }
+}

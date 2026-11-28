@@ -1,0 +1,54 @@
+{
+  "result": "FAIL: manual restart; no further goal for over 130 simulation seconds with repeated exits",
+  "manual_abort": true,
+  "score_version": 2,
+  "events": [
+    [
+      47.82,
+      "GOAL",
+      "yellow"
+    ],
+    [
+      92.12,
+      "OUT",
+      ""
+    ],
+    [
+      165.93,
+      "UNVERIFIED_EXIT",
+      ""
+    ]
+  ],
+  "starts": 4,
+  "scores": [
+    1,
+    0
+  ],
+  "reward": {
+    "yellow": {
+      "total": -281.12740340052267,
+      "stationary_s": 0.2400000000000091,
+      "far_ball_s": 0.0,
+      "distance_m": 13.974806800814244,
+      "recoveries": 2,
+      "goals": 0,
+      "conceded": 1,
+      "outs": 2,
+      "playing_s": 171.370000001,
+      "stagnant_ball_s": 129.09
+    },
+    "blue": {
+      "total": -45.82287133902974,
+      "stationary_s": 0.27000000000001023,
+      "far_ball_s": 0.0,
+      "distance_m": 13.417742677859888,
+      "recoveries": 2,
+      "goals": 1,
+      "conceded": 0,
+      "outs": 2,
+      "playing_s": 171.37000000099997,
+      "stagnant_ball_s": 95.16999999999999
+    }
+  },
+  "reward_note": "latest logged sample before manual STOP, not exact termination instant"
+}

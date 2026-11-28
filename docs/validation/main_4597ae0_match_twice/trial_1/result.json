@@ -1,0 +1,10 @@
+{
+  "result": "FAIL: both WorldModel nodes crashed: numpy.bool_ is not JSON serializable in contact publication; test stopped early",
+  "scores": [
+    0,
+    0
+  ],
+  "events": [],
+  "score_order": "goal entries yellow, blue; team scores are reversed",
+  "interrupted_by_test_driver": true
+}

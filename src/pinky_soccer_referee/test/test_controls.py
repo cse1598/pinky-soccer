@@ -21,6 +21,7 @@ def state(phase='READY', ready=True, valid=True):
     ('IDLE', False, False, .1, False, False),
     ('CALIBRATING', False, False, .1, False, False),
     ('MOVING_TO_START', False, True, .1, False, False),
+    ('RECOVERING', True, True, .1, False, False),
     ('READY', True, False, .1, False, False),
     ('READY', True, True, 2., False, False),
     ('READY', True, True, .1, True, False),
@@ -37,6 +38,7 @@ def test_namespaces_and_all_robot_gate():
         robot_namespaces('yellow; invalid')
     assert not allowed('start', [(state(), 10), (state('ERROR', False), 10)], 10)
     assert not allowed('prepare', [(state('PLAYING'), 10)], 10)
+    assert allowed('retry', [(state('RECOVERING', True, False), 10)], 10)
 
 
 class Future:
@@ -110,6 +112,7 @@ def test_stop_is_reasserted_if_an_earlier_start_takes_effect_late():
 def test_rejected_or_timeout_request_stops_all_robots():
     for timeout in (False, True):
         c, clients = controls()
+        c.status = {n: (state('IDLE', False, False), time.monotonic()) for n in c.names}
         c.request('prepare')
         key = ('yellow', 'prepare')
         f, t = c.pending[key]
@@ -170,7 +173,7 @@ def test_native_ros_service_bridge_never_sends_velocity(tmp_path, monkeypatch):
         c.request('start')
         assert calls == []
         pub.publish(String(data=json.dumps(state('IDLE', False, False))))
-        pump(lambda: c.enabled('prepare'))
+        pump(lambda: '' in c.status and c.action_clients['']['prepare'].service_is_ready())
         c.request('prepare')
         pump(lambda: 'prepare' in calls and not c.pending)
         c.request('start')

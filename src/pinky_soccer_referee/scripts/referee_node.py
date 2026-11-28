@@ -397,7 +397,8 @@ class Referee(Node):
             text_pos=(int(np.clip(center[0]+9,2,max(2,top.shape[1]-tw-3))),int(np.clip(center[1]-max(22,int(.09*f.ppm)),th+3,top.shape[0]-3)))
             cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,(15,15,15),3,cv2.LINE_AA)
             cv2.putText(top,label,text_pos,cv2.FONT_HERSHEY_SIMPLEX,.43,color,1,cv2.LINE_AA)
-        cv2.putText(top,self.last_state.status+" | goals entered Y:%d B:%d"%(self.rules.scores["yellow"],self.rules.scores["blue"]),(12,24),cv2.FONT_HERSHEY_SIMPLEX,.60,(255,255,255),2)
+        score=self.rules.team_scores
+        cv2.putText(top,self.last_state.status+" | SCORE Yellow:%d Blue:%d"%(score["yellow"],score["blue"]),(12,24),cv2.FONT_HERSHEY_SIMPLEX,.60,(255,255,255),2)
         if self.params["debug_ui"]:
             debug="CAL %s | tape p90 %s px"%(f.source,"/".join("%.1f"%x for x in f.boundary_errors))
             cv2.putText(top,debug,(12,45),cv2.FONT_HERSHEY_SIMPLEX,.48,(255,255,255),1,cv2.LINE_AA)

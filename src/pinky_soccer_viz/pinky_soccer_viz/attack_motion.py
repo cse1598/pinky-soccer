@@ -11,6 +11,11 @@ def wrap(a):
     return math.atan2(math.sin(a), math.cos(a))
 
 
+def reverse_for_waypoint(pose, waypoint, allow_reverse):
+    """An axial escape behind the robot must back out before trying to turn."""
+    bearing = math.atan2(waypoint[1]-pose[1], waypoint[0]-pose[0])
+    return bool(allow_reverse and abs(wrap(bearing-pose[2])) > math.pi/2)
+
 def contact_speed_limit(pose, ball, velocity, maximum):
     """Reduce relative impact speed; a moving ball permits faster sustained pushing."""
     delta = np.asarray(ball)-np.asarray(pose[:2])

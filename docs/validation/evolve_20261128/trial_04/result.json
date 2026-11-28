@@ -1,0 +1,58 @@
+{
+  "result": "SUCCESS",
+  "score_version": 2,
+  "events": [
+    [
+      22.32,
+      "GOAL",
+      "blue"
+    ],
+    [
+      76.82000000000001,
+      "UNVERIFIED_EXIT",
+      ""
+    ],
+    [
+      105.72000000000001,
+      "GOAL",
+      "blue"
+    ],
+    [
+      143.13,
+      "GOAL",
+      "blue"
+    ]
+  ],
+  "starts": 4,
+  "scores": [
+    0,
+    3
+  ],
+  "reward": {
+    "yellow": {
+      "total": 216.11050055537294,
+      "stationary_s": 0.9399999999999977,
+      "far_ball_s": 0.0,
+      "distance_m": 8.552998889258,
+      "recoveries": 6,
+      "goals": 3,
+      "conceded": 0,
+      "outs": 1,
+      "playing_s": 106.33000000000001,
+      "stagnant_ball_s": 40.33000000000002
+    },
+    "blue": {
+      "total": -410.14136118967247,
+      "stationary_s": 1.480000000000011,
+      "far_ball_s": 0.0,
+      "distance_m": 8.89872237934491,
+      "recoveries": 7,
+      "goals": 0,
+      "conceded": 3,
+      "outs": 1,
+      "playing_s": 106.33000000000001,
+      "stagnant_ball_s": 60.470000000000034
+    }
+  },
+  "note": "Final event/reward repaired from raw topics after STOP; original result.before_event_fix.json preserved. RefereeState already confirmed 3:0."
+}

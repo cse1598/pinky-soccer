@@ -1,0 +1,6 @@
+Starting >>> pinky_soccer_bt
+Finished <<< pinky_soccer_bt [0.27s]
+Starting >>> pinky_soccer_viz
+Finished <<< pinky_soccer_viz [1.55s]
+
+Summary: 2 packages finished [2.07s]

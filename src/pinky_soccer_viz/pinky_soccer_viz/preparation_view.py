@@ -31,6 +31,14 @@ class PreparationView(Node):
             pass
 
     def call(self, action, team=None):
+        if not team and action in ('prepare', 'retry'):
+            phase = self.status.get('state') if time.monotonic()-self.received <= 1.5 else None
+            if phase in ('CALIBRATING', 'MOVING_TO_START'):
+                self.message = '이미 준비 중입니다. 중단 후 다시 준비하려면 경기 중지를 누르세요.'
+                return
+            if phase == 'PLAYING':
+                self.message = '경기 중입니다. 경기 중지 후 준비해주세요.'
+                return
         client = self.team_client if team else self.action_clients[action]
         if not client.service_is_ready():
             self.message = '상태 관리자 연결 대기'
@@ -83,8 +91,7 @@ def main(args=None):
         buttons['start'].configure(state='normal' if s.get('ready') and phase in ('READY', 'STOPPED')
                                   and s.get('localization_valid') else 'disabled')
         for k in ('prepare', 'retry'):
-            buttons[k].configure(state='normal' if phase in ('IDLE', 'READY', 'STOPPED', 'ERROR')
-                                 else 'disabled')
+            buttons[k].configure(state='normal')
         loc = s.get('localization', {})
         led = s.get('led', {})
         text.set('\n'.join([f"센서: {s.get('sensors', {})} / odom fresh={s.get('odom_fresh')}",

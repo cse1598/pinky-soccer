@@ -104,6 +104,11 @@ MPC의 기존 snapshot에 전달하여 상대 확정 조건과 회피 입력을 
 `opponents/status`는 구독 시 생성하는 진단이다. 상세·미검증 사항은 [OPPONENT_TRACKING.md](OPPONENT_TRACKING.md).
 
 기본 rectangle launch의 최종 명령/경기 허용/LED는 `match_preparation`이 소유한다.
+위치 추정이 일시 무효/지연되면 `RECOVERING`에서 정지·초록 점멸하며 기다리고,
+위치가 검증되면 이전 준비/경기 단계로 복귀한다. `localization/recovery` Bool은
+오래 상실한 외벽 정합을 기존 좌표계와 일치하는 새 관측3개로 복구하도록 허용한다.
+STOP/심판 중지는 자동 복귀를 취소한다. 위치 유효 상태의 경로 막힘은 기존
+충돌 검사 하에 약10cm 후진을 우선하고 재계획한다. 위치 무효 상태에서는 이동하지 않는다.
 `preparation/prepare`→기존 보정→기존 GoToPose/MotionResult→odom 정지 확인→READY→별도 시작이다.
 BT 출력은 `preparation/strategy_goal`로 받아 PLAYING에서만 기존 behavior_goal로 전달한다.
 localizer LED는 끄고 보정 출력/50Hz 제어 명령을 최종 준비 게이트로 통과시킨다. World Model과 심판은
@@ -119,6 +124,13 @@ solver 비용·제약·물리·주기·watchdog는 유지한다. 신규 제어�
 연결해야 한다. [PART B 구현/검증과 미검증 범위](CONTROL_PART_B.md).
 
 ## 좌표계
+
+- 2026-11-28 실물 rectangle의 기본 방위 입력은 wheel odometry다.
+  `localization_heading_source:=odom|imu|auto`로 선택하며 auto는 실물 odom,
+  시뮬레이션 imu다. odom에서는 IMU 수신·시간 매칭을 요구하지 않는다.
+  LiDAR 두 후보와 초기 골대 색상으로 map 방향을 확정하고, 이후 odom 회전량으로
+  예측한 후보를 외벽 정합으로 보정한다. 각 로봇은 자기 위치/카메라 TF에서 골대
+  조준각을 계산하고 자기 odom→map 방위 기준을 유지한다. IMU 방식은 선택적으로 보존한다.
 
 - 공통 시작 기본(`localization:=rectangle`, 실물·MuJoCo·Gazebo): 같은 PC `rectangle_localization`이
   외벽 두 후보를 유지하고 최소각 골대를 조준·정지 후 HLS 한 색으로 IMU 양축을 계산한다. 완료 후 map→odom 단독 발행,

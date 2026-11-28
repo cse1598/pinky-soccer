@@ -25,6 +25,7 @@ def setup(context):
         'calibration_profile', 'camera_yaml', 'identification', 'robot_host', 'robot_workspace', 'robot_profile',
         'opponent_mode', 'opponent_x', 'opponent_y', 'initial_x', 'initial_y', 'initial_yaw')}
     common.update(controller='attack', strategy=arg('strategy'), opponent_strategy=arg('opponent_strategy'),
+                  localization_heading_source=arg('localization_heading_source'),
                   referee='false', preparation='true', verify='false',
                   wheel_feedback='true', localization='rectangle', imu_enabled='true')
     referee = dict(mode='topic' if sim else 'realsense', use_sim_time='true' if sim else 'false',
@@ -67,6 +68,7 @@ def setup(context):
 def generate_launch_description():
     defaults = dict(mode='mujoco', field='hardboard', team='Y', robots='1', robot_name='',
         strategy='legacy', opponent_strategy='legacy',
+        localization_heading_source='auto',
         headless='false', show_rviz='true', show_camera='false',
         show_localization='false', show_preparation='false', auto_reset_ball='true',
         ball_rolling_deceleration='0.10', referee_ball_assist='false', ball_source='hybrid', opponent_mode='game', opponent_x='auto', opponent_y='auto',
@@ -75,5 +77,6 @@ def generate_launch_description():
     return LaunchDescription([*(DeclareLaunchArgument(k, default_value=v,
         **({'choices': ['real', 'mujoco']} if k == 'mode' else
            {'choices': ['auto','robot','assist','referee','hybrid']} if k == 'ball_source' else
-           {'choices': ['legacy','path_mpc']} if k in ('strategy','opponent_strategy') else {})) for k,v in defaults.items()),
+           {'choices': ['legacy','path_mpc']} if k in ('strategy','opponent_strategy') else
+           {'choices': ['auto','odom','imu']} if k == 'localization_heading_source' else {})) for k,v in defaults.items()),
         OpaqueFunction(function=setup)])
